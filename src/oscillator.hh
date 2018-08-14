@@ -14,34 +14,6 @@ Float FastSine(Float x) {
   return y;
 }
 
-// LUT + ZOH
-Float sine1(Float phase) {
-  phase *= (Data::sine.size()-1_u32).to_float(); // TODO -1 dans Buffer
-  u32 integral = u32(phase);
-  Float a = Data::sine[integral];
-  return a;
-}
-
-// LUT + linear interpolation
-Float sine2(Float phase) {
-  phase *= (Data::sine.size()-1_u32).to_float();
-  u32 integral = u32(phase);
-  Float fractional = phase - integral.to_float();
-  Float a = Data::sine[integral];
-  Float b = Data::sine[integral+1_u32];
-  return a + (b - a) * fractional;
-}
-
-// TODO: fix sine2 above (pb with long long int in Numtypes)
-Float sine2_alamain(Float phase) {
-  phase *= (Data::sine.size()-1_u32).to_float();
-  u32 integral = u32(DANGER, static_cast<uint32_t>(phase.repr()));
-  Float fractional = phase - integral.to_float();
-  Float a = Data::sine[integral];
-  Float b = Data::sine[integral+1_u32];
-  return a + (b - a) * f(fractional);
-}
-
 // polynomial
 Float sine3(Float x) {
   return FastSine(x);
@@ -53,7 +25,7 @@ public:
   Float Process(Float freq) {
     phase_ += freq;
     if (phase_ > 1_f) phase_--;
-    return sine2_alamain(phase_);
+    return Data::sine.interpolate(phase_);
   }
 };
 
@@ -78,7 +50,7 @@ class IFOscillator {
 public:
   Float Process(u0_32 freq) {
     phase_ += freq;
-    return sine2_alamain(phase_.to_float());
+    return Data::sine.interpolate(phase_.to_float());
   }
 };
 
@@ -135,7 +107,7 @@ class IOscillator {
 public:
   s1_15 Process(u0_32 freq) {
     phase_ += freq;
-    return sine2i(phase_);
+    return Data::short_sine.interpolate(phase_).shift_left<15>();
   }
 };
 
