@@ -22,28 +22,28 @@ struct Main :
 
     // accel_.ReadAccelData(&d);
 
-    // // 52%
+    // // 42%
     // Float t[size];
     // static FOscillators<40> sine_;
     // for(int i=0; i<size; i++) {
-    //   t[i] = sine_.Process(0.005_f);
+    //   t[i] = sine_.Process(0.002_f);
     //   out[i].l = s1_15(t[i]).repr();
     //   out[i].r = out[i].l;
     // }
 
-    // // 52%
+    // // 42%
     // Float t[size];
-    // static IFOscillators<40> sine_;
+    // static IFOscillators<1> sine_;
     // for(int i=0; i<size; i++) {
-    //   t[i] = sine_.Process(0.005_u0_32);
+    //   t[i] = sine_.Process(0.002_u0_32);
     //   out[i].l = s1_15(t[i]).repr();
     //   out[i].r = out[i].l;
     // }
 
-    // 31%
-    static IOscillators<40> sine_;
+    // 30.8%
+    static IOscillators<1> sine_;
     for(int i=0; i<size; i++) {
-      out[i].l = sine_.Process(0.001_u0_32).repr();
+      out[i].l = sine_.Process(0.002_u0_32).repr();
       out[i].r = out[i].l;
     }
 
