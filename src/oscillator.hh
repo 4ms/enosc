@@ -16,29 +16,29 @@ Float FastSine(Float x) {
 
 // LUT + ZOH
 Float sine1(Float phase) {
-  phase *= Float(Data::sine.size()-1);
-  int integral = s32(phase).repr();
+  phase *= (Data::sine.size()-1_u32).to_float(); // TODO -1 dans Buffer
+  u32 integral = u32(phase);
   Float a = Data::sine[integral];
   return a;
 }
 
 // LUT + linear interpolation
 Float sine2(Float phase) {
-  phase *= Float(Data::sine.size()-1);
+  phase *= (Data::sine.size()-1_u32).to_float();
   u32 integral = u32(phase);
   Float fractional = phase - integral.to_float();
-  Float a = Data::sine[integral.repr()];
-  Float b = Data::sine[integral.repr()+1];
+  Float a = Data::sine[integral];
+  Float b = Data::sine[integral+1_u32];
   return a + (b - a) * fractional;
 }
 
 // TODO: fix sine2 above (pb with long long int in Numtypes)
 Float sine2_alamain(Float phase) {
-  phase *= Float(Data::sine.size()-1);
+  phase *= (Data::sine.size()-1_u32).to_float();
   u32 integral = u32(DANGER, static_cast<uint32_t>(phase.repr()));
   Float fractional = phase - integral.to_float();
-  Float a = Data::sine[integral.repr()];
-  Float b = Data::sine[(integral+1_u32).repr()];
+  Float a = Data::sine[integral];
+  Float b = Data::sine[integral+1_u32];
   return a + (b - a) * f(fractional);
 }
 
@@ -90,7 +90,7 @@ public:
     Float output = 0_f;
     for(int i=0; i<kNumOsc; i++) {
       output += osc_[i].Process(freq);
-      freq += 0.001_u0_32;      // TODO mult
+      freq += 0.001_u0_32;
     }
     return output / Float(kNumOsc);
   }
@@ -124,8 +124,8 @@ s1_15 sine3i(u0_32 x) {
 s1_15 sine2i(u0_32 const phase) {
   u10_22 p = phase.shift_right<10>();
   u32_0 integral = p.integral();
-  s1_15 a = s1_15(DANGER, Data::short_sine[integral.repr()]); // TODO Data
-  s1_15 b = s1_15(DANGER, Data::short_sine[integral.repr()+1]);
+  s1_15 a = Data::short_sine[integral].shift_left<15>(); // TODO Data
+  s1_15 b = Data::short_sine[integral+1_u32].shift_left<15>();
   u0_32 fractional = p.fractional();
   return a + (b - a) * fractional.to_wrap<SIGNED, 1, 15>();
 }

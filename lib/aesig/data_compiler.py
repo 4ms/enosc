@@ -7,11 +7,12 @@ file_name = "data"
 
 def type_of(value):
     return {
-        int: lambda: "int",
-        numpy.int16: lambda: "int16_t",
+        int: lambda: "s32",
+        numpy.int32: lambda: "s32",
+        numpy.int16: lambda: "s16",
         bool: lambda: "bool",
-        float: lambda: "Float",
-        numpy.float64: lambda: "Float",
+        float: lambda: "f",
+        numpy.float64: lambda: "f",
         str: lambda: "string",
         tuple: lambda: ("tuple<%s>" % (", ".join(map(type_of, value)))),
         list: lambda: ("Buffer<%s>" % (type_of(value[0]))),
@@ -32,7 +33,7 @@ def is_base_type(value):
 
 def write_value_of(file, value, indent_level):
     t = type(value)
-    if (t is int or t is numpy.int16): file.write("%d" % (value))
+    if (t is int or t is numpy.int16): file.write("%d_s16" % (value))
     elif (t is bool): file.write("true" if value else "false")
     elif (t is float or t is numpy.float64): file.write("%f_f" % (value))
     elif (t is str): file.write("\"%s\"" % (value))

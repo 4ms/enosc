@@ -393,6 +393,8 @@ using u10_22 = Fixed<UNSIGNED, 10, 22>;
 
 constexpr s16 operator "" _s(const unsigned long long int x) { return s16::of_int(x); }
 constexpr u16 operator "" _u(unsigned long long int x) { return u16::of_int(x); }
+constexpr s16 operator "" _s16(const unsigned long long int x) { return s16::of_int(x); }
+constexpr u16 operator "" _u16(unsigned long long int x) { return u16::of_int(x); }
 constexpr s32 operator "" _s32(unsigned long long int x) { return s32::of_int(x); }
 constexpr u32 operator "" _u32(unsigned long long int x) { return u32::of_int(x); }
 constexpr s1_15 operator "" _s1_15(long double x) { return s1_15(x); }

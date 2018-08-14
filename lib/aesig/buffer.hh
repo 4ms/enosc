@@ -1,7 +1,8 @@
 #include <initializer_list>
 
-// TODO -> u32
-using index = unsigned int;
+#include "numtypes.hh"
+
+using index = u32;
 
 template<class T>
 class Buffer {
@@ -11,6 +12,6 @@ public:
   constexpr Buffer(std::initializer_list<T> data) :
     data_(data.begin()), size_(data.size()) {};
 
-  constexpr int size() const {return size_;}
-  constexpr T operator[](index idx) const { return data_[idx]; }
+  constexpr index size() const {return size_;}
+  constexpr T operator[](index idx) const { return data_[idx.repr()]; }
 };
