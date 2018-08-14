@@ -1,0 +1,9 @@
+*.o
+*.elf
+*.bin
+.DS_Store
+test/test
+test/test.wav
+*.pyc
+/data.cc
+/data.hh
