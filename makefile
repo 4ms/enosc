@@ -30,10 +30,11 @@ GDB = $(TOOLCHAIN_DIR)arm-none-eabi-gdb
 
 CMSIS_DIR = lib/CMSIS/
 HAL_DIR = lib/HAL/
+AESIG_DIR = lib/aesig/
 
 INC =   -I src/ \
 	-I . \
-	-I lib/aesig/ \
+	-I $(AESIG_DIR) \
 	-I $(CMSIS_DIR) \
 	-I $(HAL_DIR) \
 
@@ -87,11 +88,12 @@ all: $(TARGET).bin
 %.o: %.s
 	$(CC) -c -x assembler-with-cpp $(ASFLAGS) $< -o $@
 
-data.cc data.hh: data/data_compiler.py data/data.py
-	python data/data.py
+data.cc data.hh: $(AESIG_DIR)/data_compiler.py data/data.py
+	PYTHONPATH=$(AESIG_DIR) python data/data.py
 
 clean:
-	rm -f $(OBJS) $(TARGET).elf $(TARGET).bin data.cc data.hh
+	rm -f $(OBJS) $(TARGET).elf $(TARGET).bin data.cc data.hh \
+	$(AESIG_DIR)/data_compiler.pyc
 
 flash: $(TARGET).bin
 	openocd -f interface/stlink-v2-1.cfg -f target/stm32f4x.cfg \
@@ -111,7 +113,7 @@ debug:
 .PRECIOUS: $(OBJS) $(TARGET).elf data.cc data.hh
 
 # File dependencies:
-src/main.o: lib/aesig/numtypes.hh \
+src/main.o: $(AESIG_DIR)/numtypes.hh \
 	    src/parameters.hh \
 	    src/drivers/leds.hh src/drivers/dac.hh src/drivers/button.hh \
 	    src/drivers/system.hh src/drivers/debug_pins.hh \
