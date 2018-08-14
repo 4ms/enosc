@@ -232,7 +232,11 @@ public:
 
   template<sign SIGN2>
   constexpr Fixed<SIGN2, INT, FRAC> const to() const {
-    return to<SIGN2, INT, FRAC>();
+    if (SIGN==UNSIGNED && SIGN2==SIGNED) {
+      return Fixed<SIGN2, INT, FRAC>(DANGER, (signed)val_ >> 1);
+    } else if (SIGN==SIGNED && SIGN2==UNSIGNED) {
+      return Fixed<SIGN2, INT, FRAC>(DANGER, (unsigned)val_);
+    }
   }
 
   template<int INT2, int FRAC2>
