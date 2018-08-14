@@ -247,7 +247,7 @@ public:
 
   template <int SHIFT>
   constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> shift_left() const {
-    return Fixed<SIGN, INT+SHIFT, FRAC-SHIFT>(DANGER, val_);
+    return Fixed<SIGN, INT-SHIFT, FRAC+SHIFT>(DANGER, val_);
   }
 
   // Operations:
