@@ -15,8 +15,8 @@ def type_of(value):
         numpy.float64: lambda: "f",
         str: lambda: "string",
         tuple: lambda: ("tuple<%s>" % (", ".join(map(type_of, value)))),
-        list: lambda: ("Buffer<%s>" % (type_of(value[0]))),
-        numpy.ndarray: lambda: ("Buffer<%s>" % (type_of(value[0]))),
+        list: lambda: ("Buffer<%s, %d>" % (type_of(value[0])), len(value)),
+        numpy.ndarray: lambda: ("Buffer<%s, %d>" % (type_of(value[0]), len(value))),
     }[type(value)]()
 
 def is_base_type(value):

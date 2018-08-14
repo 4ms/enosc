@@ -124,6 +124,6 @@ src/main.o: $(AESIG_DIR)/numtypes.hh \
 
 data.hh: $(AESIG_DIR)/buffer.hh
 
-buffer.hh: $(AESIG_DIR)/numtypes.hh
+buffer.hh: $(AESIG_DIR)/numtypes.hh $(AESIG_DIR)/util.hh
 
 src/*.o: src/*.hh

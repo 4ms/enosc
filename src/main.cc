@@ -41,7 +41,7 @@ struct Main :
     // }
 
     // 30.8%
-    static IOscillators<1> sine_;
+    static IOscillators<40> sine_;
     for(int i=0; i<size; i++) {
       out[i].l = sine_.Process(0.002_u0_32).repr();
       out[i].r = out[i].l;

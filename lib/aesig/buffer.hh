@@ -1,18 +1,18 @@
 #include <initializer_list>
 
+#include "util.hh"
 #include "numtypes.hh"
 
 using index = u32;
 
-template<class T>
+template<class T, unsigned int SIZE>
 class Buffer {
   const T *data_;
-  index size_;
 public:
   constexpr Buffer(std::initializer_list<T> data) :
-    data_(data.begin()), size_(data.size()) {};
+    data_(data.begin()) {};
 
-  constexpr index size() const {return size_;}
+  constexpr index size() const {return index(SIZE);}
   constexpr T operator[](index idx) const { return data_[idx.repr()]; }
 
   // zero-order hold
@@ -32,14 +32,16 @@ public:
     return a + (b - a) * fractional;
   }
 
-  // TODO generalize the 10 and the output type (fixed to s1_15 for now)
   constexpr T interpolate(u0_32 const phase) const {
-    u10_22 p = phase.shift_right<10>();
+    static_assert(is_power_of_2(SIZE-1),
+                  "Integer interpolate supports only power-of-two-sized buffers");
+    constexpr int bits = Log2<SIZE>::val;
+    Fixed<UNSIGNED, bits, 32-bits> p = phase.shift_right<bits>();
     u32_0 integral = p.integral();
     T a = data_[(integral).repr()];
     T b = data_[(integral+1_u32).repr()];
     u0_32 fractional = p.fractional();
-    s1_15 frac = fractional.to_narrow<0,16>().to<SIGNED>().shift_right<1>();
+    s1_15 frac = fractional.to_narrow<0,16>().shift_right<1>().to<SIGNED>();
     return a + (b - a) * frac;
   }
 
