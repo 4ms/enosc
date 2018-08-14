@@ -276,9 +276,12 @@ public:
 
   constexpr T operator+(T y) const { return T(DANGER, repr() + y.repr()); }
   constexpr T operator-(T y) const { return T(DANGER, repr() - y.repr()); }
-  constexpr T operator*(T y) const {
-    using Wider = typename Basetype<WIDTH, SIGN>::Wider;
-    return T(DANGER, ((Wider)repr() * (Wider)y.repr()) >> FRAC);
+
+  template <int INT2, int FRAC2>
+  constexpr T operator*(Fixed<SIGN, INT2, FRAC2> y) const {
+    static_assert(INT2+FRAC2 <= WIDTH, "Multiplier is too large");
+    using Wider = typename Basetype<INT2+FRAC2, SIGN>::Wider;
+    return T(DANGER, ((Wider)repr() * (Wider)y.repr()) >> FRAC2);
   }
 
   constexpr T operator*(Base y) const {
