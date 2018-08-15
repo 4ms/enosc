@@ -4,7 +4,10 @@
 # - define TARGET
 
 TARGET = main
-OBJS = lib/aesig/numtypes.o src/main.o data.o
+SRCS = lib/aesig/numtypes.cc src/main.cc data.cc
+DEPS = $(addsuffix .d, $(SRCS))
+OBJS = $(SRCS:.cc=.o)
+
 HAL = 	stm32f4xx_hal.o \
 	stm32f4xx_hal_cortex.o \
 	stm32f4xx_hal_gpio.o \
@@ -32,11 +35,11 @@ CMSIS_DIR = lib/CMSIS/
 HAL_DIR = lib/HAL/
 AESIG_DIR = lib/aesig/
 
-INC =   -I src/ \
-	-I . \
-	-I $(AESIG_DIR) \
-	-I $(CMSIS_DIR) \
-	-I $(HAL_DIR) \
+INC = -I . \
+      -I src/ \
+      -I $(AESIG_DIR) \
+      -I $(CMSIS_DIR) \
+      -I $(HAL_DIR) \
 
 LDSCRIPT = $(CMSIS_DIR)/STM32F407VGTx_FLASH.ld
 
@@ -79,7 +82,7 @@ OBJS += $(STARTUP).o \
 
 all: $(TARGET).bin
 
-%.elf: $(OBJS)
+%.elf: data.hh $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 %.bin: %.elf
@@ -88,12 +91,12 @@ all: $(TARGET).bin
 %.o: %.s
 	$(CC) -c -x assembler-with-cpp $(ASFLAGS) $< -o $@
 
-data.cc data.hh: $(AESIG_DIR)/data_compiler.py data/data.py
+data.cc data.hh: $(AESIG_DIR)data_compiler.py data/data.py
 	PYTHONPATH=$(AESIG_DIR) python data/data.py
 
 clean:
-	rm -f $(OBJS) $(TARGET).elf $(TARGET).bin data.cc data.hh \
-	$(AESIG_DIR)/data_compiler.pyc
+	rm -f $(OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin data.cc data.hh \
+	$(AESIG_DIR)data_compiler.pyc
 
 flash: $(TARGET).bin
 	openocd -f interface/stlink-v2-1.cfg -f target/stm32f4x.cfg \
@@ -110,24 +113,18 @@ debug:
 	$(TOOLCHAIN_DIR)arm-none-eabi-gdb $(TARGET).elf \
 	--eval-command="target remote localhost:3333"
 
-.PRECIOUS: $(OBJS) $(TARGET).elf data.cc data.hh
-
 # File dependencies:
-src/main.o: $(AESIG_DIR)/numtypes.hh \
-	    src/parameters.hh \
-	    src/drivers/leds.hh src/drivers/dac.hh src/drivers/button.hh \
-	    src/drivers/system.hh src/drivers/debug_pins.hh \
-	    src/drivers/accelerometer.hh src/drivers/adc.hh src/drivers/rng.hh \
-	    src/oscillator.hh \
-	    src/ui.hh \
-	    data.hh
 
-src/oscillator.hh: ${AESIG_DIR}/dsp.hh
+DEPFLAGS = -MMD -MP -MF $<.d -o $@
 
-$(AESIG_DIR)/numtypes.hh:
-$(AESIG_DIR)/dsp.hh: data.hh $(AESIG_DIR)/numtypes.hh $(AESIG_DIR)/filter.hh
-$(AESIG_DIR)/buffer.hh: $(AESIG_DIR)/util.hh $(AESIG_DIR)/numtypes.hh
+%.o: %.c %.c.d
+	$(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c $<
 
-data.hh: $(AESIG_DIR)/buffer.hh
+%.o: %.cc %.cc.d
+	$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c $<
 
-src/*.o: src/*.hh
+%.d: ;
+
+include $(DEPS)
+
+.PRECIOUS: $(DEPS) $(OBJS) $(TARGET).elf data.cc data.hh
