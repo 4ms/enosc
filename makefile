@@ -4,7 +4,7 @@
 # - define TARGET
 
 TARGET = main
-SRCS = lib/aesig/numtypes.cc src/main.cc data.cc
+SRCS = lib/easiglib/numtypes.cc src/main.cc data.cc
 DEPS = $(addsuffix .d, $(SRCS))
 OBJS = $(SRCS:.cc=.o)
 
@@ -33,11 +33,11 @@ GDB = $(TOOLCHAIN_DIR)arm-none-eabi-gdb
 
 CMSIS_DIR = lib/CMSIS/
 HAL_DIR = lib/HAL/
-AESIG_DIR = lib/aesig/
+EASIGLIB_DIR = lib/easiglib/
 
 INC = -I . \
       -I src/ \
-      -I $(AESIG_DIR) \
+      -I $(EASIGLIB_DIR) \
       -I $(CMSIS_DIR) \
       -I $(HAL_DIR) \
 
@@ -91,12 +91,12 @@ all: $(TARGET).bin
 %.o: %.s
 	$(CC) -c -x assembler-with-cpp $(ASFLAGS) $< -o $@
 
-data.cc data.hh: $(AESIG_DIR)data_compiler.py data/data.py
-	PYTHONPATH=$(AESIG_DIR) python data/data.py
+data.cc data.hh: $(EASIGLIB_DIR)data_compiler.py data/data.py
+	PYTHONPATH=$(EASIGLIB_DIR) python data/data.py
 
 clean:
 	rm -f $(OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin data.cc data.hh \
-	$(AESIG_DIR)data_compiler.pyc
+	$(EASIGLIB_DIR)data_compiler.pyc
 
 flash: $(TARGET).bin
 	openocd -f interface/stlink-v2-1.cfg -f target/stm32f4x.cfg \

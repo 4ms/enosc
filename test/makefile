@@ -6,7 +6,7 @@ CXXFLAGS = -std=c++14 \
 
 CPPFLAGS = -I .. \
 	   -I ../src/ \
-	   -I ../lib/aesig/ \
+	   -I ../lib/easiglib/ \
 
 OBJS = test.o ../data.o
 LIBS =
