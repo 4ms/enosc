@@ -18,7 +18,6 @@ struct Main :
   Accelerometer::AccelData d;
 
   FOscillators<20> fsine_;
-  IFOscillators<20> ifsine_;
   IOscillators<20> isine_;
 
   void Process(ShortFrame *out, int size) {
@@ -30,14 +29,6 @@ struct Main :
     // Float t[size];
     // for(int i=0; i<size; i++) {
     //   t[i] = fsine_.Process(0.004_f);
-    //   out[i].l = s1_15(t[i]).repr();
-    //   out[i].r = out[i].l;
-    // }
-
-    // // 42%
-    // Float t[size];
-    // for(int i=0; i<size; i++) {
-    //   t[i] = ifsine_.Process(0.002_u0_32);
     //   out[i].l = s1_15(t[i]).repr();
     //   out[i].r = out[i].l;
     // }
