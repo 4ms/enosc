@@ -37,16 +37,16 @@ public:
   constexpr bool const operator==(const T y) const { return repr() == y.repr(); }
   constexpr bool const operator!=(const T y) const { return repr() != y.repr(); }
 
-  void operator+=(const T y) { val_ += y.repr(); }
-  void operator-=(const T y) { val_ -= y.repr(); }
-  void operator*=(const T y) { val_ = val_ * y.repr(); }
-  void operator/=(const T y) { val_ = val_ / y.repr(); }
-  void operator++() { ++val_; }
-  void operator--() { --val_; }
-  void operator++(int) { val_++; }
-  void operator--(int) { val_--; }
+  constexpr void operator+=(const T y) { val_ += y.repr(); }
+  constexpr void operator-=(const T y) { val_ -= y.repr(); }
+  constexpr void operator*=(const T y) { val_ = val_ * y.repr(); }
+  constexpr void operator/=(const T y) { val_ = val_ / y.repr(); }
+  constexpr void operator++() { ++val_; }
+  constexpr void operator--() { --val_; }
+  constexpr void operator++(int) { val_++; }
+  constexpr void operator--(int) { val_--; }
 
-  T const abs() const { return T(fabsf(val_)); }
+  constexpr T const abs() const { return T(fabsf(val_)); }
   T const sqrt() const {
 #ifdef __arm__
     float y;
@@ -63,8 +63,12 @@ public:
   // clip
   constexpr T min(const T y) const { return *this < y ? *this : y; }
   constexpr T max(const T y) const { return *this < y ? y : *this; }
-  constexpr T clip(const T x, const T y) const { return this->max(x).min(y); }
-  constexpr T clip() const { return this->clip(T(-1.0f), T(1.0f)); }
+  constexpr T clip(const T x, const T y) const { return max(x).min(y); }
+  constexpr T clip() const { return clip(T(-1.0f), T(1.0f)); }
+
+  constexpr T fractional() const {
+    return T(static_cast<float>(val_ - static_cast<int32_t>(val_)));
+  }
 };
 
 using Float = FloatT<true>;
@@ -303,16 +307,16 @@ public:
 
   template <int BITS>
   constexpr T div2() const {
-    static_assert(BITS > 0 && BITS < WIDTH, "Invalid bit count");
+    static_assert(BITS >= 0 && BITS < WIDTH, "Invalid bit count");
     return T(DANGER, repr() >> BITS);
   }
 
-  void operator+=(T y) { val_ += y.repr(); }
-  void operator-=(T y) { val_ -= y.repr(); }
-  void operator*=(T y) { val_ = (*this * y).repr(); }
-  void operator/=(T y) { val_ = (*this / y).repr(); }
-  void operator*=(Base y) { val_ = (*this * y).repr(); }
-  void operator/=(Base y) { val_ = (*this / y).repr(); }
+  constexpr void operator+=(T y) { val_ += y.repr(); }
+  constexpr void operator-=(T y) { val_ -= y.repr(); }
+  constexpr void operator*=(T y) { val_ = (*this * y).repr(); }
+  constexpr void operator/=(T y) { val_ = (*this / y).repr(); }
+  constexpr void operator*=(Base y) { val_ = (*this * y).repr(); }
+  constexpr void operator/=(Base y) { val_ = (*this / y).repr(); }
 
   constexpr bool const operator<(const T y) const { return repr() < y.repr(); }
   constexpr bool const operator>(const T y) const { return repr() > y.repr(); }

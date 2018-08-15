@@ -122,8 +122,12 @@ src/main.o: $(AESIG_DIR)/numtypes.hh \
 	    src/ui.hh \
 	    data.hh
 
-data.hh: $(AESIG_DIR)/buffer.hh
+src/oscillator.hh: ${AESIG_DIR}/dsp.hh
 
-buffer.hh: $(AESIG_DIR)/numtypes.hh $(AESIG_DIR)/util.hh
+$(AESIG_DIR)/numtypes.hh:
+$(AESIG_DIR)/dsp.hh: data.hh $(AESIG_DIR)/numtypes.hh $(AESIG_DIR)/filter.hh
+$(AESIG_DIR)/buffer.hh: $(AESIG_DIR)/util.hh $(AESIG_DIR)/numtypes.hh
+
+data.hh: $(AESIG_DIR)/buffer.hh
 
 src/*.o: src/*.hh

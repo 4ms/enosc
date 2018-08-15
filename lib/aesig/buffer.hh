@@ -3,6 +3,8 @@
 #include "util.hh"
 #include "numtypes.hh"
 
+#pragma once
+
 using index = u32;
 
 template<class T, unsigned int SIZE>
@@ -22,6 +24,8 @@ public:
     Float a = data_[integral.repr()];
     return a;
   }
+
+  // TODO zoh taking a u0_32 for phase
 
   constexpr T interpolate(f phase) const {
     phase *= (size()-1_u32).to_float();
@@ -44,5 +48,46 @@ public:
     s1_15 frac = fractional.to_narrow<0,16>().shift_right<1>().to<SIGNED>();
     return a + (b - a) * frac;
   }
+};
 
+
+template<typename T, unsigned int SIZE>
+class RingBuffer {
+  T buffer_[SIZE] = {0};
+  uint32_t cursor_ = SIZE;
+public:
+  void Write(T x) {
+    buffer_[++cursor_ % SIZE] = x;
+  }
+  T Read(uint32_t n) {
+    return buffer_[(cursor_ - n) % SIZE];
+  }
+  T ReadLast() {
+    return buffer_[(cursor_+1) % SIZE];
+  }
+};
+
+
+template<unsigned int SIZE>
+struct RingBuffer<Float, SIZE> {
+  void Write(Float x) {
+    buffer_[++cursor_ % SIZE] = x;
+  }
+  Float Read(int n) {
+    return buffer_[(cursor_ - n) % SIZE];
+  }
+  Float ReadLast() {
+    return buffer_[(cursor_+1) % SIZE];
+  }
+
+  Float ReadLinear(Float x) {
+    uint32_t index = static_cast<uint32_t>(x);
+    Float fractional = x - Float(index);
+    Float x1 = buffer_[(cursor_ - index+1) % SIZE];
+    Float x2 = buffer_[(cursor_ - index) % SIZE];
+    return x1 + (x2 - x1) * fractional;
+  }
+private:
+  Float buffer_[SIZE] = {0};
+  uint32_t cursor_ = SIZE;
 };
