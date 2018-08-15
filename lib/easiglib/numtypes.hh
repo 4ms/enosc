@@ -97,10 +97,13 @@ private:
  * Fixed-Point
  ***************/
 
-enum sign {
+enum class sign {
   UNSIGNED,
   SIGNED
 };
+
+constexpr sign SIGNED = sign::SIGNED;
+constexpr sign UNSIGNED = sign::UNSIGNED;
 
 template<int WIDTH, sign SIGN> struct Basetype;
 // Wider should be twice as big as T
@@ -130,7 +133,7 @@ class Fixed {
 
   template <typename A, int BITS>
   static constexpr A const saturate_integer(A x) {
-    if (SIGN) {
+    if (SIGN==SIGNED) {
       A vmin = -(1LL<<(BITS-1));
       A vmax = (1LL<<(BITS-1))-1;
       return x < vmin ? vmin : x > vmax ? vmax : x;
@@ -145,7 +148,7 @@ class Fixed {
   template <int BITS>
   T const saturate() const {
     static_assert(BITS > 0 && BITS < WIDTH, "Invalid bit count");
-    if (SIGN) return T::of_repr(__SSAT(val_, BITS));
+    if (SIGN==SIGNED) return T::of_repr(__SSAT(val_, BITS));
     else return T::of_repr(__USAT(val_, BITS));
   }
 #else
@@ -179,8 +182,8 @@ public:
     val_ = y.repr();
   }
 
-  static constexpr T min_val = T::of_repr(SIGN ? (Base)(1 << (WIDTH-1)) : 0);
-  static constexpr T max_val = T::of_repr(SIGN ? (Base)(~(1 << (WIDTH-1))) : -1);
+  static constexpr T min_val = T::of_repr(SIGN==SIGNED ? (Base)(1 << (WIDTH-1)) : 0);
+  static constexpr T max_val = T::of_repr(SIGN==SIGNED ? (Base)(~(1 << (WIDTH-1))) : -1);
   static constexpr T increment = T::of_repr(1);
 
   // Conversions:
@@ -249,12 +252,12 @@ public:
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> shift_right() const {
+  constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> shiftr() const {
     return Fixed<SIGN, INT+SHIFT, FRAC-SHIFT>::of_repr(val_);
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> shift_left() const {
+  constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> shiftl() const {
     return Fixed<SIGN, INT-SHIFT, FRAC+SHIFT>::of_repr(val_);
   }
 
@@ -266,6 +269,7 @@ public:
 
   constexpr T floor() const { return T::of_repr(repr() & ~((1ULL << FRAC) - 1ULL)); }
   constexpr T frac() const { return T::of_repr(repr() & ((1ULL << FRAC) - 1ULL)); }
+  constexpr T abs() const { return T::of_repr(libc_abs(val_)); }
 
   constexpr Fixed<SIGN, WIDTH, 0> integral() const {
     return to_narrow<WIDTH, 0>();
@@ -274,8 +278,6 @@ public:
   constexpr Fixed<SIGN, 0, WIDTH> fractional() const {
     return to_wrap<SIGN, 0, WIDTH>();
   }
-
-  constexpr T const abs() const { return T::of_repr(libc_abs(val_)); }
 
   constexpr T operator-() const {
     static_assert(SIGN, "Prefix negation is invalid on unsigned data");
@@ -331,7 +333,7 @@ public:
 
   // saturates between -1 and 1 (signed) or 0 and 1 (unsigned)
   constexpr T clip() const {
-    return SIGN ? saturate<FRAC+1>() : saturate<FRAC>();
+    return SIGN==SIGNED ? saturate<FRAC+1>() : saturate<FRAC>();
   }
 
   // saturating add/sub
@@ -339,13 +341,13 @@ public:
 #ifdef __arm__
     static_assert(!(WIDTH==32 && SIGN==UNSIGNED), "Unsigned saturating add unsupported");
     if (WIDTH == 32) {
-      if (SIGN) return T::of_repr(__QADD(val_, y.val_));
+      if (SIGN==SIGNED) return T::of_repr(__QADD(val_, y.val_));
       else return T::of_repr(42); // unreachable: there is no UQADD instruction
     } else if (WIDTH == 16) {
-      if (SIGN) return T::of_repr(__QADD16(val_, y.val_));
+      if (SIGN==SIGNED) return T::of_repr(__QADD16(val_, y.val_));
       else return T::of_repr(__UQADD16(val_, y.val_));
     } else if (WIDTH == 8) {
-      if (SIGN) return T::of_repr(__QADD8(val_, y.val_));
+      if (SIGN==SIGNED) return T::of_repr(__QADD8(val_, y.val_));
       else return T::of_repr(__UQADD8(val_, y.val_));
     }
 #else
@@ -360,13 +362,13 @@ public:
 #ifdef __arm__
     static_assert(!(WIDTH==32 && SIGN==UNSIGNED), "Unsigned saturating add unsupported");
     if (WIDTH == 32) {
-      if (SIGN) return T::of_repr(__QSUB(val_, y.val_));
+      if (SIGN==SIGNED) return T::of_repr(__QSUB(val_, y.val_));
       else return T::of_repr(42); // unreachable: there is no UQADD instruction
     } else if (WIDTH == 16) {
-      if (SIGN) return T::of_repr(__QSUB16(val_, y.val_));
+      if (SIGN==SIGNED) return T::of_repr(__QSUB16(val_, y.val_));
       else return T::of_repr(__UQSUB16(val_, y.val_));
     } else if (WIDTH == 8) {
-      if (SIGN) return T::of_repr(__QSUB8(val_, y.val_));
+      if (SIGN==SIGNED) return T::of_repr(__QSUB8(val_, y.val_));
       else return T::of_repr(__UQSUB8(val_, y.val_));
     }
 #else
