@@ -60,7 +60,6 @@ public:
   static constexpr T min_val = T(FLT_MIN);
   static constexpr T max_val = T(FLT_MIN);
 
-  // clip
   constexpr T min(const T y) const { return *this < y ? *this : y; }
   constexpr T max(const T y) const { return *this < y ? y : *this; }
   constexpr T clip(const T x, const T y) const { return max(x).min(y); }
@@ -88,7 +87,6 @@ constexpr Float operator "" _f(unsigned long long int f){ return Float(f); }
 struct Float16 {
   Float16(Float x) : val_(x.repr()) { };
   Float to_float() { return Float(val_); }
-  // unsigned short repr() { return t.repr; }
 private:
   __fp16 val_;
 };
@@ -98,9 +96,6 @@ private:
 /***************
  * Fixed-Point
  ***************/
-
-struct dangerous { };
-extern dangerous DANGER;
 
 enum sign {
   UNSIGNED,
@@ -150,8 +145,8 @@ class Fixed {
   template <int BITS>
   T const saturate() const {
     static_assert(BITS > 0 && BITS < WIDTH, "Invalid bit count");
-    if (SIGN) return T(DANGER, __SSAT(val_, BITS));
-    else return T(DANGER, __USAT(val_, BITS));
+    if (SIGN) return T::of_repr(__SSAT(val_, BITS));
+    else return T::of_repr(__USAT(val_, BITS));
   }
 #else
   template <int BITS>
@@ -160,6 +155,8 @@ class Fixed {
     return T(saturate_integer<Base, BITS>(val_));
   }
 #endif
+  enum class dangerous { DANGER };
+  explicit constexpr Fixed(dangerous, Base x) : val_(x) {}
 
 public:
   explicit constexpr Fixed(long double x) :
@@ -167,10 +164,13 @@ public:
 
   explicit constexpr Fixed(Float x) :
     val_(static_cast<Base>((x * Float(1ULL << FRAC)).repr())) { }
-  explicit constexpr Fixed(dangerous, Base x) : val_(x) {}
 
-  static constexpr T of_int(unsigned long long int x) {
-    return T(DANGER, x * (1ULL << FRAC));
+  static constexpr T of_repr(Base x) {
+    return T(dangerous::DANGER, x);
+  }
+
+  static constexpr T of_long_long(unsigned long long int x) {
+    return T::of_repr(x * (1ULL << FRAC));
   }
 
   template<int INT2, int FRAC2>
@@ -179,9 +179,9 @@ public:
     val_ = y.repr();
   }
 
-  static constexpr T min_val = T(DANGER, SIGN ? (Base)(1 << (WIDTH-1)) : 0);
-  static constexpr T max_val = T(DANGER, SIGN ? (Base)(~(1 << (WIDTH-1))) : -1);
-  static constexpr T increment = T(DANGER, 1);
+  static constexpr T min_val = T::of_repr(SIGN ? (Base)(1 << (WIDTH-1)) : 0);
+  static constexpr T max_val = T::of_repr(SIGN ? (Base)(~(1 << (WIDTH-1))) : -1);
+  static constexpr T increment = T::of_repr(1);
 
   // Conversions:
 
@@ -197,7 +197,7 @@ public:
 
     Base x = repr();
     // WARNING! possibly shifting negative integer
-    return Fixed<SIGN2, INT2, FRAC2>(DANGER, (unsigned)repr() << (FRAC2 - FRAC));
+    return Fixed<SIGN2, INT2, FRAC2>::of_repr((unsigned)repr() << (FRAC2 - FRAC));
   }
 
   // narrowing conversion => possible loss of precision
@@ -208,16 +208,16 @@ public:
 
     Base x = repr();
     // narrowing the fractional part => rounding
-    return Fixed<SIGN, INT2, FRAC2>(DANGER, x >> (FRAC - FRAC2));
+    return Fixed<SIGN, INT2, FRAC2>::of_repr(x >> (FRAC - FRAC2));
   }
 
   // TODO cleanup + test! this one has no safeguard
   template <sign SIGN2, int INT2, int FRAC2>
   constexpr Fixed<SIGN2, INT2, FRAC2> const to_wrap() const {
     if (FRAC2 >= FRAC) {
-      return Fixed<SIGN2, INT2, FRAC2>(DANGER, (unsigned)val_ << (FRAC2 - FRAC));
+      return Fixed<SIGN2, INT2, FRAC2>::of_repr((unsigned)val_ << (FRAC2 - FRAC));
     } else {
-      return Fixed<SIGN2, INT2, FRAC2>(DANGER, val_ >> (FRAC - FRAC2));
+      return Fixed<SIGN2, INT2, FRAC2>::of_repr(val_ >> (FRAC - FRAC2));
     }
   }
 
@@ -228,18 +228,18 @@ public:
     Base x = saturate<WIDTH-(INT-INT2)>().repr();
 
     if (FRAC2 >= FRAC) {
-      return Fixed<SIGN, INT2, FRAC2>(DANGER, (unsigned)x << (FRAC2 - FRAC));
+      return Fixed<SIGN, INT2, FRAC2>::of_repr((unsigned)x << (FRAC2 - FRAC));
     } else {
-      return Fixed<SIGN, INT2, FRAC2>(DANGER, x >> (FRAC - FRAC2));
+      return Fixed<SIGN, INT2, FRAC2>::of_repr(x >> (FRAC - FRAC2));
     }
   }
 
   template<sign SIGN2>
   constexpr Fixed<SIGN2, INT, FRAC> const to() const {
     if (SIGN==UNSIGNED && SIGN2==SIGNED) {
-      return Fixed<SIGN2, INT, FRAC>(DANGER, (signed)val_ >> 1);
+      return Fixed<SIGN2, INT, FRAC>::of_repr((signed)val_ >> 1);
     } else if (SIGN==SIGNED && SIGN2==UNSIGNED) {
-      return Fixed<SIGN2, INT, FRAC>(DANGER, (unsigned)val_);
+      return Fixed<SIGN2, INT, FRAC>::of_repr((unsigned)val_);
     }
   }
 
@@ -250,22 +250,22 @@ public:
 
   template <int SHIFT>
   constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> shift_right() const {
-    return Fixed<SIGN, INT+SHIFT, FRAC-SHIFT>(DANGER, val_);
+    return Fixed<SIGN, INT+SHIFT, FRAC-SHIFT>::of_repr(val_);
   }
 
   template <int SHIFT>
   constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> shift_left() const {
-    return Fixed<SIGN, INT-SHIFT, FRAC+SHIFT>(DANGER, val_);
+    return Fixed<SIGN, INT-SHIFT, FRAC+SHIFT>::of_repr(val_);
   }
 
   // Operations:
 
   // in/decrement by the smallest amount possible in the representation
-  constexpr T succ() const { return T(DANGER, repr()+1L); }
-  constexpr T pred() const { return T(DANGER, repr()-1L); }
+  constexpr T succ() const { return T::of_repr(repr()+1L); }
+  constexpr T pred() const { return T::of_repr(repr()-1L); }
 
-  constexpr T floor() const { return T(DANGER, repr() & ~((1ULL << FRAC) - 1ULL)); }
-  constexpr T frac() const { return T(DANGER, repr() & ((1ULL << FRAC) - 1ULL)); }
+  constexpr T floor() const { return T::of_repr(repr() & ~((1ULL << FRAC) - 1ULL)); }
+  constexpr T frac() const { return T::of_repr(repr() & ((1ULL << FRAC) - 1ULL)); }
 
   constexpr Fixed<SIGN, WIDTH, 0> integral() const {
     return to_narrow<WIDTH, 0>();
@@ -275,40 +275,40 @@ public:
     return to_wrap<SIGN, 0, WIDTH>();
   }
 
-  constexpr T const abs() const { return T(DANGER, libc_abs(val_)); }
+  constexpr T const abs() const { return T::of_repr(libc_abs(val_)); }
 
   constexpr T operator-() const {
     static_assert(SIGN, "Prefix negation is invalid on unsigned data");
-    return T(DANGER, -repr());
+    return T::of_repr(-repr());
   }
 
-  constexpr T operator+(T y) const { return T(DANGER, repr() + y.repr()); }
-  constexpr T operator-(T y) const { return T(DANGER, repr() - y.repr()); }
+  constexpr T operator+(T y) const { return T::of_repr(repr() + y.repr()); }
+  constexpr T operator-(T y) const { return T::of_repr(repr() - y.repr()); }
 
   template <int INT2, int FRAC2>
   constexpr T operator*(Fixed<SIGN, INT2, FRAC2> y) const {
     static_assert(INT2+FRAC2 <= WIDTH, "Multiplier is too large");
     using Wider = typename Basetype<INT2+FRAC2, SIGN>::Wider;
-    return T(DANGER, ((Wider)repr() * (Wider)y.repr()) >> FRAC2);
+    return T::of_repr(((Wider)repr() * (Wider)y.repr()) >> FRAC2);
   }
 
   constexpr T operator*(Base y) const {
-    return T(DANGER, repr() * y);
+    return T::of_repr(repr() * y);
   }
 
   constexpr T operator/(T y) const {
     using Wider = typename Basetype<WIDTH, SIGN>::Wider;
-    return T(DANGER, (static_cast<Wider>(repr()) << FRAC) / static_cast<Wider>(y.repr()));
+    return T::of_repr((static_cast<Wider>(repr()) << FRAC) / static_cast<Wider>(y.repr()));
   }
 
   constexpr T operator/(Base y) const {
-    return T(DANGER, repr() / y);
+    return T::of_repr(repr() / y);
   }
 
   template <int BITS>
   constexpr T div2() const {
     static_assert(BITS >= 0 && BITS < WIDTH, "Invalid bit count");
-    return T(DANGER, repr() >> BITS);
+    return T::of_repr(repr() >> BITS);
   }
 
   constexpr void operator+=(T y) { val_ += y.repr(); }
@@ -339,20 +339,20 @@ public:
 #ifdef __arm__
     static_assert(!(WIDTH==32 && SIGN==UNSIGNED), "Unsigned saturating add unsupported");
     if (WIDTH == 32) {
-      if (SIGN) return T(DANGER, __QADD(val_, y.val_));
-      else return T(DANGER, 42); // unreachable: there is no UQADD instruction
+      if (SIGN) return T::of_repr(__QADD(val_, y.val_));
+      else return T::of_repr(42); // unreachable: there is no UQADD instruction
     } else if (WIDTH == 16) {
-      if (SIGN) return T(DANGER, __QADD16(val_, y.val_));
-      else return T(DANGER, __UQADD16(val_, y.val_));
+      if (SIGN) return T::of_repr(__QADD16(val_, y.val_));
+      else return T::of_repr(__UQADD16(val_, y.val_));
     } else if (WIDTH == 8) {
-      if (SIGN) return T(DANGER, __QADD8(val_, y.val_));
-      else return T(DANGER, __UQADD8(val_, y.val_));
+      if (SIGN) return T::of_repr(__QADD8(val_, y.val_));
+      else return T::of_repr(__UQADD8(val_, y.val_));
     }
 #else
     using Wider = typename Basetype<WIDTH, SIGN>::Wider;
     Wider r = (Wider)val_ + (Wider)y.val_;
     r = saturate_integer<Wider, WIDTH>(r);
-    return T(DANGER, r);
+    return T::of_repr(r);
 #endif
   }
 
@@ -360,20 +360,20 @@ public:
 #ifdef __arm__
     static_assert(!(WIDTH==32 && SIGN==UNSIGNED), "Unsigned saturating add unsupported");
     if (WIDTH == 32) {
-      if (SIGN) return T(DANGER, __QSUB(val_, y.val_));
-      else return T(DANGER, 42); // unreachable: there is no UQADD instruction
+      if (SIGN) return T::of_repr(__QSUB(val_, y.val_));
+      else return T::of_repr(42); // unreachable: there is no UQADD instruction
     } else if (WIDTH == 16) {
-      if (SIGN) return T(DANGER, __QSUB16(val_, y.val_));
-      else return T(DANGER, __UQSUB16(val_, y.val_));
+      if (SIGN) return T::of_repr(__QSUB16(val_, y.val_));
+      else return T::of_repr(__UQSUB16(val_, y.val_));
     } else if (WIDTH == 8) {
-      if (SIGN) return T(DANGER, __QSUB8(val_, y.val_));
-      else return T(DANGER, __UQSUB8(val_, y.val_));
+      if (SIGN) return T::of_repr(__QSUB8(val_, y.val_));
+      else return T::of_repr(__UQSUB8(val_, y.val_));
     }
 #else
     using Wider = typename Basetype<WIDTH, SIGN>::Wider;
     Wider r = (Wider)val_ - (Wider)y.val_;
     r = saturate_integer<Wider, WIDTH>(r);
-    return T(DANGER, r);
+    return T::of_repr(r);
 #endif
   }
 
@@ -402,12 +402,12 @@ using u10_22 = Fixed<UNSIGNED, 10, 22>;
 
 // Some user-defined literals
 
-constexpr s16 operator "" _s(const unsigned long long int x) { return s16::of_int(x); }
-constexpr u16 operator "" _u(unsigned long long int x) { return u16::of_int(x); }
-constexpr s16 operator "" _s16(const unsigned long long int x) { return s16::of_int(x); }
-constexpr u16 operator "" _u16(unsigned long long int x) { return u16::of_int(x); }
-constexpr s32 operator "" _s32(unsigned long long int x) { return s32::of_int(x); }
-constexpr u32 operator "" _u32(unsigned long long int x) { return u32::of_int(x); }
+constexpr s16 operator "" _s(const unsigned long long int x) { return s16::of_long_long(x); }
+constexpr u16 operator "" _u(unsigned long long int x) { return u16::of_long_long(x); }
+constexpr s16 operator "" _s16(const unsigned long long int x) { return s16::of_long_long(x); }
+constexpr u16 operator "" _u16(unsigned long long int x) { return u16::of_long_long(x); }
+constexpr s32 operator "" _s32(unsigned long long int x) { return s32::of_long_long(x); }
+constexpr u32 operator "" _u32(unsigned long long int x) { return u32::of_long_long(x); }
 constexpr s1_15 operator "" _s1_15(long double x) { return s1_15(x); }
 constexpr s17_15 operator "" _s17_15(long double x) { return s17_15(x); }
 constexpr u0_16 operator "" _u0_16(long double x) { return u0_16(x); }

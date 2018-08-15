@@ -51,6 +51,7 @@ public:
 };
 
 
+// TODO convert to numtypes
 template<typename T, unsigned int SIZE>
 class RingBuffer {
   T buffer_[SIZE] = {0};
@@ -66,7 +67,6 @@ public:
     return buffer_[(cursor_+1) % SIZE];
   }
 };
-
 
 template<unsigned int SIZE>
 struct RingBuffer<Float, SIZE> {

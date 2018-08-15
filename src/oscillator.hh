@@ -46,8 +46,8 @@ public:
   s1_15 Process(u0_32 freq, u0_16 feedback) {
     // TODO multiplication
     // s1_31 fb = (history_ * feedback.shift_right<1>().to<SIGNED>()).to<1,31>();
-    // s1_31 fb = s1_31(DANGER, history_.repr() * feedback.repr());
-    s1_31 fb = s1_31(DANGER, history_.repr() * feedback.shift_right<1>().to<SIGNED>().repr());
+    // s1_31 fb = s1_31::of_repr(history_.repr() * feedback.repr());
+    s1_31 fb = s1_31::of_repr(history_.repr() * feedback.shift_right<1>().to<SIGNED>().repr());
     u0_32 phase = phase_;
     phase += freq + fb.shift_left<1>().to<UNSIGNED>();
     s1_15 sample = Data::short_sine.interpolate(phase).shift_left<15>();
