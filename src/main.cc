@@ -11,11 +11,15 @@ struct Main :
   Dac::ProcessCallback {
 
   System system_ {this};
-  Dac dac_ {I2S_FREQ_48000, this};
+  Dac dac_ {I2S_FREQ_96000, this};
   Accelerometer accel_;
   Ui ui_;
 
   Accelerometer::AccelData d;
+
+  FOscillators<20> fsine_;
+  IFOscillators<20> ifsine_;
+  IOscillators<20> isine_;
 
   void Process(ShortFrame *out, int size) {
     debug.on(1);
@@ -24,26 +28,23 @@ struct Main :
 
     // // 42%
     // Float t[size];
-    // static FOscillators<40> sine_;
     // for(int i=0; i<size; i++) {
-    //   t[i] = sine_.Process(0.002_f);
+    //   t[i] = fsine_.Process(0.004_f);
     //   out[i].l = s1_15(t[i]).repr();
     //   out[i].r = out[i].l;
     // }
 
     // // 42%
     // Float t[size];
-    // static IFOscillators<1> sine_;
     // for(int i=0; i<size; i++) {
-    //   t[i] = sine_.Process(0.002_u0_32);
+    //   t[i] = ifsine_.Process(0.002_u0_32);
     //   out[i].l = s1_15(t[i]).repr();
     //   out[i].r = out[i].l;
     // }
 
     // 30.8%
-    static IOscillators<1> sine_;
     for(int i=0; i<size; i++) {
-      out[i].l = sine_.Process(0.002_s1_31).repr();
+      out[i].l = isine_.Process(0.001_u0_32).repr();
       out[i].r = out[i].l;
     }
 
