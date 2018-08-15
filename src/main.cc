@@ -11,7 +11,7 @@ struct Main :
   Dac::ProcessCallback {
 
   System system_ {this};
-  Dac dac_ {I2S_FREQ_96000, this};
+  Dac dac_ {this};
   Accelerometer accel_;
   Ui ui_;
 

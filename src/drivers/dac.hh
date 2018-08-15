@@ -1,6 +1,18 @@
 #include "stm32f4xx.h"
 #include "parameters.hh"
 
+enum I2S_Freq {
+  I2S_FREQ_8000 = 0,
+  I2S_FREQ_11025 = 1,
+  I2S_FREQ_16000 = 2,
+  I2S_FREQ_22050 = 3,
+  I2S_FREQ_32000 = 4,
+  I2S_FREQ_44100 = 5,
+  I2S_FREQ_48000 = 6,
+  I2S_FREQ_96000 = 7,
+  I2S_ERROR = -1,
+};
+
 class Dac
 {
   ShortFrame block_[kBlockSize * 2] = {zero};
@@ -63,12 +75,12 @@ public:
 
   static Dac* instance_;
 
-  Dac(I2S_Freq freq, ProcessCallback *callback) :
+  Dac(ProcessCallback *callback) :
     callback_(callback) {
     instance_ = this;
     Init_I2C();
     Init_DAC();
-    Init_I2S(freq);
+    Init_I2S();
     Init_DMA();
   }
 
@@ -131,7 +143,19 @@ public:
     HAL_Delay(10);
   }
 
-  void Init_I2S(I2S_Freq freq) {
+  void Init_I2S() {
+
+    constexpr I2S_Freq freq =
+      kSampleRate == 8000 ? I2S_FREQ_8000 :
+      kSampleRate == 11025 ? I2S_FREQ_11025 :
+      kSampleRate == 16000 ? I2S_FREQ_16000 :
+      kSampleRate == 22050 ? I2S_FREQ_22050 :
+      kSampleRate == 32000 ? I2S_FREQ_32000 :
+      kSampleRate == 44100 ? I2S_FREQ_44100 :
+      kSampleRate == 48000 ? I2S_FREQ_48000 :
+      kSampleRate == 96000 ? I2S_FREQ_96000 :
+      kSampleRate == 8000 ? I2S_FREQ_8000 :
+      I2S_ERROR;
 
     const uint32_t I2SFreq[8] = {8000, 11025, 16000, 22050, 32000, 44100, 48000, 96000};
     const uint32_t I2SPLLN[8] = {258, 429, 213, 429, 426, 271, 260, 344};
