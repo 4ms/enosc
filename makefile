@@ -128,3 +128,4 @@ DEPFLAGS = -MMD -MP -MF $<.d -o $@
 include $(DEPS)
 
 .PRECIOUS: $(DEPS) $(OBJS) $(TARGET).elf data.cc data.hh
+.PHONY: all clean flash erase debug debug-server

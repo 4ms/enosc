@@ -1,6 +1,5 @@
 #include <cstdio>
 #include "parameters.hh"
-#include "grain_oscillator.hh"
 #include "dsp.hh"
 #include "data.hh"
 
@@ -40,36 +39,17 @@ public:
 
 constexpr int kDuration = 10;    // seconds
 
-Wavetable example_buffer{Data::wavetable1.data(), Data::wavetable1.size()-1};
-
 struct Main {
-  FilteredGrainOscillator<4, &example_buffer> osc_;
   WavWriter<short, 1> wav_{"test.wav", kDuration * kSampleRate};
   Main() {
     int size = kDuration * kSampleRate;
 
-    Parameters p = {
-      .frequency = 0.0015f,
-      .formant = 0.15f / example_buffer.size(),
-      .amplitude = 1.0f,
-      .filters = {.q = 30.0f, .freq = 0.02f, .spread = 1.294f},
-    };
-
     while(size -= kBlockSize) {
       // process by engine
-      float r = Random::Float() * 2.0f - 1.0f;
-      float temp[kBlockSize];
-      osc_.Process(&p, temp, kBlockSize);
-      p.formant *= 1.0004f;
-      p.frequency *= 0.9995f + r * 0.01f;
-      p.amplitude += r * 0.02f;
-      p.filters.spread *= 1.00012f;
-      p.filters.freq *= 0.9995f;
-
       // conversion to short
       short output[kBlockSize];
       for(int i=0; i<kBlockSize; i++) {
-        output[i] = short_of_float(temp[i]);
+        output[i] = 0;
       }
       // write
       wav_.Write(output, kBlockSize);

@@ -1,12 +1,16 @@
+CXX = x86_64-apple-darwin16.7.0-c++-8
 
 TARGET = test
-CXXFLAGS = -std=c++11 \
+CXXFLAGS = -std=c++14 \
 	-Wno-shift-negative-value \
 
-CPPFLAGS = -I ../src/ -I ..
+CPPFLAGS = -I .. \
+	   -I ../src/ \
+	   -I ../lib/aesig/ \
 
 OBJS = test.o ../data.o
 LIBS =
+
 .PHONY: all clean
 
 all: $(TARGET)
@@ -19,6 +23,3 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
-
-test.o: test.cc ../src/parameters.hh ../src/grain_oscillator.hh ../src/dsp.hh \
-	../data.hh
