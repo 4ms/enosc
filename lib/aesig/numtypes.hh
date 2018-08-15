@@ -157,7 +157,7 @@ class Fixed {
   template <int BITS>
   constexpr T const saturate() const {
     static_assert(BITS > 0 && BITS < WIDTH, "Invalid bit count");
-    return T(saturate_integer<Base, BITS>(y.val_));
+    return T(saturate_integer<Base, BITS>(val_));
   }
 #endif
 

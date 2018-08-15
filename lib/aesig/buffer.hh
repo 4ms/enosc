@@ -81,7 +81,7 @@ struct RingBuffer<Float, SIZE> {
   }
 
   Float ReadLinear(Float x) {
-    uint32_t index = static_cast<uint32_t>(x);
+    uint32_t index = static_cast<uint32_t>(x.repr());
     Float fractional = x - Float(index);
     Float x1 = buffer_[(cursor_ - index+1) % SIZE];
     Float x2 = buffer_[(cursor_ - index) % SIZE];
