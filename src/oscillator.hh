@@ -45,12 +45,10 @@ class IOscillator {
 public:
   s1_15 Process(u0_32 freq, u0_16 feedback) {
     // TODO multiplication
-    // s1_31 fb = (history_ * feedback.shift_right<1>().to<SIGNED>()).to<1,31>();
-    // s1_31 fb = s1_31::of_repr(history_.repr() * feedback.repr());
-    s1_31 fb = s1_31::of_repr(history_.repr() * feedback.shiftr<1>().to<SIGNED>().repr());
+    s1_31 fb = history_ * feedback.to_signed();
     u0_32 phase = phase_;
-    phase += freq + fb.shiftl<1>().to<UNSIGNED>();
-    s1_15 sample = Data::short_sine.interpolate(phase).shiftl<15>();
+    phase += freq + fb.to_unsigned();
+    s1_15 sample = Data::short_sine.interpolate(phase).movl<15>();
     phase_ += freq;
     lp_.Process(sample, &history_);
     return sample;
@@ -64,7 +62,7 @@ public:
   s1_15 Process(u0_32 freq) {
     s17_15 sum = 0._s17_15;
     for(int i=0; i<kNumOsc; i++) {
-      s1_15 x = osc_[i].Process(freq, 0.4_u0_16);
+      s1_15 x = osc_[i].Process(freq, 0._u0_16);
       s17_15 y(x);
       sum += y;
       freq += 0.001001_u0_32;

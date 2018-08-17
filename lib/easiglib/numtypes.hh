@@ -107,20 +107,12 @@ constexpr sign UNSIGNED = sign::UNSIGNED;
 
 template<int WIDTH, sign SIGN> struct Basetype;
 // Wider should be twice as big as T
-template<> struct Basetype<8, SIGNED> { using T = int8_t; using Wider = int16_t; };
-template<> struct Basetype<8, UNSIGNED> { using T = uint8_t; using Wider = uint16_t; };
-template<> struct Basetype<16, SIGNED> { using T = int16_t; using Wider = int32_t; };
-template<> struct Basetype<16, UNSIGNED> { using T = uint16_t; using Wider = uint32_t; };
-template<> struct Basetype<32, SIGNED> { using T = int32_t;
-#ifndef __arm__
-  using Wider = __int128;
-#endif
-};
-template<> struct Basetype<32, UNSIGNED> { using T = uint32_t;
-  #ifndef __arm__
-  using Wider = unsigned __int128;
-  #endif
-};
+template<> struct Basetype<8, SIGNED> { using T = int8_t; };
+template<> struct Basetype<8, UNSIGNED> { using T = uint8_t; };
+template<> struct Basetype<16, SIGNED> { using T = int16_t; };
+template<> struct Basetype<16, UNSIGNED> { using T = uint16_t; };
+template<> struct Basetype<32, SIGNED> { using T = int32_t; };
+template<> struct Basetype<32, UNSIGNED> { using T = uint32_t; };
 
 template<sign SIGN, int INT, int FRAC>
 class Fixed {
@@ -162,11 +154,20 @@ class Fixed {
   explicit constexpr Fixed(dangerous, Base x) : val_(x) {}
 
 public:
-  explicit constexpr Fixed(long double x) :
-    val_(static_cast<long long int>((x * (long double)(1ULL << FRAC)))) { }
 
   explicit constexpr Fixed(Float x) :
     val_(static_cast<Base>((x * Float(1ULL << FRAC)).repr())) { }
+
+  template<int INT2, int FRAC2>
+  explicit constexpr Fixed(Fixed<SIGN, INT2, FRAC2> const that) {
+    Fixed<SIGN, INT, FRAC> y = that.template to<INT, FRAC>();
+    val_ = y.repr();
+  }
+
+  template<int INT2, int FRAC2>
+  static constexpr T narrow(Fixed<SIGN, INT2, FRAC2> const that) {
+    return that.template to_narrow<INT, FRAC>();
+  }
 
   static constexpr T of_repr(Base x) {
     return T(dangerous::DANGER, x);
@@ -176,10 +177,8 @@ public:
     return T::of_repr(x * (1ULL << FRAC));
   }
 
-  template<int INT2, int FRAC2>
-  explicit constexpr Fixed(Fixed<SIGN, INT2, FRAC2> const that) {
-    Fixed<SIGN, INT, FRAC> y = that.template to<INT, FRAC>();
-    val_ = y.repr();
+  static constexpr T of_double(long double x) {
+    return T(dangerous::DANGER, static_cast<long long int>((x * (long double)(1ULL << FRAC))));
   }
 
   static constexpr T min_val = T::of_repr(SIGN==SIGNED ? (Base)(1 << (WIDTH-1)) : 0);
@@ -237,14 +236,26 @@ public:
     }
   }
 
-  template<sign SIGN2>
-  constexpr Fixed<SIGN2, INT, FRAC> const to() const {
-    if (SIGN==UNSIGNED && SIGN2==SIGNED) {
-      return Fixed<SIGN2, INT, FRAC>::of_repr((signed)val_ >> 1);
-    } else if (SIGN==SIGNED && SIGN2==UNSIGNED) {
-      return Fixed<SIGN2, INT, FRAC>::of_repr((unsigned)val_);
-    }
+  // preserves the represented value
+  constexpr Fixed<SIGNED, INT+1, FRAC-1> const to_signed() const {
+    static_assert(SIGN==UNSIGNED, "Only signed-to-unsigned conversion supported");
+    return Fixed<SIGNED, INT+1, FRAC-1>::of_repr((signed)(val_ >> 1));
   }
+
+  // preserves the represented value if it is positive
+  constexpr Fixed<UNSIGNED, INT-1, FRAC+1> const to_unsigned() const {
+    static_assert(SIGN==SIGNED, "Only unsigned-to-signed conversion supported");
+    return Fixed<UNSIGNED, INT-1, FRAC+1>::of_repr((unsigned)(val_ << 1));
+  }
+
+  // template<sign SIGN2>
+  // constexpr Fixed<SIGN2, INT, FRAC> const to() const {
+  //   if (SIGN==UNSIGNED && SIGN2==SIGNED) {
+  //     return Fixed<SIGN2, INT, FRAC>::of_repr((signed)val_ >> 1);
+  //   } else if (SIGN==SIGNED && SIGN2==UNSIGNED) {
+  //     return Fixed<SIGN2, INT, FRAC>::of_repr((unsigned)val_);
+  //   }
+  // }
 
   template<int INT2, int FRAC2>
   constexpr Fixed<SIGN, INT2, FRAC2> const to() const {
@@ -252,13 +263,23 @@ public:
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> shiftr() const {
+  constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> movr() const {
     return Fixed<SIGN, INT+SHIFT, FRAC-SHIFT>::of_repr(val_);
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> shiftl() const {
+  constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> movl() const {
     return Fixed<SIGN, INT-SHIFT, FRAC+SHIFT>::of_repr(val_);
+  }
+
+  template <int SHIFT>
+  constexpr Fixed<SIGN, INT, FRAC-SHIFT> shiftr() const {
+    return Fixed<SIGN, INT, FRAC-SHIFT>::of_repr(val_ >> SHIFT);
+  }
+
+  template <int SHIFT>
+  constexpr Fixed<SIGN, INT, FRAC+SHIFT> shiftl() const {
+    return Fixed<SIGN, INT, FRAC+SHIFT>::of_repr(val_ << SHIFT);
   }
 
   // Operations:
@@ -280,28 +301,36 @@ public:
   }
 
   constexpr T operator-() const {
-    static_assert(SIGN, "Prefix negation is invalid on unsigned data");
+    static_assert(SIGN==SIGNED, "Prefix negation is invalid on unsigned data");
     return T::of_repr(-repr());
   }
 
   constexpr T operator+(T y) const { return T::of_repr(repr() + y.repr()); }
   constexpr T operator-(T y) const { return T::of_repr(repr() - y.repr()); }
 
-  template <int INT2, int FRAC2>
-  constexpr T operator*(Fixed<SIGN, INT2, FRAC2> y) const {
-    static_assert(INT2+FRAC2 <= WIDTH, "Multiplier is too large");
-    using Wider = typename Basetype<INT2+FRAC2, SIGN>::Wider;
-    return T::of_repr(((Wider)repr() * (Wider)y.repr()) >> FRAC2);
+  template<int INT2, int FRAC2>
+  constexpr Fixed<SIGNED, INT+INT2-1, FRAC+FRAC2+1>
+  operator*(Fixed<SIGNED, INT2, FRAC2> that) const {
+    using T = Fixed<SIGNED, INT+INT2-1, FRAC+FRAC2+1>;
+    // TODO understand this * 2!
+    return T::of_repr((repr() * that.repr()) * 2);
+  }
+
+  template<int INT2, int FRAC2>
+  constexpr Fixed<UNSIGNED, INT+INT2, FRAC+FRAC2>
+  operator*(Fixed<UNSIGNED, INT2, FRAC2> that) const {
+    using T = Fixed<UNSIGNED, INT+INT2, FRAC+FRAC2>;
+    return T::of_repr((repr() * that.repr()));
   }
 
   constexpr T operator*(Base y) const {
     return T::of_repr(repr() * y);
   }
 
-  constexpr T operator/(T y) const {
-    using Wider = typename Basetype<WIDTH, SIGN>::Wider;
-    return T::of_repr((static_cast<Wider>(repr()) << FRAC) / static_cast<Wider>(y.repr()));
-  }
+  // constexpr T operator/(T y) const {
+  //   using Wider = typename Basetype<WIDTH, SIGN>::Wider;
+  //   return T::of_repr((static_cast<Wider>(repr()) << FRAC) / static_cast<Wider>(y.repr()));
+  // }
 
   constexpr T operator/(Base y) const {
     return T::of_repr(repr() / y);
@@ -313,8 +342,8 @@ public:
     return T::of_repr(repr() >> BITS);
   }
 
-  constexpr void operator+=(T y) { val_ += y.repr(); }
-  constexpr void operator-=(T y) { val_ -= y.repr(); }
+  constexpr void operator+=(T y) { val_ = (*this + y).repr(); }
+  constexpr void operator-=(T y) { val_ = (*this - y).repr(); }
   constexpr void operator*=(T y) { val_ = (*this * y).repr(); }
   constexpr void operator/=(T y) { val_ = (*this / y).repr(); }
   constexpr void operator*=(Base y) { val_ = (*this * y).repr(); }
@@ -351,7 +380,7 @@ public:
       else return T::of_repr(__UQADD8(val_, y.val_));
     }
 #else
-    using Wider = typename Basetype<WIDTH, SIGN>::Wider;
+    using Wider = typename Basetype<WIDTH*2, SIGN>::T;
     Wider r = (Wider)val_ + (Wider)y.val_;
     r = saturate_integer<Wider, WIDTH>(r);
     return T::of_repr(r);
@@ -394,9 +423,43 @@ using u32 = u32_0;
 using s = s16;
 using u = u16;
 
-using s1_15 = Fixed<SIGNED, 1, 15>;
-using s17_15 = Fixed<SIGNED, 17, 15>;
 using u0_16 = Fixed<UNSIGNED, 0, 16>;
+using u1_15 = Fixed<UNSIGNED, 1, 15>;
+using u2_14 = Fixed<UNSIGNED, 2, 14>;
+using u3_13 = Fixed<UNSIGNED, 3, 13>;
+using u4_12 = Fixed<UNSIGNED, 4, 12>;
+using u5_11 = Fixed<UNSIGNED, 5, 11>;
+using u6_10 = Fixed<UNSIGNED, 6, 10>;
+using u7_9 = Fixed<UNSIGNED, 7, 9>;
+using u8_8 = Fixed<UNSIGNED, 8, 8>;
+using u9_7 = Fixed<UNSIGNED, 9, 7>;
+using u10_6 = Fixed<UNSIGNED, 10, 6>;
+using u11_5 = Fixed<UNSIGNED, 11, 5>;
+using u12_4 = Fixed<UNSIGNED, 12, 4>;
+using u13_3 = Fixed<UNSIGNED, 13, 3>;
+using u14_2 = Fixed<UNSIGNED, 14, 2>;
+using u15_1 = Fixed<UNSIGNED, 15, 1>;
+using u16_0 = Fixed<UNSIGNED, 16, 0>;
+
+using s0_16 = Fixed<SIGNED, 0, 16>;
+using s1_15 = Fixed<SIGNED, 1, 15>;
+using s2_14 = Fixed<SIGNED, 2, 14>;
+using s3_13 = Fixed<SIGNED, 3, 13>;
+using s4_12 = Fixed<SIGNED, 4, 12>;
+using s5_11 = Fixed<SIGNED, 5, 11>;
+using s6_10 = Fixed<SIGNED, 6, 10>;
+using s7_9 = Fixed<SIGNED, 7, 9>;
+using s8_8 = Fixed<SIGNED, 8, 8>;
+using s9_7 = Fixed<SIGNED, 9, 7>;
+using s10_6 = Fixed<SIGNED, 10, 6>;
+using s11_5 = Fixed<SIGNED, 11, 5>;
+using s12_4 = Fixed<SIGNED, 12, 4>;
+using s13_3 = Fixed<SIGNED, 13, 3>;
+using s14_2 = Fixed<SIGNED, 14, 2>;
+using s15_1 = Fixed<SIGNED, 15, 1>;
+using s16_0 = Fixed<SIGNED, 16, 0>;
+
+using s17_15 = Fixed<SIGNED, 17, 15>;
 using s1_31 = Fixed<SIGNED, 1, 31>;
 using u0_32 = Fixed<UNSIGNED, 0, 32>;
 using s10_22 = Fixed<SIGNED, 10, 22>;
@@ -410,10 +473,17 @@ constexpr s16 operator "" _s16(const unsigned long long int x) { return s16::of_
 constexpr u16 operator "" _u16(unsigned long long int x) { return u16::of_long_long(x); }
 constexpr s32 operator "" _s32(unsigned long long int x) { return s32::of_long_long(x); }
 constexpr u32 operator "" _u32(unsigned long long int x) { return u32::of_long_long(x); }
-constexpr s1_15 operator "" _s1_15(long double x) { return s1_15(x); }
-constexpr s17_15 operator "" _s17_15(long double x) { return s17_15(x); }
-constexpr u0_16 operator "" _u0_16(long double x) { return u0_16(x); }
-constexpr s1_31 operator "" _s1_31(long double x) { return s1_31(x); }
-constexpr u0_32 operator "" _u0_32(long double x) { return u0_32(x); }
-constexpr u10_22 operator "" _u10_22(long double x) { return u10_22(x); }
-constexpr s10_22 operator "" _s10_22(long double x) { return s10_22(x); }
+constexpr s1_15 operator "" _s1_15(long double x) { return s1_15::of_double(x); }
+constexpr s17_15 operator "" _s17_15(long double x) { return s17_15::of_double(x); }
+constexpr u0_16 operator "" _u0_16(long double x) { return u0_16::of_double(x); }
+constexpr s1_31 operator "" _s1_31(long double x) { return s1_31::of_double(x); }
+constexpr u0_32 operator "" _u0_32(long double x) { return u0_32::of_double(x); }
+constexpr u10_22 operator "" _u10_22(long double x) { return u10_22::of_double(x); }
+constexpr s10_22 operator "" _s10_22(long double x) { return s10_22::of_double(x); }
+
+template<sign SIGN, int INT, int FRAC>
+constexpr Fixed<SIGN, INT, FRAC> Fixed<SIGN, INT, FRAC>::min_val;
+template<sign SIGN, int INT, int FRAC>
+constexpr Fixed<SIGN, INT, FRAC> Fixed<SIGN, INT, FRAC>::max_val;
+template<sign SIGN, int INT, int FRAC>
+constexpr Fixed<SIGN, INT, FRAC> Fixed<SIGN, INT, FRAC>::increment;

@@ -14,7 +14,7 @@ public:
   constexpr Buffer(std::initializer_list<T> data) :
     data_(data.begin()) {};
 
-  constexpr index size() const {return index(SIZE);}
+  constexpr index size() const {return index::of_long_long(SIZE);}
   constexpr T operator[](index idx) const { return data_[idx.repr()]; }
 
   // zero-order hold
@@ -39,14 +39,13 @@ public:
   constexpr T interpolate(u0_32 const phase) const {
     static_assert(is_power_of_2(SIZE-1),
                   "Integer interpolate supports only power-of-two-sized buffers");
-    constexpr int bits = Log2<SIZE>::val;
-    Fixed<UNSIGNED, bits, 32-bits> p = phase.shiftr<bits>();
+    constexpr int BITS = Log2<SIZE>::val;
+    Fixed<UNSIGNED, BITS, 32-BITS> p = phase.movr<BITS>();
     u32_0 integral = p.integral();
-    T a = data_[(integral).repr()];
-    T b = data_[(integral+1_u32).repr()];
-    u0_32 fractional = p.fractional();
-    s1_15 frac = fractional.to_narrow<0,16>().shiftr<1>().to<SIGNED>();
-    return a + (b - a) * frac;
+    s16 a = data_[(integral).repr()]; // TODO data_ en Array
+    s16 b = data_[(integral+1_u32).repr()];
+    s1_15 frac = u0_16::narrow(p.fractional()).to_signed();
+    return a + ((b-a) * frac).shiftr<16>();
   }
 };
 
