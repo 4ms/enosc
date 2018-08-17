@@ -21,11 +21,16 @@ public:
   constexpr T operator[](f const phase) const {
     phase *= (size()-1_u32).to_float();
     index integral = index(phase);
-    Float a = data_[integral.repr()];
-    return a;
+    return data_[integral.repr()];;
   }
 
-  // TODO zoh taking a u0_32 for phase
+  // zero-order hold
+  constexpr T operator[](u0_32 const phase) const {
+    static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
+    constexpr int BITS = Log2<SIZE>::val;
+    index i = phase.movr<BITS>().integral();
+    return data_[i.repr()];
+  }
 
   constexpr T interpolate(f phase) const {
     phase *= (size()-1_u32).to_float();
@@ -37,8 +42,7 @@ public:
   }
 
   constexpr T interpolate(u0_32 const phase) const {
-    static_assert(is_power_of_2(SIZE-1),
-                  "Integer interpolate supports only power-of-two-sized buffers");
+    static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
     constexpr int BITS = Log2<SIZE>::val;
     Fixed<UNSIGNED, BITS, 32-BITS> p = phase.movr<BITS>();
     u32_0 integral = p.integral();
