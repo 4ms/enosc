@@ -1,5 +1,6 @@
 #include "numtypes.hh"
 #include "filter.hh"
+#include "units.hh"
 
 #pragma once
 
@@ -151,12 +152,12 @@ public:
 
 
 // Magic circle algorithm
-class SineOscillator {
+class MagicSine {
   Float sinz = 0_f;
   Float cosz = 1_f;
   Float f = 2_f * Math::pi * 0.001_f;
 public:
-  SineOscillator(Float freq) : f(2_f * Math::pi * freq) { }
+  MagicSine(Float freq) : f(2_f * Math::pi * freq) { }
 
   void Process(Float *out) {
     sinz += f * cosz;
