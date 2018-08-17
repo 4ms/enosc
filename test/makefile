@@ -8,7 +8,9 @@ CPPFLAGS = -I .. \
 	   -I ../src/ \
 	   -I ../lib/easiglib/ \
 
-OBJS = test.o ../data.o
+OBJS = test.o ../data.o \
+       # TODO
+       # ../lib/easiglib/numtypes.o
 LIBS =
 
 .PHONY: all clean

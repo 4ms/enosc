@@ -70,8 +70,6 @@ def write_implementation_file(file, data):
             file.write("\n")
 
 def write_header_file(file, data):
-    file.write("#include <array>\n")
-    file.write("#include <tuple>\n\n")
     file.write("#include \"numtypes.hh\"\n")
     file.write("#include \"buffer.hh\"\n\n")
     file.write("#pragma once\n\n")

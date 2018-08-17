@@ -11,6 +11,9 @@ struct Main {
   Main() {
     int size = kDuration * kSampleRate;
 
+
+    printf("%f\n", (0.25_u0_16 * 0.5_u0_16).to_float().repr());
+
     while(size -= kBlockSize) {
       // process by engine
       // conversion to short
