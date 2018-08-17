@@ -8,20 +8,31 @@
 using index = u32;
 
 template<class T, unsigned int SIZE>
-class Buffer {
-  const T *data_;
-public:
-  constexpr Buffer(std::initializer_list<T> data) :
+struct Table {
+  constexpr Table(std::initializer_list<T> data) :
     data_(data.begin()) {};
+  constexpr T operator[](index idx) const { return this->data_[idx.repr()]; }
+
+protected:
+  const T *data_;
+};
+
+template<class T, unsigned int SIZE>
+struct Buffer {
+private:
+  Table<T, SIZE> data_;
+public:
+
+  constexpr Buffer(std::initializer_list<T> data) : data_(data) {};
 
   constexpr index size() const {return index::of_long_long(SIZE);}
-  constexpr T operator[](index idx) const { return data_[idx.repr()]; }
+  constexpr T operator[](index idx) const { return this->data_[idx]; }
 
   // zero-order hold
   constexpr T operator[](f const phase) const {
     phase *= (size()-1_u32).to_float();
     index integral = index(phase);
-    return data_[integral.repr()];;
+    return this->data_[integral];;
   }
 
   // zero-order hold
@@ -29,15 +40,15 @@ public:
     static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
     constexpr int BITS = Log2<SIZE>::val;
     index i = phase.movr<BITS>().integral();
-    return data_[i.repr()];
+    return this->data_[i];
   }
 
   constexpr T interpolate(f phase) const {
     phase *= (size()-1_u32).to_float();
-    u32 integral = u32(phase);
+    index integral = index(phase);
     f fractional = phase - integral.to_float();
-    T a = data_[integral.repr()];
-    T b = data_[(integral+1_u32).repr()];
+    T a = this->data_[integral];
+    T b = this->data_[integral+1_u32];
     return a + (b - a) * fractional;
   }
 
@@ -46,8 +57,8 @@ public:
     constexpr int BITS = Log2<SIZE>::val;
     Fixed<UNSIGNED, BITS, 32-BITS> p = phase.movr<BITS>();
     u32_0 integral = p.integral();
-    s16 a = data_[(integral).repr()]; // TODO data_ en Array
-    s16 b = data_[(integral+1_u32).repr()];
+    s16 a = this->data_[integral];
+    s16 b = this->data_[integral+1_u32];
     s1_15 frac = u0_16::narrow(p.fractional()).to_signed();
     return a + ((b-a) * frac).shiftr<16>();
   }
