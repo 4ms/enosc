@@ -70,4 +70,8 @@ public:
     s1_15 output = (sum / kNumOsc).to_sat<1, 15>();
     return output;
   }
+
+  s1_15 Process(Freq freq) {
+    return Process(u0_32(freq.repr()));
+  }
 };
