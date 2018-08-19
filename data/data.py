@@ -23,6 +23,14 @@ data['sine'] = sine
 
 data['short_sine'] = (sine*32767.0).astype(np.int16)
 
+# base-2 exponential
+
+size = 1024
+spc = np.arange(0., size) / size
+exp2 = 2 ** spc
+
+data['exp2_u0_23'] = (exp2*(2**23)).astype(np.uint32)
+
 # Generate
 
 import data_compiler
