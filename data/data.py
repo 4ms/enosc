@@ -8,11 +8,11 @@ data = {}
 
 size = 256
 ratios_low = 2.0 ** (np.arange(-size/2.0,size/2.0)/12.0)
-data['pitch_ratios_low'] = ratios_low
+data['pitch_ratios_high'] = ratios_low
 
-size = 128
-ratios_high = 2.0 ** (np.linspace(0.,1.,num=128))
-data['pitch_ratios_high'] = ratios_high
+size = 256
+ratios_high = 2.0 ** (np.linspace(0.,1./12.,num=size))
+data['pitch_ratios_low'] = ratios_high
 
 # sine
 
