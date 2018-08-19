@@ -10,6 +10,8 @@ def type_of(value):
         int: lambda: "s32",
         numpy.int32: lambda: "s32",
         numpy.int16: lambda: "s16",
+        numpy.uint32: lambda: "u32",
+        numpy.uint16: lambda: "u16",
         bool: lambda: "bool",
         float: lambda: "f",
         numpy.float64: lambda: "f",
@@ -25,6 +27,8 @@ def is_base_type(value):
         t is bool or
         t is numpy.int16 or
         t is numpy.int32 or
+        t is numpy.uint16 or
+        t is numpy.uint32 or
         t is numpy.float64 or
         t is numpy.float32):
         return True;
@@ -33,7 +37,10 @@ def is_base_type(value):
 
 def write_value_of(file, value, indent_level):
     t = type(value)
-    if (t is int or t is numpy.int16): file.write("%d_s16" % (value))
+    if (t is int or t is numpy.int32): file.write("%d_s32" % (value))
+    elif (t is numpy.int16): file.write("%d_s16" % (value))
+    elif (t is numpy.uint16): file.write("%d_u16" % (value))
+    elif (t is numpy.uint32): file.write("%d_u32" % (value))
     elif (t is bool): file.write("true" if value else "false")
     elif (t is float or t is numpy.float64): file.write("%f_f" % (value))
     elif (t is str): file.write("\"%s\"" % (value))
