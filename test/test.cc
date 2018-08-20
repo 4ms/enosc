@@ -11,8 +11,10 @@ struct Main {
   Main() {
     int size = kDuration * kSampleRate;
 
-
-    printf("%f\n", (0.25_u0_16 * 0.5_u0_16).to_float().repr());
+    // various tests
+    f x = 440_f;
+    Pitch p = 69._st;
+    printf("%f\n", Freq(p).repr().repr());
 
     while(size -= kBlockSize) {
       // process by engine

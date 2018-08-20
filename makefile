@@ -8,6 +8,12 @@ SRCS = lib/easiglib/numtypes.cc src/main.cc data.cc
 DEPS = $(addsuffix .d, $(SRCS))
 OBJS = $(SRCS:.cc=.o)
 
+TEST_SRCS = test/test.cc data.cc \
+#	lib/easiglib/numtypes.cc
+# ^ TODO
+
+TEST_OBJS = $(TEST_SRCS:.cc=.test.o)
+
 HAL = 	stm32f4xx_hal.o \
 	stm32f4xx_hal_cortex.o \
 	stm32f4xx_hal_gpio.o \
@@ -30,6 +36,8 @@ CXX = $(TOOLCHAIN_DIR)arm-none-eabi-g++
 CC = $(TOOLCHAIN_DIR)arm-none-eabi-gcc
 OBJCOPY = $(TOOLCHAIN_DIR)arm-none-eabi-objcopy
 GDB = $(TOOLCHAIN_DIR)arm-none-eabi-gdb
+
+TEST_CXX = x86_64-apple-darwin16.7.0-c++-8
 
 CMSIS_DIR = lib/CMSIS/
 HAL_DIR = lib/HAL/
@@ -83,7 +91,7 @@ OBJS += $(STARTUP).o \
 all: $(TARGET).bin
 
 %.elf: data.hh $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS)
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
@@ -95,7 +103,7 @@ data.cc data.hh: $(EASIGLIB_DIR)data_compiler.py data/data.py
 	PYTHONPATH=$(EASIGLIB_DIR) python data/data.py
 
 clean:
-	rm -f $(OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin data.cc data.hh \
+	rm -f $(OBJS) $(TEST_OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin test/test data.cc data.hh \
 	$(EASIGLIB_DIR)data_compiler.pyc
 
 flash: $(TARGET).bin
@@ -115,17 +123,28 @@ debug:
 
 # File dependencies:
 
-DEPFLAGS = -MMD -MP -MF $<.d -o $@
+DEPFLAGS = -MMD -MP -MF $<.d
 
 %.o: %.c %.c.d
-	$(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c $<
+	$(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 %.o: %.cc %.cc.d
-	$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c $<
+	$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 %.d: ;
 
+# Test build:
+
+test: test/test
+
+test/test: data.hh test/test.cc $(TEST_OBJS)
+	$(TEST_CXX) -o $@ $(TEST_OBJS) $(LIBS)
+
+%.test.o: %.cc %.cc.d
+	$(TEST_CXX) $(DEPFLAGS) $(CPPFLAGS) -c $< -o $@
+
+
 include $(DEPS)
 
-.PRECIOUS: $(DEPS) $(OBJS) $(TARGET).elf data.cc data.hh
+.PRECIOUS: $(DEPS) $(OBJS) $(TEST_OBJS) $(TARGET).elf data.cc data.hh
 .PHONY: all clean flash erase debug debug-server
