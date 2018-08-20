@@ -14,15 +14,20 @@ struct System {
     HAL_Init();
     // SysTick takes priority over everything
     HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+    HAL_SuspendTick();
   }
+
   System(SysTickCallback *cb) : cb_(cb) {
     instance_ = this;
     System();
+    HAL_ResumeTick();
   }
 
   struct DefaultCallback : SysTickCallback {
     void onSysTick() {}
   } default_callback;
+
+  uint32_t milliseconds() { return HAL_GetTick(); }
 
   /**
    * @brief  System Clock Configuration
