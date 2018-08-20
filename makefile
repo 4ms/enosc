@@ -8,9 +8,7 @@ SRCS = lib/easiglib/numtypes.cc src/main.cc data.cc
 DEPS = $(addsuffix .d, $(SRCS))
 OBJS = $(SRCS:.cc=.o)
 
-TEST_SRCS = test/test.cc data.cc \
-#	lib/easiglib/numtypes.cc
-# ^ TODO
+TEST_SRCS = test/test.cc data.cc lib/easiglib/numtypes.cc
 
 TEST_OBJS = $(TEST_SRCS:.cc=.test.o)
 
@@ -142,7 +140,6 @@ test/test: data.hh test/test.cc $(TEST_OBJS)
 
 %.test.o: %.cc %.cc.d
 	$(TEST_CXX) $(DEPFLAGS) $(CPPFLAGS) -c $< -o $@
-
 
 include $(DEPS)
 

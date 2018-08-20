@@ -113,6 +113,10 @@ template<> struct Basetype<16, SIGNED> { using T = int16_t; };
 template<> struct Basetype<16, UNSIGNED> { using T = uint16_t; };
 template<> struct Basetype<32, SIGNED> { using T = int32_t; };
 template<> struct Basetype<32, UNSIGNED> { using T = uint32_t; };
+#ifndef __arm__
+template<> struct Basetype<64, SIGNED> { using T = int64_t; };
+template<> struct Basetype<64, UNSIGNED> { using T = uint64_t; };
+#endif
 
 template<sign SIGN, int INT, int FRAC>
 class Fixed {
@@ -147,7 +151,7 @@ class Fixed {
   template <int BITS>
   constexpr T const saturate() const {
     static_assert(BITS > 0 && BITS < WIDTH, "Invalid bit count");
-    return T(saturate_integer<Base, BITS>(val_));
+    return T::of_repr(saturate_integer<Base, BITS>(val_));
   }
 #endif
   enum class dangerous { DANGER };
@@ -401,7 +405,7 @@ public:
       else return T::of_repr(__UQSUB8(val_, y.val_));
     }
 #else
-    using Wider = typename Basetype<WIDTH, SIGN>::Wider;
+    using Wider = typename Basetype<WIDTH*2, SIGN>::T;
     Wider r = (Wider)val_ - (Wider)y.val_;
     r = saturate_integer<Wider, WIDTH>(r);
     return T::of_repr(r);
