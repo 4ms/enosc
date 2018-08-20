@@ -7,10 +7,9 @@
 #include "oscillator.hh"
 
 struct Main :
-  System::SysTickCallback,
   Dac::ProcessCallback {
 
-  System system_ {this};
+  System system_;
   Dac dac_ {this};
   Accelerometer accel_;
   Ui ui_;
@@ -21,6 +20,8 @@ struct Main :
   IOscillators<20> isine_;
 
   void Process(ShortFrame *out, int size) {
+    ui_.Poll();
+    ui_.Display();
     debug.on(1);
 
     // accel_.ReadAccelData(&d);
@@ -40,11 +41,6 @@ struct Main :
     }
 
     debug.off(1);
-  }
-
-  void onSysTick() {
-    ui_.Poll();
-    ui_.Display();
   }
 
   Main() {
