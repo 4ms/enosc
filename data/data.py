@@ -34,4 +34,4 @@ data['exp2_u0_23'] = (exp2*(2**23)).astype(np.uint32)
 # Generate
 
 import data_compiler
-data_compiler.compile(data)
+data_compiler.compile("data", "Data", data);

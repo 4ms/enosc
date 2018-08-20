@@ -2,9 +2,6 @@
 
 import numpy
 
-class_name = "Data"
-file_name = "data"
-
 def type_of(value):
     return {
         int: lambda: "s32",
@@ -67,8 +64,8 @@ def write_definition(file, name, value):
     write_value_of(file, value, 1)
     file.write(";\n")
 
-def write_implementation_file(file, data):
-    file.write("#include \"data.hh\"\n\n")
+def write_implementation_file(file_name, class_name, file, data):
+    file.write("#include \""+file_name+".hh\"\n\n")
     file.write("using namespace std;\n\n")
     for name, value in data.items():
         if (not is_base_type(value)):
@@ -76,12 +73,12 @@ def write_implementation_file(file, data):
             write_definition(file, class_name+"::"+name, value)
             file.write("\n")
 
-def write_header_file(file, data):
+def write_header_file(class_name, file, data):
     file.write("#include \"numtypes.hh\"\n")
     file.write("#include \"buffer.hh\"\n\n")
     file.write("#pragma once\n\n")
     file.write("using namespace std;\n\n")
-    file.write("struct Data {\n")
+    file.write("struct "+class_name+" {\n")
     for name, value in data.items():
         if (is_base_type(value)):
             file.write("  static constexpr %s %s = " % (type_of(value), name))
@@ -91,8 +88,8 @@ def write_header_file(file, data):
             file.write("  static const %s %s;\n" % (type_of(value), name))
     file.write("};")
 
-def compile(data):
+def compile(file_name, class_name, data):
     with open(file_name+".hh", "w") as header_file:
-        write_header_file(header_file, data)
+        write_header_file(class_name, header_file, data)
     with open(file_name+".cc", "w") as implem_file:
-        write_implementation_file(implem_file, data)
+        write_implementation_file(file_name, class_name, implem_file, data)
