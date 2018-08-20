@@ -36,7 +36,7 @@ struct Main :
 
     // 37%
     for(int i=0; i<size; i++) {
-      out[i].l = isine_.Process(100._Hz).repr();
+      out[i].l = isine_.Process(Freq(50._st)).repr();
       out[i].r = out[i].l;
     }
 

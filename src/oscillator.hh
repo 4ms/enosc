@@ -63,9 +63,9 @@ public:
     s17_15 sum = 0._s17_15;
     for(int i=0; i<kNumOsc; i++) {
       s1_15 x = osc_[i].Process(freq, 0._u0_16);
-      s17_15 y(x);
+      s17_15 y {x};
       sum += y;
-      freq += 0.001001_u0_32;
+      freq += 0.002_u0_32;
     }
     s1_15 output = (sum / kNumOsc).to_sat<1, 15>();
     return output;
