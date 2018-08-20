@@ -138,9 +138,9 @@ public:
 
     // reset DAC
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_4, GPIO_PIN_RESET);
-    HAL_Delay(10);
+    for(int i=0; i<10000; i++) asm("nop");
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_4, GPIO_PIN_SET);
-    HAL_Delay(10);
+    for(int i=0; i<10000; i++) asm("nop");
   }
 
   void Init_I2S() {
