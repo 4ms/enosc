@@ -66,6 +66,7 @@ CFLAGS= $(ARCHFLAGS) \
 	-DUSE_FULL_ASSERT \
 	-fdata-sections \
 	-ffunction-sections \
+	-ffreestanding \
 
 CXXFLAGS=$(CFLAGS) \
 	-std=c++14 \
@@ -76,7 +77,6 @@ CXXFLAGS=$(CFLAGS) \
 
 LDFLAGS= $(ARCHFLAGS) -T $(LDSCRIPT) \
 	-Wl,--gc-sections \
-	-nostartfiles \
 	-nostdlib \
 
 STARTUP = $(CMSIS_DIR)startup_stm32f407xx

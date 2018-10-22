@@ -109,5 +109,5 @@ extern "C" {
   void PendSV_Handler() { }
   void __cxa_pure_virtual() { while (1); }
   __weak void _init() {}
-  __weak int main() {}
+  __weak void main() {}
 }
