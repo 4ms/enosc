@@ -11,17 +11,29 @@ struct Main {
   Main() {
     int size = kDuration * kSampleRate;
 
-    // various tests
-    f x = 440_f;
-    Pitch p = 69._st;
-    printf("%f\n", Freq(p).repr().repr());
+    FourPoleLadderLp lp;
+    MagicSine sine (0.000002_f);
 
     while(size -= kBlockSize) {
       // process by engine
       // conversion to short
+
+      Float out[kBlockSize];
+
+      for(int i=0; i<kBlockSize; i++) {
+        Float rnd  = Random::Float01() * 2_f - 1_f;
+        // if (size < (kDuration-1)*kSampleRate) rnd = 0_f;
+
+        Float cutoff;
+        sine.Process(&cutoff);
+        cutoff = (cutoff + 1_f) * 0.1_f + 0.01_f;
+
+        lp.Process(rnd, &out[i], cutoff, 4.0_f);
+      }
+
       short output[kBlockSize];
       for(int i=0; i<kBlockSize; i++) {
-        output[i] = 0;
+        output[i] = s1_15::inclusive(out[i]).repr();
       }
       // write
       wav_.Write(output, kBlockSize);

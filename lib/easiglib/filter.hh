@@ -24,25 +24,26 @@ struct OnePoleHp : OnePoleLp {
 template<class T, int SHIFT>
 struct IOnePoleLp {
   void Process(T input, T *output) {
-    state_ += (input - state_).template div2<SHIFT>();
+    state_ += input.template div2<SHIFT>() - state_.template div2<SHIFT>();
     *output = state_;
   }
 private:
   T state_ = T(0_f);
 };
 
-// careful: gain must be <= 2^16
+// TODO: convert to numtypes
 // complexity:
 // size=size * (stages+1) * 4 + 4,
 // time=O(stages)
 template<int SIZE, int STAGES>
 class Average {
   static constexpr int gain = ipow(SIZE - 1, STAGES);
-  int32_t state_i[STAGES] = {0};
-  RingBuffer<int32_t, SIZE> state_c[STAGES];
+  static_assert(gain < (1<<16), "Error: gain must be less than 65536");
+  uint32_t state_i[STAGES] = {0};
+  RingBuffer<uint32_t, SIZE> state_c[STAGES];
 public:
-  int16_t Process(int16_t x) {
-    int32_t y = x;
+  uint16_t Process(uint16_t x) {
+    uint32_t y = x;
     for (int i=0; i<STAGES; i++) {
       state_c[i].Write(y);
       y -= state_c[i].ReadLast();
@@ -52,8 +53,19 @@ public:
     for (int i=1; i<STAGES; i++) {
       state_i[i] += state_i[i-1];
     }
-    int32_t z = state_i[STAGES-1];
+    uint32_t z = state_i[STAGES-1];
     return z / gain;
+  }
+};
+
+struct FourPoleLadderLp {
+  OnePoleLp lp_[4];
+  Float fb = 0_f;
+  void Process(Float in, Float *out, Float cutoff, Float resonance) {
+    in -= fb * resonance;
+    for (int i=0; i<4; i++)
+      lp_[i].Process(cutoff, in, &in);
+    *out = fb = Math::fast_tanh(in);
   }
 };
 

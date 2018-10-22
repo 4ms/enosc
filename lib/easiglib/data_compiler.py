@@ -14,7 +14,7 @@ def type_of(value):
         numpy.float64: lambda: "f",
         str: lambda: "string",
         tuple: lambda: ("tuple<%s>" % (", ".join(map(type_of, value)))),
-        list: lambda: ("Buffer<%s, %d>" % (type_of(value[0])), len(value)),
+        list: lambda: ("Buffer<%s, %d>" % (type_of(value[0]), len(value))),
         numpy.ndarray: lambda: ("Buffer<%s, %d>" % (type_of(value[0]), len(value))),
     }[type(value)]()
 
@@ -74,8 +74,8 @@ def write_implementation_file(file_name, class_name, file, data):
             file.write("\n")
 
 def write_header_file(class_name, file, data):
-    file.write("#include \"numtypes.hh\"\n")
-    file.write("#include \"buffer.hh\"\n\n")
+    file.write("#include \"lib/easiglib/numtypes.hh\"\n")
+    file.write("#include \"lib/easiglib/buffer.hh\"\n\n")
     file.write("#pragma once\n\n")
     file.write("using namespace std;\n\n")
     file.write("struct "+class_name+" {\n")

@@ -5,10 +5,11 @@
 
 TARGET = main
 SRCS = lib/easiglib/numtypes.cc src/main.cc data.cc
-DEPS = $(addsuffix .d, $(SRCS))
 OBJS = $(SRCS:.cc=.o)
 
 TEST_SRCS = test/test.cc data.cc lib/easiglib/numtypes.cc
+
+DEPS = $(addsuffix .d, $(SRCS)) $(addsuffix .d, $(TEST_SRCS))
 
 TEST_OBJS = $(TEST_SRCS:.cc=.test.o)
 
@@ -35,7 +36,7 @@ CC = $(TOOLCHAIN_DIR)arm-none-eabi-gcc
 OBJCOPY = $(TOOLCHAIN_DIR)arm-none-eabi-objcopy
 GDB = $(TOOLCHAIN_DIR)arm-none-eabi-gdb
 
-TEST_CXX = x86_64-apple-darwin16.7.0-c++-8
+TEST_CXX = x86_64-apple-darwin17.7.0-c++-8
 
 CMSIS_DIR = lib/CMSIS/
 HAL_DIR = lib/HAL/

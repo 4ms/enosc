@@ -20,6 +20,9 @@ template<bool>
 class FloatT {
   float val_;
 public:
+
+  // TODO: constructor from Fixed types
+
   using T = FloatT;
   explicit FloatT() { }
   explicit constexpr FloatT(float v) : val_(v) { }
@@ -68,6 +71,10 @@ public:
   constexpr T fractional() const {
     return T(static_cast<float>(val_ - static_cast<int32_t>(val_)));
   }
+
+  constexpr T integral() const {
+    return *this - fractional();
+  }
 };
 
 using Float = FloatT<true>;
@@ -90,6 +97,8 @@ struct Float16 {
 private:
   __fp16 val_;
 };
+
+using f16 = Float16
 
 #endif
 
@@ -159,8 +168,15 @@ class Fixed {
 
 public:
 
+  // to construct arrays
+  explicit Fixed() {}
+
   explicit constexpr Fixed(Float x) :
     val_(static_cast<Base>((x * Float(1ULL << FRAC)).repr())) { }
+
+  static constexpr T inclusive(Float x) {
+    return T::of_repr(static_cast<Base>((x * Float((1ULL << FRAC) - 1)).repr()));
+  }
 
   template<int INT2, int FRAC2>
   explicit constexpr Fixed(Fixed<SIGN, INT2, FRAC2> const that) {
@@ -193,6 +209,7 @@ public:
 
   constexpr Base repr() const { return val_; }
   constexpr Float const to_float() const { return Float(repr()) / Float(1ULL << FRAC); }
+  constexpr Float const to_float_inclusive() const { return Float(repr()) / Float((1ULL << FRAC) - 1); }
 
   // promotion => no loss of information
   template <sign SIGN2, int INT2, int FRAC2>
@@ -201,7 +218,6 @@ public:
     static_assert(FRAC2 >= FRAC, "Conversion with possible loss of precision");
     static_assert(INT2 >= INT, "Conversion with possible wrapover");
 
-    Base x = repr();
     // WARNING! possibly shifting negative integer
     return Fixed<SIGN2, INT2, FRAC2>::of_repr((unsigned)repr() << (FRAC2 - FRAC));
   }
@@ -346,13 +362,23 @@ public:
     return T::of_repr(repr() >> BITS);
   }
 
-  constexpr void operator+=(T y) { val_ = (*this + y).repr(); }
-  constexpr void operator-=(T y) { val_ = (*this - y).repr(); }
-  constexpr void operator*=(T y) { val_ = (*this * y).repr(); }
-  constexpr void operator/=(T y) { val_ = (*this / y).repr(); }
-  constexpr void operator*=(Base y) { val_ = (*this * y).repr(); }
-  constexpr void operator/=(Base y) { val_ = (*this / y).repr(); }
+  constexpr void operator+=(T const that) { *this = *this + that; }
+  constexpr void operator-=(T const that) { *this = *this - that; }
+  constexpr void operator*=(T const that) { *this = T::narrow(*this * that); }
+  constexpr void operator/=(T const that) { *this = T::narrow(*this / that); }
+  constexpr void operator*=(Base const that) { val_ = (*this * that).repr(); }
+  constexpr void operator/=(Base const that) { val_ = (*this / that).repr(); }
 
+  constexpr T operator++() { T temp = *this; *this += T(1_f); return temp; }
+  constexpr T operator--() { T temp = *this; *this -= T(1_f); return temp; }
+  constexpr T operator++(int) { *this += T(1_f); return *this; }
+  constexpr T operator--(int) { *this -= T(1_f); return *this; }
+
+  constexpr T operator%(T const that) const {
+    static_assert(SIGN==UNSIGNED, "modulo undefined on unsigned types");
+    return T::of_repr(val_ % that.val_);
+  }
+  
   constexpr bool const operator<(const T y) const { return repr() < y.repr(); }
   constexpr bool const operator>(const T y) const { return repr() > y.repr(); }
   constexpr bool const operator<=(const T y) const { return repr() <= y.repr(); }
@@ -414,19 +440,6 @@ public:
 
 };
 
-using s16_0 = Fixed<SIGNED, 16, 0>;
-using u16_0 = Fixed<UNSIGNED, 16, 0>;
-using s32_0 = Fixed<SIGNED, 32, 0>;
-using u32_0 = Fixed<UNSIGNED, 32, 0>;
-
-using s16 = s16_0;
-using u16 = u16_0;
-using s32 = s32_0;
-using u32 = u32_0;
-
-using s = s16;
-using u = u16;
-
 using u0_16 = Fixed<UNSIGNED, 0, 16>;
 using u1_15 = Fixed<UNSIGNED, 1, 15>;
 using u2_14 = Fixed<UNSIGNED, 2, 14>;
@@ -468,6 +481,20 @@ using s1_31 = Fixed<SIGNED, 1, 31>;
 using u0_32 = Fixed<UNSIGNED, 0, 32>;
 using s10_22 = Fixed<SIGNED, 10, 22>;
 using u10_22 = Fixed<UNSIGNED, 10, 22>;
+
+using s16_0 = Fixed<SIGNED, 16, 0>;
+using u16_0 = Fixed<UNSIGNED, 16, 0>;
+using s32_0 = Fixed<SIGNED, 32, 0>;
+using u32_0 = Fixed<UNSIGNED, 32, 0>;
+
+using s16 = s16_0;
+using u16 = u16_0;
+
+using s32 = s32_0;
+using u32 = u32_0;
+
+using s = s16;
+using u = u16;
 
 // Some user-defined literals
 
