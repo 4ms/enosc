@@ -6,7 +6,6 @@
 struct Math {
   static constexpr f pi = f(3.14159265358979323846264338327950288);
 
-
   // [-1; +1] --> [-1; +1]
   static constexpr f faster_sine(f x) {
     x = (x * 2_f) - 1_f;
@@ -51,7 +50,20 @@ struct Math {
     u32 i = u32(((x + 127_f) * f(1 << 23)));
     float_cast u = {.i_repr = i};
 
-    u.parts.mantisa = Data::exp2_u0_23[index::of_repr(u.parts.mantisa >> 23-BITS)].repr();
+    u.parts.mantisa = Data::exp2_u0_23[index::of_repr(u.parts.mantisa >> (23-BITS))].repr();
     return u.f_repr;
   }
+
+  static constexpr f softclip1(f x) {
+    x *= 0.6666_f;
+    return (x * (3_f - x * x)) * 0.5_f;
+  }
+
+  static constexpr f softclip2(f x) {
+    x *= 0.536_f;
+    f s = x * x;
+    return x * (1.875_f + s * (-1.25_f + 0.375_f * s));
+  }
 };
+
+constexpr f Math::pi;

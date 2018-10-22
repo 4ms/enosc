@@ -1,8 +1,8 @@
+#pragma once
+
 #include "numtypes.hh"
 #include "filter.hh"
 #include "units.hh"
-
-#pragma once
 
 struct Random {
   static uint32_t state() { return state_; }
@@ -13,12 +13,12 @@ struct Random {
   static int16_t Int16() { return Word() >> 16; }
   // float between 0 and 1
   static Float Float01() { return Float(Word()) / Float(UINT32_MAX); }
+  static bool Bool() { return Word() & 1; }
+
   static constexpr uint32_t rand_max = UINT32_MAX;
 private:
   static uint32_t state_;
 };
-
-uint32_t Random::state_ = 0x21;
 
 // N number of stages, R decimation rate
 // careful: gain must be <= 2^16
@@ -108,22 +108,16 @@ template<> struct PinkNoiseCsts<3> {
   static constexpr Float A[3] = {0.02109238_f, 0.07113478_f, 0.68873558_f};
   static constexpr Float P[3] = {0.3190_f, 0.7756_f, 0.9613_f};
 };
-constexpr Float PinkNoiseCsts<3>::A[];
-constexpr Float PinkNoiseCsts<3>::P[];
 
 template<> struct PinkNoiseCsts<4> {
   static constexpr Float A[4] = {0.0186944045911_f, 0.0514485907859_f, 0.19168_f, 0.940098715596_f};
   static constexpr Float P[4] = {0.3030_f, 0.7417_f, 0.9168_f, 0.9782_f};
 };
-constexpr Float PinkNoiseCsts<4>::A[];
-constexpr Float PinkNoiseCsts<4>::P[];
 
 template<> struct PinkNoiseCsts<5> {
   static constexpr Float A[5] = {0.0030662336401_f, 0.0153123333238_f, 0.0536773305003_f, 0.191430730313_f, 0.999749211196_f};
   static constexpr Float P[5] = {0.15571_f, 0.30194_f, 0.74115_f, 0.93003_f, 0.98035_f};
 };
-constexpr Float PinkNoiseCsts<5>::A[];
-constexpr Float PinkNoiseCsts<5>::P[];
 
 template<int STAGES>
 class PinkNoise {
