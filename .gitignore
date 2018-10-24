@@ -5,6 +5,7 @@
 .DS_Store
 test/test
 test/test.wav
+test.wav
 *.pyc
 /data.cc
 /data.hh
