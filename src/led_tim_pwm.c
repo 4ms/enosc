@@ -29,7 +29,6 @@
 #include "led_tim_pwm.h"
 #include "globals.h"
 #include "gpio_pins.h"
-#include "hal_handlers.h"
 #include "adc_interface.h"
 
 TIM_HandleTypeDef	timFREEZELED;

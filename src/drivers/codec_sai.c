@@ -29,7 +29,6 @@
 
 #include "drivers/codec_sai.h"
 #include "globals.h"
-#include "hal_handlers.h"
 #include "drivers/codec_i2c.h"
 #include "gpio_pins.h"
 

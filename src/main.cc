@@ -35,7 +35,6 @@ extern "C" {
 #include "audio_stream.h"
 #include "led_tim_pwm.h"
 #include "adc_interface.h"
-#include "hal_handlers.h"
 }
 
 #include "system.hh"

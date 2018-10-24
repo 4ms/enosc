@@ -30,7 +30,6 @@
 #include "gpio_pins.h"
 #include "globals.h"
 #include "drivers/adc_builtin_driver.h"
-#include "hal_handlers.h"
 
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc3;

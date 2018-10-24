@@ -27,7 +27,6 @@
  */
 
 #include "globals.h"
-#include "hal_handlers.h"
 #include "drivers/codec_i2c.h"
 #include "drivers/codec_sai.h"
 
