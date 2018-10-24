@@ -4,8 +4,24 @@
 # - define TARGET
 
 TARGET = main
-SRCS = lib/easiglib/numtypes.cc lib/easiglib/math.cc lib/easiglib/dsp.cc src/main.cc data.cc
-OBJS = $(SRCS:.cc=.o)
+SRCS = \
+	data.cc \
+	lib/easiglib/numtypes.cc \
+	lib/easiglib/math.cc \
+	lib/easiglib/dsp.cc \
+	src/main.cc \
+	src/hal_handlers.c \
+	src/led_tim_pwm.c \
+	src/adc_interface.c \
+	src/audio_stream.c \
+	src/audio_util.c \
+	src/gpio_pins.c \
+	src/drivers/adc_builtin_driver.c \
+	src/drivers/codec_i2c.c \
+	src/drivers/codec_sai.c \
+
+OBJS_1 = $(SRCS:.cc=.o)
+OBJS = $(OBJS_1:.c=.o)
 
 TEST_SRCS = test/test.cc data.cc lib/easiglib/numtypes.cc lib/easiglib/math.cc lib/easiglib/dsp.cc
 
@@ -20,11 +36,16 @@ HAL = 	stm32f7xx_hal.o \
 	stm32f7xx_hal_rcc_ex.o \
 	stm32f7xx_hal_dma.o \
 	stm32f7xx_hal_i2c.o \
+	stm32f7xx_hal_i2c_ex.o \
 	stm32f7xx_hal_sai.o \
 	stm32f7xx_hal_sai_ex.o \
 	stm32f7xx_hal_spi.o \
 	stm32f7xx_hal_adc.o \
 	stm32f7xx_hal_adc_ex.o \
+	stm32f7xx_hal_pwr.o \
+	stm32f7xx_hal_pwr_ex.o \
+	stm32f7xx_hal_tim.o \
+	stm32f7xx_hal_tim_ex.o \
 
 OPTIM ?= 2
 TOOLCHAIN_DIR ?=
@@ -42,6 +63,7 @@ EASIGLIB_DIR = lib/easiglib/
 
 INC = -I . \
       -I src/ \
+      -I src/drivers \
       -I $(EASIGLIB_DIR) \
       -I $(CMSIS_DIR) \
       -I $(HAL_DIR) \

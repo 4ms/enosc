@@ -13,18 +13,11 @@ void HAL_MspInit(void)
   HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 }
 
-//#define USE_FULL_ASSERT
-#ifdef  USE_FULL_ASSERT
-	#define assert_param(expr) ((expr) ? (void)0 : _Error_Handler((char *)__FILE__, __LINE__))
+void _init() {}
 
-	/**
-	  * @brief  Reports the name of the source file and the source line number
-	  *   where the assert_param error has occurred.
-	  * @param  file: pointer to the source file name
-	  * @param  line: assert_param error line source number
-	  * @retval None
-	  */
-#endif
+void assert_failed(uint8_t* file, uint32_t line) {
+  _Error_Handler(file, line);
+}
 
 void _Error_Handler(const char* file, uint32_t line)
 { 
