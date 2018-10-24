@@ -329,7 +329,8 @@ void SystemClock_Config(void)
 	RCC_OscInitStruct.PLL.PLLM = 16;
 	RCC_OscInitStruct.PLL.PLLN = 432;
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  RCC_OscInitStruct.PLL.PLLQ = 2;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
 		_Error_Handler(__FILE__, __LINE__);
 
 	//Activate the OverDrive to reach the 216 MHz Frequency 
