@@ -13,20 +13,18 @@ DEPS = $(addsuffix .d, $(SRCS)) $(addsuffix .d, $(TEST_SRCS))
 
 TEST_OBJS = $(TEST_SRCS:.cc=.test.o)
 
-HAL = 	stm32f4xx_hal.o \
-	stm32f4xx_hal_cortex.o \
-	stm32f4xx_hal_gpio.o \
-	stm32f4xx_hal_rcc.o \
-	stm32f4xx_hal_rcc_ex.o \
-	stm32f4xx_hal_dma.o \
-	stm32f4xx_hal_i2c.o \
-	stm32f4xx_hal_i2s.o \
-	stm32f4xx_hal_i2s_ex.o \
-	stm32f4xx_hal_spi.o \
-	stm32f4xx_hal_dac.o \
-	stm32f4xx_hal_adc.o \
-	stm32f4xx_hal_adc_ex.o \
-	stm32f4xx_hal_rng.o \
+HAL = 	stm32f7xx_hal.o \
+	stm32f7xx_hal_cortex.o \
+	stm32f7xx_hal_gpio.o \
+	stm32f7xx_hal_rcc.o \
+	stm32f7xx_hal_rcc_ex.o \
+	stm32f7xx_hal_dma.o \
+	stm32f7xx_hal_i2c.o \
+	stm32f7xx_hal_sai.o \
+	stm32f7xx_hal_sai_ex.o \
+	stm32f7xx_hal_spi.o \
+	stm32f7xx_hal_adc.o \
+	stm32f7xx_hal_adc_ex.o \
 
 OPTIM ?= 2
 TOOLCHAIN_DIR ?=
@@ -48,15 +46,16 @@ INC = -I . \
       -I $(CMSIS_DIR) \
       -I $(HAL_DIR) \
 
-LDSCRIPT = $(CMSIS_DIR)/STM32F407VGTx_FLASH.ld
+LDSCRIPT = $(CMSIS_DIR)/STM32F722VEx_FLASH.ld
 
-ARCHFLAGS =  	-mcpu=cortex-m4 \
+ARCHFLAGS =  	-mcpu=cortex-m7 \
 		-mthumb \
 		-mfloat-abi=hard \
-		-mfpu=fpv4-sp-d16 \
+		-mfpu=fpv5-d16 \
 		-mthumb-interwork \
 		-mfp16-format=ieee \
-		-DSTM32F407xx \
+		-DARM_MATH_CM7 \
+		-DSTM32F722xx \
 
 CPPFLAGS= $(INC)
 
@@ -80,8 +79,8 @@ LDFLAGS= $(ARCHFLAGS) -T $(LDSCRIPT) \
 	-Wl,--gc-sections \
 	-nostdlib \
 
-STARTUP = $(CMSIS_DIR)startup_stm32f407xx
-SYSTEM = $(CMSIS_DIR)system_stm32f4xx
+STARTUP = $(CMSIS_DIR)startup_stm32f722xx
+SYSTEM = $(CMSIS_DIR)system_stm32f7xx
 
 OBJS += $(STARTUP).o \
 	$(SYSTEM).o \
@@ -106,15 +105,15 @@ clean:
 	$(EASIGLIB_DIR)data_compiler.pyc
 
 flash: $(TARGET).bin
-	openocd -f interface/stlink-v2-1.cfg -f target/stm32f4x.cfg \
+	openocd -f interface/stlink-v2-1.cfg -f target/stm32f7x.cfg \
 	-c "init; program $(TARGET).bin verify reset exit 0x08000000" \
 
 erase:
-	openocd -f interface/stlink-v2-1.cfg -f target/stm32f4x.cfg \
-	-c "init; halt; stm32f4x mass_erase 0; exit" \
+	openocd -f interface/stlink-v2-1.cfg -f target/stm32f7x.cfg \
+	-c "init; halt; stm32f7x mass_erase 0; exit" \
 
 debug-server:
-	openocd -f interface/stlink-v2-1.cfg -f target/stm32f4x.cfg \
+	openocd -f interface/stlink-v2-1.cfg -f target/stm32f7x.cfg \
 
 debug:
 	$(TOOLCHAIN_DIR)arm-none-eabi-gdb $(TARGET).elf \

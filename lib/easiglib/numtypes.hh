@@ -5,7 +5,7 @@
 #include <cfloat>
 
 #ifdef __arm__
-  #include "stm32f4xx.h"
+  #include "stm32f7xx.h"
 #endif
 
 inline int libc_abs(int x) { return abs(x); }
