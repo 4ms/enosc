@@ -9,7 +9,7 @@ SRCS = \
 	lib/easiglib/numtypes.cc \
 	lib/easiglib/math.cc \
 	lib/easiglib/dsp.cc \
-	src/main.cc \
+	src/main.c \
 	src/hal_handlers.c \
 	src/led_tim_pwm.c \
 	src/adc_interface.c \
