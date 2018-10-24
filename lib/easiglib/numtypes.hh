@@ -98,7 +98,7 @@ private:
   __fp16 val_;
 };
 
-using f16 = Float16
+using f16 = Float16;
 
 #endif
 
