@@ -100,7 +100,7 @@ void init_SAI_clock(uint32_t sample_rate)
 
 	PeriphClkInitStruct.CODEC_SaixClockSelection 		= CODEC_SAI_RCC_CLKSOURCE_PLLI2S;
 	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-		_Error_Handler(__FILE__, __LINE__);
+		assert_failed(__FILE__, __LINE__);
 
 
 }
@@ -266,23 +266,23 @@ void Init_SAIDMA(void)
 	//
 
 	if (HAL_SAI_InitProtocol(&hsai1b_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
-		_Error_Handler(__FILE__, __LINE__);
+		assert_failed(__FILE__, __LINE__);
 
 	if (HAL_SAI_InitProtocol(&hsai1a_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
-		_Error_Handler(__FILE__, __LINE__);
+		assert_failed(__FILE__, __LINE__);
 
 	//
 	// Initialize the DMA, and link to SAI
 	//
 
     if (HAL_DMA_Init(&hdma_sai1b_rx) != HAL_OK)
-      _Error_Handler(__FILE__, __LINE__);
+      assert_failed(__FILE__, __LINE__);
 
     __HAL_LINKDMA(&hsai1b_rx, hdmarx, hdma_sai1b_rx);
 
 	
     if (HAL_DMA_Init(&hdma_sai1a_tx) != HAL_OK)
-      _Error_Handler(__FILE__, __LINE__);
+      assert_failed(__FILE__, __LINE__);
 
     __HAL_LINKDMA(&hsai1a_tx, hdmatx, hdma_sai1a_tx);
 

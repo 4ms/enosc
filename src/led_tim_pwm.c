@@ -70,7 +70,7 @@ void init_led_tim_pwm(void)
 	timFREEZELED.Init.CounterMode       	= TIM_COUNTERMODE_UP;
 	timFREEZELED.Init.RepetitionCounter 	= 0;
 	timFREEZELED.Init.AutoReloadPreload 	= TIM_AUTORELOAD_PRELOAD_DISABLE;
-	if (HAL_TIM_PWM_Init(&timFREEZELED) != HAL_OK) _Error_Handler(__FILE__, __LINE__);
+  if (HAL_TIM_PWM_Init(&timFREEZELED) != HAL_OK) assert_failed(__FILE__, __LINE__);
 
 
 	timLEARNLED.Instance 					= LEARN_LED_PWM_TIM;
@@ -80,7 +80,7 @@ void init_led_tim_pwm(void)
 	timLEARNLED.Init.CounterMode       		= TIM_COUNTERMODE_UP;
 	timLEARNLED.Init.RepetitionCounter 		= 0;
 	timLEARNLED.Init.AutoReloadPreload 		= TIM_AUTORELOAD_PRELOAD_DISABLE;
-	if (HAL_TIM_PWM_Init(&timLEARNLED) != HAL_OK) _Error_Handler(__FILE__, __LINE__);
+	if (HAL_TIM_PWM_Init(&timLEARNLED) != HAL_OK) assert_failed(__FILE__, __LINE__);
 
 
 	// Configure each TIMx peripheral's Output Compare units.
@@ -95,24 +95,24 @@ void init_led_tim_pwm(void)
 	tim_oc.OCIdleState  = TIM_OCIDLESTATE_RESET;
 	tim_oc.Pulse 		= 0;
 
-	if (HAL_TIM_PWM_ConfigChannel(&timFREEZELED, &tim_oc, 	FREEZE_LED_PWM_CHAN_RED) != HAL_OK)		_Error_Handler(__FILE__, __LINE__);
-	if (HAL_TIM_PWM_ConfigChannel(&timFREEZELED, &tim_oc, 	FREEZE_LED_PWM_CHAN_GREEN) != HAL_OK)	_Error_Handler(__FILE__, __LINE__);
-	if (HAL_TIM_PWM_ConfigChannel(&timFREEZELED, &tim_oc, 	FREEZE_LED_PWM_CHAN_BLUE) != HAL_OK)	_Error_Handler(__FILE__, __LINE__);
+	if (HAL_TIM_PWM_ConfigChannel(&timFREEZELED, &tim_oc, 	FREEZE_LED_PWM_CHAN_RED) != HAL_OK)		assert_failed(__FILE__, __LINE__);
+	if (HAL_TIM_PWM_ConfigChannel(&timFREEZELED, &tim_oc, 	FREEZE_LED_PWM_CHAN_GREEN) != HAL_OK)	assert_failed(__FILE__, __LINE__);
+	if (HAL_TIM_PWM_ConfigChannel(&timFREEZELED, &tim_oc, 	FREEZE_LED_PWM_CHAN_BLUE) != HAL_OK)	assert_failed(__FILE__, __LINE__);
 
-	if (HAL_TIM_PWM_ConfigChannel(&timLEARNLED, &tim_oc, 	LEARN_LED_PWM_CHAN_RED) != HAL_OK)		_Error_Handler(__FILE__, __LINE__);
-	if (HAL_TIM_PWM_ConfigChannel(&timLEARNLED, &tim_oc, 	LEARN_LED_PWM_CHAN_GREEN) != HAL_OK)	_Error_Handler(__FILE__, __LINE__);
-	if (HAL_TIM_PWM_ConfigChannel(&timLEARNLED, &tim_oc, 	LEARN_LED_PWM_CHAN_BLUE) != HAL_OK)		_Error_Handler(__FILE__, __LINE__);
+	if (HAL_TIM_PWM_ConfigChannel(&timLEARNLED, &tim_oc, 	LEARN_LED_PWM_CHAN_RED) != HAL_OK)		assert_failed(__FILE__, __LINE__);
+	if (HAL_TIM_PWM_ConfigChannel(&timLEARNLED, &tim_oc, 	LEARN_LED_PWM_CHAN_GREEN) != HAL_OK)	assert_failed(__FILE__, __LINE__);
+	if (HAL_TIM_PWM_ConfigChannel(&timLEARNLED, &tim_oc, 	LEARN_LED_PWM_CHAN_BLUE) != HAL_OK)		assert_failed(__FILE__, __LINE__);
 
 	//
 	// Start PWM signals generation
 	//
- 	if (HAL_TIM_PWM_Start(&timFREEZELED, 	FREEZE_LED_PWM_CHAN_RED) != HAL_OK)						_Error_Handler(__FILE__, __LINE__);
- 	if (HAL_TIM_PWM_Start(&timFREEZELED, 	FREEZE_LED_PWM_CHAN_GREEN) != HAL_OK)					_Error_Handler(__FILE__, __LINE__);
- 	if (HAL_TIM_PWM_Start(&timFREEZELED, 	FREEZE_LED_PWM_CHAN_BLUE) != HAL_OK)					_Error_Handler(__FILE__, __LINE__);
+ 	if (HAL_TIM_PWM_Start(&timFREEZELED, 	FREEZE_LED_PWM_CHAN_RED) != HAL_OK)						assert_failed(__FILE__, __LINE__);
+ 	if (HAL_TIM_PWM_Start(&timFREEZELED, 	FREEZE_LED_PWM_CHAN_GREEN) != HAL_OK)					assert_failed(__FILE__, __LINE__);
+ 	if (HAL_TIM_PWM_Start(&timFREEZELED, 	FREEZE_LED_PWM_CHAN_BLUE) != HAL_OK)					assert_failed(__FILE__, __LINE__);
  
- 	if (HAL_TIM_PWM_Start(&timLEARNLED, 	LEARN_LED_PWM_CHAN_RED) != HAL_OK)						_Error_Handler(__FILE__, __LINE__);
- 	if (HAL_TIM_PWM_Start(&timLEARNLED, 	LEARN_LED_PWM_CHAN_GREEN) != HAL_OK)					_Error_Handler(__FILE__, __LINE__);
- 	if (HAL_TIM_PWM_Start(&timLEARNLED, 	LEARN_LED_PWM_CHAN_BLUE) != HAL_OK)						_Error_Handler(__FILE__, __LINE__);
+ 	if (HAL_TIM_PWM_Start(&timLEARNLED, 	LEARN_LED_PWM_CHAN_RED) != HAL_OK)						assert_failed(__FILE__, __LINE__);
+ 	if (HAL_TIM_PWM_Start(&timLEARNLED, 	LEARN_LED_PWM_CHAN_GREEN) != HAL_OK)					assert_failed(__FILE__, __LINE__);
+ 	if (HAL_TIM_PWM_Start(&timLEARNLED, 	LEARN_LED_PWM_CHAN_BLUE) != HAL_OK)						assert_failed(__FILE__, __LINE__);
 
 }
 

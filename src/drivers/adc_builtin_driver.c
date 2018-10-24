@@ -70,7 +70,7 @@ void ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc
 	hadc1.Init.DMAContinuousRequests 	= ENABLE;//DISABLE;
 	hadc1.Init.EOCSelection 			= ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
 	if (HAL_ADC_Init(&hadc1) != HAL_OK)
-		_Error_Handler(__FILE__, __LINE__);
+    assert_failed(__FILE__, __LINE__);
 
 	for (i=0; i<num_channels; i++)
 	{
@@ -78,7 +78,7 @@ void ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc
 		sConfig.Rank 			= ADC_REGULAR_RANK_1 + i;
 		sConfig.SamplingTime	= adc_setup[i].sample_time;
 		if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-			_Error_Handler(__FILE__, __LINE__);
+			assert_failed(__FILE__, __LINE__);
 	}
 
 	//__HAL_ADC_DISABLE_IT(&hadc1, (ADC_IT_EOC | ADC_IT_OVR));
@@ -120,7 +120,7 @@ void ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc
 	hadc3.Init.DMAContinuousRequests 	= ENABLE;//DISABLE;
 	hadc3.Init.EOCSelection 			= ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
 	if (HAL_ADC_Init(&hadc3) != HAL_OK)
-		_Error_Handler(__FILE__, __LINE__);
+		assert_failed(__FILE__, __LINE__);
 
 	for (i=0; i<num_channels; i++)
 	{
@@ -128,7 +128,7 @@ void ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc
 		sConfig.Rank 			= ADC_REGULAR_RANK_1 + i;
 		sConfig.SamplingTime	= adc_setup[i].sample_time;
 		if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
-			_Error_Handler(__FILE__, __LINE__);
+			assert_failed(__FILE__, __LINE__);
 	}
 
 	//__HAL_ADC_DISABLE_IT(&hadc3, (ADC_IT_EOC | ADC_IT_OVR));
@@ -157,7 +157,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 		hdma_adc1.Init.Priority 			= DMA_PRIORITY_MEDIUM;
 		hdma_adc1.Init.FIFOMode 			= DMA_FIFOMODE_DISABLE;
 		if (HAL_DMA_Init(&hdma_adc1) != HAL_OK)
-			_Error_Handler(__FILE__, __LINE__);
+			assert_failed(__FILE__, __LINE__);
 
 		__HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc1);
 	}
@@ -177,7 +177,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 		hdma_adc3.Init.Priority 			= DMA_PRIORITY_MEDIUM;
 		hdma_adc3.Init.FIFOMode 			= DMA_FIFOMODE_DISABLE;
 		if (HAL_DMA_Init(&hdma_adc3) != HAL_OK)
-			_Error_Handler(__FILE__, __LINE__);
+			assert_failed(__FILE__, __LINE__);
 
 		__HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc3);
 	}

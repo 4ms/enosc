@@ -26,6 +26,7 @@
  * -----------------------------------------------------------------------------
  */
 
+extern "C" {
 #include <stm32f7xx.h>
 #include "globals.h"
 #include "gpio_pins.h"
@@ -35,9 +36,11 @@
 #include "led_tim_pwm.h"
 #include "adc_interface.h"
 #include "hal_handlers.h"
+}
+
+#include "system.hh"
+
 //Private functions:
-void SystemClock_Config(void);
-void SetVectorTable(uint32_t reset_address);
 void do_init(void);
 extern uint16_t		builtin_adc1_raw[ NUM_BUILTIN_ADC1 ];
 extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];
@@ -73,15 +76,10 @@ uint16_t spread1_cv, warp_cv, spread2_cv, twist_cv, tilt_cv, grid_cv, mod_cv;
 ///////////////////////////////////////////////////////////
 
 
-
-
-
-
-
 uint32_t learn_but_armed=0, freeze_but_armed=0;
 uint8_t learn_color=1, freeze_color=1;
 
-int main(void)
+void main2()
 {
 	uint32_t last_update_tm = 0;
 
@@ -246,29 +244,14 @@ int main(void)
 		grid_cv = builtin_adc3_raw[GRID_CV_ADC];
 		mod_cv = builtin_adc3_raw[MOD_CV_ADC];
 
-	} //end main loop
-
-	return(0);
-
-} //end main()
+  }
+}
 
 
 void do_init(void)
 {
 
 	uint32_t err;
-
-	SetVectorTable(0x08000000);
-
-	HAL_Init();
-	SystemClock_Config();
-
-	// SCB_EnableICache();
-	SCB_DisableICache(); //not needed because we're running from FLASH on the ITCM bus, using ART and Prefetch
-
-	SCB_InvalidateDCache();
-	SCB_EnableDCache();	
-	//SCB_DisableDCache();	
 
 	__HAL_RCC_DMA2_CLK_DISABLE();
 
@@ -298,7 +281,7 @@ void do_init(void)
 	
 	HAL_Delay(100);
 	err = codec_register_setup(SAMPLERATE);
-	if (err){_Error_Handler(__FILE__, __LINE__);}
+  if (err){assert_failed(__FILE__, __LINE__);}
 
 	//Start Codec SAI
 	codec_SAI_init(SAMPLERATE);
@@ -309,82 +292,14 @@ void do_init(void)
 }
 
 
-void SystemClock_Config(void)
-{
+struct Main {
+  System sys_;
 
-	RCC_OscInitTypeDef RCC_OscInitStruct;
-	RCC_ClkInitTypeDef RCC_ClkInitStruct;
-	RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
-
-	//Configure the main internal regulator output voltage 
-	__HAL_RCC_PWR_CLK_ENABLE();
-
-	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-
-	//Initializes the CPU, AHB and APB busses clocks 
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	RCC_OscInitStruct.PLL.PLLM = 16;
-	RCC_OscInitStruct.PLL.PLLN = 432;
-	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-		_Error_Handler(__FILE__, __LINE__);
-
-	//Activate the OverDrive to reach the 216 MHz Frequency 
-	if (HAL_PWREx_EnableOverDrive() != HAL_OK)
-		_Error_Handler(__FILE__, __LINE__);
-
-	//Initializes the CPU, AHB and APB busses clocks 
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
-
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
-		_Error_Handler(__FILE__, __LINE__);
-
-
-	//Note: Do not start the SAI clock (I2S) at this time. 
-	PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
-
-	PeriphClkInitStruct.I2c1ClockSelection 		= RCC_I2C1CLKSOURCE_PCLK1; //54MHz
-
-	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-	{
-		_Error_Handler(__FILE__, __LINE__);
-	}
-
-	//Enables the Clock Security System 
-	HAL_RCC_EnableCSS();
-
-	// Configure the Systick interrupt time for 1ms
-	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
-
-	//Configure the Systick 
-	HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-
-	// SysTick_IRQn interrupt configuration 
-	HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-}
-
-void SetVectorTable(uint32_t reset_address)
-{ 
-	SCB->VTOR = reset_address & (uint32_t)0x1FFFFF80;
-}
-
+  Main() {
+    main2();
+  }
+} _;
 
 //
 // SysTick_Handler() is needed for HAL_GetTick()
 //
-void SysTick_Handler(void)
-{
-	HAL_IncTick();
-	HAL_SYSTICK_IRQHandler();
-}
-
-
-

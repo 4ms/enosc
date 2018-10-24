@@ -9,7 +9,6 @@ SRCS = \
 	lib/easiglib/numtypes.cc \
 	lib/easiglib/math.cc \
 	lib/easiglib/dsp.cc \
-	src/main.c \
 	src/hal_handlers.c \
 	src/led_tim_pwm.c \
 	src/adc_interface.c \
@@ -19,6 +18,7 @@ SRCS = \
 	src/drivers/adc_builtin_driver.c \
 	src/drivers/codec_i2c.c \
 	src/drivers/codec_sai.c \
+	src/main.cc \
 
 OBJS_1 = $(SRCS:.cc=.o)
 OBJS = $(OBJS_1:.c=.o)

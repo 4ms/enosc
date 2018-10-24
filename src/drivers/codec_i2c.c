@@ -255,7 +255,7 @@ uint32_t codec_write_register(uint8_t RegisterAddr, uint16_t RegisterValue)
 	while((err = HAL_I2C_Master_Transmit(&codec_i2c, CODEC_ADDRESS, data, 2, CODEC_SHORT_TIMEOUT)) != HAL_OK)
 	{
 		if (HAL_I2C_GetError(&codec_i2c) != HAL_I2C_ERROR_AF)
-			_Error_Handler(__FILE__, __LINE__);
+			assert_failed(__FILE__, __LINE__);
 	}
 
 	if (err==HAL_OK) 	return 0;
@@ -324,9 +324,9 @@ void codec_I2C_init(void)
 	codec_i2c.Init.GeneralCallMode 		= I2C_GENERALCALL_DISABLE;
 	codec_i2c.Init.NoStretchMode 		= I2C_NOSTRETCH_DISABLE;
 
-	if (HAL_I2C_Init(&codec_i2c) != HAL_OK)												_Error_Handler(__FILE__, __LINE__);
-	if (HAL_I2CEx_ConfigAnalogFilter(&codec_i2c, I2C_ANALOGFILTER_ENABLE) != HAL_OK)	_Error_Handler(__FILE__, __LINE__);
-	if (HAL_I2CEx_ConfigDigitalFilter(&codec_i2c, 0) != HAL_OK)							_Error_Handler(__FILE__, __LINE__);
+	if (HAL_I2C_Init(&codec_i2c) != HAL_OK)												assert_failed(__FILE__, __LINE__);
+	if (HAL_I2CEx_ConfigAnalogFilter(&codec_i2c, I2C_ANALOGFILTER_ENABLE) != HAL_OK)	assert_failed(__FILE__, __LINE__);
+	if (HAL_I2CEx_ConfigDigitalFilter(&codec_i2c, 0) != HAL_OK)							assert_failed(__FILE__, __LINE__);
 }
 
 
