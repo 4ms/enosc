@@ -41,16 +41,8 @@
 // 								GPIOs and PINS 
 //##############################################################################
 
-// Gate jacks
 
-#define FREEZE_JACK_Pin GPIO_PIN_2
-#define FREEZE_JACK_GPIO_Port GPIOB
-
-#define LEARN_JACK_Pin GPIO_PIN_7
-#define LEARN_JACK_GPIO_Port GPIOE
-
-
-//Switches/Buttons
+//Switches
 
 #define MODSW_TOP_Pin GPIO_PIN_14
 #define MODSW_TOP_GPIO_Port GPIOE

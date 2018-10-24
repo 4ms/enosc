@@ -39,6 +39,7 @@ extern "C" {
 
 #include "system.hh"
 #include "buttons.hh"
+#include "gates.hh"
 
 extern uint16_t		builtin_adc1_raw[ NUM_BUILTIN_ADC1 ];
 extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];
@@ -49,9 +50,10 @@ extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];
 struct Main {
   System sys_;
   Buttons buttons_;
+  Gates gates_;
 
   // UI state variables
-  enum GateStates 	freeze_jack, learn_jack;
+  bool freeze_jack, learn_jack;
   bool learn_but, freeze_but;
   enum SwitchStates 	mod_sw, grid_sw, twist_sw, warp_sw;
   uint16_t warp_pot, detune_pot, mod_pot, root_pot, grid_pot, pitch_pot, spread_pot, tilt_pot, twist_pot;
@@ -174,8 +176,8 @@ struct Main {
     ///////////////////////////////////////////////////////////////////////////////////////
 
     //Gate jacks
-    freeze_jack = PIN_READ(FREEZE_JACK_GPIO_Port, FREEZE_JACK_Pin) ? JACK_HIGH : JACK_LOW;
-    learn_jack = PIN_READ(LEARN_JACK_GPIO_Port, LEARN_JACK_Pin) ? JACK_HIGH : JACK_LOW;
+    freeze_jack = gates_.freeze.get();
+    learn_jack = gates_.learn.get();
 
     //Buttons
     freeze_but = buttons_.freeze.get();

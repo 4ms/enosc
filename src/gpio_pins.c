@@ -38,20 +38,7 @@ void init_gpio_pins(void){
 	__HAL_RCC_GPIOC_CLK_ENABLE();
 	__HAL_RCC_GPIOD_CLK_ENABLE();
 	__HAL_RCC_GPIOE_CLK_ENABLE();
-	__HAL_RCC_GPIOH_CLK_ENABLE();
-
-
-	// Gate Jacks
-	gpio.Pin = FREEZE_JACK_Pin;
-	gpio.Mode = GPIO_MODE_INPUT;
-	gpio.Pull = GPIO_PULLDOWN;
-	HAL_GPIO_Init(FREEZE_JACK_GPIO_Port, &gpio);
-
-	gpio.Pin = LEARN_JACK_Pin;
-	gpio.Mode = GPIO_MODE_INPUT;
-	gpio.Pull = GPIO_PULLDOWN;
-	HAL_GPIO_Init(LEARN_JACK_GPIO_Port, &gpio);
-
+  __HAL_RCC_GPIOH_CLK_ENABLE();
 
   //Switches
 
