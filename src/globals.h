@@ -41,7 +41,3 @@ enum GateStates {
 	JACK_LOW,
 	JACK_HIGH
 };
-enum ButtonStates {
-	NOT_PRESSED,
-	PRESSED
-};

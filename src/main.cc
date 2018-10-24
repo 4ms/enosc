@@ -38,19 +38,21 @@ extern "C" {
 }
 
 #include "system.hh"
+#include "buttons.hh"
 
 extern uint16_t		builtin_adc1_raw[ NUM_BUILTIN_ADC1 ];
 extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];
 
-#define USE_TIM_PWM_FOR_LEDS 1
+#define USE_TIM_PWM_FOR_LEDS 0
 
 
 struct Main {
   System sys_;
+  Buttons buttons_;
 
   // UI state variables
   enum GateStates 	freeze_jack, learn_jack;
-  enum ButtonStates 	learn_but, freeze_but;
+  bool learn_but, freeze_but;
   enum SwitchStates 	mod_sw, grid_sw, twist_sw, warp_sw;
   uint16_t warp_pot, detune_pot, mod_pot, root_pot, grid_pot, pitch_pot, spread_pot, tilt_pot, twist_pot;
   uint16_t spread1_cv, warp_cv, spread2_cv, twist_cv, tilt_cv, grid_cv, mod_cv;
@@ -135,8 +137,8 @@ struct Main {
 
       //Change color when buttons are pressed
       //Simple de-bounce
-      if (freeze_but==PRESSED) freeze_but_armed++;
-      if (freeze_but==NOT_PRESSED) {
+      if (freeze_but) freeze_but_armed++;
+      else {
         if (freeze_but_armed>20000) freeze_color++; //reset_led(FREEZE_LED);}
         freeze_but_armed = 0;
       }
@@ -150,8 +152,8 @@ struct Main {
       if (freeze_color & 0b100) LED_ON(FREEZE_BLUE_GPIO_Port, FREEZE_BLUE_Pin);
       else LED_OFF(FREEZE_BLUE_GPIO_Port, FREEZE_BLUE_Pin);
 
-      if (learn_but==PRESSED) learn_but_armed++;
-      if (learn_but==NOT_PRESSED) {
+      if (learn_but) learn_but_armed++;
+      else {
         if (learn_but_armed>20000) learn_color++; //reset_led(LEARN_LED);}
         learn_but_armed = 0;
       }
@@ -176,8 +178,8 @@ struct Main {
     learn_jack = PIN_READ(LEARN_JACK_GPIO_Port, LEARN_JACK_Pin) ? JACK_HIGH : JACK_LOW;
 
     //Buttons
-    freeze_but = PIN_READ(FREEZE_BUT_GPIO_Port, FREEZE_BUT_Pin) ? NOT_PRESSED : PRESSED;
-    learn_but = PIN_READ(LEARN_BUT_GPIO_Port, LEARN_BUT_Pin) ? NOT_PRESSED : PRESSED;
+    freeze_but = buttons_.freeze.get();
+    learn_but = buttons_.learn.get();
 
     //MOD Switch
     if (PIN_READ(MODSW_TOP_GPIO_Port, MODSW_TOP_Pin)) {

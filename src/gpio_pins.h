@@ -72,12 +72,6 @@
 #define WARPSW_BOT_Pin GPIO_PIN_10 /*reversed from PCB*/
 #define WARPSW_BOT_GPIO_Port GPIOC
 
-#define FREEZE_BUT_Pin GPIO_PIN_11
-#define FREEZE_BUT_GPIO_Port GPIOA
-
-#define LEARN_BUT_Pin GPIO_PIN_9
-#define LEARN_BUT_GPIO_Port GPIOC
-
 // LEDs (TIM PWM)
 
 #define LEARN_RED_Pin GPIO_PIN_6

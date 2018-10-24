@@ -53,7 +53,7 @@ void init_gpio_pins(void){
 	HAL_GPIO_Init(LEARN_JACK_GPIO_Port, &gpio);
 
 
-	//Switches/buttons
+  //Switches
 
 	gpio.Pin = MODSW_TOP_Pin|MODSW_BOT_Pin;
 	gpio.Mode = GPIO_MODE_INPUT;
@@ -70,20 +70,10 @@ void init_gpio_pins(void){
 	gpio.Pull = GPIO_PULLUP;
 	HAL_GPIO_Init(TWISTSW_TOP_GPIO_Port, &gpio);
 
-	gpio.Pin = LEARN_BUT_Pin;
-	gpio.Mode = GPIO_MODE_INPUT;
-	gpio.Pull = GPIO_PULLUP;
-	HAL_GPIO_Init(LEARN_BUT_GPIO_Port, &gpio);
-
 	gpio.Pin = WARPSW_TOP_Pin|WARPSW_BOT_Pin;
 	gpio.Mode = GPIO_MODE_INPUT;
 	gpio.Pull = GPIO_PULLUP;
 	HAL_GPIO_Init(WARPSW_TOP_GPIO_Port, &gpio);
-
-	gpio.Pin = FREEZE_BUT_Pin;
-	gpio.Mode = GPIO_MODE_INPUT;
-	gpio.Pull = GPIO_PULLUP;
-	HAL_GPIO_Init(FREEZE_BUT_GPIO_Port, &gpio);
 
 	// Debug header pins
 
