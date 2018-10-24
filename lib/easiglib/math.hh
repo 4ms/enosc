@@ -65,5 +65,3 @@ struct Math {
     return x * (1.875_f + s * (-1.25_f + 0.375_f * s));
   }
 };
-
-constexpr f Math::pi;

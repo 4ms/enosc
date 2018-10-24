@@ -4,10 +4,10 @@
 # - define TARGET
 
 TARGET = main
-SRCS = lib/easiglib/numtypes.cc src/main.cc data.cc
+SRCS = lib/easiglib/numtypes.cc lib/easiglib/math.cc lib/easiglib/dsp.cc src/main.cc data.cc
 OBJS = $(SRCS:.cc=.o)
 
-TEST_SRCS = test/test.cc data.cc lib/easiglib/numtypes.cc
+TEST_SRCS = test/test.cc data.cc lib/easiglib/numtypes.cc lib/easiglib/math.cc lib/easiglib/dsp.cc
 
 DEPS = $(addsuffix .d, $(SRCS)) $(addsuffix .d, $(TEST_SRCS))
 
