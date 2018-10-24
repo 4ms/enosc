@@ -176,12 +176,12 @@ struct Main {
     ///////////////////////////////////////////////////////////////////////////////////////
 
     //Gate jacks
-    freeze_jack = gates_.freeze.get();
-    learn_jack = gates_.learn.get();
+    freeze_jack = gates_.freeze_.get();
+    learn_jack = gates_.learn_.get();
 
     //Buttons
-    freeze_but = buttons_.freeze.get();
-    learn_but = buttons_.learn.get();
+    freeze_but = buttons_.freeze_.get();
+    learn_but = buttons_.learn_.get();
 
     //MOD Switch
     if (PIN_READ(MODSW_TOP_GPIO_Port, MODSW_TOP_Pin)) {

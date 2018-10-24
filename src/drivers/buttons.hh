@@ -20,7 +20,7 @@ struct Buttons {
       HAL_GPIO_Init(GPIOC, &gpio);
     }
     bool get() { return HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9); };
-  } learn;
+  } learn_;
 
   struct Freeze : Button {
     Freeze() {
@@ -32,10 +32,10 @@ struct Buttons {
       HAL_GPIO_Init(GPIOA, &gpio);
     }
     bool get() { return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_11); };
-  } freeze;
+  } freeze_;
 
   void Debounce() {
-    learn.Debounce();
-    freeze.Debounce();
+    learn_.Debounce();
+    freeze_.Debounce();
   }
 };

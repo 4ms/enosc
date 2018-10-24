@@ -14,7 +14,7 @@ struct Gates {
       HAL_GPIO_Init(GPIOE, &gpio);
     }
     bool get() { return HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_7); };
-  } learn;
+  } learn_;
 
   struct Freeze : Gate {
     Freeze() {
@@ -26,5 +26,5 @@ struct Gates {
       HAL_GPIO_Init(GPIOB, &gpio);
     }
     bool get() { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2); };
-  } freeze;
+  } freeze_;
 };
