@@ -2,7 +2,7 @@
 
 #pragma once
 
-struct ShortFrame {
+constexpr struct ShortFrame {
   int16_t l = 0;
   int16_t r = 0;
 } zero;
