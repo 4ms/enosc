@@ -36,7 +36,7 @@ CC = $(TOOLCHAIN_DIR)arm-none-eabi-gcc
 OBJCOPY = $(TOOLCHAIN_DIR)arm-none-eabi-objcopy
 GDB = $(TOOLCHAIN_DIR)arm-none-eabi-gdb
 
-TEST_CXX = x86_64-apple-darwin17.7.0-c++-8
+TEST_CXX = g++-8
 
 CMSIS_DIR = lib/CMSIS/
 HAL_DIR = lib/HAL/
