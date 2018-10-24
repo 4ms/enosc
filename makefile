@@ -127,19 +127,17 @@ clean:
 	$(EASIGLIB_DIR)data_compiler.pyc
 
 flash: $(TARGET).bin
-	openocd -f interface/stlink-v2-1.cfg -f target/stm32f7x.cfg \
-	-c "init; program $(TARGET).bin verify reset exit 0x08000000" \
+	st-flash write $(TARGET).bin 0x8000000
 
 erase:
-	openocd -f interface/stlink-v2-1.cfg -f target/stm32f7x.cfg \
-	-c "init; halt; stm32f7x mass_erase 0; exit" \
+	st-flash erase
 
 debug-server:
-	openocd -f interface/stlink-v2-1.cfg -f target/stm32f7x.cfg \
+	st-util -v
 
 debug:
 	$(TOOLCHAIN_DIR)arm-none-eabi-gdb $(TARGET).elf \
-	--eval-command="target remote localhost:3333"
+	--eval-command="target remote localhost:4242"
 
 # File dependencies:
 
