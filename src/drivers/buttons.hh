@@ -13,7 +13,7 @@ struct Buttons {
   struct Learn : Button {
     Learn() {
       __HAL_RCC_GPIOC_CLK_ENABLE();
-      GPIO_InitTypeDef gpio;
+      GPIO_InitTypeDef gpio = {0};
       gpio.Pin = GPIO_PIN_9;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLUP;
@@ -25,7 +25,7 @@ struct Buttons {
   struct Freeze : Button {
     Freeze() {
       __HAL_RCC_GPIOA_CLK_ENABLE();
-      GPIO_InitTypeDef gpio;
+      GPIO_InitTypeDef gpio = {0};
       gpio.Pin = GPIO_PIN_11;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLUP;

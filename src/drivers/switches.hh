@@ -20,7 +20,6 @@
 #define WARPSW_BOT_Pin GPIO_PIN_10 /*reversed from PCB*/
 #define WARPSW_BOT_GPIO_Port GPIOC
 
-
 struct Switches {
   enum State { UP, CENTER, DOWN, ERROR };
 
@@ -37,7 +36,7 @@ struct Switches {
 
   struct Grid : Switch {
     Grid() {
-      GPIO_InitTypeDef gpio;
+      GPIO_InitTypeDef gpio = {0};
       gpio.Pin = GRIDSW_TOP_Pin|GRIDSW_BOT_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLUP;
@@ -49,7 +48,7 @@ struct Switches {
 
   struct Mod : Switch {
     Mod() {
-      GPIO_InitTypeDef gpio;
+      GPIO_InitTypeDef gpio = {0};
       gpio.Pin = MODSW_TOP_Pin|MODSW_BOT_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLUP;
@@ -61,7 +60,7 @@ struct Switches {
 
   struct Twist : Switch {
     Twist() {
-      GPIO_InitTypeDef gpio;
+      GPIO_InitTypeDef gpio = {0};
       gpio.Pin = TWISTSW_TOP_Pin|TWISTSW_BOT_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLUP;
@@ -73,7 +72,7 @@ struct Switches {
 
   struct Warp : Switch {
     Warp() {
-      GPIO_InitTypeDef gpio;
+      GPIO_InitTypeDef gpio = {0};
       gpio.Pin = WARPSW_TOP_Pin|WARPSW_BOT_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLUP;

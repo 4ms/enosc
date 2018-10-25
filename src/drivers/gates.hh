@@ -7,7 +7,7 @@ struct Gates {
   struct Learn : Gate {
     Learn() {
       __HAL_RCC_GPIOE_CLK_ENABLE();
-      GPIO_InitTypeDef gpio;
+      GPIO_InitTypeDef gpio = {0};
       gpio.Pin = GPIO_PIN_7;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLDOWN;
@@ -19,7 +19,7 @@ struct Gates {
   struct Freeze : Gate {
     Freeze() {
       __HAL_RCC_GPIOB_CLK_ENABLE();
-      GPIO_InitTypeDef gpio;
+      GPIO_InitTypeDef gpio = {0};
       gpio.Pin = GPIO_PIN_2;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLDOWN;

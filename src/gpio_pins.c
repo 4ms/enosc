@@ -40,7 +40,7 @@ void init_gpio_pins(void){
 	__HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
 
-	// Debug header pins
+  // Debug header pins
 
 	gpio.Pin = DEBUG1_OUT_Pin;
 	gpio.Mode = GPIO_MODE_OUTPUT_PP;
