@@ -40,28 +40,6 @@ void init_gpio_pins(void){
 	__HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
 
-  //Switches
-
-	gpio.Pin = MODSW_TOP_Pin|MODSW_BOT_Pin;
-	gpio.Mode = GPIO_MODE_INPUT;
-	gpio.Pull = GPIO_PULLUP;
-	HAL_GPIO_Init(MODSW_TOP_GPIO_Port, &gpio);
-
-	gpio.Pin = GRIDSW_TOP_Pin|GRIDSW_BOT_Pin;
-	gpio.Mode = GPIO_MODE_INPUT;
-	gpio.Pull = GPIO_PULLUP;
-	HAL_GPIO_Init(GRIDSW_TOP_GPIO_Port, &gpio);
-
-	gpio.Pin = TWISTSW_TOP_Pin|TWISTSW_BOT_Pin;
-	gpio.Mode = GPIO_MODE_INPUT;
-	gpio.Pull = GPIO_PULLUP;
-	HAL_GPIO_Init(TWISTSW_TOP_GPIO_Port, &gpio);
-
-	gpio.Pin = WARPSW_TOP_Pin|WARPSW_BOT_Pin;
-	gpio.Mode = GPIO_MODE_INPUT;
-	gpio.Pull = GPIO_PULLUP;
-	HAL_GPIO_Init(WARPSW_TOP_GPIO_Port, &gpio);
-
 	// Debug header pins
 
 	gpio.Pin = DEBUG1_OUT_Pin;

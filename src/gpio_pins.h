@@ -42,28 +42,6 @@
 //##############################################################################
 
 
-//Switches
-
-#define MODSW_TOP_Pin GPIO_PIN_14
-#define MODSW_TOP_GPIO_Port GPIOE
-#define MODSW_BOT_Pin GPIO_PIN_15
-#define MODSW_BOT_GPIO_Port GPIOE
-
-#define GRIDSW_TOP_Pin GPIO_PIN_12
-#define GRIDSW_TOP_GPIO_Port GPIOB
-#define GRIDSW_BOT_Pin GPIO_PIN_13
-#define GRIDSW_BOT_GPIO_Port GPIOB
-
-#define TWISTSW_TOP_Pin GPIO_PIN_14
-#define TWISTSW_TOP_GPIO_Port GPIOD
-#define TWISTSW_BOT_Pin GPIO_PIN_15
-#define TWISTSW_BOT_GPIO_Port GPIOD
-
-#define WARPSW_TOP_Pin GPIO_PIN_11 /*reversed from PCB*/
-#define WARPSW_TOP_GPIO_Port GPIOC
-#define WARPSW_BOT_Pin GPIO_PIN_10 /*reversed from PCB*/
-#define WARPSW_BOT_GPIO_Port GPIOC
-
 // LEDs (TIM PWM)
 
 #define LEARN_RED_Pin GPIO_PIN_6

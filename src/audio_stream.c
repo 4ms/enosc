@@ -48,9 +48,7 @@ void process_audio_block_codec(int32_t *src, int32_t *dst)
 	int32_t		in_L, in_R;
 	int32_t 	sum_L=0, sum_R=0;
 
-	uint8_t do_audio_passthrough_test = (PIN_READ(MODSW_TOP_GPIO_Port, MODSW_TOP_Pin) && !PIN_READ(MODSW_BOT_GPIO_Port, MODSW_BOT_Pin));
-
-	if (do_audio_passthrough_test)
+  if (do_audio_passthrough_test)
 	{
 
 		for ( i_sample = 0; i_sample < codec_HT_CHAN_LEN; i_sample++)

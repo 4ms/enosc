@@ -29,15 +29,13 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 #define SAMPLERATE 96000
 
-enum SwitchStates {
-	SWITCH_CENTER,
-	SWITCH_UP,
-	SWITCH_DOWN,
-	SWITCH_INVALID,
-};
 enum GateStates {
 	JACK_LOW,
 	JACK_HIGH
 };
+
+extern bool do_audio_passthrough_test;

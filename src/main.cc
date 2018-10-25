@@ -40,22 +40,26 @@ extern "C" {
 #include "system.hh"
 #include "buttons.hh"
 #include "gates.hh"
+#include "switches.hh"
 
 extern uint16_t		builtin_adc1_raw[ NUM_BUILTIN_ADC1 ];
 extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];
 
 #define USE_TIM_PWM_FOR_LEDS 0
 
+bool do_audio_passthrough_test = false;
+
 
 struct Main {
   System sys_;
   Buttons buttons_;
   Gates gates_;
+  Switches switches_;
 
   // UI state variables
   bool freeze_jack, learn_jack;
   bool learn_but, freeze_but;
-  enum SwitchStates 	mod_sw, grid_sw, twist_sw, warp_sw;
+  Switches::State 	mod_sw, grid_sw, twist_sw, warp_sw;
   uint16_t warp_pot, detune_pot, mod_pot, root_pot, grid_pot, pitch_pot, spread_pot, tilt_pot, twist_pot;
   uint16_t spread1_cv, warp_cv, spread2_cv, twist_cv, tilt_cv, grid_cv, mod_cv;
 
@@ -183,57 +187,15 @@ struct Main {
     freeze_but = buttons_.freeze_.get();
     learn_but = buttons_.learn_.get();
 
-    //MOD Switch
-    if (PIN_READ(MODSW_TOP_GPIO_Port, MODSW_TOP_Pin)) {
-      if (PIN_READ(MODSW_BOT_GPIO_Port, MODSW_BOT_Pin))
-        mod_sw = SWITCH_CENTER;	//top and bottom pins high
-      else
-        mod_sw = SWITCH_DOWN; //top high, bottom low
-    } else {
-      if (PIN_READ(MODSW_BOT_GPIO_Port, MODSW_BOT_Pin))
-        mod_sw = SWITCH_UP;	//top low, bottom high
-      else
-        mod_sw = SWITCH_INVALID; //top low, bottom low
-    }
+    // Switches
+    do_audio_passthrough_test = (PIN_READ(MODSW_TOP_GPIO_Port, MODSW_TOP_Pin) && !PIN_READ(MODSW_BOT_GPIO_Port, MODSW_BOT_Pin));
 
-    //GRID Switch
-    if (PIN_READ(GRIDSW_TOP_GPIO_Port, GRIDSW_TOP_Pin)) {
-      if (PIN_READ(GRIDSW_BOT_GPIO_Port, GRIDSW_BOT_Pin))
-        grid_sw = SWITCH_CENTER;	//top and bottom pins high
-      else
-        grid_sw = SWITCH_DOWN; //top high, bottom low
-    } else {
-      if (PIN_READ(GRIDSW_BOT_GPIO_Port, GRIDSW_BOT_Pin))
-        grid_sw = SWITCH_UP;	//top low, bottom high
-      else
-        grid_sw = SWITCH_INVALID; //top low, bottom low
-    }
 
-    //TWIST Switch
-    if (PIN_READ(TWISTSW_TOP_GPIO_Port, TWISTSW_TOP_Pin)) {
-      if (PIN_READ(TWISTSW_BOT_GPIO_Port, TWISTSW_BOT_Pin))
-        twist_sw = SWITCH_CENTER;	//top and bottom pins high
-      else
-        twist_sw = SWITCH_DOWN; //top high, bottom low
-    } else {
-      if (PIN_READ(TWISTSW_BOT_GPIO_Port, TWISTSW_BOT_Pin))
-        twist_sw = SWITCH_UP;	//top low, bottom high
-      else
-        twist_sw = SWITCH_INVALID; //top low, bottom low
-    }
-
-    //WARP Switch
-    if (PIN_READ(WARPSW_TOP_GPIO_Port, WARPSW_TOP_Pin)) {
-      if (PIN_READ(WARPSW_BOT_GPIO_Port, WARPSW_BOT_Pin))
-        warp_sw = SWITCH_CENTER;	//top and bottom pins high
-      else
-        warp_sw = SWITCH_DOWN; //top high, bottom low
-    } else {
-      if (PIN_READ(WARPSW_BOT_GPIO_Port, WARPSW_BOT_Pin))
-        warp_sw = SWITCH_UP;	//top low, bottom high
-      else
-        warp_sw = SWITCH_INVALID; //top low, bottom low
-    }
+    //Switches
+    mod_sw = switches_.mod_.get();
+    grid_sw = switches_.grid_.get();
+    twist_sw = switches_.twist_.get();
+    warp_sw = switches_.warp_.get();
 
     //ADCs
     warp_pot = builtin_adc1_raw[WARP_POT_ADC];
