@@ -39,31 +39,6 @@ void init_gpio_pins(void){
 
   // Debug header pins
 
-	gpio.Pin = DEBUG1_OUT_Pin;
-	gpio.Mode = GPIO_MODE_OUTPUT_PP;
-	gpio.Pull = GPIO_NOPULL;
-	gpio.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(DEBUG1_OUT_GPIO_Port, &gpio);
-
-	gpio.Pin = DEBUG2_OUT_Pin;
-	gpio.Mode = GPIO_MODE_OUTPUT_PP;
-	gpio.Pull = GPIO_NOPULL;
-	gpio.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(DEBUG2_OUT_GPIO_Port, &gpio);
-
-	gpio.Pin = DEBUG3_OUT_Pin;
-	gpio.Mode = GPIO_MODE_OUTPUT_PP;
-	gpio.Pull = GPIO_NOPULL;
-	gpio.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(DEBUG3_OUT_GPIO_Port, &gpio);
-
-	gpio.Pin = DEBUG4_OUT_Pin;
-	gpio.Mode = GPIO_MODE_OUTPUT_PP;
-	gpio.Pull = GPIO_NOPULL;
-	gpio.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(DEBUG4_OUT_GPIO_Port, &gpio);
-
-
 	gpio.Mode = GPIO_MODE_OUTPUT_PP;
 	gpio.Pull = GPIO_NOPULL;
 	gpio.Speed = GPIO_SPEED_FREQ_HIGH;

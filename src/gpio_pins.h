@@ -63,20 +63,6 @@
 #define FREEZE_BLUE_Pin GPIO_PIN_9
 #define FREEZE_BLUE_GPIO_Port GPIOA
 
-// DEBUG header pins
-
-#define DEBUG1_OUT_Pin GPIO_PIN_5
-#define DEBUG1_OUT_GPIO_Port GPIOD
-
-#define DEBUG2_OUT_Pin GPIO_PIN_6
-#define DEBUG2_OUT_GPIO_Port GPIOD
-
-#define DEBUG3_OUT_Pin GPIO_PIN_7
-#define DEBUG3_OUT_GPIO_Port GPIOD
-
-#define DEBUG4_OUT_Pin GPIO_PIN_4
-#define DEBUG4_OUT_GPIO_Port GPIOD
-
 //ADCs
 
 #define SPREAD_CV_1_Pin GPIO_PIN_0

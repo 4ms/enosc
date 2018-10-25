@@ -42,9 +42,7 @@ int32_t tri_L_dir=1, tri_R_dir=1;
 
 void process_audio_block_codec(int32_t *src, int32_t *dst)
 {
-	PIN_ON(DEBUG1_OUT_GPIO_Port, DEBUG1_OUT_Pin);
-
-	uint32_t 	i_sample;
+  uint32_t 	i_sample;
 	int32_t		in_L, in_R;
 	int32_t 	sum_L=0, sum_R=0;
 
@@ -89,6 +87,4 @@ void process_audio_block_codec(int32_t *src, int32_t *dst)
 		}
 
 	}
-		PIN_OFF(DEBUG1_OUT_GPIO_Port, DEBUG1_OUT_Pin);
-
 }

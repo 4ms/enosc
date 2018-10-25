@@ -41,6 +41,7 @@ extern "C" {
 #include "buttons.hh"
 #include "gates.hh"
 #include "switches.hh"
+#include "debug.hh"
 
 extern uint16_t		builtin_adc1_raw[ NUM_BUILTIN_ADC1 ];
 extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];

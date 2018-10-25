@@ -1,3 +1,5 @@
+#pragma once
+
 #include "stm32f7xx.h"
 
 #define MODSW_TOP_Pin GPIO_PIN_14
