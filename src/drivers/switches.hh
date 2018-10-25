@@ -36,6 +36,7 @@ struct Switches {
 
   struct Grid : Switch {
     Grid() {
+      __HAL_RCC_GPIOB_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
       gpio.Pin = GRIDSW_TOP_Pin|GRIDSW_BOT_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
@@ -48,6 +49,7 @@ struct Switches {
 
   struct Mod : Switch {
     Mod() {
+      __HAL_RCC_GPIOE_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
       gpio.Pin = MODSW_TOP_Pin|MODSW_BOT_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
@@ -60,6 +62,7 @@ struct Switches {
 
   struct Twist : Switch {
     Twist() {
+      __HAL_RCC_GPIOD_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
       gpio.Pin = TWISTSW_TOP_Pin|TWISTSW_BOT_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
@@ -72,6 +75,7 @@ struct Switches {
 
   struct Warp : Switch {
     Warp() {
+      __HAL_RCC_GPIOC_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
       gpio.Pin = WARPSW_TOP_Pin|WARPSW_BOT_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
