@@ -37,8 +37,6 @@ void init_gpio_pins(void){
 	__HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
 
-  // Debug header pins
-
 	gpio.Mode = GPIO_MODE_OUTPUT_PP;
 	gpio.Pull = GPIO_NOPULL;
 	gpio.Speed = GPIO_SPEED_FREQ_HIGH;
@@ -48,7 +46,5 @@ void init_gpio_pins(void){
 	gpio.Pin = LEARN_BLUE_Pin;		HAL_GPIO_Init(LEARN_BLUE_GPIO_Port, &gpio);
 	gpio.Pin = FREEZE_RED_Pin;		HAL_GPIO_Init(FREEZE_RED_GPIO_Port, &gpio);
 	gpio.Pin = FREEZE_GREEN_Pin;	HAL_GPIO_Init(FREEZE_GREEN_GPIO_Port, &gpio);
-	gpio.Pin = FREEZE_BLUE_Pin;		HAL_GPIO_Init(FREEZE_BLUE_GPIO_Port, &gpio);
-
-
+  gpio.Pin = FREEZE_BLUE_Pin;		HAL_GPIO_Init(FREEZE_BLUE_GPIO_Port, &gpio);
 }

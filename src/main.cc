@@ -121,17 +121,14 @@ struct Main {
     //////////////////////////////////////////////////////////////////////////
 
     //Debug header
-    PIN_ON(DEBUG1_OUT_GPIO_Port, DEBUG1_OUT_Pin);
-    PIN_OFF(DEBUG1_OUT_GPIO_Port, DEBUG1_OUT_Pin);
-
-    PIN_ON(DEBUG2_OUT_GPIO_Port, DEBUG2_OUT_Pin);
-    PIN_OFF(DEBUG2_OUT_GPIO_Port, DEBUG2_OUT_Pin);
-
-    PIN_ON(DEBUG3_OUT_GPIO_Port, DEBUG3_OUT_Pin);
-    PIN_OFF(DEBUG3_OUT_GPIO_Port, DEBUG3_OUT_Pin);
-
-    PIN_ON(DEBUG4_OUT_GPIO_Port, DEBUG4_OUT_Pin);
-    PIN_OFF(DEBUG4_OUT_GPIO_Port, DEBUG4_OUT_Pin);
+    debug.set(0, true);
+    debug.set(0, false);
+    debug.set(1, true);
+    debug.set(1, false);
+    debug.set(2, true);
+    debug.set(2, false);
+    debug.set(3, true);
+    debug.set(3, false);
 
     if (USE_TIM_PWM_FOR_LEDS) {
       //LEDs with PWM
