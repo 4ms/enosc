@@ -42,27 +42,6 @@
 //##############################################################################
 
 
-// LEDs (TIM PWM)
-
-#define LEARN_RED_Pin GPIO_PIN_6
-#define LEARN_RED_GPIO_Port GPIOC
-
-#define LEARN_GREEN_Pin GPIO_PIN_8
-#define LEARN_GREEN_GPIO_Port GPIOC
-
-#define LEARN_BLUE_Pin GPIO_PIN_7
-#define LEARN_BLUE_GPIO_Port GPIOC
-
-
-#define FREEZE_RED_Pin GPIO_PIN_8
-#define FREEZE_RED_GPIO_Port GPIOA
-
-#define FREEZE_GREEN_Pin GPIO_PIN_10
-#define FREEZE_GREEN_GPIO_Port GPIOA
-
-#define FREEZE_BLUE_Pin GPIO_PIN_9
-#define FREEZE_BLUE_GPIO_Port GPIOA
-
 //ADCs
 
 #define SPREAD_CV_1_Pin GPIO_PIN_0

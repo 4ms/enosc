@@ -33,7 +33,6 @@ extern "C" {
 #include "drivers/codec_i2c.h"
 #include "drivers/codec_sai.h"
 #include "audio_stream.h"
-#include "led_tim_pwm.h"
 #include "adc_interface.h"
 }
 
@@ -42,11 +41,12 @@ extern "C" {
 #include "gates.hh"
 #include "switches.hh"
 #include "debug.hh"
+#include "leds.hh"
 
 extern uint16_t		builtin_adc1_raw[ NUM_BUILTIN_ADC1 ];
 extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];
 
-#define USE_TIM_PWM_FOR_LEDS 0
+#define USE_TIM_PWM_FOR_LEDS 1
 
 bool do_audio_passthrough_test = false;
 
@@ -56,6 +56,7 @@ struct Main {
   Buttons buttons_;
   Gates gates_;
   Switches switches_;
+  Leds leds_;
 
   // UI state variables
   bool freeze_jack, learn_jack;
