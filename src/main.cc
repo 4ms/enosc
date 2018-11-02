@@ -46,8 +46,6 @@ extern "C" {
 extern uint16_t		builtin_adc1_raw[ NUM_BUILTIN_ADC1 ];
 extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];
 
-#define USE_TIM_PWM_FOR_LEDS 1
-
 bool do_audio_passthrough_test = false;
 
 
@@ -83,11 +81,6 @@ struct Main {
     // INITIALIZATIONS
     init_gpio_pins();
     HAL_Delay(10);
-
-#if (USE_TIM_PWM_FOR_LEDS)
-    //Setup PWM LED pins
-    init_led_tim_pwm();
-#endif
 
     // Init ADC
     adc_init_all();
@@ -131,46 +124,13 @@ struct Main {
     debug.set(3, true);
     debug.set(3, false);
 
-    if (USE_TIM_PWM_FOR_LEDS) {
-      //LEDs with PWM
-      if ((HAL_GetTick() - last_update_tm) > 1000/60) {
-        last_update_tm = HAL_GetTick();
-        update_led_tim_pwm();
-      }
-    } else {
-      //LEDs with GPIO
-
-      //Change color when buttons are pressed
-      //Simple de-bounce
-      if (freeze_but) freeze_but_armed++;
-      else {
-        if (freeze_but_armed>20000) freeze_color++; //reset_led(FREEZE_LED);}
-        freeze_but_armed = 0;
-      }
-
-      if (freeze_color & 0b001) LED_ON(FREEZE_RED_GPIO_Port, FREEZE_RED_Pin);
-      else LED_OFF(FREEZE_RED_GPIO_Port, FREEZE_RED_Pin);
-
-      if (freeze_color & 0b010) LED_ON(FREEZE_GREEN_GPIO_Port, FREEZE_GREEN_Pin);
-      else LED_OFF(FREEZE_GREEN_GPIO_Port, FREEZE_GREEN_Pin);
-
-      if (freeze_color & 0b100) LED_ON(FREEZE_BLUE_GPIO_Port, FREEZE_BLUE_Pin);
-      else LED_OFF(FREEZE_BLUE_GPIO_Port, FREEZE_BLUE_Pin);
-
-      if (learn_but) learn_but_armed++;
-      else {
-        if (learn_but_armed>20000) learn_color++; //reset_led(LEARN_LED);}
-        learn_but_armed = 0;
-      }
-
-      if (learn_color & 0b001) LED_ON(LEARN_RED_GPIO_Port, LEARN_RED_Pin);
-      else LED_OFF(LEARN_RED_GPIO_Port, LEARN_RED_Pin);
-
-      if (learn_color & 0b010) LED_ON(LEARN_GREEN_GPIO_Port, LEARN_GREEN_Pin);
-      else LED_OFF(LEARN_GREEN_GPIO_Port, LEARN_GREEN_Pin);
-
-      if (learn_color & 0b100) LED_ON(LEARN_BLUE_GPIO_Port, LEARN_BLUE_Pin);
-      else LED_OFF(LEARN_BLUE_GPIO_Port, LEARN_BLUE_Pin);
+    //LEDs with PWM
+    if ((HAL_GetTick() - last_update_tm) > 1000/60) {
+      last_update_tm = HAL_GetTick();
+      uint8_t ledpwm[6]={0};
+      for (int i=0;i<6;i++) ledpwm[i] = builtin_adc1_raw[i]/(4096/PWM_MAX);
+      leds_.set_freeze(ledpwm[0], ledpwm[1], ledpwm[2]);
+      leds_.set_learn(ledpwm[3], ledpwm[4], ledpwm[5]);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
