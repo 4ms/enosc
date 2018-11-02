@@ -78,6 +78,7 @@
 #define TWIST_POT_Pin GPIO_PIN_1
 #define TWIST_POT_GPIO_Port GPIOB
 
+
 typedef struct builtinAdcSetup{
 	GPIO_TypeDef	*gpio;
 	uint16_t		pin;
