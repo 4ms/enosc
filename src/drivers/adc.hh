@@ -35,3 +35,5 @@ enum BuiltinAdc3Channels{
 #define NUM_ADCS 			(NUM_HIRES_ADCS + NUM_BUILTIN_ADCS)
 
 void adc_init_all(void);
+uint16_t get_adc1(int channel);
+uint16_t get_adc3(int channel);

@@ -15,9 +15,6 @@ extern "C" {
 #include "leds.hh"
 #include "adc.hh"
 
-extern uint16_t		builtin_adc1_raw[ NUM_BUILTIN_ADC1 ];
-extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];
-
 bool do_audio_passthrough_test = false;
 
 
@@ -96,7 +93,7 @@ struct Main {
     if ((HAL_GetTick() - last_update_tm) > 1000/60) {
       last_update_tm = HAL_GetTick();
       uint8_t ledpwm[6]={0};
-      for (int i=0;i<6;i++) ledpwm[i] = builtin_adc1_raw[i]/(4096/PWM_MAX);
+      for (int i=0;i<6;i++) ledpwm[i] = get_adc3(i)/(4096/PWM_MAX);
       leds_.set_freeze(ledpwm[0], ledpwm[1], ledpwm[2]);
       leds_.set_learn(ledpwm[3], ledpwm[4], ledpwm[5]);
     }
@@ -124,22 +121,22 @@ struct Main {
     warp_sw = switches_.warp_.get();
 
     //ADCs
-    warp_pot = builtin_adc1_raw[WARP_POT_ADC];
-    detune_pot = builtin_adc1_raw[DETUNE_POT_ADC];
-    mod_pot = builtin_adc1_raw[MOD_POT_ADC];
-    root_pot = builtin_adc1_raw[ROOT_POT_ADC];
-    grid_pot = builtin_adc1_raw[GRID_POT_ADC];
-    pitch_pot = builtin_adc1_raw[PITCH_POT_ADC];
-    spread_pot = builtin_adc1_raw[SPREAD_POT_ADC];
-    tilt_pot = builtin_adc1_raw[TILT_POT_ADC];
-    twist_pot = builtin_adc1_raw[TWIST_POT_ADC];
+    warp_pot = get_adc1(WARP_POT_ADC);
+    detune_pot = get_adc1(DETUNE_POT_ADC);
+    mod_pot = get_adc1(MOD_POT_ADC);
+    root_pot = get_adc1(ROOT_POT_ADC);
+    grid_pot = get_adc1(GRID_POT_ADC);
+    pitch_pot = get_adc1(PITCH_POT_ADC);
+    spread_pot = get_adc1(SPREAD_POT_ADC);
+    tilt_pot = get_adc1(TILT_POT_ADC);
+    twist_pot = get_adc1(TWIST_POT_ADC);
 
-    spread1_cv = builtin_adc3_raw[SPREAD_CV_1_ADC];
-    warp_cv = builtin_adc3_raw[WARP_CV_ADC];
-    spread2_cv = builtin_adc3_raw[SPREAD_CV_2_ADC];
-    twist_cv = builtin_adc3_raw[TWIST_CV_ADC];
-    tilt_cv = builtin_adc3_raw[TILT_CV_ADC];
-    grid_cv = builtin_adc3_raw[GRID_CV_ADC];
-    mod_cv = builtin_adc3_raw[MOD_CV_ADC];
+    spread1_cv = get_adc3(SPREAD_CV_1_ADC);
+    warp_cv = get_adc3(WARP_CV_ADC);
+    spread2_cv = get_adc3(SPREAD_CV_2_ADC);
+    twist_cv = get_adc3(TWIST_CV_ADC);
+    tilt_cv = get_adc3(TILT_CV_ADC);
+    grid_cv = get_adc3(GRID_CV_ADC);
+    mod_cv = get_adc3(MOD_CV_ADC);
   }
-}_;
+} _;
