@@ -30,8 +30,6 @@
 #include "drivers/codec_sai.h"
 #include "globals.h"
 #include "drivers/codec_i2c.h"
-#include "gpio_pins.h"
-
 
 //Link to the process_audio_block_codec() of the main app or the bootloader
 #if IS_BOOTLOADER == 1

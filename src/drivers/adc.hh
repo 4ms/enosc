@@ -4,7 +4,7 @@
 #include "hal.hh"
 
 // ADC1
-enum BuiltinAdc1Channels{
+enum Adc1Channels {
 	WARP_POT_ADC,		//  0
 	DETUNE_POT_ADC,		//  1
 	MOD_POT_ADC,		//  2
@@ -15,11 +15,11 @@ enum BuiltinAdc1Channels{
 	TILT_POT_ADC,		//  7
 	TWIST_POT_ADC,		//  8
 
-	NUM_BUILTIN_ADC1
+	NUM_ADC1
 };
 
 // ADC3
-enum BuiltinAdc3Channels{
+enum Adc3Channels{
 	SPREAD_CV_1_ADC,	//  0
 	WARP_CV_ADC,		//  1
 	SPREAD_CV_2_ADC,	//  2
@@ -28,12 +28,15 @@ enum BuiltinAdc3Channels{
 	GRID_CV_ADC,		//  5
 	MOD_CV_ADC,			//  6
 	
-	NUM_BUILTIN_ADC3
+	NUM_ADC3
 };
 
-#define NUM_BUILTIN_ADCS	(NUM_BUILTIN_ADC1 + NUM_BUILTIN_ADC2 + NUM_BUILTIN_ADC3)
-#define NUM_ADCS 			(NUM_HIRES_ADCS + NUM_BUILTIN_ADCS)
+#define NUM_ADCS	(NUM_ADC1 + NUM_ADC3)
 
-void adc_init_all(void);
-uint16_t get_adc1(int channel);
-uint16_t get_adc3(int channel);
+struct Adc {
+  Adc();
+  uint16_t get_adc1(int channel);
+  uint16_t get_adc3(int channel);
+private:
+  uint16_t adc_raw[NUM_ADCS];
+};

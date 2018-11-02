@@ -29,7 +29,6 @@
 #include "audio_stream.h"
 #include "globals.h"
 #include "codec_sai.h"
-#include "gpio_pins.h"
 
 
 #define MAX_CODEC_DAC_VAL 8388607

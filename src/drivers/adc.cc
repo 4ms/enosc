@@ -1,6 +1,4 @@
-
 #include "adc.hh"
-#include "gpio_pins.h"
 
 #define SPREAD_CV_1_Pin GPIO_PIN_0
 #define SPREAD_CV_1_GPIO_Port GPIOC
@@ -50,12 +48,12 @@
 #define TWIST_POT_Pin GPIO_PIN_1
 #define TWIST_POT_GPIO_Port GPIOB
 
-typedef struct builtinAdcSetup{
+typedef struct AdcSetup {
 	GPIO_TypeDef	*gpio;
 	uint16_t		pin;
 	uint8_t			channel;
 	uint8_t			sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
-} builtinAdcSetup;
+} AdcSetup;
 
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc3;
@@ -64,7 +62,7 @@ DMA_HandleTypeDef hdma_adc3;
 
 void ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels)
 {
-  builtinAdcSetup	adc_setup[NUM_BUILTIN_ADC1];
+  AdcSetup adc_setup[NUM_ADC1];
 
   adc_setup[WARP_POT_ADC].gpio = WARP_POT_GPIO_Port;
   adc_setup[WARP_POT_ADC].pin = WARP_POT_Pin;
@@ -139,8 +137,7 @@ void ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels)
   hdma_adc1.Init.Mode = DMA_CIRCULAR;
   hdma_adc1.Init.Priority = DMA_PRIORITY_MEDIUM;
   hdma_adc1.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-  if (HAL_DMA_Init(&hdma_adc1) != HAL_OK)
-    assert_failed(__FILE__, __LINE__);
+  hal_assert(HAL_DMA_Init(&hdma_adc1))
 
   __HAL_LINKDMA(&hadc1, DMA_Handle, hdma_adc1);
 
@@ -157,16 +154,14 @@ void ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels)
   hadc1.Init.NbrOfConversion = num_channels;
   hadc1.Init.DMAContinuousRequests = ENABLE;//DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
-	if (HAL_ADC_Init(&hadc1) != HAL_OK)
-    assert_failed(__FILE__, __LINE__);
+  hal_assert(HAL_ADC_Init(&hadc1));
 
   for (i=0; i<num_channels; i++) {
 		sConfig.Channel 		= adc_setup[i].channel;
 		sConfig.Rank 			= ADC_REGULAR_RANK_1 + i;
 		sConfig.SamplingTime	= adc_setup[i].sample_time;
-		if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
-			assert_failed(__FILE__, __LINE__);
-	}
+    hal_assert(HAL_ADC_ConfigChannel(&hadc1, &sConfig));
+  }
 
 	//__HAL_ADC_DISABLE_IT(&hadc1, (ADC_IT_EOC | ADC_IT_OVR));
 
@@ -176,7 +171,7 @@ void ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels)
 
 void ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels)
 {
-  builtinAdcSetup	adc_setup[NUM_BUILTIN_ADC3];
+  AdcSetup adc_setup[NUM_ADC3];
 
   adc_setup[SPREAD_CV_1_ADC].gpio = SPREAD_CV_1_GPIO_Port;
   adc_setup[SPREAD_CV_1_ADC].pin = SPREAD_CV_1_Pin;
@@ -240,8 +235,7 @@ void ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels)
   hdma_adc3.Init.Mode = DMA_CIRCULAR;
   hdma_adc3.Init.Priority = DMA_PRIORITY_MEDIUM;
   hdma_adc3.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-  if (HAL_DMA_Init(&hdma_adc3) != HAL_OK)
-    assert_failed(__FILE__, __LINE__);
+  hal_assert(HAL_DMA_Init(&hdma_adc3));
 
   __HAL_LINKDMA(&hadc3, DMA_Handle, hdma_adc3);
 
@@ -258,17 +252,15 @@ void ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels)
   hadc3.Init.NbrOfConversion = num_channels;
   hadc3.Init.DMAContinuousRequests = ENABLE;//DISABLE;
   hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
-	if (HAL_ADC_Init(&hadc3) != HAL_OK)
-		assert_failed(__FILE__, __LINE__);
+  hal_assert(HAL_ADC_Init(&hadc3));
 
 	for (i=0; i<num_channels; i++)
 	{
     sConfig.Channel = adc_setup[i].channel;
     sConfig.Rank = ADC_REGULAR_RANK_1 + i;
     sConfig.SamplingTime = adc_setup[i].sample_time;
-		if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
-			assert_failed(__FILE__, __LINE__);
-	}
+    hal_assert(HAL_ADC_ConfigChannel(&hadc3, &sConfig));
+  }
 
 	//__HAL_ADC_DISABLE_IT(&hadc3, (ADC_IT_EOC | ADC_IT_OVR));
 
@@ -276,20 +268,17 @@ void ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels)
 	HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc_buffer, num_channels);
 }
 
-uint16_t adc1_raw[NUM_BUILTIN_ADC1];
-uint16_t adc3_raw[NUM_BUILTIN_ADC3];
-
-void adc_init_all(void)
+Adc::Adc()
 {
 	//Initialize and start the ADC and DMA
-  ADC1_Init(adc1_raw, NUM_BUILTIN_ADC1);
-  ADC3_Init(adc3_raw, NUM_BUILTIN_ADC3);
+  ADC1_Init(adc_raw, NUM_ADC1);
+  ADC3_Init(adc_raw + NUM_ADC1, NUM_ADC3);
 }
 
-uint16_t get_adc1(int i) {
-  return adc1_raw[i];
+uint16_t Adc::get_adc1(int i) {
+  return adc_raw[i];
 }
 
-uint16_t get_adc3(int i) {
-  return adc3_raw[i];
+uint16_t Adc::get_adc3(int i) {
+  return adc_raw[i+NUM_ADC1];
 }

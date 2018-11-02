@@ -1,7 +1,6 @@
 extern "C" {
 #include "hal.hh"
 #include "globals.h"
-#include "gpio_pins.h"
 #include "drivers/codec_i2c.h"
 #include "drivers/codec_sai.h"
 #include "audio_stream.h"
@@ -24,6 +23,7 @@ struct Main {
   Gates gates_;
   Switches switches_;
   Leds leds_;
+  Adc adc_;
 
   // UI state variables
   bool freeze_jack, learn_jack;
@@ -46,10 +46,6 @@ struct Main {
    	//De-init the codec to force it to reset
     codec_deinit();
     HAL_Delay(10);
-
-    // Init ADC
-    adc_init_all();
-    HAL_Delay(100);
 
     //Start Codec I2C
     codec_GPIO_init();
@@ -93,7 +89,7 @@ struct Main {
     if ((HAL_GetTick() - last_update_tm) > 1000/60) {
       last_update_tm = HAL_GetTick();
       uint8_t ledpwm[6]={0};
-      for (int i=0;i<6;i++) ledpwm[i] = get_adc3(i)/(4096/PWM_MAX);
+      for (int i=0;i<6;i++) ledpwm[i] = adc_.get_adc3(i)/(4096/PWM_MAX);
       leds_.set_freeze(ledpwm[0], ledpwm[1], ledpwm[2]);
       leds_.set_learn(ledpwm[3], ledpwm[4], ledpwm[5]);
     }
@@ -121,22 +117,22 @@ struct Main {
     warp_sw = switches_.warp_.get();
 
     //ADCs
-    warp_pot = get_adc1(WARP_POT_ADC);
-    detune_pot = get_adc1(DETUNE_POT_ADC);
-    mod_pot = get_adc1(MOD_POT_ADC);
-    root_pot = get_adc1(ROOT_POT_ADC);
-    grid_pot = get_adc1(GRID_POT_ADC);
-    pitch_pot = get_adc1(PITCH_POT_ADC);
-    spread_pot = get_adc1(SPREAD_POT_ADC);
-    tilt_pot = get_adc1(TILT_POT_ADC);
-    twist_pot = get_adc1(TWIST_POT_ADC);
+    warp_pot = adc_.get_adc1(WARP_POT_ADC);
+    detune_pot = adc_.get_adc1(DETUNE_POT_ADC);
+    mod_pot = adc_.get_adc1(MOD_POT_ADC);
+    root_pot = adc_.get_adc1(ROOT_POT_ADC);
+    grid_pot = adc_.get_adc1(GRID_POT_ADC);
+    pitch_pot = adc_.get_adc1(PITCH_POT_ADC);
+    spread_pot = adc_.get_adc1(SPREAD_POT_ADC);
+    tilt_pot = adc_.get_adc1(TILT_POT_ADC);
+    twist_pot = adc_.get_adc1(TWIST_POT_ADC);
 
-    spread1_cv = get_adc3(SPREAD_CV_1_ADC);
-    warp_cv = get_adc3(WARP_CV_ADC);
-    spread2_cv = get_adc3(SPREAD_CV_2_ADC);
-    twist_cv = get_adc3(TWIST_CV_ADC);
-    tilt_cv = get_adc3(TILT_CV_ADC);
-    grid_cv = get_adc3(GRID_CV_ADC);
-    mod_cv = get_adc3(MOD_CV_ADC);
+    spread1_cv = adc_.get_adc3(SPREAD_CV_1_ADC);
+    warp_cv = adc_.get_adc3(WARP_CV_ADC);
+    spread2_cv = adc_.get_adc3(SPREAD_CV_2_ADC);
+    twist_cv = adc_.get_adc3(TWIST_CV_ADC);
+    tilt_cv = adc_.get_adc3(TILT_CV_ADC);
+    grid_cv = adc_.get_adc3(GRID_CV_ADC);
+    mod_cv = adc_.get_adc3(MOD_CV_ADC);
   }
 } _;
