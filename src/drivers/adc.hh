@@ -3,22 +3,6 @@
 
 #include "hal.hh"
 
-typedef struct builtinAdcSetup{
-	GPIO_TypeDef	*gpio;
-	uint16_t		pin;
-	uint8_t			channel;
-	uint8_t			sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
-} builtinAdcSetup;
-
-void ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc_setup);
-void ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc_setup);
-
-//
-// Config:
-//
-// Set the names of the ADC channels being used
-//
-
 // ADC1
 enum BuiltinAdc1Channels{
 	WARP_POT_ADC,		//  0
@@ -32,11 +16,6 @@ enum BuiltinAdc1Channels{
 	TWIST_POT_ADC,		//  8
 
 	NUM_BUILTIN_ADC1
-};
-
-// ADC2
-enum BuiltinAdc2Channels{	
-	NUM_BUILTIN_ADC2
 };
 
 // ADC3
