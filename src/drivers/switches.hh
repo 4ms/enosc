@@ -1,6 +1,6 @@
 #pragma once
 
-#include "stm32f7xx.h"
+#include "hal.hh"
 
 #define MODSW_TOP_Pin GPIO_PIN_14
 #define MODSW_TOP_GPIO_Port GPIOE

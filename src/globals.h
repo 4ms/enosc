@@ -33,9 +33,4 @@
 
 #define SAMPLERATE 96000
 
-enum GateStates {
-	JACK_LOW,
-	JACK_HIGH
-};
-
 extern bool do_audio_passthrough_test;

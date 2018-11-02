@@ -1,33 +1,5 @@
-/*
- * main.c - PolyOsc test code
- *
- * Author: Dan Green (danngreen1@gmail.com)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * See http://creativecommons.org/licenses/MIT/ for more information.
- *
- * -----------------------------------------------------------------------------
- */
-
 extern "C" {
-#include <stm32f7xx.h>
+#include "hal.hh"
 #include "globals.h"
 #include "gpio_pins.h"
 #include "drivers/codec_i2c.h"
@@ -147,8 +119,7 @@ struct Main {
     learn_but = buttons_.learn_.get();
 
     // Switches
-    do_audio_passthrough_test = (PIN_READ(MODSW_TOP_GPIO_Port, MODSW_TOP_Pin) && !PIN_READ(MODSW_BOT_GPIO_Port, MODSW_BOT_Pin));
-
+    do_audio_passthrough_test = switches_.mod_.get() == Switches::DOWN;
 
     //Switches
     mod_sw = switches_.mod_.get();
