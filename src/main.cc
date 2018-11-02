@@ -5,7 +5,6 @@ extern "C" {
 #include "drivers/codec_i2c.h"
 #include "drivers/codec_sai.h"
 #include "audio_stream.h"
-#include "adc_interface.h"
 }
 
 #include "system.hh"
@@ -14,6 +13,7 @@ extern "C" {
 #include "switches.hh"
 #include "debug.hh"
 #include "leds.hh"
+#include "adc.hh"
 
 extern uint16_t		builtin_adc1_raw[ NUM_BUILTIN_ADC1 ];
 extern uint16_t		builtin_adc3_raw[ NUM_BUILTIN_ADC3 ];

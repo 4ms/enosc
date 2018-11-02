@@ -9,10 +9,9 @@ SRCS = \
 	lib/easiglib/numtypes.cc \
 	lib/easiglib/math.cc \
 	lib/easiglib/dsp.cc \
-	src/adc_interface.c \
 	src/audio_stream.c \
 	src/audio_util.c \
-	src/drivers/adc_builtin_driver.c \
+	src/drivers/adc.cc \
 	src/drivers/codec_i2c.c \
 	src/drivers/codec_sai.c \
 	src/main.cc \

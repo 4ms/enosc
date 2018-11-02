@@ -1,12 +1,17 @@
-/*
- * adc_interface.h
- * Interfaces with one or more adc drivers to produce a coherent adc structure
- */
 
 #pragma once
 
-#include <stm32f7xx.h>
-#include "drivers/adc_builtin_driver.h"
+#include "hal.hh"
+
+typedef struct builtinAdcSetup{
+	GPIO_TypeDef	*gpio;
+	uint16_t		pin;
+	uint8_t			channel;
+	uint8_t			sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
+} builtinAdcSetup;
+
+void ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc_setup);
+void ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc_setup);
 
 //
 // Config:
