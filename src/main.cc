@@ -50,10 +50,6 @@ struct Main {
     codec_deinit();
     HAL_Delay(10);
 
-    // INITIALIZATIONS
-    init_gpio_pins();
-    HAL_Delay(10);
-
     // Init ADC
     adc_init_all();
     HAL_Delay(100);

@@ -12,7 +12,6 @@ SRCS = \
 	src/adc_interface.c \
 	src/audio_stream.c \
 	src/audio_util.c \
-	src/gpio_pins.c \
 	src/drivers/adc_builtin_driver.c \
 	src/drivers/codec_i2c.c \
 	src/drivers/codec_sai.c \
