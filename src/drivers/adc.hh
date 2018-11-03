@@ -2,6 +2,7 @@
 #pragma once
 
 #include "hal.hh"
+#include "dsp.hh"
 
 struct Adc {
   Adc();
@@ -26,10 +27,10 @@ struct Adc {
     NUM_ADCS
   };
   
-  uint16_t get_adc(AdcChannel channel);
+  u0_16 get_adc(AdcChannel channel);
 
 private:
-  uint16_t adc_raw[NUM_ADCS];
-  void ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels);
-  void ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels);
+  u0_16 adc_raw[NUM_ADCS];
+  void ADC1_Init(u0_16 *adc_buffer, uint32_t num_channels);
+  void ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels);
 };

@@ -88,13 +88,13 @@ struct Main {
     //LEDs with PWM
     if ((HAL_GetTick() - last_update_tm) > 1000/60) {
       last_update_tm = HAL_GetTick();
-      uint8_t ledpwm[6];
-      ledpwm[0] = adc_.get_adc(Adc::GRID_POT)/(4096/PWM_MAX);
-      ledpwm[1] = adc_.get_adc(Adc::SPREAD_POT)/(4096/PWM_MAX);
-      ledpwm[2] = adc_.get_adc(Adc::PITCH_POT)/(4096/PWM_MAX);
-      ledpwm[3] = adc_.get_adc(Adc::TILT_CV)/(4096/PWM_MAX);
-      ledpwm[4] = adc_.get_adc(Adc::GRID_CV)/(4096/PWM_MAX);
-      ledpwm[5] = adc_.get_adc(Adc::SPREAD_CV_1)/(4096/PWM_MAX);
+      u0_8 ledpwm[6];
+      ledpwm[0] = adc_.get_adc(Adc::GRID_POT) >> 8;
+      ledpwm[1] = adc_.get_adc(Adc::SPREAD_POT) >> 8;
+      ledpwm[2] = adc_.get_adc(Adc::PITCH_POT) >> 8;
+      ledpwm[3] = adc_.get_adc(Adc::TILT_CV) >> 8;
+      ledpwm[4] = adc_.get_adc(Adc::GRID_CV) >> 8;
+      ledpwm[5] = adc_.get_adc(Adc::SPREAD_CV_1) >> 8;
       leds_.set_freeze(ledpwm[0], ledpwm[1], ledpwm[2]);
       leds_.set_learn(ledpwm[3], ledpwm[4], ledpwm[5]);
     }

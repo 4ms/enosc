@@ -72,7 +72,3 @@ int32_t convert_s24_to_s32(int32_t src)
 	in_s24bit >>= 8;
 	return (in_s24bit);
 }
-
-
-
-

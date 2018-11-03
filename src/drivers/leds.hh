@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hal.hh"
+#include "dsp.hh"
 
 #define LEARN_RED_Pin GPIO_PIN_6
 #define LEARN_RED_GPIO_Port GPIOC
@@ -108,7 +109,7 @@ struct Leds {
 
     //Common configuration for all channels
     tim_oc.OCMode = TIM_OCMODE_PWM1;
-    tim_oc.OCPolarity = TIM_OCPOLARITY_HIGH;
+    tim_oc.OCPolarity = TIM_OCPOLARITY_LOW;
     tim_oc.OCFastMode = TIM_OCFAST_DISABLE;
     tim_oc.OCNPolarity = TIM_OCNPOLARITY_HIGH;
     tim_oc.OCNIdleState = TIM_OCNIDLESTATE_RESET;
@@ -135,15 +136,15 @@ struct Leds {
     hal_assert(HAL_TIM_PWM_Start(&timLEARNLED, 	LEARN_LED_PWM_CHAN_BLUE));
   }
 
-  void set_freeze(uint8_t r, uint8_t g, uint8_t b) {
-      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= r;
-      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = g;
-      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= b;
+  void set_freeze(u0_8 r, u0_8 g, u0_8 b) {
+    FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= r.repr();
+    FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = g.repr();
+    FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= b.repr();
   }
 
-  void set_learn(uint8_t r, uint8_t g, uint8_t b) {
-      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r;
-      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = g;
-      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= b;
+  void set_learn(u0_8 r, u0_8 g, u0_8 b) {
+    LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r.repr();
+    LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = g.repr();
+    LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= b.repr();
   }
 };

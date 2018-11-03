@@ -88,7 +88,7 @@ enum Adc3Channels{
 	NUM_ADC3
 };
 
-void Adc::ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels)
+void Adc::ADC1_Init(u0_16 *adc_buffer, uint32_t num_channels)
 {
   AdcSetup adc_setup[NUM_ADC1];
 
@@ -178,7 +178,7 @@ void Adc::ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels)
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_CC1;//ADC_SOFTWARE_START;
-  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_LEFT;
   hadc1.Init.NbrOfConversion = num_channels;
   hadc1.Init.DMAContinuousRequests = ENABLE;//DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
@@ -197,7 +197,7 @@ void Adc::ADC1_Init(uint16_t *adc_buffer, uint32_t num_channels)
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, num_channels);
 }
 
-void Adc::ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels)
+void Adc::ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels)
 {
   AdcSetup adc_setup[NUM_ADC3];
 
@@ -276,7 +276,7 @@ void Adc::ADC3_Init(uint16_t *adc_buffer, uint32_t num_channels)
   hadc3.Init.DiscontinuousConvMode = DISABLE;
   hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc3.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_CC1;//ADC_SOFTWARE_START;
-  hadc3.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc3.Init.DataAlign = ADC_DATAALIGN_LEFT;
   hadc3.Init.NbrOfConversion = num_channels;
   hadc3.Init.DMAContinuousRequests = ENABLE;//DISABLE;
   hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
@@ -303,6 +303,6 @@ Adc::Adc()
   ADC3_Init(adc_raw + NUM_ADC1, NUM_ADC3);
 }
 
-uint16_t Adc::get_adc(AdcChannel i) {
+u0_16 Adc::get_adc(AdcChannel i) {
   return adc_raw[(int)i];
 }
