@@ -115,7 +115,7 @@ constexpr sign SIGNED = sign::SIGNED;
 constexpr sign UNSIGNED = sign::UNSIGNED;
 
 template<int WIDTH, sign SIGN> struct Basetype;
-// Wider should be twice as big as T
+
 template<> struct Basetype<8, SIGNED> { using T = int8_t; };
 template<> struct Basetype<8, UNSIGNED> { using T = uint8_t; };
 template<> struct Basetype<16, SIGNED> { using T = int16_t; };
@@ -486,6 +486,29 @@ using s16_0 = Fixed<SIGNED, 16, 0>;
 using u16_0 = Fixed<UNSIGNED, 16, 0>;
 using s32_0 = Fixed<SIGNED, 32, 0>;
 using u32_0 = Fixed<UNSIGNED, 32, 0>;
+
+using s8_0 = Fixed<SIGNED, 8, 0>;
+using s7_1 = Fixed<SIGNED, 7, 1>;
+using s6_2 = Fixed<SIGNED, 6, 2>;
+using s5_3 = Fixed<SIGNED, 5, 3>;
+using s4_4 = Fixed<SIGNED, 4, 4>;
+using s3_5 = Fixed<SIGNED, 3, 5>;
+using s2_6 = Fixed<SIGNED, 2, 6>;
+using s1_7 = Fixed<SIGNED, 1, 7>;
+using s0_8 = Fixed<SIGNED, 0, 8>;
+
+using u8_0 = Fixed<UNSIGNED, 8, 0>;
+using u7_1 = Fixed<UNSIGNED, 7, 1>;
+using u6_2 = Fixed<UNSIGNED, 6, 2>;
+using u5_3 = Fixed<UNSIGNED, 5, 3>;
+using u4_4 = Fixed<UNSIGNED, 4, 4>;
+using u3_5 = Fixed<UNSIGNED, 3, 5>;
+using u2_6 = Fixed<UNSIGNED, 2, 6>;
+using u1_7 = Fixed<UNSIGNED, 1, 7>;
+using u0_8 = Fixed<UNSIGNED, 0, 8>;
+
+using s8 = s8_0;
+using u8 = u8_0;
 
 using s16 = s16_0;
 using u16 = u16_0;
