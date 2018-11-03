@@ -29,8 +29,8 @@ struct Main {
   bool freeze_jack, learn_jack;
   bool learn_but, freeze_but;
   Switches::State 	mod_sw, grid_sw, twist_sw, warp_sw;
-  uint16_t warp_pot, detune_pot, mod_pot, root_pot, grid_pot, pitch_pot, spread_pot, tilt_pot, twist_pot;
-  uint16_t spread1_cv, warp_cv, spread2_cv, twist_cv, tilt_cv, grid_cv, mod_cv;
+  u0_16 warp_pot, detune_pot, mod_pot, root_pot, grid_pot, pitch_pot, spread_pot, tilt_pot, twist_pot;
+  u0_16 spread1_cv, warp_cv, spread2_cv, twist_cv, tilt_cv, grid_cv, mod_cv;
 
   // other state variables
   uint32_t learn_but_armed=0, freeze_but_armed=0;
@@ -89,12 +89,12 @@ struct Main {
     if ((HAL_GetTick() - last_update_tm) > 1000/60) {
       last_update_tm = HAL_GetTick();
       u0_8 ledpwm[6];
-      ledpwm[0] = adc_.get_adc(Adc::GRID_POT) >> 8;
-      ledpwm[1] = adc_.get_adc(Adc::SPREAD_POT) >> 8;
-      ledpwm[2] = adc_.get_adc(Adc::PITCH_POT) >> 8;
-      ledpwm[3] = adc_.get_adc(Adc::TILT_CV) >> 8;
-      ledpwm[4] = adc_.get_adc(Adc::GRID_CV) >> 8;
-      ledpwm[5] = adc_.get_adc(Adc::SPREAD_CV_1) >> 8;
+      ledpwm[0] = u0_8::narrow(adc_.get_adc(Adc::GRID_POT));
+      ledpwm[1] = u0_8::narrow(adc_.get_adc(Adc::SPREAD_POT));
+      ledpwm[2] = u0_8::narrow(adc_.get_adc(Adc::PITCH_POT));
+      ledpwm[3] = u0_8::narrow(adc_.get_adc(Adc::TILT_CV));
+      ledpwm[4] = u0_8::narrow(adc_.get_adc(Adc::GRID_CV));
+      ledpwm[5] = u0_8::narrow(adc_.get_adc(Adc::SPREAD_CV_1));
       leds_.set_freeze(ledpwm[0], ledpwm[1], ledpwm[2]);
       leds_.set_learn(ledpwm[3], ledpwm[4], ledpwm[5]);
     }
