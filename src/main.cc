@@ -20,6 +20,7 @@ struct Main {
   Switches switches_;
   Leds leds_;
   Adc adc_;
+  Codec codec_;
 
   // UI state variables
   bool freeze_jack, learn_jack;
@@ -37,26 +38,26 @@ struct Main {
   Main() {
 
     // Setup PLL clock for codec
-   	init_SAI_clock(SAMPLERATE);
+    codec_.init_SAI_clock(SAMPLERATE);
 
    	//De-init the codec to force it to reset
-    codec_deinit();
+    codec_.deinit();
     HAL_Delay(10);
 
     //Start Codec I2C
-    codec_GPIO_init();
-    codec_I2C_init();
+    codec_.GPIO_init();
+    codec_.I2C_init();
 
     HAL_Delay(100);
-    if (codec_register_setup(SAMPLERATE))
+    if (codec_.register_setup(SAMPLERATE))
       assert_failed(__FILE__, __LINE__);
 
     //Start Codec SAI
-    codec_SAI_init(SAMPLERATE);
-    init_audio_DMA();
+    codec_.SAI_init(SAMPLERATE);
+    codec_.init_audio_DMA();
 
     //Start audio processing
-    start_audio();
+    codec_.start();
 
     // process
     while(1) {

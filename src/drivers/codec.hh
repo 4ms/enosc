@@ -26,24 +26,50 @@
  * -----------------------------------------------------------------------------
  */
 
-
 #pragma once
 
-#include <stm32f7xx.h>
+#include "hal.hh"
 
-void codec_deinit(void);
-uint32_t codec_power_down(void);
-uint32_t codec_register_setup(uint32_t sample_rate);
-void codec_GPIO_init(void);
-void codec_I2C_init(void);
+/* DMA rx/tx buffer size, in number of DMA Periph/MemAlign-sized elements (words) */
+#define codec_BUFF_LEN 1024
 
-void init_SAI_clock(uint32_t sample_rate);
-void codec_SAI_init(uint32_t sample_rate);
 
-void Init_SAIDMA(void);
-void DeInit_I2S_Clock(void);
-void DeInit_SAIDMA(void);
-void start_audio(void);
-void init_audio_DMA(void);
+struct Codec {
 
-void reboot_codec(uint32_t sample_rate);
+  Codec() { instance_ = this; }
+
+  void reboot(uint32_t sample_rate);
+  void start(void);
+  void deinit(void);
+
+  // i2c
+  uint32_t power_down(void);
+  uint32_t register_setup(uint32_t sample_rate);
+  void GPIO_init(void);
+  void I2C_init(void);
+
+  // sai
+  void init_SAI_clock(uint32_t sample_rate);
+  void SAI_init(uint32_t sample_rate);
+  void Init_SAIDMA(void);
+  void DeInit_I2S_Clock(void);
+  void DeInit_SAIDMA(void);
+  void init_audio_DMA(void);
+  uint32_t reset(uint8_t master_slave, uint32_t sample_rate);
+
+  static Codec *instance_;
+
+  DMA_HandleTypeDef hdma_sai1b_rx;
+  DMA_HandleTypeDef hdma_sai1a_tx;
+  uint32_t tx_buffer_start, rx_buffer_start, tx_buffer_half, rx_buffer_half;
+
+private:
+  uint32_t write_register(uint8_t RegisterAddr, uint16_t RegisterValue);
+  I2C_HandleTypeDef codec_i2c;
+
+  SAI_HandleTypeDef hsai1b_rx;
+  SAI_HandleTypeDef hsai1a_tx;
+
+  volatile int32_t tx_buffer[codec_BUFF_LEN];
+  volatile int32_t rx_buffer[codec_BUFF_LEN];
+};

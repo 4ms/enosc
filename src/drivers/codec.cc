@@ -47,15 +47,10 @@
 #define CODEC_LONG_TIMEOUT             ((uint32_t)(300 * CODEC_FLAG_TIMEOUT))
 #define CODEC_VLONG_TIMEOUT            ((uint32_t)(30000 * CODEC_FLAG_TIMEOUT))
 
-
-
-/* CODEC.SAI */
-
 //
 // Codec buffer size
 // 
 
-#define codec_BUFF_LEN 		1024						/* DMA rx/tx buffer size, in number of DMA Periph/MemAlign-sized elements (words) */
 #define codec_HT_LEN 		(codec_BUFF_LEN>>1) 		/* Half Transfer buffer size (both channels interleved)*/
 #define codec_HT_CHAN_LEN 	(codec_HT_LEN>>1) 			/* Half Transfer buffer size per channel */
 
@@ -213,43 +208,11 @@
 #define SR_NORM_88K (0b1111 << 2)
 #define SR_NORM_96K (0b0111 << 2)
 
-I2C_HandleTypeDef codec_i2c;
-
 // Oddness:
 // format_I2S does not work with I2S2 on the STM32F427Z (works on the 427V) in Master TX mode (I2S2ext is RX)
 // The RX data is shifted left 2 bits (x4) as it comes in, causing digital wrap-around clipping.
 // Using format_MSB_Left works (I2S periph has to be set up I2S_Standard_LSB or I2S_Standard_MSB).
 // Also, format_MSB_Right does not seem to work at all (with the I2S set to LSB or MSB)
-
-uint16_t codec_init_data[] =
-{
-	VOL_0dB,			// Reg 00: Left Line In
-
-	VOL_0dB,			// Reg 01: Right Line In
-
-	0b0101111,			// Reg 02: Left Headphone out (Mute)
-
-	0b0101111,			// Reg 03: Right Headphone out (Mute)
-
-	(MUTEMIC 			// Reg 04: Analog Audio Path Control (maximum attenuation on sidetone, sidetone disabled, DAC selected, Mute Mic, no bypass)
-	| INSEL_line
-	| DACSEL
-	| SIDEATT_neg6dB),
-
-	(DEEMPH_disable			// Reg 05: Digital Audio Path Control: HPF disable (no DC Blocking on input), De-emphasis disable on DAC
-	| ADCHPFDisable),
-
-	(PD_MIC
-	| PD_OSC
-	| PD_CLKOUT),		// Reg 06: Power Down Control (Clkout, Osc, Mic Off) 0x062
-
-	(format_24b			// Reg 07: Digital Audio Interface Format (24-bit, slave)
-	| format_I2S),
-
-	0x000,				// Reg 08: Sampling Control (USB_NORM=Normal, BOSR=256x, default = 48k)
-
-	0x001				// Reg 09: Active Control
-};
 
 
 //Set configuration here:
@@ -257,61 +220,7 @@ uint16_t codec_init_data[] =
 #define CODEC_MCLK_SRC 			MCLK_SRC_STM
 #define CODEC_ADDRESS           (W8731_ADDR_0<<1)
 
-
-
-
-//Private
-uint32_t codec_reset(uint8_t master_slave, uint32_t sample_rate);
-uint32_t codec_write_register(uint8_t RegisterAddr, uint16_t RegisterValue);
-
-__IO uint32_t  CODECTimeout = CODEC_LONG_TIMEOUT;   
-
-
-uint32_t codec_power_down(void)
-{
-	uint32_t err=0;
-
-	err=codec_write_register(WM8731_REG_POWERDOWN, 0xFF); //Power Down enable all
-	return err;
-
-}
-
-
-uint32_t codec_register_setup(uint32_t sample_rate)
-{
-	uint32_t err = 0;
-
-	err+=codec_reset(CODEC_MODE, sample_rate);
-
-	return err;
-}
-
-
-uint32_t codec_reset(uint8_t master_slave, uint32_t sample_rate)
-{
-	uint8_t i;
-	uint32_t err=0;
-	
-
-	err = codec_write_register(WM8731_REG_RESET, 0);
-	
-
-	if (sample_rate==48000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_48K;
-	if (sample_rate==44100)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_44K;
-	if (sample_rate==32000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_32K;
-	if (sample_rate==88200)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_88K;
-	if (sample_rate==96000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_96K;
-	if (sample_rate==8000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_8K;
-
-
-	for(i=0;i<W8731_NUM_REGS;i++) 
-		err+=codec_write_register(i, codec_init_data[i]);
-
-	return err;
-}
-
-
-uint32_t codec_write_register(uint8_t RegisterAddr, uint16_t RegisterValue)
+uint32_t Codec::write_register(uint8_t RegisterAddr, uint16_t RegisterValue)
 {	
 	//Assemble 2-byte data 
 	uint8_t Byte1 = ((RegisterAddr<<1)&0xFE) | ((RegisterValue>>8)&0x01);
@@ -333,9 +242,70 @@ uint32_t codec_write_register(uint8_t RegisterAddr, uint16_t RegisterValue)
 	else				return 1;
 }
 
+__IO uint32_t  CODECTimeout = CODEC_LONG_TIMEOUT;   
 
 
-void codec_GPIO_init(void)
+uint32_t Codec::power_down(void)
+{
+	uint32_t err=0;
+
+  err=write_register(WM8731_REG_POWERDOWN, 0xFF); //Power Down enable all
+	return err;
+
+}
+
+uint32_t Codec::reset(uint8_t master_slave, uint32_t sample_rate)
+{
+	uint8_t i;
+	uint32_t err=0;
+
+  uint16_t codec_init_data[] = {
+    VOL_0dB,			// Reg 00: Left Line In
+    VOL_0dB,			// Reg 01: Right Line In
+    0b0101111,			// Reg 02: Left Headphone out (Mute)
+    0b0101111,			// Reg 03: Right Headphone out (Mute)
+    (MUTEMIC 			// Reg 04: Analog Audio Path Control (maximum attenuation on sidetone, sidetone disabled, DAC selected, Mute Mic, no bypass)
+     | INSEL_line
+     | DACSEL
+     | SIDEATT_neg6dB),
+    (DEEMPH_disable			// Reg 05: Digital Audio Path Control: HPF disable (no DC Blocking on input), De-emphasis disable on DAC
+     | ADCHPFDisable),
+    (PD_MIC
+     | PD_OSC
+     | PD_CLKOUT),		// Reg 06: Power Down Control (Clkout, Osc, Mic Off) 0x062
+    (format_24b			// Reg 07: Digital Audio Interface Format (24-bit, slave)
+     | format_I2S),
+    0x000,				// Reg 08: Sampling Control (USB_NORM=Normal, BOSR=256x, default = 48k)
+    0x001				// Reg 09: Active Control
+  };
+
+  err = write_register(WM8731_REG_RESET, 0);
+	
+
+	if (sample_rate==48000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_48K;
+	if (sample_rate==44100)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_44K;
+	if (sample_rate==32000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_32K;
+	if (sample_rate==88200)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_88K;
+	if (sample_rate==96000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_96K;
+	if (sample_rate==8000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_8K;
+
+
+	for(i=0;i<W8731_NUM_REGS;i++) 
+    err+=write_register(i, codec_init_data[i]);
+
+	return err;
+}
+
+uint32_t Codec::register_setup(uint32_t sample_rate)
+{
+	uint32_t err = 0;
+
+  err+=reset(CODEC_MODE, sample_rate);
+
+	return err;
+}
+
+void Codec::GPIO_init(void)
 {
 	GPIO_InitTypeDef gpio;
 
@@ -381,7 +351,7 @@ void codec_GPIO_init(void)
   }
 }
 
-void codec_I2C_init(void)
+void Codec::I2C_init(void)
 {
 
 	codec_i2c.Instance 					= CODEC_I2C;
@@ -399,18 +369,7 @@ void codec_I2C_init(void)
 	if (HAL_I2CEx_ConfigDigitalFilter(&codec_i2c, 0) != HAL_OK)							assert_failed(__FILE__, __LINE__);
 }
 
-SAI_HandleTypeDef hsai1b_rx;
-SAI_HandleTypeDef hsai1a_tx;
-DMA_HandleTypeDef hdma_sai1b_rx;
-DMA_HandleTypeDef hdma_sai1a_tx;
-
-volatile int32_t tx_buffer[codec_BUFF_LEN];
-volatile int32_t rx_buffer[codec_BUFF_LEN];
-
-
-uint32_t tx_buffer_start, rx_buffer_start, tx_buffer_half, rx_buffer_half;
-
-void init_audio_DMA(void)
+void Codec::init_audio_DMA(void)
 {
 
 	tx_buffer_start = (uint32_t)&tx_buffer;
@@ -419,11 +378,11 @@ void init_audio_DMA(void)
 	tx_buffer_half = (uint32_t)(&(tx_buffer[codec_HT_LEN]));
 	rx_buffer_half = (uint32_t)(&(rx_buffer[codec_HT_LEN]));
 
-	Init_SAIDMA();
+  Codec::Init_SAIDMA();
 }
 
 
-void reboot_codec(uint32_t sample_rate)
+void Codec::reboot(uint32_t sample_rate)
 {
 	static uint32_t last_sample_rate;
 
@@ -438,8 +397,8 @@ void reboot_codec(uint32_t sample_rate)
 		last_sample_rate = sample_rate; 
 
 		//Take everything down...
-		codec_power_down();
-	    codec_deinit();
+    power_down();
+    Codec::deinit();
 	   	HAL_Delay(10);
 
 	    DeInit_I2S_Clock();
@@ -449,29 +408,29 @@ void reboot_codec(uint32_t sample_rate)
 	   	//...and bring it all back up
 		init_SAI_clock(sample_rate);
 
-		codec_GPIO_init();
-		codec_SAI_init(sample_rate);
+    GPIO_init();
+    SAI_init(sample_rate);
 		init_audio_DMA();
 
-		codec_I2C_init();
-		codec_register_setup(sample_rate);
+    I2C_init();
+    register_setup(sample_rate);
 
-		start_audio();
+    start();
   }
 }
 
 
-void start_audio(void)
+void Codec::start(void)
 {
 	HAL_NVIC_EnableIRQ(CODEC_SAI_RX_DMA_IRQn); 
 }
 
-void DeInit_I2S_Clock(void)
+void Codec::DeInit_I2S_Clock(void)
 {
 	HAL_RCCEx_DisablePLLI2S();
 }
 
-void DeInit_SAIDMA(void)
+void Codec::DeInit_SAIDMA(void)
 {
 	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
 	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
@@ -492,7 +451,7 @@ void DeInit_SAIDMA(void)
 }
 
 
-void codec_SAI_init(uint32_t sample_rate)
+void Codec::SAI_init(uint32_t sample_rate)
 {
 	CODEC_SAI_CLOCK_ENABLE();
 
@@ -528,7 +487,7 @@ void codec_SAI_init(uint32_t sample_rate)
 }
 
 
-void init_SAI_clock(uint32_t sample_rate)
+void Codec::init_SAI_clock(uint32_t sample_rate)
 {
 	RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
 	PeriphClkInitStruct.PeriphClockSelection = CODEC_SAI_RCC_PERIPHCLK;
@@ -581,14 +540,14 @@ void init_SAI_clock(uint32_t sample_rate)
 
 }
 
-void codec_deinit(void)
+void Codec::deinit(void)
 {
 	CODEC_I2C_CLK_DISABLE();
     HAL_GPIO_DeInit(CODEC_I2C_GPIO, CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN);
 }
 
 
-void Init_SAIDMA(void)
+void Codec::Init_SAIDMA(void)
 {
 	//
 	// Prepare the DMA for RX (but don't enable yet)
@@ -662,6 +621,8 @@ void Init_SAIDMA(void)
   HAL_SAI_Receive_DMA(&hsai1b_rx, (uint8_t *)rx_buffer, codec_BUFF_LEN);
 }
 
+Codec *Codec::instance_;
+
 //DMA2_Stream5_IRQHandler
 extern "C" void CODEC_SAI_RX_DMA_IRQHandler(void)
 {
@@ -675,45 +636,48 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler(void)
 	//Read the interrupt status register (ISR)
 	uint32_t tmpisr = CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_ISR;
 
-	if ((tmpisr & __HAL_DMA_GET_FE_FLAG_INDEX(&hdma_sai1b_rx)) && __HAL_DMA_GET_IT_SOURCE(&hdma_sai1b_rx, DMA_IT_FE))
-	{	
+  if ((tmpisr & __HAL_DMA_GET_FE_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
+      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_FE)) {
 		err=DMA_IT_FE; 
 	}
 		
-	if ((tmpisr & __HAL_DMA_GET_TE_FLAG_INDEX(&hdma_sai1b_rx)) && __HAL_DMA_GET_IT_SOURCE(&hdma_sai1b_rx, DMA_IT_TE))
-	{	
+  if ((tmpisr & __HAL_DMA_GET_TE_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
+      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_TE)) {
 		err=DMA_IT_TE; 
 	}
 
-	if ((tmpisr & __HAL_DMA_GET_DME_FLAG_INDEX(&hdma_sai1b_rx)) && __HAL_DMA_GET_IT_SOURCE(&hdma_sai1b_rx, DMA_IT_DME))
-	{	
+  if ((tmpisr & __HAL_DMA_GET_DME_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
+      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_DME)) {
 		err=DMA_IT_DME; 
 	}
 
 	// Transfer Complete (TC)
-	if ((tmpisr & __HAL_DMA_GET_TC_FLAG_INDEX(&hdma_sai1b_rx)) && __HAL_DMA_GET_IT_SOURCE(&hdma_sai1b_rx, DMA_IT_TC))
-	{
+  if ((tmpisr & __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
+      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_TC)) {
 		// Point to 2nd half of buffers
-		src = (int32_t *)(rx_buffer_half);
-		dst = (int32_t *)(tx_buffer_half);
+    src = (int32_t *)(Codec::instance_->rx_buffer_half);
+    dst = (int32_t *)(Codec::instance_->tx_buffer_half);
 
     process_audio_block_codec(src, dst, codec_HT_CHAN_LEN);
 
 		//CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_IFCR = CODEC_SAI_RX_DMA_FLAG_TC;
-		__HAL_DMA_CLEAR_FLAG(&hdma_sai1b_rx, __HAL_DMA_GET_TC_FLAG_INDEX(&hdma_sai1b_rx));
+    __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_sai1b_rx,
+                         __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx));
 	}
 
 	// Half Transfer complete (HT)
-	if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&hdma_sai1b_rx)) && __HAL_DMA_GET_IT_SOURCE(&hdma_sai1b_rx, DMA_IT_HT))
+  if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
+      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_HT))
 	{
 		// Point to 1st half of buffers
-		src = (int32_t *)(rx_buffer_start);
-		dst = (int32_t *)(tx_buffer_start);
+    src = (int32_t *)(Codec::instance_->rx_buffer_start);
+    dst = (int32_t *)(Codec::instance_->tx_buffer_start);
 
     process_audio_block_codec(src, dst, codec_HT_CHAN_LEN);
 
 		//CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_IFCR = CODEC_SAI_RX_DMA_FLAG_HT;
-		__HAL_DMA_CLEAR_FLAG(&hdma_sai1b_rx, __HAL_DMA_GET_HT_FLAG_INDEX(&hdma_sai1b_rx));
+    __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_sai1b_rx,
+                         __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx));
 	}
 }
 
