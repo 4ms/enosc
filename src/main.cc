@@ -3,7 +3,7 @@
 
 extern "C" {
 #include "codec.hh"
-#include "audio_stream.h"
+#include "audio_stream.hh"
 }
 
 #include "system.hh"

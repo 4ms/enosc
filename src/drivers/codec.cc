@@ -308,12 +308,7 @@ void codec_I2C_init(void)
 
 
 
-//Link to the process_audio_block_codec() of the main app or the bootloader
-#if IS_BOOTLOADER == 1
-	#include "bootloader.h"
-#else
-	#include "audio_stream.h"
-#endif
+#include "audio_stream.hh"
 
 SAI_HandleTypeDef hsai1b_rx;
 SAI_HandleTypeDef hsai1a_tx;

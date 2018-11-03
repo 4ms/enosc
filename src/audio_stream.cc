@@ -26,9 +26,9 @@
  * -----------------------------------------------------------------------------
  */
 
-#include "audio_stream.h"
 #include "globals.h"
 
+#include "audio_stream.hh"
 #include "codec.hh"
 
 
@@ -40,7 +40,7 @@ int32_t average_L, average_R;
 int32_t tri_L=0, tri_R=0;
 int32_t tri_L_dir=1, tri_R_dir=1;
 
-void process_audio_block_codec(int32_t *src, int32_t *dst)
+extern "C" void process_audio_block_codec(int32_t *src, int32_t *dst)
 {
   uint32_t 	i_sample;
 	int32_t		in_L, in_R;
