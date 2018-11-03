@@ -10,7 +10,6 @@ SRCS = \
 	lib/easiglib/math.cc \
 	lib/easiglib/dsp.cc \
 	src/audio_stream.c \
-	src/audio_util.c \
 	src/drivers/adc.cc \
 	src/drivers/codec.cc \
 	src/main.cc \

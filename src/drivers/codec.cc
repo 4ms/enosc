@@ -173,12 +173,6 @@ uint32_t codec_write_register(uint8_t RegisterAddr, uint16_t RegisterValue);
 __IO uint32_t  CODECTimeout = CODEC_LONG_TIMEOUT;   
 
 
-void codec_deinit(void)
-{
-	CODEC_I2C_CLK_DISABLE();
-    HAL_GPIO_DeInit(CODEC_I2C_GPIO, CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN);
-}
-
 uint32_t codec_power_down(void)
 {
 	uint32_t err=0;
@@ -643,4 +637,10 @@ void init_SAI_clock(uint32_t sample_rate)
 		assert_failed(__FILE__, __LINE__);
 
 
+}
+
+void codec_deinit(void)
+{
+	CODEC_I2C_CLK_DISABLE();
+    HAL_GPIO_DeInit(CODEC_I2C_GPIO, CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN);
 }
