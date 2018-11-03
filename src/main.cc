@@ -88,8 +88,13 @@ struct Main {
     //LEDs with PWM
     if ((HAL_GetTick() - last_update_tm) > 1000/60) {
       last_update_tm = HAL_GetTick();
-      uint8_t ledpwm[6]={0};
-      for (int i=0;i<6;i++) ledpwm[i] = adc_.get_adc3(i)/(4096/PWM_MAX);
+      uint8_t ledpwm[6];
+      ledpwm[0] = adc_.get_adc(GRID_POT)/(4096/PWM_MAX);
+      ledpwm[1] = adc_.get_adc(SPREAD_POT)/(4096/PWM_MAX);
+      ledpwm[2] = adc_.get_adc(PITCH_POT)/(4096/PWM_MAX);
+      ledpwm[3] = adc_.get_adc(TILT_CV)/(4096/PWM_MAX);
+      ledpwm[4] = adc_.get_adc(GRID_CV)/(4096/PWM_MAX);
+      ledpwm[5] = adc_.get_adc(SPREAD_CV_1)/(4096/PWM_MAX);
       leds_.set_freeze(ledpwm[0], ledpwm[1], ledpwm[2]);
       leds_.set_learn(ledpwm[3], ledpwm[4], ledpwm[5]);
     }
@@ -117,22 +122,22 @@ struct Main {
     warp_sw = switches_.warp_.get();
 
     //ADCs
-    warp_pot = adc_.get_adc1(WARP_POT_ADC);
-    detune_pot = adc_.get_adc1(DETUNE_POT_ADC);
-    mod_pot = adc_.get_adc1(MOD_POT_ADC);
-    root_pot = adc_.get_adc1(ROOT_POT_ADC);
-    grid_pot = adc_.get_adc1(GRID_POT_ADC);
-    pitch_pot = adc_.get_adc1(PITCH_POT_ADC);
-    spread_pot = adc_.get_adc1(SPREAD_POT_ADC);
-    tilt_pot = adc_.get_adc1(TILT_POT_ADC);
-    twist_pot = adc_.get_adc1(TWIST_POT_ADC);
+    warp_pot = adc_.get_adc(WARP_POT);
+    detune_pot = adc_.get_adc(DETUNE_POT);
+    mod_pot = adc_.get_adc(MOD_POT);
+    root_pot = adc_.get_adc(ROOT_POT);
+    grid_pot = adc_.get_adc(GRID_POT);
+    pitch_pot = adc_.get_adc(PITCH_POT);
+    spread_pot = adc_.get_adc(SPREAD_POT);
+    tilt_pot = adc_.get_adc(TILT_POT);
+    twist_pot = adc_.get_adc(TWIST_POT);
 
-    spread1_cv = adc_.get_adc3(SPREAD_CV_1_ADC);
-    warp_cv = adc_.get_adc3(WARP_CV_ADC);
-    spread2_cv = adc_.get_adc3(SPREAD_CV_2_ADC);
-    twist_cv = adc_.get_adc3(TWIST_CV_ADC);
-    tilt_cv = adc_.get_adc3(TILT_CV_ADC);
-    grid_cv = adc_.get_adc3(GRID_CV_ADC);
-    mod_cv = adc_.get_adc3(MOD_CV_ADC);
+    spread1_cv = adc_.get_adc(SPREAD_CV_1);
+    warp_cv = adc_.get_adc(WARP_CV);
+    spread2_cv = adc_.get_adc(SPREAD_CV_2);
+    twist_cv = adc_.get_adc(TWIST_CV);
+    tilt_cv = adc_.get_adc(TILT_CV);
+    grid_cv = adc_.get_adc(GRID_CV);
+    mod_cv = adc_.get_adc(MOD_CV);
   }
 } _;
