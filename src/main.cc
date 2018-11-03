@@ -2,7 +2,6 @@ extern "C" {
 #include "hal.hh"
 #include "globals.h"
 #include "drivers/codec_i2c.h"
-#include "drivers/codec_sai.h"
 #include "audio_stream.h"
 }
 
