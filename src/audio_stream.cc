@@ -40,7 +40,7 @@ int32_t average_L, average_R;
 int32_t tri_L=0, tri_R=0;
 int32_t tri_L_dir=1, tri_R_dir=1;
 
-extern "C" void process_audio_block_codec(int32_t *src, int32_t *dst)
+void process_audio_block_codec(int32_t *src, int32_t *dst)
 {
   uint32_t 	i_sample;
 	int32_t		in_L, in_R;

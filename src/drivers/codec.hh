@@ -50,12 +50,6 @@
 #define CODEC_VLONG_TIMEOUT            ((uint32_t)(30000 * CODEC_FLAG_TIMEOUT))
 
 
-void codec_deinit(void);
-uint32_t codec_power_down(void);
-uint32_t codec_register_setup(uint32_t sample_rate);
-void codec_GPIO_init(void);
-void codec_I2C_init(void);
-
 
 /* CODEC.SAI */
 
@@ -134,6 +128,12 @@ void codec_I2C_init(void);
 #define CODEC_SAI_RX_DMA_FLAG_DME		DMA_FLAG_DMEIF1_5
 
 
+
+void codec_deinit(void);
+uint32_t codec_power_down(void);
+uint32_t codec_register_setup(uint32_t sample_rate);
+void codec_GPIO_init(void);
+void codec_I2C_init(void);
 
 void init_SAI_clock(uint32_t sample_rate);
 void codec_SAI_init(uint32_t sample_rate);

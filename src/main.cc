@@ -1,11 +1,7 @@
 #include "hal.hh"
 #include "globals.h"
-
-extern "C" {
 #include "codec.hh"
 #include "audio_stream.hh"
-}
-
 #include "system.hh"
 #include "buttons.hh"
 #include "gates.hh"
