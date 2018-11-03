@@ -3,30 +3,29 @@
 
 #include "hal.hh"
 
-// ADC1
-enum AdcChannel {
-  WARP_POT,		//  0
-  DETUNE_POT,		//  1
-  MOD_POT,		//  2
-  ROOT_POT, 		//  3
-  GRID_POT,		//  4
-  PITCH_POT,		//  5
-  SPREAD_POT,		//  6
-  TILT_POT,		//  7
-  TWIST_POT,		//  8
-  SPREAD_CV_1,	//  0
-  WARP_CV,		//  1
-  SPREAD_CV_2,	//  2
-  TWIST_CV, 		//  3
-  TILT_CV,		//  4
-  GRID_CV,		//  5
-  MOD_CV,			//  6
-	
-  NUM_ADCS
-};
-
 struct Adc {
   Adc();
+
+  enum AdcChannel {
+    WARP_POT,
+    DETUNE_POT,
+    MOD_POT,
+    ROOT_POT,
+    GRID_POT,
+    PITCH_POT,
+    SPREAD_POT,
+    TILT_POT,
+    TWIST_POT,
+    SPREAD_CV_1,
+    WARP_CV,
+    SPREAD_CV_2,
+    TWIST_CV,
+    TILT_CV,
+    GRID_CV,
+    MOD_CV,
+    NUM_ADCS
+  };
+  
   uint16_t get_adc(AdcChannel channel);
 
 private:
