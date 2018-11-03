@@ -27,7 +27,7 @@
  */
 
 #include "globals.h"
-#include "drivers/codec_i2c.h"
+#include "codec.h"
 
 I2C_HandleTypeDef codec_i2c;
 

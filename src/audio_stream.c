@@ -28,7 +28,7 @@
 
 #include "audio_stream.h"
 #include "globals.h"
-#include "codec_i2c.h"
+#include "codec.h"
 
 
 #define MAX_CODEC_DAC_VAL 8388607
