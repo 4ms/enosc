@@ -40,7 +40,7 @@ int32_t average_L, average_R;
 int32_t tri_L=0, tri_R=0;
 int32_t tri_L_dir=1, tri_R_dir=1;
 
-void process_audio_block_codec(int32_t *src, int32_t *dst)
+void process_audio_block_codec(int32_t *src, int32_t *dst, uint32_t size)
 {
   uint32_t 	i_sample;
 	int32_t		in_L, in_R;
@@ -49,7 +49,7 @@ void process_audio_block_codec(int32_t *src, int32_t *dst)
   if (do_audio_passthrough_test)
 	{
 
-		for ( i_sample = 0; i_sample < codec_HT_CHAN_LEN; i_sample++)
+		for ( i_sample = 0; i_sample < size; i_sample++)
 		{
 			in_L = *src++;
 			in_R = *src++;
@@ -61,14 +61,14 @@ void process_audio_block_codec(int32_t *src, int32_t *dst)
 			*dst++ = in_R;
 		}
 
-		average_L = ((sum_L/codec_HT_CHAN_LEN) << 8);
-		average_R = ((sum_R/codec_HT_CHAN_LEN) << 8);
+		average_L = ((sum_L/size) << 8);
+		average_R = ((sum_R/size) << 8);
 
 	} 
 	else //triangle wave test
 	{
 
-		for ( i_sample = 0; i_sample < codec_HT_CHAN_LEN; i_sample++)
+		for ( i_sample = 0; i_sample < size; i_sample++)
 		{
 			if (tri_L_dir==1)	tri_L+=0x1000;
 			else				tri_L-=0x2000;
