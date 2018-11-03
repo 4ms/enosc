@@ -1,7 +1,7 @@
 extern "C" {
 #include "hal.hh"
 #include "globals.h"
-#include "codec.h"
+#include "codec.hh"
 #include "audio_stream.h"
 }
 

@@ -26,8 +26,9 @@
  * -----------------------------------------------------------------------------
  */
 
-#include "globals.h"
-#include "codec.h"
+extern "C" {
+
+#include "codec.hh"
 
 I2C_HandleTypeDef codec_i2c;
 
@@ -170,22 +171,6 @@ uint32_t codec_reset(uint8_t master_slave, uint32_t sample_rate);
 uint32_t codec_write_register(uint8_t RegisterAddr, uint16_t RegisterValue);
 
 __IO uint32_t  CODECTimeout = CODEC_LONG_TIMEOUT;   
-
-
-#ifdef USE_DEFAULT_TIMEOUT_CALLBACK
-
-uint32_t Codec_TIMEOUT_UserCallback(void)
-{
-	while (1)
-	{   
-	}
-}
-#else
-uint32_t Codec_TIMEOUT_UserCallback(void)
-{
-	return 1;
-}
-#endif
 
 
 void codec_deinit(void)
@@ -346,59 +331,6 @@ volatile int32_t rx_buffer[codec_BUFF_LEN];
 
 
 uint32_t tx_buffer_start, rx_buffer_start, tx_buffer_half, rx_buffer_half;
-
-void init_SAI_clock(uint32_t sample_rate)
-{
-	RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
-	PeriphClkInitStruct.PeriphClockSelection = CODEC_SAI_RCC_PERIPHCLK;
-
-	//PLL input = HSE / PLLM = 16000000 / 16 = 1000000
-	//PLLI2S = 1000000 * PLLI2SN / PLLI2SQ / PLLI2SDivQ
-
-	if (sample_rate==44100)
-	{
-		//44.1kHz * 256 == 11 289 600
-		// 		1000000 * 384 / 2 / 17
-		//		= 11 294 117 = +0.04%
-
-		PeriphClkInitStruct.PLLI2S.PLLI2SN 	= 384;	// mult by 384 = 384MHz
-		PeriphClkInitStruct.PLLI2S.PLLI2SQ 	= 2;  	// div by 2 = 192MHz
-		PeriphClkInitStruct.PLLI2SDivQ 		= 17; 	// div by 17 = 11.294117MHz
-													// div by 256 for bit rate = 44.117kHz
-	}
-
-	else if (sample_rate==48000)
-	{
-		//48kHz * 256 == 12.288 MHz
-		//		1000000 * 344 / 4 / 7
-		//		= 12.285714MHz = -0.01%
-
-		PeriphClkInitStruct.PLLI2S.PLLI2SN 	= 344;	// mult by 344 = 344MHz
-		PeriphClkInitStruct.PLLI2S.PLLI2SQ 	= 4;  	// div by 4 = 86MHz
-		PeriphClkInitStruct.PLLI2SDivQ 		= 7; 	// div by 7 = 12.285714MHz
-													// div by 256 for bit rate = 47.991kHz
-	}
-
-	else if (sample_rate==96000)
-	{
-		//96kHz * 256 == 24.576 MHz
-		//		1000000 * 344 / 2 / 7
-		//		= 24.571429MHz = -0.02%
-		
-		PeriphClkInitStruct.PLLI2S.PLLI2SN 	= 344;	// mult by 344 = 344MHz
-		PeriphClkInitStruct.PLLI2S.PLLI2SQ 	= 2;  	// div by 2 = 172MHz
-		PeriphClkInitStruct.PLLI2SDivQ 		= 7; 	// div by 7 = 24.571429MHz
-													// div by 256 for bit rate = 95.982kHz
-	}
-	else 
-		return; //exit if sample_rate is not valid
-
-	PeriphClkInitStruct.CODEC_SaixClockSelection 		= CODEC_SAI_RCC_CLKSOURCE_PLLI2S;
-	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-		assert_failed(__FILE__, __LINE__);
-
-
-}
 
 void init_audio_DMA(void)
 {
@@ -657,3 +589,58 @@ void CODEC_SAI_RX_DMA_IRQHandler(void)
 // 	HAL_DMA_IRQHandler(&hdma_sai1a_tx);
 // }
 
+}
+
+
+void init_SAI_clock(uint32_t sample_rate)
+{
+	RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
+	PeriphClkInitStruct.PeriphClockSelection = CODEC_SAI_RCC_PERIPHCLK;
+
+	//PLL input = HSE / PLLM = 16000000 / 16 = 1000000
+	//PLLI2S = 1000000 * PLLI2SN / PLLI2SQ / PLLI2SDivQ
+
+	if (sample_rate==44100)
+	{
+		//44.1kHz * 256 == 11 289 600
+		// 		1000000 * 384 / 2 / 17
+		//		= 11 294 117 = +0.04%
+
+		PeriphClkInitStruct.PLLI2S.PLLI2SN 	= 384;	// mult by 384 = 384MHz
+		PeriphClkInitStruct.PLLI2S.PLLI2SQ 	= 2;  	// div by 2 = 192MHz
+		PeriphClkInitStruct.PLLI2SDivQ 		= 17; 	// div by 17 = 11.294117MHz
+													// div by 256 for bit rate = 44.117kHz
+	}
+
+	else if (sample_rate==48000)
+	{
+		//48kHz * 256 == 12.288 MHz
+		//		1000000 * 344 / 4 / 7
+		//		= 12.285714MHz = -0.01%
+
+		PeriphClkInitStruct.PLLI2S.PLLI2SN 	= 344;	// mult by 344 = 344MHz
+		PeriphClkInitStruct.PLLI2S.PLLI2SQ 	= 4;  	// div by 4 = 86MHz
+		PeriphClkInitStruct.PLLI2SDivQ 		= 7; 	// div by 7 = 12.285714MHz
+													// div by 256 for bit rate = 47.991kHz
+	}
+
+	else if (sample_rate==96000)
+	{
+		//96kHz * 256 == 24.576 MHz
+		//		1000000 * 344 / 2 / 7
+		//		= 24.571429MHz = -0.02%
+		
+		PeriphClkInitStruct.PLLI2S.PLLI2SN 	= 344;	// mult by 344 = 344MHz
+		PeriphClkInitStruct.PLLI2S.PLLI2SQ 	= 2;  	// div by 2 = 172MHz
+		PeriphClkInitStruct.PLLI2SDivQ 		= 7; 	// div by 7 = 24.571429MHz
+													// div by 256 for bit rate = 95.982kHz
+	}
+	else 
+		return; //exit if sample_rate is not valid
+
+	PeriphClkInitStruct.CODEC_SaixClockSelection 		= CODEC_SAI_RCC_CLKSOURCE_PLLI2S;
+	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+		assert_failed(__FILE__, __LINE__);
+
+
+}

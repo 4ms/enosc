@@ -12,7 +12,7 @@ SRCS = \
 	src/audio_stream.c \
 	src/audio_util.c \
 	src/drivers/adc.cc \
-	src/drivers/codec.c \
+	src/drivers/codec.cc \
 	src/main.cc \
 
 OBJS_1 = $(SRCS:.cc=.o)
