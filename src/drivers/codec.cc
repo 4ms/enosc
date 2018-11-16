@@ -12,13 +12,6 @@
 #define CODEC_I2C_SCL_PIN				GPIO_PIN_8
 #define CODEC_I2C_SDA_PIN				GPIO_PIN_7
 
-
-#define CODEC_FLAG_TIMEOUT             ((uint32_t)0x1000)
-#define CODEC_SHORT_TIMEOUT            ((uint32_t)(1000))
-#define CODEC_LONG_TIMEOUT             ((uint32_t)(300 * CODEC_FLAG_TIMEOUT))
-#define CODEC_VLONG_TIMEOUT            ((uint32_t)(30000 * CODEC_FLAG_TIMEOUT))
-
-
 #define W8731_ADDR_0 0x1A
 #define W8731_ADDR_1 0x1B
 #define W8731_NUM_REGS 10
@@ -235,11 +228,8 @@ void Codec::I2C::Write(uint8_t RegisterAddr, uint16_t RegisterValue)
 	data[0] = Byte1;
 	data[1] = Byte2;
 
-  hal_assert(HAL_I2C_Master_Transmit(&handle_, CODEC_ADDRESS, data, 2, CODEC_SHORT_TIMEOUT));
+  hal_assert(HAL_I2C_Master_Transmit(&handle_, CODEC_ADDRESS, data, 2, 1000));
 }
-
-__IO uint32_t  CODECTimeout = CODEC_LONG_TIMEOUT;   
-
 
 void Codec::I2C::PowerDown() {
   Write(WM8731_REG_POWERDOWN, 0xFF); //Power Down enable all
@@ -410,8 +400,7 @@ void Codec::DeInit_SAIDMA()
 	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
 	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
 
-	//__HAL_RCC_DMA2_CLK_DISABLE();
-	HAL_RCCEx_DisablePLLSAI();
+  HAL_RCCEx_DisablePLLSAI();
 
 	CODEC_SAI_CLOCK_DISABLE();
 
