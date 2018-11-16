@@ -1,39 +1,26 @@
-/*
- * codec_i2c.h: setup and init for WM8731 codec
- *
- * Author: Dan Green (danngreen1@gmail.com)
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * See http://creativecommons.org/licenses/MIT/ for more information.
- *
- * -----------------------------------------------------------------------------
- */
 
 #pragma once
 
 #include "parameters.hh"
 #include "hal.hh"
 
+#define CODEC_IS_SLAVE 0
+#define CODEC_IS_MASTER 1
+
+#define MCLK_SRC_STM 0
+#define MCLK_SRC_EXTERNAL 1
+
+#define W8731_ADDR_0 0x1A
+#define W8731_ADDR_1 0x1B
+#define W8731_NUM_REGS 10
+
+//Set configuration here:
+#define CODEC_MODE 				CODEC_IS_SLAVE
+#define CODEC_MCLK_SRC 			MCLK_SRC_STM
+#define CODEC_ADDRESS           (W8731_ADDR_0<<1)
+
 /* DMA rx/tx buffer size, in number of DMA Periph/MemAlign-sized elements (words) */
 #define codec_BUFF_LEN 1024
-
 
 struct Codec {
 
@@ -49,19 +36,21 @@ struct Codec {
     init_SAI_clock(sample_rate);
 
    	//De-init the codec to force it to reset
-    i2c_.Deinit();
+    i2c_.DeInit();
 
     //Start Codec I2C
     gpio_.Init();
     i2c_.Init();
 
-    if (register_setup(sample_rate))
+    if (i2c_.Reset(CODEC_MODE, sample_rate))
       assert_failed(__FILE__, __LINE__);
 
     //Start Codec SAI
     SAI_init(sample_rate);
     init_audio_DMA();
   }
+
+  void Start(void);
 
   static Codec *instance_;
   Callback *callback_;
@@ -71,8 +60,6 @@ struct Codec {
 
   uint32_t tx_buffer_start, rx_buffer_start, tx_buffer_half, rx_buffer_half;
 
-  void Start(void);
-
 private:
 
   struct GPIO {
@@ -81,18 +68,18 @@ private:
 
   struct I2C {
     void Init();
-    void Deinit();
-    uint32_t Write(uint8_t RegisterAddr, uint16_t RegisterValue);
+    void DeInit();
+    uint32_t Reset(uint8_t master_slave, uint32_t sample_rate);
+    void PowerDown();
   private:
+    uint32_t Write(uint8_t RegisterAddr, uint16_t RegisterValue);
     I2C_HandleTypeDef handle_;
   } i2c_;
 
-  void reboot(uint32_t sample_rate);
+  void Reboot(uint32_t sample_rate);
 
   // i2c
-  uint32_t power_down(void);
   uint32_t register_setup(uint32_t sample_rate);
-  void GPIO_init(void);
 
   // sai
   void init_SAI_clock(uint32_t sample_rate);
@@ -101,7 +88,6 @@ private:
   void DeInit_I2S_Clock(void);
   void DeInit_SAIDMA(void);
   void init_audio_DMA(void);
-  uint32_t reset(uint8_t master_slave, uint32_t sample_rate);
 
 private:
 
