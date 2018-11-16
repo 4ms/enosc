@@ -49,11 +49,11 @@ struct Codec {
     init_SAI_clock(sample_rate);
 
    	//De-init the codec to force it to reset
-    deinit();
+    i2c_.Deinit();
 
     //Start Codec I2C
-    GPIO_init();
-    I2C_init();
+    gpio_.Init();
+    i2c_.Init();
 
     if (register_setup(sample_rate))
       assert_failed(__FILE__, __LINE__);
@@ -75,14 +75,24 @@ struct Codec {
 
 private:
 
+  struct GPIO {
+    void Init();
+  } gpio_;
+
+  struct I2C {
+    void Init();
+    void Deinit();
+    uint32_t Write(uint8_t RegisterAddr, uint16_t RegisterValue);
+  private:
+    I2C_HandleTypeDef handle_;
+  } i2c_;
+
   void reboot(uint32_t sample_rate);
-  void deinit(void);
 
   // i2c
   uint32_t power_down(void);
   uint32_t register_setup(uint32_t sample_rate);
   void GPIO_init(void);
-  void I2C_init(void);
 
   // sai
   void init_SAI_clock(uint32_t sample_rate);
@@ -94,9 +104,6 @@ private:
   uint32_t reset(uint8_t master_slave, uint32_t sample_rate);
 
 private:
-
-  uint32_t write_register(uint8_t RegisterAddr, uint16_t RegisterValue);
-  I2C_HandleTypeDef codec_i2c;
 
   SAI_HandleTypeDef hsai1b_rx;
   SAI_HandleTypeDef hsai1a_tx;

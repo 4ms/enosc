@@ -219,7 +219,7 @@
 #define CODEC_MCLK_SRC 			MCLK_SRC_STM
 #define CODEC_ADDRESS           (W8731_ADDR_0<<1)
 
-uint32_t Codec::write_register(uint8_t RegisterAddr, uint16_t RegisterValue)
+uint32_t Codec::I2C::Write(uint8_t RegisterAddr, uint16_t RegisterValue)
 {	
 	//Assemble 2-byte data 
 	uint8_t Byte1 = ((RegisterAddr<<1)&0xFE) | ((RegisterValue>>8)&0x01);
@@ -231,9 +231,9 @@ uint32_t Codec::write_register(uint8_t RegisterAddr, uint16_t RegisterValue)
 
 	HAL_StatusTypeDef 	err;
 
-	while((err = HAL_I2C_Master_Transmit(&codec_i2c, CODEC_ADDRESS, data, 2, CODEC_SHORT_TIMEOUT)) != HAL_OK)
+  while((err = HAL_I2C_Master_Transmit(&handle_, CODEC_ADDRESS, data, 2, CODEC_SHORT_TIMEOUT)) != HAL_OK)
 	{
-		if (HAL_I2C_GetError(&codec_i2c) != HAL_I2C_ERROR_AF)
+    if (HAL_I2C_GetError(&handle_) != HAL_I2C_ERROR_AF)
 			assert_failed(__FILE__, __LINE__);
 	}
 
@@ -244,11 +244,11 @@ uint32_t Codec::write_register(uint8_t RegisterAddr, uint16_t RegisterValue)
 __IO uint32_t  CODECTimeout = CODEC_LONG_TIMEOUT;   
 
 
-uint32_t Codec::power_down(void)
+uint32_t Codec::power_down()
 {
 	uint32_t err=0;
 
-  err=write_register(WM8731_REG_POWERDOWN, 0xFF); //Power Down enable all
+  err=i2c_.Write(WM8731_REG_POWERDOWN, 0xFF); //Power Down enable all
 	return err;
 
 }
@@ -278,7 +278,7 @@ uint32_t Codec::reset(uint8_t master_slave, uint32_t sample_rate)
     0x001				// Reg 09: Active Control
   };
 
-  err = write_register(WM8731_REG_RESET, 0);
+  err = i2c_.Write(WM8731_REG_RESET, 0);
 	
 
 	if (sample_rate==48000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_48K;
@@ -290,7 +290,7 @@ uint32_t Codec::reset(uint8_t master_slave, uint32_t sample_rate)
 
 
 	for(i=0;i<W8731_NUM_REGS;i++) 
-    err+=write_register(i, codec_init_data[i]);
+    err+=i2c_.Write(i, codec_init_data[i]);
 
 	return err;
 }
@@ -304,7 +304,7 @@ uint32_t Codec::register_setup(uint32_t sample_rate)
 	return err;
 }
 
-void Codec::GPIO_init(void)
+void Codec::GPIO::Init(void)
 {
 	GPIO_InitTypeDef gpio;
 
@@ -350,22 +350,22 @@ void Codec::GPIO_init(void)
   }
 }
 
-void Codec::I2C_init(void)
+void Codec::I2C::Init(void)
 {
 
-	codec_i2c.Instance 					= CODEC_I2C;
-	codec_i2c.Init.Timing 				= 0x20404768; //0x20445757;
-	codec_i2c.Init.OwnAddress1		 	= 0;
-	codec_i2c.Init.AddressingMode 		= I2C_ADDRESSINGMODE_7BIT;
-	codec_i2c.Init.DualAddressMode 		= I2C_DUALADDRESS_DISABLE;
-	codec_i2c.Init.OwnAddress2 			= 0;
-	codec_i2c.Init.OwnAddress2Masks		= I2C_OA2_NOMASK;
-	codec_i2c.Init.GeneralCallMode 		= I2C_GENERALCALL_DISABLE;
-	codec_i2c.Init.NoStretchMode 		= I2C_NOSTRETCH_DISABLE;
+	handle_.Instance 					= CODEC_I2C;
+	handle_.Init.Timing 				= 0x20404768; //0x20445757;
+	handle_.Init.OwnAddress1		 	= 0;
+	handle_.Init.AddressingMode 		= I2C_ADDRESSINGMODE_7BIT;
+	handle_.Init.DualAddressMode 		= I2C_DUALADDRESS_DISABLE;
+	handle_.Init.OwnAddress2 			= 0;
+	handle_.Init.OwnAddress2Masks		= I2C_OA2_NOMASK;
+	handle_.Init.GeneralCallMode 		= I2C_GENERALCALL_DISABLE;
+	handle_.Init.NoStretchMode 		= I2C_NOSTRETCH_DISABLE;
 
-	if (HAL_I2C_Init(&codec_i2c) != HAL_OK)												assert_failed(__FILE__, __LINE__);
-	if (HAL_I2CEx_ConfigAnalogFilter(&codec_i2c, I2C_ANALOGFILTER_ENABLE) != HAL_OK)	assert_failed(__FILE__, __LINE__);
-	if (HAL_I2CEx_ConfigDigitalFilter(&codec_i2c, 0) != HAL_OK)							assert_failed(__FILE__, __LINE__);
+	if (HAL_I2C_Init(&handle_) != HAL_OK)												assert_failed(__FILE__, __LINE__);
+	if (HAL_I2CEx_ConfigAnalogFilter(&handle_, I2C_ANALOGFILTER_ENABLE) != HAL_OK)	assert_failed(__FILE__, __LINE__);
+	if (HAL_I2CEx_ConfigDigitalFilter(&handle_, 0) != HAL_OK)							assert_failed(__FILE__, __LINE__);
 }
 
 void Codec::init_audio_DMA(void)
@@ -391,27 +391,26 @@ void Codec::reboot(uint32_t sample_rate)
 
 	//Do nothing if the sample_rate did not change
 	
-	if (last_sample_rate != sample_rate)
-	{
+  if (last_sample_rate != sample_rate) {
 		last_sample_rate = sample_rate; 
 
 		//Take everything down...
     power_down();
-    Codec::deinit();
-	   	HAL_Delay(10);
+    i2c_.Deinit();
+    HAL_Delay(10);
 
-	    DeInit_I2S_Clock();
-	    DeInit_SAIDMA();
-	   	HAL_Delay(10);
+    DeInit_I2S_Clock();
+    DeInit_SAIDMA();
+    HAL_Delay(10);
 
-	   	//...and bring it all back up
+    //...and bring it all back up
 		init_SAI_clock(sample_rate);
 
     GPIO_init();
     SAI_init(sample_rate);
 		init_audio_DMA();
 
-    I2C_init();
+    i2c_.Init();
     register_setup(sample_rate);
 
     Start();
@@ -539,10 +538,10 @@ void Codec::init_SAI_clock(uint32_t sample_rate)
 
 }
 
-void Codec::deinit(void)
+void Codec::I2C::Deinit(void)
 {
 	CODEC_I2C_CLK_DISABLE();
-    HAL_GPIO_DeInit(CODEC_I2C_GPIO, CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN);
+  HAL_GPIO_DeInit(CODEC_I2C_GPIO, CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN);
 }
 
 
