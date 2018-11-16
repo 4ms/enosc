@@ -29,6 +29,9 @@
 #include "codec.hh"
 #include "audio_stream.hh"
 
+
+void process_audio_block_codec(int32_t *src, int32_t *dst, uint32_t size);
+
 //
 // I2C Config
 //
@@ -312,8 +315,7 @@ void Codec::GPIO_init(void)
 	CODEC_I2C_GPIO_CLOCK_ENABLE();
 	CODEC_SAI_GPIO_CLOCK_ENABLE();
 
-
-	//I2C pins SDA SCL
+  //I2C pins: SDA SCL
 	gpio.Mode 		= GPIO_MODE_AF_OD;
 	gpio.Pull 		= GPIO_PULLUP;
 	gpio.Speed 		= GPIO_SPEED_FREQ_VERY_HIGH;
@@ -323,6 +325,7 @@ void Codec::GPIO_init(void)
 
 	CODEC_I2C_CLK_ENABLE();
 
+  // SAI pins: WS, SDI, SCK, SDO
 	gpio.Mode = GPIO_MODE_AF_PP;
 	gpio.Pull = GPIO_NOPULL;
 	gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;

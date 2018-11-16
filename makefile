@@ -9,7 +9,6 @@ SRCS = \
 	lib/easiglib/numtypes.cc \
 	lib/easiglib/math.cc \
 	lib/easiglib/dsp.cc \
-	src/audio_stream.cc \
 	src/drivers/adc.cc \
 	src/drivers/codec.cc \
 	src/main.cc \
