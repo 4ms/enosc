@@ -63,8 +63,19 @@ struct Codec {
     init_audio_DMA();
   }
 
+  static Codec *instance_;
+  Callback *callback_;
+
+  DMA_HandleTypeDef hdma_sai1b_rx;
+  DMA_HandleTypeDef hdma_sai1a_tx;
+
+  uint32_t tx_buffer_start, rx_buffer_start, tx_buffer_half, rx_buffer_half;
+
+  void Start(void);
+
+private:
+
   void reboot(uint32_t sample_rate);
-  void start(void);
   void deinit(void);
 
   // i2c
@@ -81,14 +92,6 @@ struct Codec {
   void DeInit_SAIDMA(void);
   void init_audio_DMA(void);
   uint32_t reset(uint8_t master_slave, uint32_t sample_rate);
-
-  static Codec *instance_;
-
-  DMA_HandleTypeDef hdma_sai1b_rx;
-  DMA_HandleTypeDef hdma_sai1a_tx;
-  uint32_t tx_buffer_start, rx_buffer_start, tx_buffer_half, rx_buffer_half;
-
-  Callback *callback_;
 
 private:
 

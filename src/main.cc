@@ -40,10 +40,9 @@ struct Main : Codec::Callback {
   uint8_t learn_color=1, freeze_color=1;
   uint32_t last_update_tm = 0;
 
-
   Main() {
     //Start audio processing
-    codec_.start();
+    codec_.Start();
 
     // process
     while(1) {
@@ -51,6 +50,7 @@ struct Main : Codec::Callback {
     }
   }
 
+private:
 
   void Process() {
     //////////////////////////////////////////////////////////////////////////

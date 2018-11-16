@@ -414,12 +414,12 @@ void Codec::reboot(uint32_t sample_rate)
     I2C_init();
     register_setup(sample_rate);
 
-    start();
+    Start();
   }
 }
 
 
-void Codec::start(void)
+void Codec::Start(void)
 {
 	HAL_NVIC_EnableIRQ(CODEC_SAI_RX_DMA_IRQn); 
 }
