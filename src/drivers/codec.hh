@@ -48,7 +48,7 @@ struct Codec {
     init_audio_DMA();
   }
 
-  void Start(void);
+  void Start();
 
   static Codec *instance_;
   Callback *callback_;
@@ -78,10 +78,10 @@ private:
   // sai
   void init_SAI_clock(uint32_t sample_rate);
   void SAI_init(uint32_t sample_rate);
-  void Init_SAIDMA(void);
-  void DeInit_I2S_Clock(void);
-  void DeInit_SAIDMA(void);
-  void init_audio_DMA(void);
+  void Init_SAIDMA();
+  void DeInit_I2S_Clock();
+  void DeInit_SAIDMA();
+  void init_audio_DMA();
 
 private:
 

@@ -245,15 +245,13 @@ uint32_t Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
   };
 
   err = Write(WM8731_REG_RESET, 0);
-	
 
 	if (sample_rate==48000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_48K;
 	if (sample_rate==44100)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_44K;
 	if (sample_rate==32000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_32K;
 	if (sample_rate==88200)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_88K;
 	if (sample_rate==96000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_96K;
-	if (sample_rate==8000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_8K;
-
+  if (sample_rate==8000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_8K;
 
 	for(i=0;i<W8731_NUM_REGS;i++) 
     err += Write(i, codec_init_data[i]);
@@ -261,7 +259,7 @@ uint32_t Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
 	return err;
 }
 
-void Codec::GPIO::Init(void)
+void Codec::GPIO::Init()
 {
 	GPIO_InitTypeDef gpio;
 
@@ -307,7 +305,7 @@ void Codec::GPIO::Init(void)
   }
 }
 
-void Codec::init_audio_DMA(void)
+void Codec::init_audio_DMA()
 {
 
 	tx_buffer_start = (uint32_t)&tx_buffer;
@@ -356,17 +354,17 @@ void Codec::Reboot(uint32_t sample_rate)
 }
 
 
-void Codec::Start(void)
+void Codec::Start()
 {
 	HAL_NVIC_EnableIRQ(CODEC_SAI_RX_DMA_IRQn); 
 }
 
-void Codec::DeInit_I2S_Clock(void)
+void Codec::DeInit_I2S_Clock()
 {
 	HAL_RCCEx_DisablePLLI2S();
 }
 
-void Codec::DeInit_SAIDMA(void)
+void Codec::DeInit_SAIDMA()
 {
 	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
 	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
@@ -476,14 +474,14 @@ void Codec::init_SAI_clock(uint32_t sample_rate)
 
 }
 
-void Codec::I2C::DeInit(void)
+void Codec::I2C::DeInit()
 {
 	CODEC_I2C_CLK_DISABLE();
   HAL_GPIO_DeInit(CODEC_I2C_GPIO, CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN);
 }
 
 
-void Codec::Init_SAIDMA(void)
+void Codec::Init_SAIDMA()
 {
 	//
 	// Prepare the DMA for RX (but don't enable yet)
@@ -560,7 +558,7 @@ void Codec::Init_SAIDMA(void)
 Codec *Codec::instance_;
 
 //DMA2_Stream5_IRQHandler
-extern "C" void CODEC_SAI_RX_DMA_IRQHandler(void)
+extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
 {
 	// HAL_DMA_IRQHandler(&hdma_sai1b_rx);
 
@@ -620,7 +618,7 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler(void)
 
 // DMA2_Stream1_IRQHandler
 // Does not get called, this is only here for debugging when enabling TX IRQ
-// void CODEC_SAI_TX_DMA_IRQHandler(void)
+// void CODEC_SAI_TX_DMA_IRQHandler()
 // {
 // 	HAL_DMA_IRQHandler(&hdma_sai1a_tx);
 // }
