@@ -1,23 +1,7 @@
-
 #pragma once
 
 #include "parameters.hh"
 #include "hal.hh"
-
-#define CODEC_IS_SLAVE 0
-#define CODEC_IS_MASTER 1
-
-#define MCLK_SRC_STM 0
-#define MCLK_SRC_EXTERNAL 1
-
-#define W8731_ADDR_0 0x1A
-#define W8731_ADDR_1 0x1B
-#define W8731_NUM_REGS 10
-
-//Set configuration here:
-#define CODEC_MODE 				CODEC_IS_SLAVE
-#define CODEC_MCLK_SRC 			MCLK_SRC_STM
-#define CODEC_ADDRESS           (W8731_ADDR_0<<1)
 
 struct Codec {
 
@@ -37,7 +21,7 @@ struct Codec {
 
     //Start Codec I2C
     gpio_.Init();
-    i2c_.Init(CODEC_MODE, sample_rate);
+    i2c_.Init(sample_rate);
 
     //Start Codec SAI
     SAI_init(sample_rate);
@@ -58,11 +42,12 @@ struct Codec {
 private:
 
   struct GPIO {
+    // TODO do with constructor
     void Init();
   } gpio_;
 
   struct I2C {
-    void Init(uint8_t master_slave, uint32_t sample_rate);
+    void Init(uint32_t sample_rate);
     void DeInit();
     void PowerDown();
   private:

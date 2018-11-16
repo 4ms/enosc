@@ -18,10 +18,17 @@
 #define CODEC_LONG_TIMEOUT             ((uint32_t)(300 * CODEC_FLAG_TIMEOUT))
 #define CODEC_VLONG_TIMEOUT            ((uint32_t)(30000 * CODEC_FLAG_TIMEOUT))
 
-//
-// Codec buffer size
-// 
 
+#define W8731_ADDR_0 0x1A
+#define W8731_ADDR_1 0x1B
+#define W8731_NUM_REGS 10
+
+#define CODEC_ADDRESS           (W8731_ADDR_0<<1)
+
+#define MCLK_SRC_STM 0
+#define MCLK_SRC_EXTERNAL 1
+
+#define CODEC_MCLK_SRC 			MCLK_SRC_STM
 
 //
 // Codec SAI pins
@@ -238,7 +245,7 @@ void Codec::I2C::PowerDown() {
   Write(WM8731_REG_POWERDOWN, 0xFF); //Power Down enable all
 }
 
-void Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
+void Codec::I2C::Init(uint32_t sample_rate)
 {
 	handle_.Instance 					= CODEC_I2C;
 	handle_.Init.Timing 				= 0x20404768; //0x20445757;
@@ -382,7 +389,7 @@ void Codec::Reboot(uint32_t sample_rate)
   SAI_init(sample_rate);
   init_audio_DMA();
 
-  i2c_.Init(CODEC_MODE, sample_rate);
+  i2c_.Init(sample_rate);
 
   Start();
 }
