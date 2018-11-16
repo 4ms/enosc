@@ -205,9 +205,23 @@ void Codec::I2C::PowerDown() {
   Write(WM8731_REG_POWERDOWN, 0xFF); //Power Down enable all
 }
 
-uint32_t Codec::I2C::Reset(uint8_t master_slave, uint32_t sample_rate)
+uint32_t Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
 {
-	uint8_t i;
+	handle_.Instance 					= CODEC_I2C;
+	handle_.Init.Timing 				= 0x20404768; //0x20445757;
+	handle_.Init.OwnAddress1		 	= 0;
+	handle_.Init.AddressingMode 		= I2C_ADDRESSINGMODE_7BIT;
+	handle_.Init.DualAddressMode 		= I2C_DUALADDRESS_DISABLE;
+	handle_.Init.OwnAddress2 			= 0;
+	handle_.Init.OwnAddress2Masks		= I2C_OA2_NOMASK;
+	handle_.Init.GeneralCallMode 		= I2C_GENERALCALL_DISABLE;
+	handle_.Init.NoStretchMode 		= I2C_NOSTRETCH_DISABLE;
+
+	if (HAL_I2C_Init(&handle_) != HAL_OK)												assert_failed(__FILE__, __LINE__);
+	if (HAL_I2CEx_ConfigAnalogFilter(&handle_, I2C_ANALOGFILTER_ENABLE) != HAL_OK)	assert_failed(__FILE__, __LINE__);
+	if (HAL_I2CEx_ConfigDigitalFilter(&handle_, 0) != HAL_OK)							assert_failed(__FILE__, __LINE__);
+
+  uint8_t i;
 	uint32_t err=0;
 
   uint16_t codec_init_data[] = {
@@ -293,24 +307,6 @@ void Codec::GPIO::Init(void)
   }
 }
 
-void Codec::I2C::Init(void)
-{
-
-	handle_.Instance 					= CODEC_I2C;
-	handle_.Init.Timing 				= 0x20404768; //0x20445757;
-	handle_.Init.OwnAddress1		 	= 0;
-	handle_.Init.AddressingMode 		= I2C_ADDRESSINGMODE_7BIT;
-	handle_.Init.DualAddressMode 		= I2C_DUALADDRESS_DISABLE;
-	handle_.Init.OwnAddress2 			= 0;
-	handle_.Init.OwnAddress2Masks		= I2C_OA2_NOMASK;
-	handle_.Init.GeneralCallMode 		= I2C_GENERALCALL_DISABLE;
-	handle_.Init.NoStretchMode 		= I2C_NOSTRETCH_DISABLE;
-
-	if (HAL_I2C_Init(&handle_) != HAL_OK)												assert_failed(__FILE__, __LINE__);
-	if (HAL_I2CEx_ConfigAnalogFilter(&handle_, I2C_ANALOGFILTER_ENABLE) != HAL_OK)	assert_failed(__FILE__, __LINE__);
-	if (HAL_I2CEx_ConfigDigitalFilter(&handle_, 0) != HAL_OK)							assert_failed(__FILE__, __LINE__);
-}
-
 void Codec::init_audio_DMA(void)
 {
 
@@ -353,8 +349,7 @@ void Codec::Reboot(uint32_t sample_rate)
     SAI_init(sample_rate);
 		init_audio_DMA();
 
-    i2c_.Init();
-    i2c_.Reset(CODEC_MODE, sample_rate);
+    i2c_.Init(CODEC_MODE, sample_rate);
 
     Start();
   }
