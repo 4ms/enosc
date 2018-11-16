@@ -1,5 +1,4 @@
 #include "hal.hh"
-#include "globals.h"
 #include "codec.hh"
 #include "system.hh"
 #include "buttons.hh"
@@ -27,7 +26,7 @@ struct Main : Codec::Callback {
   Switches switches_;
   Leds leds_;
   Adc adc_;
-  Codec codec_{this};
+  Codec codec_{this, kSampleRate};
 
   // UI state variables
   bool freeze_jack, learn_jack;
@@ -43,24 +42,6 @@ struct Main : Codec::Callback {
 
 
   Main() {
-
-    // Setup PLL clock for codec
-    codec_.init_SAI_clock(SAMPLERATE);
-
-   	//De-init the codec to force it to reset
-    codec_.deinit();
-
-    //Start Codec I2C
-    codec_.GPIO_init();
-    codec_.I2C_init();
-
-    if (codec_.register_setup(SAMPLERATE))
-      assert_failed(__FILE__, __LINE__);
-
-    //Start Codec SAI
-    codec_.SAI_init(SAMPLERATE);
-    codec_.init_audio_DMA();
-
     //Start audio processing
     codec_.start();
 

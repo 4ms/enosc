@@ -41,9 +41,26 @@ struct Codec {
     virtual void Process(int32_t* in, int32_t *out, int size) = 0;
   };
 
-  Codec(Callback *callback) :
+  Codec(Callback *callback, int sample_rate) :
     callback_(callback) {
     instance_ = this;
+
+    // Setup PLL clock for codec
+    init_SAI_clock(sample_rate);
+
+   	//De-init the codec to force it to reset
+    deinit();
+
+    //Start Codec I2C
+    GPIO_init();
+    I2C_init();
+
+    if (register_setup(sample_rate))
+      assert_failed(__FILE__, __LINE__);
+
+    //Start Codec SAI
+    SAI_init(sample_rate);
+    init_audio_DMA();
   }
 
   void reboot(uint32_t sample_rate);
