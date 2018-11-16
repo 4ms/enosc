@@ -313,61 +313,61 @@ void Codec::init_audio_DMA()
 	//
 	CODEC_SAI_DMA_CLOCK_ENABLE();
 
-  hdma_sai1b_rx.Instance = CODEC_SAI_RX_DMA_STREAM;
-  hdma_sai1b_rx.Init.Channel = CODEC_SAI_RX_DMA_CHANNEL;
-  hdma_sai1b_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
-  hdma_sai1b_rx.Init.PeriphInc = DMA_PINC_DISABLE;
-  hdma_sai1b_rx.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_sai1b_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  hdma_sai1b_rx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-  hdma_sai1b_rx.Init.Mode = DMA_CIRCULAR;
-  hdma_sai1b_rx.Init.Priority = DMA_PRIORITY_HIGH;
-  hdma_sai1b_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-  hdma_sai1b_rx.Init.MemBurst = DMA_MBURST_SINGLE;
-  hdma_sai1b_rx.Init.PeriphBurst = DMA_PBURST_SINGLE;
+  hdma_rx.Instance = CODEC_SAI_RX_DMA_STREAM;
+  hdma_rx.Init.Channel = CODEC_SAI_RX_DMA_CHANNEL;
+  hdma_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+  hdma_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_rx.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  hdma_rx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_rx.Init.Mode = DMA_CIRCULAR;
+  hdma_rx.Init.Priority = DMA_PRIORITY_HIGH;
+  hdma_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+  hdma_rx.Init.MemBurst = DMA_MBURST_SINGLE;
+  hdma_rx.Init.PeriphBurst = DMA_PBURST_SINGLE;
 
-  hdma_sai1a_tx.Instance = CODEC_SAI_TX_DMA_STREAM;
-  hdma_sai1a_tx.Init.Channel = CODEC_SAI_TX_DMA_CHANNEL;
-  hdma_sai1a_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
-  hdma_sai1a_tx.Init.PeriphInc = DMA_PINC_DISABLE;
-  hdma_sai1a_tx.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_sai1a_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  hdma_sai1a_tx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
-  hdma_sai1a_tx.Init.Mode = DMA_CIRCULAR;
-  hdma_sai1a_tx.Init.Priority = DMA_PRIORITY_HIGH;
-  hdma_sai1a_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-  hdma_sai1a_tx.Init.MemBurst = DMA_MBURST_SINGLE;
-  hdma_sai1a_tx.Init.PeriphBurst = DMA_PBURST_SINGLE;
+  hdma_tx.Instance = CODEC_SAI_TX_DMA_STREAM;
+  hdma_tx.Init.Channel = CODEC_SAI_TX_DMA_CHANNEL;
+  hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+  hdma_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_tx.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  hdma_tx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_tx.Init.Mode = DMA_CIRCULAR;
+  hdma_tx.Init.Priority = DMA_PRIORITY_HIGH;
+  hdma_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+  hdma_tx.Init.MemBurst = DMA_MBURST_SINGLE;
+  hdma_tx.Init.PeriphBurst = DMA_PBURST_SINGLE;
 
-	HAL_DMA_DeInit(&hdma_sai1b_rx);
-	HAL_DMA_DeInit(&hdma_sai1a_tx);
+	HAL_DMA_DeInit(&hdma_rx);
+	HAL_DMA_DeInit(&hdma_tx);
 
 	//
 	// Must initialize the SAI before initializing the DMA
 	//
 
-  hal_assert(HAL_SAI_InitProtocol(&hsai1b_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
-  hal_assert(HAL_SAI_InitProtocol(&hsai1a_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
+  hal_assert(HAL_SAI_InitProtocol(&hsai_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
+  hal_assert(HAL_SAI_InitProtocol(&hsai_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
 
 	//
 	// Initialize the DMA, and link to SAI
 	//
 
-  hal_assert(HAL_DMA_Init(&hdma_sai1b_rx));
-  hal_assert(HAL_DMA_Init(&hdma_sai1a_tx));
-  __HAL_LINKDMA(&hsai1b_rx, hdmarx, hdma_sai1b_rx);
-  __HAL_LINKDMA(&hsai1a_tx, hdmatx, hdma_sai1a_tx);
+  hal_assert(HAL_DMA_Init(&hdma_rx));
+  hal_assert(HAL_DMA_Init(&hdma_tx));
+  __HAL_LINKDMA(&hsai_rx, hdmarx, hdma_rx);
+  __HAL_LINKDMA(&hsai_tx, hdmatx, hdma_tx);
 
   //
   // DMA IRQ and start DMAs
   //
 
 	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
-  HAL_SAI_Transmit_DMA(&hsai1a_tx, (uint8_t *)tx_buffer, kBlockSize * 2);
+  HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer, kBlockSize * 2);
 
 	HAL_NVIC_SetPriority(CODEC_SAI_RX_DMA_IRQn, 0, 0);
 	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
-  HAL_SAI_Receive_DMA(&hsai1b_rx, (uint8_t *)rx_buffer, kBlockSize * 2);
+  HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer, kBlockSize * 2);
 }
 
 
@@ -415,14 +415,14 @@ void Codec::DeInit_SAIDMA()
 
 	CODEC_SAI_CLOCK_DISABLE();
 
-	HAL_SAI_DeInit(&hsai1b_rx);
-	HAL_SAI_DeInit(&hsai1a_tx);
+	HAL_SAI_DeInit(&hsai_rx);
+	HAL_SAI_DeInit(&hsai_tx);
 
-	HAL_DMA_Abort(&hdma_sai1b_rx);
-	HAL_DMA_Abort(&hdma_sai1a_tx);
+	HAL_DMA_Abort(&hdma_rx);
+	HAL_DMA_Abort(&hdma_tx);
 
-	HAL_DMA_DeInit(&hdma_sai1b_rx);
-	HAL_DMA_DeInit(&hdma_sai1a_tx);
+	HAL_DMA_DeInit(&hdma_rx);
+	HAL_DMA_DeInit(&hdma_tx);
 }
 
 
@@ -432,33 +432,33 @@ void Codec::SAI_init(uint32_t sample_rate)
 
 	if (!IS_SAI_AUDIO_FREQUENCY(sample_rate)) return;
 
-	hsai1b_rx.Instance 				= CODEC_SAI_RX_BLOCK;
-	hsai1b_rx.Init.AudioMode 		= SAI_MODESLAVE_RX;
-	hsai1b_rx.Init.Synchro 			= SAI_SYNCHRONOUS;
-	hsai1b_rx.Init.OutputDrive 		= SAI_OUTPUTDRIVE_DISABLE;
-	hsai1b_rx.Init.FIFOThreshold 	= SAI_FIFOTHRESHOLD_EMPTY;
-	hsai1b_rx.Init.SynchroExt 		= SAI_SYNCEXT_DISABLE;
-	hsai1b_rx.Init.MonoStereoMode 	= SAI_STEREOMODE;
-	hsai1b_rx.Init.CompandingMode 	= SAI_NOCOMPANDING;
-	hsai1b_rx.Init.TriState 		= SAI_OUTPUT_NOTRELEASED;
+	hsai_rx.Instance 				= CODEC_SAI_RX_BLOCK;
+	hsai_rx.Init.AudioMode 		= SAI_MODESLAVE_RX;
+	hsai_rx.Init.Synchro 			= SAI_SYNCHRONOUS;
+	hsai_rx.Init.OutputDrive 		= SAI_OUTPUTDRIVE_DISABLE;
+	hsai_rx.Init.FIFOThreshold 	= SAI_FIFOTHRESHOLD_EMPTY;
+	hsai_rx.Init.SynchroExt 		= SAI_SYNCEXT_DISABLE;
+	hsai_rx.Init.MonoStereoMode 	= SAI_STEREOMODE;
+	hsai_rx.Init.CompandingMode 	= SAI_NOCOMPANDING;
+	hsai_rx.Init.TriState 		= SAI_OUTPUT_NOTRELEASED;
 
-	hsai1a_tx.Instance 				= CODEC_SAI_TX_BLOCK;
-	hsai1a_tx.Init.AudioMode 		= SAI_MODEMASTER_TX;
-	hsai1a_tx.Init.Synchro 			= SAI_ASYNCHRONOUS;
-	hsai1a_tx.Init.OutputDrive 		= SAI_OUTPUTDRIVE_DISABLE;
-	hsai1a_tx.Init.NoDivider 		= SAI_MASTERDIVIDER_ENABLE;
-	hsai1a_tx.Init.FIFOThreshold 	= SAI_FIFOTHRESHOLD_EMPTY;
-	hsai1a_tx.Init.AudioFrequency	= sample_rate;
-	hsai1a_tx.Init.SynchroExt 		= SAI_SYNCEXT_DISABLE;
-	hsai1a_tx.Init.MonoStereoMode 	= SAI_STEREOMODE;
-	hsai1a_tx.Init.CompandingMode 	= SAI_NOCOMPANDING;
-	hsai1a_tx.Init.TriState 		= SAI_OUTPUT_NOTRELEASED;
+	hsai_tx.Instance 				= CODEC_SAI_TX_BLOCK;
+	hsai_tx.Init.AudioMode 		= SAI_MODEMASTER_TX;
+	hsai_tx.Init.Synchro 			= SAI_ASYNCHRONOUS;
+	hsai_tx.Init.OutputDrive 		= SAI_OUTPUTDRIVE_DISABLE;
+	hsai_tx.Init.NoDivider 		= SAI_MASTERDIVIDER_ENABLE;
+	hsai_tx.Init.FIFOThreshold 	= SAI_FIFOTHRESHOLD_EMPTY;
+	hsai_tx.Init.AudioFrequency	= sample_rate;
+	hsai_tx.Init.SynchroExt 		= SAI_SYNCEXT_DISABLE;
+	hsai_tx.Init.MonoStereoMode 	= SAI_STEREOMODE;
+	hsai_tx.Init.CompandingMode 	= SAI_NOCOMPANDING;
+	hsai_tx.Init.TriState 		= SAI_OUTPUT_NOTRELEASED;
 
 	//
 	//Don't initialize them yet, we have to de-init the DMA first
 	//
-	HAL_SAI_DeInit(&hsai1b_rx);
-  HAL_SAI_DeInit(&hsai1a_tx);
+	HAL_SAI_DeInit(&hsai_rx);
+  HAL_SAI_DeInit(&hsai_tx);
 }
 
 
@@ -516,56 +516,26 @@ Codec *Codec::instance_;
 
 extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
 {
-	int32_t *src, *dst;
-	uint32_t err=0;
-	UNUSED(err);
+  //Read the interrupt status register (ISR)
+  uint32_t tmpisr = CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_ISR;
+  int32_t *src, *dst;
 
-	//Read the interrupt status register (ISR)
-	uint32_t tmpisr = CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_ISR;
-
-  if ((tmpisr & __HAL_DMA_GET_FE_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
-      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_FE)) {
-		err=DMA_IT_FE; 
-	}
-		
-  if ((tmpisr & __HAL_DMA_GET_TE_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
-      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_TE)) {
-		err=DMA_IT_TE; 
-	}
-
-  if ((tmpisr & __HAL_DMA_GET_DME_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
-      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_DME)) {
-		err=DMA_IT_DME; 
-	}
-
-	// Transfer Complete (TC)
-  if ((tmpisr & __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
-      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_TC)) {
-		// Point to 2nd half of buffers
+  if ((tmpisr & __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_rx))
+      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_rx, DMA_IT_TC)) {
+    // Transfer Complete (TC) -> Point to 2nd half of buffers
     src = (int32_t *)(&Codec::instance_->rx_buffer[kBlockSize]);
     dst = (int32_t *)(&Codec::instance_->tx_buffer[kBlockSize]);
-
-    // TODO why /2??
-    Codec::instance_->callback_->Process(src, dst, kBlockSize / 2);
-
-		//CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_IFCR = CODEC_SAI_RX_DMA_FLAG_TC;
-    __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_sai1b_rx,
-                         __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx));
-	}
-
-	// Half Transfer complete (HT)
-  if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
-      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_HT))
-	{
-		// Point to 1st half of buffers
+    __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_rx,
+                         __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_rx));
+  } else if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx))
+      && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_rx, DMA_IT_HT)) {
+    // Half Transfer complete (HT) -> Point to 1st half of buffers
     src = (int32_t *)(&Codec::instance_->rx_buffer);
     dst = (int32_t *)(&Codec::instance_->tx_buffer);
+    __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_rx,
+                         __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx));
+  }
 
-    // TODO why /2??
-    Codec::instance_->callback_->Process(src, dst, kBlockSize / 2);
-
-		//CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_IFCR = CODEC_SAI_RX_DMA_FLAG_HT;
-    __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_sai1b_rx,
-                         __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx));
-	}
+  // TODO why /2??
+  Codec::instance_->callback_->Process(src, dst, kBlockSize / 2);
 }

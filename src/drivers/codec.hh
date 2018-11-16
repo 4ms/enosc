@@ -33,8 +33,8 @@ struct Codec {
   static Codec *instance_;
   Callback *callback_;
 
-  DMA_HandleTypeDef hdma_sai1b_rx;
-  DMA_HandleTypeDef hdma_sai1a_tx;
+  DMA_HandleTypeDef hdma_rx;
+  DMA_HandleTypeDef hdma_tx;
 
   volatile int32_t tx_buffer[kBlockSize * 2];
   volatile int32_t rx_buffer[kBlockSize * 2];
@@ -42,7 +42,7 @@ struct Codec {
 private:
 
   struct GPIO {
-    // TODO do with constructor
+    // TODO init with constructor
     void Init();
   } gpio_;
 
@@ -64,7 +64,7 @@ private:
   void DeInit_SAIDMA();
   void init_audio_DMA();
 
-  SAI_HandleTypeDef hsai1b_rx;
-  SAI_HandleTypeDef hsai1a_tx;
+  SAI_HandleTypeDef hsai_rx;
+  SAI_HandleTypeDef hsai_tx;
 
 };
