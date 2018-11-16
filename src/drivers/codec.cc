@@ -302,43 +302,90 @@ void Codec::init_audio_DMA()
 	tx_buffer_half = (uint32_t)(&(tx_buffer[codec_HT_LEN]));
 	rx_buffer_half = (uint32_t)(&(rx_buffer[codec_HT_LEN]));
 
-  Codec::Init_SAIDMA();
+	//
+	// Prepare the DMA for RX (but don't enable yet)
+	//
+	CODEC_SAI_DMA_CLOCK_ENABLE();
+
+  hdma_sai1b_rx.Instance = CODEC_SAI_RX_DMA_STREAM;
+  hdma_sai1b_rx.Init.Channel = CODEC_SAI_RX_DMA_CHANNEL;
+  hdma_sai1b_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+  hdma_sai1b_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_sai1b_rx.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_sai1b_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  hdma_sai1b_rx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_sai1b_rx.Init.Mode = DMA_CIRCULAR;
+  hdma_sai1b_rx.Init.Priority = DMA_PRIORITY_HIGH;
+  hdma_sai1b_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+  hdma_sai1b_rx.Init.MemBurst = DMA_MBURST_SINGLE;
+  hdma_sai1b_rx.Init.PeriphBurst = DMA_PBURST_SINGLE;
+
+  hdma_sai1a_tx.Instance = CODEC_SAI_TX_DMA_STREAM;
+  hdma_sai1a_tx.Init.Channel = CODEC_SAI_TX_DMA_CHANNEL;
+  hdma_sai1a_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+  hdma_sai1a_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_sai1a_tx.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_sai1a_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+  hdma_sai1a_tx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_sai1a_tx.Init.Mode = DMA_CIRCULAR;
+  hdma_sai1a_tx.Init.Priority = DMA_PRIORITY_HIGH;
+  hdma_sai1a_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+  hdma_sai1a_tx.Init.MemBurst = DMA_MBURST_SINGLE;
+  hdma_sai1a_tx.Init.PeriphBurst = DMA_PBURST_SINGLE;
+
+	HAL_DMA_DeInit(&hdma_sai1b_rx);
+	HAL_DMA_DeInit(&hdma_sai1a_tx);
+
+	//
+	// Must initialize the SAI before initializing the DMA
+	//
+
+  hal_assert(HAL_SAI_InitProtocol(&hsai1b_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
+  hal_assert(HAL_SAI_InitProtocol(&hsai1a_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
+
+	//
+	// Initialize the DMA, and link to SAI
+	//
+
+  hal_assert(HAL_DMA_Init(&hdma_sai1b_rx));
+  hal_assert(HAL_DMA_Init(&hdma_sai1a_tx));
+  __HAL_LINKDMA(&hsai1b_rx, hdmarx, hdma_sai1b_rx);
+  __HAL_LINKDMA(&hsai1a_tx, hdmatx, hdma_sai1a_tx);
+
+  //
+  // DMA IRQ and start DMAs
+  //
+
+	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
+  HAL_SAI_Transmit_DMA(&hsai1a_tx, (uint8_t *)tx_buffer, codec_BUFF_LEN);
+
+	HAL_NVIC_SetPriority(CODEC_SAI_RX_DMA_IRQn, 0, 0);
+	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
+  HAL_SAI_Receive_DMA(&hsai1b_rx, (uint8_t *)rx_buffer, codec_BUFF_LEN);
 }
 
 
 void Codec::Reboot(uint32_t sample_rate)
 {
-	static uint32_t last_sample_rate;
+  //Take everything down...
+  i2c_.PowerDown();
+  i2c_.DeInit();
+  HAL_Delay(10);
 
-	if (sample_rate!=44100 && sample_rate!=48000 && sample_rate!=96000)
-		sample_rate = 44100;
+  DeInit_I2S_Clock();
+  DeInit_SAIDMA();
+  HAL_Delay(10);
 
+  //...and bring it all back up
+  init_SAI_clock(sample_rate);
 
-	//Do nothing if the sample_rate did not change
-	
-  if (last_sample_rate != sample_rate) {
-    last_sample_rate = sample_rate;
+  gpio_.Init();
+  SAI_init(sample_rate);
+  init_audio_DMA();
 
-		//Take everything down...
-    i2c_.PowerDown();
-    i2c_.DeInit();
-    HAL_Delay(10);
+  i2c_.Init(CODEC_MODE, sample_rate);
 
-    DeInit_I2S_Clock();
-    DeInit_SAIDMA();
-    HAL_Delay(10);
-
-    //...and bring it all back up
-		init_SAI_clock(sample_rate);
-
-    gpio_.Init();
-    SAI_init(sample_rate);
-		init_audio_DMA();
-
-    i2c_.Init(CODEC_MODE, sample_rate);
-
-    Start();
-  }
+  Start();
 }
 
 
@@ -465,80 +512,10 @@ void Codec::I2C::DeInit()
   HAL_GPIO_DeInit(CODEC_I2C_GPIO, CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN);
 }
 
-
-void Codec::Init_SAIDMA()
-{
-	//
-	// Prepare the DMA for RX (but don't enable yet)
-	//
-	CODEC_SAI_DMA_CLOCK_ENABLE();
-
-    hdma_sai1b_rx.Instance 					= CODEC_SAI_RX_DMA_STREAM;
-    hdma_sai1b_rx.Init.Channel 				= CODEC_SAI_RX_DMA_CHANNEL;
-    hdma_sai1b_rx.Init.Direction 			= DMA_PERIPH_TO_MEMORY;
-    hdma_sai1b_rx.Init.PeriphInc 			= DMA_PINC_DISABLE;
-    hdma_sai1b_rx.Init.MemInc 				= DMA_MINC_ENABLE;
-    hdma_sai1b_rx.Init.PeriphDataAlignment 	= DMA_PDATAALIGN_WORD;
-    hdma_sai1b_rx.Init.MemDataAlignment 	= DMA_MDATAALIGN_WORD;
-    hdma_sai1b_rx.Init.Mode 				= DMA_CIRCULAR;
-    hdma_sai1b_rx.Init.Priority 			= DMA_PRIORITY_HIGH;
-    hdma_sai1b_rx.Init.FIFOMode 			= DMA_FIFOMODE_DISABLE;
-	hdma_sai1b_rx.Init.MemBurst				= DMA_MBURST_SINGLE;
-	hdma_sai1b_rx.Init.PeriphBurst			= DMA_PBURST_SINGLE; 
-
-    hdma_sai1a_tx.Instance 					= CODEC_SAI_TX_DMA_STREAM;
-    hdma_sai1a_tx.Init.Channel 				= CODEC_SAI_TX_DMA_CHANNEL;
-    hdma_sai1a_tx.Init.Direction 			= DMA_MEMORY_TO_PERIPH;
-    hdma_sai1a_tx.Init.PeriphInc 			= DMA_PINC_DISABLE;
-    hdma_sai1a_tx.Init.MemInc 				= DMA_MINC_ENABLE;
-    hdma_sai1a_tx.Init.PeriphDataAlignment 	= DMA_PDATAALIGN_WORD;
-    hdma_sai1a_tx.Init.MemDataAlignment 	= DMA_MDATAALIGN_WORD;
-    hdma_sai1a_tx.Init.Mode 				= DMA_CIRCULAR;
-    hdma_sai1a_tx.Init.Priority 			= DMA_PRIORITY_HIGH;
-    hdma_sai1a_tx.Init.FIFOMode 			= DMA_FIFOMODE_DISABLE;
-   	hdma_sai1a_tx.Init.MemBurst				= DMA_MBURST_SINGLE;
-	hdma_sai1a_tx.Init.PeriphBurst			= DMA_PBURST_SINGLE; 
-
-	HAL_DMA_DeInit(&hdma_sai1b_rx);
-	HAL_DMA_DeInit(&hdma_sai1a_tx);
-
-
-	//
-	// Must initialize the SAI before initializing the DMA
-	//
-
-  hal_assert(HAL_SAI_InitProtocol(&hsai1b_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
-  hal_assert(HAL_SAI_InitProtocol(&hsai1a_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
-
-	//
-	// Initialize the DMA, and link to SAI
-	//
-
-  hal_assert(HAL_DMA_Init(&hdma_sai1b_rx));
-  hal_assert(HAL_DMA_Init(&hdma_sai1a_tx));
-  __HAL_LINKDMA(&hsai1b_rx, hdmarx, hdma_sai1b_rx);
-  __HAL_LINKDMA(&hsai1a_tx, hdmatx, hdma_sai1a_tx);
-
-  //
-  // DMA IRQ and start DMAs
-  //
-
-	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
-  HAL_SAI_Transmit_DMA(&hsai1a_tx, (uint8_t *)tx_buffer, codec_BUFF_LEN);
-
-	HAL_NVIC_SetPriority(CODEC_SAI_RX_DMA_IRQn, 0, 0);
-	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
-  HAL_SAI_Receive_DMA(&hsai1b_rx, (uint8_t *)rx_buffer, codec_BUFF_LEN);
-}
-
 Codec *Codec::instance_;
 
-//DMA2_Stream5_IRQHandler
 extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
 {
-	// HAL_DMA_IRQHandler(&hdma_sai1b_rx);
-
-
 	int32_t *src, *dst;
 	uint32_t err=0;
 	UNUSED(err);

@@ -77,7 +77,6 @@ private:
   // sai
   void init_SAI_clock(uint32_t sample_rate);
   void SAI_init(uint32_t sample_rate);
-  void Init_SAIDMA();
   void DeInit_I2S_Clock();
   void DeInit_SAIDMA();
   void init_audio_DMA();
