@@ -19,9 +19,6 @@
 #define CODEC_MCLK_SRC 			MCLK_SRC_STM
 #define CODEC_ADDRESS           (W8731_ADDR_0<<1)
 
-/* DMA rx/tx buffer size, in number of DMA Periph/MemAlign-sized elements (words) */
-#define codec_BUFF_LEN 1024
-
 struct Codec {
 
   struct Callback {
@@ -68,13 +65,13 @@ private:
     void DeInit();
     void PowerDown();
   private:
-    void Write(uint8_t RegisterAddr, uint16_t RegisterValue);
+    void Write(uint8_t addr, uint16_t value);
     I2C_HandleTypeDef handle_;
   } i2c_;
 
   void Reboot(uint32_t sample_rate);
 
-  // sai
+  // TODO cleanup: SAI & DMA
   void init_SAI_clock(uint32_t sample_rate);
   void SAI_init(uint32_t sample_rate);
   void DeInit_I2S_Clock();
@@ -86,6 +83,6 @@ private:
   SAI_HandleTypeDef hsai1b_rx;
   SAI_HandleTypeDef hsai1a_tx;
 
-  volatile int32_t tx_buffer[codec_BUFF_LEN];
-  volatile int32_t rx_buffer[codec_BUFF_LEN];
+  volatile int32_t tx_buffer[kBlockSize * 2];
+  volatile int32_t rx_buffer[kBlockSize * 2];
 };

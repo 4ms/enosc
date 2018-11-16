@@ -22,9 +22,6 @@
 // Codec buffer size
 // 
 
-#define codec_HT_LEN 		(codec_BUFF_LEN>>1) 		/* Half Transfer buffer size (both channels interleved)*/
-#define codec_HT_CHAN_LEN 	(codec_HT_LEN>>1) 			/* Half Transfer buffer size per channel */
-
 
 //
 // Codec SAI pins
@@ -175,6 +172,51 @@
 // Using format_MSB_Left works (I2S periph has to be set up I2S_Standard_LSB or I2S_Standard_MSB).
 // Also, format_MSB_Right does not seem to work at all (with the I2S set to LSB or MSB)
 
+void Codec::GPIO::Init()
+{
+	GPIO_InitTypeDef gpio;
+
+	CODEC_I2C_GPIO_CLOCK_ENABLE();
+	CODEC_SAI_GPIO_CLOCK_ENABLE();
+
+  //I2C pins: SDA SCL
+	gpio.Mode 		= GPIO_MODE_AF_OD;
+	gpio.Pull 		= GPIO_PULLUP;
+	gpio.Speed 		= GPIO_SPEED_FREQ_VERY_HIGH;
+	gpio.Alternate 	= CODEC_I2C_GPIO_AF;
+	gpio.Pin 		= CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN;
+	HAL_GPIO_Init(CODEC_I2C_GPIO, &gpio);
+
+	CODEC_I2C_CLK_ENABLE();
+
+  // SAI pins: WS, SDI, SCK, SDO
+	gpio.Mode = GPIO_MODE_AF_PP;
+	gpio.Pull = GPIO_NOPULL;
+	gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+	gpio.Alternate 	= CODEC_SAI_GPIO_AF;
+
+	gpio.Pin = CODEC_SAI_WS_PIN;	HAL_GPIO_Init(CODEC_SAI_GPIO_WS, &gpio);
+	gpio.Pin = CODEC_SAI_SDI_PIN;	HAL_GPIO_Init(CODEC_SAI_GPIO_SDI, &gpio);
+	gpio.Pin = CODEC_SAI_SCK_PIN;	HAL_GPIO_Init(CODEC_SAI_GPIO_SCK, &gpio);
+	gpio.Pin = CODEC_SAI_SDO_PIN;	HAL_GPIO_Init(CODEC_SAI_GPIO_SDO, &gpio);
+
+	if (CODEC_MCLK_SRC==MCLK_SRC_STM){
+
+		gpio.Mode = GPIO_MODE_AF_PP;
+		gpio.Pull = GPIO_NOPULL;
+		gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+		gpio.Alternate 	= CODEC_SAI_GPIO_AF;
+		gpio.Pin = CODEC_SAI_MCK_PIN;
+		HAL_GPIO_Init(CODEC_SAI_MCK_GPIO, &gpio);
+
+	} else if (CODEC_MCLK_SRC==MCLK_SRC_EXTERNAL){
+
+		gpio.Mode = GPIO_MODE_INPUT;
+		gpio.Pull = GPIO_NOPULL;
+		gpio.Pin = CODEC_SAI_MCK_PIN;
+		HAL_GPIO_Init(CODEC_SAI_MCK_GPIO, &gpio);
+  }
+}
 
 void Codec::I2C::Write(uint8_t RegisterAddr, uint16_t RegisterValue)
 {
@@ -247,50 +289,10 @@ void Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
     Write(i, codec_init_data[i]);
 }
 
-void Codec::GPIO::Init()
+void Codec::I2C::DeInit()
 {
-	GPIO_InitTypeDef gpio;
-
-	CODEC_I2C_GPIO_CLOCK_ENABLE();
-	CODEC_SAI_GPIO_CLOCK_ENABLE();
-
-  //I2C pins: SDA SCL
-	gpio.Mode 		= GPIO_MODE_AF_OD;
-	gpio.Pull 		= GPIO_PULLUP;
-	gpio.Speed 		= GPIO_SPEED_FREQ_VERY_HIGH;
-	gpio.Alternate 	= CODEC_I2C_GPIO_AF;
-	gpio.Pin 		= CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN;
-	HAL_GPIO_Init(CODEC_I2C_GPIO, &gpio);
-
-	CODEC_I2C_CLK_ENABLE();
-
-  // SAI pins: WS, SDI, SCK, SDO
-	gpio.Mode = GPIO_MODE_AF_PP;
-	gpio.Pull = GPIO_NOPULL;
-	gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-	gpio.Alternate 	= CODEC_SAI_GPIO_AF;
-
-	gpio.Pin = CODEC_SAI_WS_PIN;	HAL_GPIO_Init(CODEC_SAI_GPIO_WS, &gpio);
-	gpio.Pin = CODEC_SAI_SDI_PIN;	HAL_GPIO_Init(CODEC_SAI_GPIO_SDI, &gpio);
-	gpio.Pin = CODEC_SAI_SCK_PIN;	HAL_GPIO_Init(CODEC_SAI_GPIO_SCK, &gpio);
-	gpio.Pin = CODEC_SAI_SDO_PIN;	HAL_GPIO_Init(CODEC_SAI_GPIO_SDO, &gpio);
-
-	if (CODEC_MCLK_SRC==MCLK_SRC_STM){
-
-		gpio.Mode = GPIO_MODE_AF_PP;
-		gpio.Pull = GPIO_NOPULL;
-		gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-		gpio.Alternate 	= CODEC_SAI_GPIO_AF;
-		gpio.Pin = CODEC_SAI_MCK_PIN;
-		HAL_GPIO_Init(CODEC_SAI_MCK_GPIO, &gpio);
-
-	} else if (CODEC_MCLK_SRC==MCLK_SRC_EXTERNAL){
-
-		gpio.Mode = GPIO_MODE_INPUT;
-		gpio.Pull = GPIO_NOPULL;
-		gpio.Pin = CODEC_SAI_MCK_PIN;
-		HAL_GPIO_Init(CODEC_SAI_MCK_GPIO, &gpio);
-  }
+	CODEC_I2C_CLK_DISABLE();
+  HAL_GPIO_DeInit(CODEC_I2C_GPIO, CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN);
 }
 
 void Codec::init_audio_DMA()
@@ -299,8 +301,8 @@ void Codec::init_audio_DMA()
 	tx_buffer_start = (uint32_t)&tx_buffer;
 	rx_buffer_start = (uint32_t)&rx_buffer;
 
-	tx_buffer_half = (uint32_t)(&(tx_buffer[codec_HT_LEN]));
-	rx_buffer_half = (uint32_t)(&(rx_buffer[codec_HT_LEN]));
+  tx_buffer_half = (uint32_t)(&(tx_buffer[kBlockSize]));
+  rx_buffer_half = (uint32_t)(&(rx_buffer[kBlockSize]));
 
 	//
 	// Prepare the DMA for RX (but don't enable yet)
@@ -357,11 +359,11 @@ void Codec::init_audio_DMA()
   //
 
 	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
-  HAL_SAI_Transmit_DMA(&hsai1a_tx, (uint8_t *)tx_buffer, codec_BUFF_LEN);
+  HAL_SAI_Transmit_DMA(&hsai1a_tx, (uint8_t *)tx_buffer, kBlockSize * 2);
 
 	HAL_NVIC_SetPriority(CODEC_SAI_RX_DMA_IRQn, 0, 0);
 	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
-  HAL_SAI_Receive_DMA(&hsai1b_rx, (uint8_t *)rx_buffer, codec_BUFF_LEN);
+  HAL_SAI_Receive_DMA(&hsai1b_rx, (uint8_t *)rx_buffer, kBlockSize * 2);
 }
 
 
@@ -506,12 +508,6 @@ void Codec::init_SAI_clock(uint32_t sample_rate)
   hal_assert(HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct));
 }
 
-void Codec::I2C::DeInit()
-{
-	CODEC_I2C_CLK_DISABLE();
-  HAL_GPIO_DeInit(CODEC_I2C_GPIO, CODEC_I2C_SCL_PIN | CODEC_I2C_SDA_PIN);
-}
-
 Codec *Codec::instance_;
 
 extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
@@ -545,7 +541,8 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
     src = (int32_t *)(Codec::instance_->rx_buffer_half);
     dst = (int32_t *)(Codec::instance_->tx_buffer_half);
 
-    Codec::instance_->callback_->Process(src, dst, codec_HT_CHAN_LEN);
+    // TODO why /2??
+    Codec::instance_->callback_->Process(src, dst, kBlockSize / 2);
 
 		//CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_IFCR = CODEC_SAI_RX_DMA_FLAG_TC;
     __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_sai1b_rx,
@@ -560,18 +557,11 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
     src = (int32_t *)(Codec::instance_->rx_buffer_start);
     dst = (int32_t *)(Codec::instance_->tx_buffer_start);
 
-    Codec::instance_->callback_->Process(src, dst, codec_HT_CHAN_LEN);
+    // TODO why /2??
+    Codec::instance_->callback_->Process(src, dst, kBlockSize / 2);
 
 		//CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_IFCR = CODEC_SAI_RX_DMA_FLAG_HT;
     __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_sai1b_rx,
                          __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx));
 	}
 }
-
-
-// DMA2_Stream1_IRQHandler
-// Does not get called, this is only here for debugging when enabling TX IRQ
-// void CODEC_SAI_TX_DMA_IRQHandler()
-// {
-// 	HAL_DMA_IRQHandler(&hdma_sai1a_tx);
-// }
