@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include "parameters.hh"
 #include "hal.hh"
 
 /* DMA rx/tx buffer size, in number of DMA Periph/MemAlign-sized elements (words) */
@@ -36,7 +37,14 @@
 
 struct Codec {
 
-  Codec() { instance_ = this; }
+  struct Callback {
+    virtual void Process(int32_t* in, int32_t *out, int size) = 0;
+  };
+
+  Codec(Callback *callback) :
+    callback_(callback) {
+    instance_ = this;
+  }
 
   void reboot(uint32_t sample_rate);
   void start(void);
@@ -63,7 +71,10 @@ struct Codec {
   DMA_HandleTypeDef hdma_sai1a_tx;
   uint32_t tx_buffer_start, rx_buffer_start, tx_buffer_half, rx_buffer_half;
 
+  Callback *callback_;
+
 private:
+
   uint32_t write_register(uint8_t RegisterAddr, uint16_t RegisterValue);
   I2C_HandleTypeDef codec_i2c;
 

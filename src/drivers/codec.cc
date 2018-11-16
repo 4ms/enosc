@@ -27,10 +27,6 @@
  */
 
 #include "codec.hh"
-#include "audio_stream.hh"
-
-
-void process_audio_block_codec(int32_t *src, int32_t *dst, uint32_t size);
 
 //
 // I2C Config
@@ -661,7 +657,7 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler(void)
     src = (int32_t *)(Codec::instance_->rx_buffer_half);
     dst = (int32_t *)(Codec::instance_->tx_buffer_half);
 
-    process_audio_block_codec(src, dst, codec_HT_CHAN_LEN);
+    Codec::instance_->callback_->Process(src, dst, codec_HT_CHAN_LEN);
 
 		//CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_IFCR = CODEC_SAI_RX_DMA_FLAG_TC;
     __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_sai1b_rx,
@@ -676,7 +672,7 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler(void)
     src = (int32_t *)(Codec::instance_->rx_buffer_start);
     dst = (int32_t *)(Codec::instance_->tx_buffer_start);
 
-    process_audio_block_codec(src, dst, codec_HT_CHAN_LEN);
+    Codec::instance_->callback_->Process(src, dst, codec_HT_CHAN_LEN);
 
 		//CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_IFCR = CODEC_SAI_RX_DMA_FLAG_HT;
     __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_sai1b_rx,

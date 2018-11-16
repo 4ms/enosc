@@ -1,7 +1,6 @@
 #include "hal.hh"
 #include "globals.h"
 #include "codec.hh"
-#include "audio_stream.hh"
 #include "system.hh"
 #include "buttons.hh"
 #include "gates.hh"
@@ -9,8 +8,6 @@
 #include "debug.hh"
 #include "leds.hh"
 #include "adc.hh"
-
-#include "audio_stream.hh"
 
 bool do_audio_passthrough_test = false;
 
@@ -23,63 +20,14 @@ int32_t average_L, average_R;
 int32_t tri_L=0, tri_R=0;
 int32_t tri_L_dir=1, tri_R_dir=1;
 
-void process_audio_block_codec(int32_t *src, int32_t *dst, uint32_t size)
-{
-  uint32_t 	i_sample;
-	int32_t		in_L, in_R;
-	int32_t 	sum_L=0, sum_R=0;
-
-  if (do_audio_passthrough_test)
-	{
-
-		for ( i_sample = 0; i_sample < size; i_sample++)
-		{
-			in_L = *src++;
-			in_R = *src++;
-
-			sum_L += ((int32_t)(in_L<<8))/256;
-			sum_R += ((int32_t)(in_R<<8))/256;
-
-			*dst++ = in_L;
-			*dst++ = in_R;
-		}
-
-		average_L = ((sum_L/size) << 8);
-		average_R = ((sum_R/size) << 8);
-
-	} 
-	else //triangle wave test
-	{
-
-		for ( i_sample = 0; i_sample < size; i_sample++)
-		{
-			if (tri_L_dir==1)	tri_L+=0x1000;
-			else				tri_L-=0x2000;
-
-			if (tri_L >= MAX_CODEC_DAC_VAL) 	{ tri_L_dir = 1 - tri_L_dir; tri_L = MAX_CODEC_DAC_VAL; }
-			if (tri_L <= MIN_CODEC_DAC_VAL) 	{ tri_L_dir = 1 - tri_L_dir; tri_L = MIN_CODEC_DAC_VAL; }
-
-			if (tri_R_dir==1)	tri_R+=0x100000;
-			else				tri_R-=0x200000;
-
-			if (tri_R >= MAX_CODEC_DAC_VAL) 	{ tri_R_dir = 1 - tri_R_dir; tri_R = MAX_CODEC_DAC_VAL; }
-			if (tri_R <= MIN_CODEC_DAC_VAL) 	{ tri_R_dir = 1 - tri_R_dir; tri_R = MIN_CODEC_DAC_VAL; }
-
-			*dst++ = tri_L;
-			*dst++ = tri_R;
-		}
-
-	}
-}
-
-struct Main {
+struct Main : Codec::Callback {
   System sys_;
   Buttons buttons_;
   Gates gates_;
   Switches switches_;
   Leds leds_;
   Adc adc_;
-  Codec codec_;
+  Codec codec_{this};
 
   // UI state variables
   bool freeze_jack, learn_jack;
@@ -194,4 +142,47 @@ struct Main {
     grid_cv = adc_.get_adc(Adc::GRID_CV);
     mod_cv = adc_.get_adc(Adc::MOD_CV);
   }
+
+
+  void Process(int32_t *src, int32_t *dst, int size) {
+      uint32_t 	i_sample;
+      int32_t		in_L, in_R;
+      int32_t 	sum_L=0, sum_R=0;
+
+      if (do_audio_passthrough_test) {
+
+        for ( i_sample = 0; i_sample < size; i_sample++) {
+          in_L = *src++;
+          in_R = *src++;
+
+          sum_L += ((int32_t)(in_L<<8))/256;
+          sum_R += ((int32_t)(in_R<<8))/256;
+
+          *dst++ = in_L;
+          *dst++ = in_R;
+        }
+
+        average_L = ((sum_L/size) << 8);
+        average_R = ((sum_R/size) << 8);
+
+      } else { //triangle wave test
+        for ( i_sample = 0; i_sample < size; i_sample++) {
+          if (tri_L_dir==1)	tri_L+=0x1000;
+          else tri_L-=0x2000;
+
+          if (tri_L >= MAX_CODEC_DAC_VAL) { tri_L_dir = 1 - tri_L_dir; tri_L = MAX_CODEC_DAC_VAL; }
+          if (tri_L <= MIN_CODEC_DAC_VAL) { tri_L_dir = 1 - tri_L_dir; tri_L = MIN_CODEC_DAC_VAL; }
+
+          if (tri_R_dir==1)	tri_R+=0x100000;
+          else tri_R-=0x200000;
+
+          if (tri_R >= MAX_CODEC_DAC_VAL) { tri_R_dir = 1 - tri_R_dir; tri_R = MAX_CODEC_DAC_VAL; }
+          if (tri_R <= MIN_CODEC_DAC_VAL) { tri_R_dir = 1 - tri_R_dir; tri_R = MIN_CODEC_DAC_VAL; }
+
+          *dst++ = tri_L;
+          *dst++ = tri_R;
+        }
+
+      }
+    }
 } _;
