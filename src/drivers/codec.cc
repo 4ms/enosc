@@ -298,11 +298,8 @@ void Codec::I2C::DeInit()
 void Codec::init_audio_DMA()
 {
 
-	tx_buffer_start = (uint32_t)&tx_buffer;
-	rx_buffer_start = (uint32_t)&rx_buffer;
-
-  tx_buffer_half = (uint32_t)(&(tx_buffer[kBlockSize]));
-  rx_buffer_half = (uint32_t)(&(rx_buffer[kBlockSize]));
+  // tx_buffer_half = (uint32_t)(&(tx_buffer[kBlockSize]));
+  // rx_buffer_half = (uint32_t)(&(rx_buffer[kBlockSize]));
 
 	//
 	// Prepare the DMA for RX (but don't enable yet)
@@ -538,8 +535,8 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
   if ((tmpisr & __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_sai1b_rx))
       && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_TC)) {
 		// Point to 2nd half of buffers
-    src = (int32_t *)(Codec::instance_->rx_buffer_half);
-    dst = (int32_t *)(Codec::instance_->tx_buffer_half);
+    src = (int32_t *)(&Codec::instance_->rx_buffer[kBlockSize]);
+    dst = (int32_t *)(&Codec::instance_->tx_buffer[kBlockSize]);
 
     // TODO why /2??
     Codec::instance_->callback_->Process(src, dst, kBlockSize / 2);
@@ -554,8 +551,8 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
       && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_sai1b_rx, DMA_IT_HT))
 	{
 		// Point to 1st half of buffers
-    src = (int32_t *)(Codec::instance_->rx_buffer_start);
-    dst = (int32_t *)(Codec::instance_->tx_buffer_start);
+    src = (int32_t *)(&Codec::instance_->rx_buffer);
+    dst = (int32_t *)(&Codec::instance_->tx_buffer);
 
     // TODO why /2??
     Codec::instance_->callback_->Process(src, dst, kBlockSize / 2);

@@ -52,7 +52,8 @@ struct Codec {
   DMA_HandleTypeDef hdma_sai1b_rx;
   DMA_HandleTypeDef hdma_sai1a_tx;
 
-  uint32_t tx_buffer_start, rx_buffer_start, tx_buffer_half, rx_buffer_half;
+  volatile int32_t tx_buffer[kBlockSize * 2];
+  volatile int32_t rx_buffer[kBlockSize * 2];
 
 private:
 
@@ -78,11 +79,7 @@ private:
   void DeInit_SAIDMA();
   void init_audio_DMA();
 
-private:
-
   SAI_HandleTypeDef hsai1b_rx;
   SAI_HandleTypeDef hsai1a_tx;
 
-  volatile int32_t tx_buffer[kBlockSize * 2];
-  volatile int32_t rx_buffer[kBlockSize * 2];
 };
