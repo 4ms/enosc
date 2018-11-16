@@ -176,8 +176,8 @@
 // Also, format_MSB_Right does not seem to work at all (with the I2S set to LSB or MSB)
 
 
-uint32_t Codec::I2C::Write(uint8_t RegisterAddr, uint16_t RegisterValue)
-{	
+void Codec::I2C::Write(uint8_t RegisterAddr, uint16_t RegisterValue)
+{
 	//Assemble 2-byte data 
 	uint8_t Byte1 = ((RegisterAddr<<1)&0xFE) | ((RegisterValue>>8)&0x01);
 	uint8_t Byte2 = RegisterValue&0xFF;
@@ -186,16 +186,7 @@ uint32_t Codec::I2C::Write(uint8_t RegisterAddr, uint16_t RegisterValue)
 	data[0] = Byte1;
 	data[1] = Byte2;
 
-	HAL_StatusTypeDef 	err;
-
-  while((err = HAL_I2C_Master_Transmit(&handle_, CODEC_ADDRESS, data, 2, CODEC_SHORT_TIMEOUT)) != HAL_OK)
-	{
-    if (HAL_I2C_GetError(&handle_) != HAL_I2C_ERROR_AF)
-			assert_failed(__FILE__, __LINE__);
-	}
-
-	if (err==HAL_OK) 	return 0;
-	else				return 1;
+  hal_assert(HAL_I2C_Master_Transmit(&handle_, CODEC_ADDRESS, data, 2, CODEC_SHORT_TIMEOUT));
 }
 
 __IO uint32_t  CODECTimeout = CODEC_LONG_TIMEOUT;   
@@ -205,7 +196,7 @@ void Codec::I2C::PowerDown() {
   Write(WM8731_REG_POWERDOWN, 0xFF); //Power Down enable all
 }
 
-uint32_t Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
+void Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
 {
 	handle_.Instance 					= CODEC_I2C;
 	handle_.Init.Timing 				= 0x20404768; //0x20445757;
@@ -217,12 +208,11 @@ uint32_t Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
 	handle_.Init.GeneralCallMode 		= I2C_GENERALCALL_DISABLE;
 	handle_.Init.NoStretchMode 		= I2C_NOSTRETCH_DISABLE;
 
-	if (HAL_I2C_Init(&handle_) != HAL_OK)												assert_failed(__FILE__, __LINE__);
-	if (HAL_I2CEx_ConfigAnalogFilter(&handle_, I2C_ANALOGFILTER_ENABLE) != HAL_OK)	assert_failed(__FILE__, __LINE__);
-	if (HAL_I2CEx_ConfigDigitalFilter(&handle_, 0) != HAL_OK)							assert_failed(__FILE__, __LINE__);
+  hal_assert(HAL_I2C_Init(&handle_));
+  hal_assert(HAL_I2CEx_ConfigAnalogFilter(&handle_, I2C_ANALOGFILTER_ENABLE));
+  hal_assert(HAL_I2CEx_ConfigDigitalFilter(&handle_, 0));
 
   uint8_t i;
-	uint32_t err=0;
 
   uint16_t codec_init_data[] = {
     VOL_0dB,			// Reg 00: Left Line In
@@ -244,8 +234,6 @@ uint32_t Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
     0x001				// Reg 09: Active Control
   };
 
-  err = Write(WM8731_REG_RESET, 0);
-
 	if (sample_rate==48000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_48K;
 	if (sample_rate==44100)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_44K;
 	if (sample_rate==32000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_32K;
@@ -253,10 +241,10 @@ uint32_t Codec::I2C::Init(uint8_t master_slave, uint32_t sample_rate)
 	if (sample_rate==96000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_96K;
   if (sample_rate==8000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_8K;
 
-	for(i=0;i<W8731_NUM_REGS;i++) 
-    err += Write(i, codec_init_data[i]);
+  Write(WM8731_REG_RESET, 0);
 
-	return err;
+  for(i=0;i<W8731_NUM_REGS;i++)
+    Write(i, codec_init_data[i]);
 }
 
 void Codec::GPIO::Init()
@@ -468,10 +456,7 @@ void Codec::init_SAI_clock(uint32_t sample_rate)
 		return; //exit if sample_rate is not valid
 
 	PeriphClkInitStruct.CODEC_SaixClockSelection 		= CODEC_SAI_RCC_CLKSOURCE_PLLI2S;
-	if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
-		assert_failed(__FILE__, __LINE__);
-
-
+  hal_assert(HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct));
 }
 
 void Codec::I2C::DeInit()
@@ -522,33 +507,24 @@ void Codec::Init_SAIDMA()
 	// Must initialize the SAI before initializing the DMA
 	//
 
-	if (HAL_SAI_InitProtocol(&hsai1b_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
-		assert_failed(__FILE__, __LINE__);
-
-	if (HAL_SAI_InitProtocol(&hsai1a_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2) != HAL_OK)
-		assert_failed(__FILE__, __LINE__);
+  hal_assert(HAL_SAI_InitProtocol(&hsai1b_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
+  hal_assert(HAL_SAI_InitProtocol(&hsai1a_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
 
 	//
 	// Initialize the DMA, and link to SAI
 	//
 
-    if (HAL_DMA_Init(&hdma_sai1b_rx) != HAL_OK)
-      assert_failed(__FILE__, __LINE__);
+  hal_assert(HAL_DMA_Init(&hdma_sai1b_rx));
+  hal_assert(HAL_DMA_Init(&hdma_sai1a_tx));
+  __HAL_LINKDMA(&hsai1b_rx, hdmarx, hdma_sai1b_rx);
+  __HAL_LINKDMA(&hsai1a_tx, hdmatx, hdma_sai1a_tx);
 
-    __HAL_LINKDMA(&hsai1b_rx, hdmarx, hdma_sai1b_rx);
-
-	
-    if (HAL_DMA_Init(&hdma_sai1a_tx) != HAL_OK)
-      assert_failed(__FILE__, __LINE__);
-
-    __HAL_LINKDMA(&hsai1a_tx, hdmatx, hdma_sai1a_tx);
-
-    //
-    // DMA IRQ and start DMAs
-    //
+  //
+  // DMA IRQ and start DMAs
+  //
 
 	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
-  	HAL_SAI_Transmit_DMA(&hsai1a_tx, (uint8_t *)tx_buffer, codec_BUFF_LEN);
+  HAL_SAI_Transmit_DMA(&hsai1a_tx, (uint8_t *)tx_buffer, codec_BUFF_LEN);
 
 	HAL_NVIC_SetPriority(CODEC_SAI_RX_DMA_IRQn, 0, 0);
 	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
