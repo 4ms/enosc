@@ -3,14 +3,13 @@
 #include "util.hh"
 #include "parameters.hh"
 #include "hal.hh"
+#include <functional>
 
 struct Codec : Nocopy {
 
-  struct Callback {
-    virtual void Process(Frame* in, Frame *out, int size) = 0;
-  };
+  using callback_t = const std::function<void(Frame* in, Frame *out, int size)>;
 
-  Codec(Callback *callback, int sample_rate) :
+  Codec(int sample_rate, callback_t &callback) :
     callback_(callback) {
     instance_ = this;
 
@@ -32,7 +31,7 @@ struct Codec : Nocopy {
   void Start();
 
   static Codec *instance_;
-  Callback *callback_;
+  callback_t &callback_;
 
   DMA_HandleTypeDef hdma_rx;
   DMA_HandleTypeDef hdma_tx;

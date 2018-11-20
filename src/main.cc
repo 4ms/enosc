@@ -19,14 +19,17 @@ int32_t average_L, average_R;
 int32_t tri_L=0, tri_R=0;
 int32_t tri_L_dir=1, tri_R_dir=1;
 
-struct Main : Nocopy, Codec::Callback {
+struct Main : Nocopy {
   System sys_;
   Buttons buttons_;
   Gates gates_;
   Switches switches_;
   Leds leds_;
   Adc adc_;
-  Codec codec_{this, kSampleRate};
+  Codec codec_{kSampleRate,
+               [this](Frame* in, Frame *out, int size) {
+                 Process(in, out, size);
+               }};
 
   // UI state variables
   bool freeze_jack, learn_jack;

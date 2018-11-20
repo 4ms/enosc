@@ -523,5 +523,14 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
   }
 
   // TODO why /2??
-  Codec::instance_->callback_->Process(src, dst, kBlockSize/2);
+  Codec::instance_->callback_(src, dst, kBlockSize/2);
+}
+
+
+// to call a std::function we need this:
+namespace std {
+  void __throw_bad_function_call() {
+    assert_failed(__FILE__, __LINE__);
+    while(1);
+  };
 }
