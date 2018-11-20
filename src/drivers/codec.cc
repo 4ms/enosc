@@ -295,10 +295,7 @@ void Codec::I2C::DeInit()
 void Codec::init_audio_DMA()
 {
 
-  // tx_buffer_half = (uint32_t)(&(tx_buffer[kBlockSize]));
-  // rx_buffer_half = (uint32_t)(&(rx_buffer[kBlockSize]));
-
-	//
+  //
 	// Prepare the DMA for RX (but don't enable yet)
 	//
 	CODEC_SAI_DMA_CLOCK_ENABLE();
@@ -507,24 +504,24 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
 {
   //Read the interrupt status register (ISR)
   uint32_t tmpisr = CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_ISR;
-  int32_t *src, *dst;
+  Frame *src, *dst;
 
   if ((tmpisr & __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_rx))
       && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_rx, DMA_IT_TC)) {
     // Transfer Complete (TC) -> Point to 2nd half of buffers
-    src = (int32_t *)(&Codec::instance_->rx_buffer[kBlockSize]);
-    dst = (int32_t *)(&Codec::instance_->tx_buffer[kBlockSize]);
+    src = (Frame *)(&Codec::instance_->rx_buffer[kBlockSize]);
+    dst = (Frame *)(&Codec::instance_->tx_buffer[kBlockSize]);
     __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_rx,
                          __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_rx));
   } else if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx))
       && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_rx, DMA_IT_HT)) {
     // Half Transfer complete (HT) -> Point to 1st half of buffers
-    src = (int32_t *)(&Codec::instance_->rx_buffer);
-    dst = (int32_t *)(&Codec::instance_->tx_buffer);
+    src = (Frame *)(&Codec::instance_->rx_buffer);
+    dst = (Frame *)(&Codec::instance_->tx_buffer);
     __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_rx,
                          __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx));
   }
 
   // TODO why /2??
-  Codec::instance_->callback_->Process(src, dst, kBlockSize / 2);
+  Codec::instance_->callback_->Process(src, dst, kBlockSize/2);
 }

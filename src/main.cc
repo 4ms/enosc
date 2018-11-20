@@ -125,43 +125,44 @@ private:
   }
 
 
-  void Process(int32_t *src, int32_t *dst, int size) {
-      uint32_t 	i_sample;
+  void Process(Frame *src, Frame *dst, int size) {
       int32_t		in_L, in_R;
       int32_t 	sum_L=0, sum_R=0;
 
       if (do_audio_passthrough_test) {
-
-        for ( i_sample = 0; i_sample < size; i_sample++) {
-          in_L = *src++;
-          in_R = *src++;
+        while(size--) {
+          in_L = src->l;
+          in_R = src->r;
+          src++;
 
           sum_L += ((int32_t)(in_L<<8))/256;
           sum_R += ((int32_t)(in_R<<8))/256;
 
-          *dst++ = in_L;
-          *dst++ = in_R;
+          dst->l = in_L;
+          dst->r = in_R;
+          dst++;
         }
 
         average_L = ((sum_L/size) << 8);
         average_R = ((sum_R/size) << 8);
 
       } else { //triangle wave test
-        for ( i_sample = 0; i_sample < size; i_sample++) {
-          if (tri_L_dir==1)	tri_L+=0x1000;
-          else tri_L-=0x2000;
+        while(size--) {
+          if (tri_L_dir==1)	tri_L+=0x3000;
+          else tri_L-=0x3000;
 
           if (tri_L >= MAX_CODEC_DAC_VAL) { tri_L_dir = 1 - tri_L_dir; tri_L = MAX_CODEC_DAC_VAL; }
           if (tri_L <= MIN_CODEC_DAC_VAL) { tri_L_dir = 1 - tri_L_dir; tri_L = MIN_CODEC_DAC_VAL; }
 
-          if (tri_R_dir==1)	tri_R+=0x100000;
-          else tri_R-=0x200000;
+          if (tri_R_dir==1)	tri_R+=0x6000;
+          else tri_R-=0x6000;
 
           if (tri_R >= MAX_CODEC_DAC_VAL) { tri_R_dir = 1 - tri_R_dir; tri_R = MAX_CODEC_DAC_VAL; }
           if (tri_R <= MIN_CODEC_DAC_VAL) { tri_R_dir = 1 - tri_R_dir; tri_R = MIN_CODEC_DAC_VAL; }
 
-          *dst++ = tri_L;
-          *dst++ = tri_R;
+          dst->l = tri_L;
+          dst->r = tri_R;
+          dst++;
         }
 
       }

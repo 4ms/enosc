@@ -6,7 +6,7 @@
 struct Codec {
 
   struct Callback {
-    virtual void Process(int32_t* in, int32_t *out, int size) = 0;
+    virtual void Process(Frame* in, Frame *out, int size) = 0;
   };
 
   Codec(Callback *callback, int sample_rate) :
