@@ -54,7 +54,7 @@
 #define LEARN_LED_PWM_GPIO 			LEARN_RED_GPIO_Port
 
 
-struct Leds {
+struct Leds : Nocopy {
 
   TIM_HandleTypeDef	timFREEZELED;
   TIM_HandleTypeDef	timLEARNLED;

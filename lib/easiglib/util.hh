@@ -15,3 +15,12 @@ constexpr bool is_power_of_2(int v) {
 constexpr int ipow(int a, int b) {
   return b==0 ? 1 : a * ipow(a, b-1);
 }
+
+class Nocopy {
+public:
+  Nocopy(const Nocopy&) = delete;
+  Nocopy& operator=(const Nocopy&) = delete;
+protected:
+  constexpr Nocopy() = default;
+  ~Nocopy() = default;
+};

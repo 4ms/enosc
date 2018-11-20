@@ -19,7 +19,7 @@ int32_t average_L, average_R;
 int32_t tri_L=0, tri_R=0;
 int32_t tri_L_dir=1, tri_R_dir=1;
 
-struct Main : Codec::Callback {
+struct Main : Nocopy, Codec::Callback {
   System sys_;
   Buttons buttons_;
   Gates gates_;

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-struct Buttons {
+struct Buttons : Nocopy {
   struct Button {
     uint8_t state_;
     virtual bool get() = 0;

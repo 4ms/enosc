@@ -1,6 +1,6 @@
 #include "hal.hh"
 
-struct System {
+struct System : Nocopy {
   System() {
     SetVectorTable(0x08000000);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-struct Gates {
+struct Gates : Nocopy {
   struct Gate {
     virtual bool get() = 0;
   };

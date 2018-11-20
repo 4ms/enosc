@@ -1,9 +1,10 @@
 #pragma once
 
+#include "util.hh"
 #include "parameters.hh"
 #include "hal.hh"
 
-struct Codec {
+struct Codec : Nocopy {
 
   struct Callback {
     virtual void Process(Frame* in, Frame *out, int size) = 0;

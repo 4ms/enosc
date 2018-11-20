@@ -1,6 +1,6 @@
 #pragma once
 
-struct Debug {
+struct Debug : Nocopy {
   Debug() {
     __HAL_RCC_GPIOD_CLK_ENABLE();
 

@@ -4,7 +4,7 @@
 #include "hal.hh"
 #include "dsp.hh"
 
-struct Adc {
+struct Adc : Nocopy {
   Adc();
 
   enum AdcChannel {

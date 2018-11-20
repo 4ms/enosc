@@ -22,10 +22,10 @@
 #define WARPSW_BOT_Pin GPIO_PIN_10 /*reversed from PCB*/
 #define WARPSW_BOT_GPIO_Port GPIOC
 
-struct Switches {
+struct Switches : Nocopy {
   enum State { UP, CENTER, DOWN, ERROR };
 
-  struct Switch {
+  struct Switch : Nocopy {
     virtual bool get1() = 0;
     virtual bool get2() = 0;
     State get() {
