@@ -3,8 +3,8 @@
 #pragma once
 
 constexpr struct Frame {
-  int16_t l = 0;
-  int16_t r = 0;
+  s1_15 l = 0._s1_15;
+  s1_15 r = 0._s1_15;
 } zero;
 
 constexpr int kBlockSize = 16;

@@ -132,8 +132,8 @@ private:
       Float *p = o;
       while(size--) {
         s1_15 s = s1_15(*p);
-        out->l = s.repr();
-        out->r = s.repr();
+        out->l = s;
+        out->r = s;
         out++; p++;
       }
     }
