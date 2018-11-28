@@ -60,8 +60,8 @@ struct PolypticOscillator : Nocopy {
     oscs_.Process(params, out1, out2, size);
 
     for(f *o1=out1, *o2=out2; size--;) {
-      f s1 = *o1 * Data::normalization_factors[kNumOsc-1];
-      f s2 = *o2 * Data::normalization_factors[kNumOsc-1];
+      f s1 = *o1 / f(kNumOsc/2); // /2 because only half the voices
+      f s2 = *o2 / f(kNumOsc/2);
       out->l = s1_15(s1);
       out->r = s1_15(s2);
       out++; o1++; o2++;
