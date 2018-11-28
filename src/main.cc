@@ -1,12 +1,13 @@
 #include "hal.hh"
 #include "codec.hh"
 #include "system.hh"
+#include "debug.hh"
 #include "buttons.hh"
 #include "gates.hh"
 #include "switches.hh"
-#include "debug.hh"
 #include "leds.hh"
 #include "adc.hh"
+#include "polyptic_oscillator.hh"
 
 bool do_audio_passthrough_test = false;
 
@@ -30,6 +31,8 @@ struct Main : Nocopy {
                [this](Frame* in, Frame *out, int size) {
                  Process(in, out, size);
                }};
+
+  PolypticOscillator osc_;
 
   // UI state variables
   bool freeze_jack, learn_jack;
@@ -60,16 +63,6 @@ private:
     // Step through this code line by line and verify the debug header
     // pins and button LEDs are going high/low
     //////////////////////////////////////////////////////////////////////////
-
-    //Debug header
-    debug.set(0, true);
-    debug.set(0, false);
-    debug.set(1, true);
-    debug.set(1, false);
-    debug.set(2, true);
-    debug.set(2, false);
-    debug.set(3, true);
-    debug.set(3, false);
 
     //LEDs with PWM
     if ((HAL_GetTick() - last_update_tm) > 1000/60) {
@@ -128,46 +121,25 @@ private:
   }
 
 
-  void Process(Frame *src, Frame *dst, int size) {
-      int32_t		in_L, in_R;
-      int32_t 	sum_L=0, sum_R=0;
+  void Process(Frame *in, Frame *out, int size) {
+    if (do_audio_passthrough_test) {
+      while(size--) {
+        *out = *in;
+        out++;
+        in++;
+      }
+    } else {
+      f freq = 0.01_f;
+      Float o[size];
+      osc_.Process(freq, o, size);
 
-      if (do_audio_passthrough_test) {
-        while(size--) {
-          in_L = src->l;
-          in_R = src->r;
-          src++;
-
-          sum_L += ((int32_t)(in_L<<8))/256;
-          sum_R += ((int32_t)(in_R<<8))/256;
-
-          dst->l = in_L;
-          dst->r = in_R;
-          dst++;
-        }
-
-        average_L = ((sum_L/size) << 8);
-        average_R = ((sum_R/size) << 8);
-
-      } else { //triangle wave test
-        while(size--) {
-          if (tri_L_dir==1)	tri_L+=0x3000;
-          else tri_L-=0x3000;
-
-          if (tri_L >= MAX_CODEC_DAC_VAL) { tri_L_dir = 1 - tri_L_dir; tri_L = MAX_CODEC_DAC_VAL; }
-          if (tri_L <= MIN_CODEC_DAC_VAL) { tri_L_dir = 1 - tri_L_dir; tri_L = MIN_CODEC_DAC_VAL; }
-
-          if (tri_R_dir==1)	tri_R+=0x6000;
-          else tri_R-=0x6000;
-
-          if (tri_R >= MAX_CODEC_DAC_VAL) { tri_R_dir = 1 - tri_R_dir; tri_R = MAX_CODEC_DAC_VAL; }
-          if (tri_R <= MIN_CODEC_DAC_VAL) { tri_R_dir = 1 - tri_R_dir; tri_R = MIN_CODEC_DAC_VAL; }
-
-          dst->l = tri_L;
-          dst->r = tri_R;
-          dst++;
-        }
-
+      Float *p = o;
+      while(size--) {
+        s1_15 s = s1_15(*p);
+        out->l = s.repr() << 8;
+        out->r = s.repr() << 8;
+        out++; p++;
       }
     }
+  }
 } _;
