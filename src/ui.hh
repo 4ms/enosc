@@ -39,7 +39,7 @@ class Control {
   Adc adc_;
 
   PotConditioner<SQUARE, kPotFiltering> warp_pot;
-  PotConditioner<LINEAR, kPotFiltering> detune_pot;
+  PotConditioner<QUAD, kPotFiltering> detune_pot;
   PotConditioner<LINEAR, kPotFiltering> mod_pot;
   PotConditioner<LINEAR, kPotFiltering> root_pot;
   PotConditioner<LINEAR, kPotFiltering> grid_pot;
@@ -53,14 +53,22 @@ class Control {
 public:
   void Process(Parameters &params) {
 
+    u0_16 detune = detune_pot.Process(adc_.get_adc(Adc::DETUNE_POT));
+    // TODO cleanup the max: crop ends
+    params.detune = (detune.to_float() - 0.0006_f).max(0_f);
+
     u0_16 warp = warp_pot.Process(adc_.get_adc(Adc::WARP_POT));
-    params.warp = warp.to_float();
+    params.warp.value = warp.to_float();
+
+    u0_16 twist = twist_pot.Process(adc_.get_adc(Adc::TWIST_POT));
+    params.twist.value = twist.to_float();
 
     u0_16 pitch = pitch_pot.Process(adc_.get_adc(Adc::PITCH_POT));
     params.pitch = pitch.to_float() * 12_f * 8_f + 24_f;
     
     u0_16 spread = spread_pot.Process(adc_.get_adc(Adc::SPREAD_POT));
-    params.spread = spread.to_float() * 12_f;
+    // TODO cleanup the max
+    params.spread = (spread.to_float() * 12_f - 0.05_f).max(0_f);
     
     // warp_pot = adc_.get_adc(Adc::WARP_POT);
     // detune_pot = adc_.get_adc(Adc::DETUNE_POT);
@@ -116,7 +124,9 @@ public:
     mod_sw = switches_.mod_.get();
     grid_sw = switches_.grid_.get();
     twist_sw = switches_.twist_.get();
-    warp_sw = switches_.warp_.get();
+
+    params.twist.mode = static_cast<Parameters::Twist::Mode>(switches_.twist_.get());    
+    params.warp.mode = static_cast<Parameters::Warp::Mode>(switches_.warp_.get());
 
     bypass = switches_.mod_.get() == Switches::DOWN;
   }

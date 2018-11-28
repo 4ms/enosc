@@ -14,6 +14,16 @@ constexpr int kNumOsc = 16;
 struct Parameters {
   f pitch;                       // midi note
   f spread;                      // semitones
-  f warp;                       // 0..1
-  f twist;                      // 0..1
+  f detune;                     // semitones
+
+  struct Twist {
+    enum Mode { FEEDBACK, PULSAR, DECIMATE } mode;
+    f value;                    // 0..1
+  } twist;
+
+  struct Warp {
+    enum Mode { CRUSH, CHEBY, FOLD } mode;
+    f value;                    // 0..1
+  } warp;
+
 };

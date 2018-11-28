@@ -31,19 +31,23 @@ public:
 
     f pitch = params.pitch;
     f spread = params.spread;
-    f feedback = params.warp;
+    f twist = params.twist.value;
+    f warp = params.warp.value;
+    f detune = params.detune;
+    f w = warp * 10_f + 1_f;
+    f wi = 1_f / w;
 
     bool oc = false;
     for (int i=0; i<kNumOsc; i++) {
       oc = !oc;
       pitch += spread;
+      pitch += detune;
       f freq = Freq::of_pitch(pitch).repr();
       for (f *o1=out1, *o2=out2; o1<out1+size; o1++, o2++) {
-        s1_15 s = osc_[i].Process(u0_32(freq), u0_16(feedback));
-        if (oc)
-          *o1 += s.to_float() / f(kNumOsc); // TODO: optimize scaling
-        else
-          *o2 += s.to_float() / f(kNumOsc); // TODO: optimize scaling
+        s1_15 sample = osc_[i].Process(u0_32(freq), u0_16(twist));
+        f t = sample.to_float();
+        t *= 1_f / f(kNumOsc); // TODO: optimize scaling
+        if (oc) *o1 += t; else *o2 += t;
       }
     }
   }
