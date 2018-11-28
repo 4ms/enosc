@@ -34,8 +34,6 @@ public:
     f twist = params.twist.value;
     f warp = params.warp.value;
     f detune = params.detune;
-    f w = warp * 10_f + 1_f;
-    f wi = 1_f / w;
 
     bool oc = false;
     for (int i=0; i<kNumOsc; i++) {
@@ -46,7 +44,6 @@ public:
       for (f *o1=out1, *o2=out2; o1<out1+size; o1++, o2++) {
         s1_15 sample = osc_[i].Process(u0_32(freq), u0_16(twist));
         f t = sample.to_float();
-        t *= 1_f / f(kNumOsc); // TODO: optimize scaling
         if (oc) *o1 += t; else *o2 += t;
       }
     }
@@ -63,8 +60,10 @@ struct PolypticOscillator : Nocopy {
     oscs_.Process(params, out1, out2, size);
 
     for(f *o1=out1, *o2=out2; size--;) {
-      out->l = s1_15(*o1);
-      out->r = s1_15(*o2);      // TODO o2
+      f s1 = *o1 * Data::normalization_factors[kNumOsc-1];
+      f s2 = *o2 * Data::normalization_factors[kNumOsc-1];
+      out->l = s1_15(s1);
+      out->r = s1_15(s2);
       out++; o1++; o2++;
     }
   }

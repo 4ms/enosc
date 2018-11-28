@@ -25,5 +25,4 @@ struct Parameters {
     enum Mode { CRUSH, CHEBY, FOLD } mode;
     f value;                    // 0..1
   } warp;
-
 };
