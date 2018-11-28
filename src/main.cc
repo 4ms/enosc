@@ -59,10 +59,6 @@ struct Main : Nocopy {
 private:
 
   void Process() {
-    //////////////////////////////////////////////////////////////////////////
-    // Step through this code line by line and verify the debug header
-    // pins and button LEDs are going high/low
-    //////////////////////////////////////////////////////////////////////////
 
     //LEDs with PWM
     if ((HAL_GetTick() - last_update_tm) > 1000/60) {
@@ -136,8 +132,8 @@ private:
       Float *p = o;
       while(size--) {
         s1_15 s = s1_15(*p);
-        out->l = s.repr() << 8;
-        out->r = s.repr() << 8;
+        out->l = s.repr();
+        out->r = s.repr();
         out++; p++;
       }
     }

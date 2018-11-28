@@ -267,7 +267,7 @@ void Codec::I2C::Init(uint32_t sample_rate)
     (PD_MIC
      | PD_OSC
      | PD_CLKOUT),		// Reg 06: Power Down Control (Clkout, Osc, Mic Off) 0x062
-    (format_24b			// Reg 07: Digital Audio Interface Format (24-bit, slave)
+    (format_16b			// Reg 07: Digital Audio Interface Format (16-bit, slave)
      | format_I2S),
     0x000,				// Reg 08: Sampling Control (USB_NORM=Normal, BOSR=256x, default = 48k)
     0x001				// Reg 09: Active Control
@@ -308,8 +308,8 @@ void Codec::init_audio_DMA()
   hdma_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
   hdma_rx.Init.PeriphInc = DMA_PINC_DISABLE;
   hdma_rx.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  hdma_rx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+  hdma_rx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
   hdma_rx.Init.Mode = DMA_CIRCULAR;
   hdma_rx.Init.Priority = DMA_PRIORITY_HIGH;
   hdma_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
@@ -321,8 +321,8 @@ void Codec::init_audio_DMA()
   hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
   hdma_tx.Init.PeriphInc = DMA_PINC_DISABLE;
   hdma_tx.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  hdma_tx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+  hdma_tx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
   hdma_tx.Init.Mode = DMA_CIRCULAR;
   hdma_tx.Init.Priority = DMA_PRIORITY_HIGH;
   hdma_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
@@ -336,8 +336,8 @@ void Codec::init_audio_DMA()
 	// Must initialize the SAI before initializing the DMA
 	//
 
-  hal_assert(HAL_SAI_InitProtocol(&hsai_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
-  hal_assert(HAL_SAI_InitProtocol(&hsai_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
+  hal_assert(HAL_SAI_InitProtocol(&hsai_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2));
+  hal_assert(HAL_SAI_InitProtocol(&hsai_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2));
 
 	//
 	// Initialize the DMA, and link to SAI
