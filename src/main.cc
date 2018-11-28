@@ -125,17 +125,7 @@ private:
         in++;
       }
     } else {
-      f freq = 0.01_f;
-      Float o[size];
-      osc_.Process(freq, o, size);
-
-      Float *p = o;
-      while(size--) {
-        s1_15 s = s1_15(*p);
-        out->l = s;
-        out->r = s;
-        out++; p++;
-      }
+      osc_.Process(in, out, size);
     }
   }
 } _;

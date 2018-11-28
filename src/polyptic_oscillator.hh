@@ -21,19 +21,35 @@ public:
   }
 };
 
-struct PolypticOscillator : Nocopy {
+class Oscillators {
   Oscillator osc_;
 
-  void Process(Float freq, Float *out, int size) {
+public:
+  void Process(f freq, f *out1, f *out2, int size) {
     debug.set(3, true);
     while(size--) {
       s1_15 s = osc_.Process(u0_32(freq), u0_16(0.0_f));
-      *out = s.to_float();
-      out++;
+      *out1 = s.to_float();
+      out1++;
     }
     debug.set(3, false);
   }
+};
 
-  void Process(Frame in, Frame out, int size) {
+struct PolypticOscillator : Nocopy {
+  Oscillators oscs_;
+
+  void Process(Frame *in, Frame *out, int size) {
+    f out1[size];
+    f out2[size];
+
+    f freq = 0.01_f;
+    oscs_.Process(freq, out1, out2, size);
+
+    for(f *o1=out1, *o2=out2; size--;) {
+      out->l = s1_15(*o1);
+      out->r = s1_15(*o2);
+      out++; o1++; o2++;
+    }
   }
 };
