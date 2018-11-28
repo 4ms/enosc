@@ -353,11 +353,11 @@ void Codec::init_audio_DMA()
   //
 
 	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
-  HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer, kBlockSize * 2);
+  HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer, kBlockSize * 2 * 2);
 
 	HAL_NVIC_SetPriority(CODEC_SAI_RX_DMA_IRQn, 0, 0);
 	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
-  HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer, kBlockSize * 2);
+  HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer, kBlockSize * 2 * 2);
 }
 
 
@@ -512,8 +512,8 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
   if ((tmpisr & __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_rx))
       && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_rx, DMA_IT_TC)) {
     // Transfer Complete (TC) -> Point to 2nd half of buffers
-    src = (Frame *)(&Codec::instance_->rx_buffer[kBlockSize]);
-    dst = (Frame *)(&Codec::instance_->tx_buffer[kBlockSize]);
+    src = (Frame *)(&Codec::instance_->rx_buffer[kBlockSize*2]);
+    dst = (Frame *)(&Codec::instance_->tx_buffer[kBlockSize*2]);
     __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_rx,
                          __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_rx));
   } else if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx))
@@ -525,8 +525,7 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
                          __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx));
   }
 
-  // TODO why /2??
-  Codec::instance_->callback_(src, dst, kBlockSize/2);
+  Codec::instance_->callback_(src, dst, kBlockSize);
 }
 
 
