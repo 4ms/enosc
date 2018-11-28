@@ -9,3 +9,11 @@ constexpr struct Frame {
 
 constexpr int kBlockSize = 16;
 constexpr int kSampleRate = 96000;
+constexpr int kNumOsc = 16;
+
+struct Parameters {
+  f pitch;                       // midi note
+  f spread;                      // semitones
+  f warp;                       // 0..1
+  f twist;                      // 0..1
+};

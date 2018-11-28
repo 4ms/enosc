@@ -1,4 +1,4 @@
-
+#include "dsp.hh"
 
 class Oscillator {
   u0_32 phase_ = u0_32::of_repr(Random::Word());
@@ -22,33 +22,45 @@ public:
 };
 
 class Oscillators {
-  Oscillator osc_;
+  Oscillator osc_[kNumOsc];
 
 public:
-  void Process(f freq, f *out1, f *out2, int size) {
-    debug.set(3, true);
-    while(size--) {
-      s1_15 s = osc_.Process(u0_32(freq), u0_16(0.0_f));
-      *out1 = s.to_float();
-      out1++;
+  void Process(Parameters &params, f *out1, f *out2, int size) {
+    std::fill(out1, out1+size, 0_f);
+    std::fill(out2, out2+size, 0_f);
+
+    f pitch = params.pitch;
+    f spread = params.spread;
+    f feedback = params.warp;
+
+    bool oc = false;
+    for (int i=0; i<kNumOsc; i++) {
+      oc = !oc;
+      pitch += spread;
+      f freq = Freq::of_pitch(pitch).repr();
+      for (f *o1=out1, *o2=out2; o1<out1+size; o1++, o2++) {
+        s1_15 s = osc_[i].Process(u0_32(freq), u0_16(feedback));
+        if (oc)
+          *o1 += s.to_float() / f(kNumOsc); // TODO: optimize scaling
+        else
+          *o2 += s.to_float() / f(kNumOsc); // TODO: optimize scaling
+      }
     }
-    debug.set(3, false);
   }
 };
 
 struct PolypticOscillator : Nocopy {
   Oscillators oscs_;
 
-  void Process(Frame *in, Frame *out, int size) {
+  void Process(Parameters &params, Frame *in, Frame *out, int size) {
     f out1[size];
     f out2[size];
 
-    f freq = 0.01_f;
-    oscs_.Process(freq, out1, out2, size);
+    oscs_.Process(params, out1, out2, size);
 
     for(f *o1=out1, *o2=out2; size--;) {
       out->l = s1_15(*o1);
-      out->r = s1_15(*o2);
+      out->r = s1_15(*o2);      // TODO o2
       out++; o1++; o2++;
     }
   }
