@@ -7,13 +7,10 @@ struct System : Nocopy {
     HAL_Init();
     SystemClock_Config();
 
-    // SCB_EnableICache();
-    //not needed because we're running from FLASH on the ITCM bus, using ART and Prefetch
-    SCB_DisableICache();
-
     SCB_InvalidateDCache();
+
+    SCB_EnableICache();
     SCB_EnableDCache();
-    //SCB_DisableDCache();
   }
 
 private:
@@ -42,7 +39,7 @@ private:
     hal_assert(HAL_RCC_OscConfig(&RCC_OscInitStruct));
 
     //Activate the OverDrive to reach the 216 MHz Frequency 
-    hal_assert(HAL_PWREx_EnableOverDrive() != HAL_OK);
+    hal_assert(HAL_PWREx_EnableOverDrive());
 
     //Initializes the CPU, AHB and APB busses clocks 
     RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
