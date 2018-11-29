@@ -20,6 +20,15 @@ public:
 class Oscillators {
   Oscillator osc_[kNumOsc];
 
+  s1_15 crush(s1_15 sample, f amount) {
+    amount *= 15_f;
+    f integral = amount.integral();
+    s1_15 fractional = s1_15(amount.fractional() * 2_f - 1_f);
+    if (sample < fractional) integral++;
+    sample = sample.div2(integral.repr()).mul2(integral.repr());
+    return sample;
+  }
+
 public:
   void Process(Parameters &params, f *out1, f *out2, int size) {
     std::fill(out1, out1+size, 0_f);
@@ -39,6 +48,7 @@ public:
       f freq = Freq::of_pitch(pitch).repr();
       for (f *o1=out1, *o2=out2; o1<out1+size; o1++, o2++) {
         s1_15 sample = osc_[i].Process(u0_32(freq), u0_16(twist));
+        sample = crush(sample, warp);
         f t = sample.to_float();
         if (oc) *o1 += t; else *o2 += t;
       }

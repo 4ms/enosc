@@ -362,6 +362,9 @@ public:
     return T::of_repr(repr() >> BITS);
   }
 
+  constexpr T div2(int bits) const { return T::of_repr(repr() >> bits); }
+  constexpr T mul2(int bits) const { return T::of_repr(repr() << bits); }
+
   constexpr void operator+=(T const that) { *this = *this + that; }
   constexpr void operator-=(T const that) { *this = *this - that; }
   constexpr void operator*=(T const that) { *this = T::narrow(*this * that); }
