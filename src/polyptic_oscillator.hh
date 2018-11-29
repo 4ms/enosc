@@ -1,19 +1,35 @@
 #include "dsp.hh"
 
-class Oscillator {
+class Phasor {
   u0_32 phase_ = u0_32::of_repr(Random::Word());
+public:
+  u0_32 Process(u0_32 freq) {
+    phase_ += freq;
+    return phase_;
+  }
+};
+
+class SineShaper {
   s1_15 history_ = 0._s1_15;
   IOnePoleLp<s1_15, 2> lp_;
 public:
 
-  s1_15 Process(u0_32 freq, u0_16 feedback) {
+  s1_15 Process(u0_32 phase, u0_16 feedback) {
     s1_31 fb = history_ * feedback.to_signed();
-    u0_32 phase = phase_;
-    phase_ += freq;
-    phase += freq + fb.to_unsigned() + u0_32(feedback);
+    phase += fb.to_unsigned() + u0_32(feedback);
     s1_15 sample = Data::short_sine.interpolate(phase).movl<15>();
     lp_.Process(sample, &history_);
     return sample;
+  }
+};
+
+class Oscillator {
+  Phasor phasor_;
+  SineShaper shaper_;
+public:
+  s1_15 Process(u0_32 freq, u0_16 feedback) {
+    u0_32 phase = phasor_.Process(freq);
+    return shaper_.Process(phase, feedback);
   }
 };
 
