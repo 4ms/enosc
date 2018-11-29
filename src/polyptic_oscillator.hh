@@ -26,6 +26,7 @@ public:
 class Oscillator {
   Phasor phasor_;
   SineShaper shaper_;
+
 public:
   s1_15 Process(u0_32 freq, u0_16 feedback) {
     u0_32 phase = phasor_.Process(freq);
@@ -36,6 +37,7 @@ public:
 class Oscillators {
   Oscillator osc_[kNumOsc];
 
+  // TODO optimize
   s1_15 crush(s1_15 sample, f amount) {
     amount *= 15_f;
     f integral = amount.integral();
@@ -82,8 +84,8 @@ struct PolypticOscillator : Nocopy {
     oscs_.Process(params, out1, out2, size);
 
     for(f *o1=out1, *o2=out2; size--;) {
-      f s1 = *o1 / f(kNumOsc/2); // /2 because only half the voices
-      f s2 = *o2 / f(kNumOsc/2);
+      f s1 = *o1 / f(kNumOsc); // TODO: kNumOsc/2 because only half the voices
+      f s2 = *o2 / f(kNumOsc);
       out->l = s1_15(s1);
       out->r = s1_15(s2);
       out++; o1++; o2++;
