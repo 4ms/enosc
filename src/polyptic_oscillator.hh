@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "dsp.hh"
 
 class Phasor {
