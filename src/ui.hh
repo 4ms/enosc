@@ -15,19 +15,20 @@ class Control {
 
   template<Law LAW, int LP>  // Lp = 0..16
   class PotConditioner {
-    IOnePoleLp<u0_16, LP> lp_;
+    QuadraticOnePoleLp<LP> lp_;
   public:
-    u0_16 Process(u0_16 x) {
+    s1_15 Process(u0_16 in) {
+      s1_15 x = in.to_signed();
       switch(LAW) {
       case LINEAR: break;
-      case QUADRATIC: x = u0_16::narrow(x * x); break;
-      case CUBIC: x = u0_16::narrow(u0_16::narrow(x * x) * x); break;
+      case QUADRATIC: x = s1_15::narrow(x * x); break;
+      case CUBIC: x = s1_15::narrow(s1_15::narrow(x * x) * x); break;
       case QUARTIC:
-        x = u0_16::narrow(x * x);
-        x = u0_16::narrow(x * x);
+        x = s1_15::narrow(x * x);
+        x = s1_15::narrow(x * x);
         break;
       }
-      lp_.Process(x, &x);
+      x = lp_.Process(x);
       return x;
     }
   };
@@ -50,20 +51,20 @@ class Control {
 public:
   void Process(Parameters &params) {
 
-    u0_16 detune = detune_pot.Process(adc_.get_adc(Adc::DETUNE_POT));
+    s1_15 detune = detune_pot.Process(adc_.get_adc(Adc::DETUNE_POT));
     // TODO cleanup the max: crop ends
     params.detune = (detune.to_float() - 0.0006_f).max(0_f);
 
-    u0_16 warp = warp_pot.Process(adc_.get_adc(Adc::WARP_POT));
+    s1_15 warp = warp_pot.Process(adc_.get_adc(Adc::WARP_POT));
     params.warp.value = warp.to_float();
 
-    u0_16 twist = twist_pot.Process(adc_.get_adc(Adc::TWIST_POT));
+    s1_15 twist = twist_pot.Process(adc_.get_adc(Adc::TWIST_POT));
     params.twist.value = twist.to_float();
 
-    u0_16 pitch = pitch_pot.Process(adc_.get_adc(Adc::PITCH_POT));
+    s1_15 pitch = pitch_pot.Process(adc_.get_adc(Adc::PITCH_POT));
     params.pitch = pitch.to_float() * 12_f * 8_f + 24_f;
     
-    u0_16 spread = spread_pot.Process(adc_.get_adc(Adc::SPREAD_POT));
+    s1_15 spread = spread_pot.Process(adc_.get_adc(Adc::SPREAD_POT));
     // TODO cleanup the max
     params.spread = (spread.to_float() * 12_f - 0.05_f).max(0_f);
     
