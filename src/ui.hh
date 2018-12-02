@@ -36,7 +36,7 @@ class Control {
   Adc adc_;
 
   PotConditioner<QUADRATIC, kPotFiltering> warp_pot;
-  PotConditioner<QUARTIC, kPotFiltering> detune_pot;
+  PotConditioner<CUBIC, kPotFiltering> detune_pot;
   PotConditioner<LINEAR, kPotFiltering> mod_pot;
   PotConditioner<LINEAR, kPotFiltering> root_pot;
   PotConditioner<LINEAR, kPotFiltering> grid_pot;
