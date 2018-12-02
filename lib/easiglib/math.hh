@@ -64,4 +64,19 @@ struct Math {
     f s = x * x;
     return x * (1.875_f + s * (-1.25_f + 0.375_f * s));
   }
+
+  // (p..1 -> 0..1)
+  static constexpr f crop_down(f p, f x) {
+    return ((x-p) / (1_f-p)).max(0_f);
+  }
+
+  // 0..(1-p) -> 0..1
+  static constexpr f crop_up(f p, f x) {
+    return (x / (1_f - p)).min(1_f);
+  }
+
+  // p..(1-p) -> 0..1
+  static constexpr f crop(f p, f x) {
+    return ((x - p) / (1_f - 2_f * p)).min(1_f).max(0_f);
+  }
 };
