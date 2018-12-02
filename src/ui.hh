@@ -11,11 +11,7 @@ const int kPotFiltering = 6;     // 0..16
 
 class Control {
 
-  enum Law {
-    LINEAR,
-    SQUARE,
-    QUAD,
-  };
+  enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
 
   template<Law LAW, int LP>  // Lp = 0..16
   class PotConditioner {
@@ -24,8 +20,9 @@ class Control {
     u0_16 Process(u0_16 x) {
       switch(LAW) {
       case LINEAR: break;
-      case SQUARE: x = u0_16::narrow(x * x); break;
-      case QUAD:
+      case QUADRATIC: x = u0_16::narrow(x * x); break;
+      case CUBIC: x = u0_16::narrow(u0_16::narrow(x * x) * x); break;
+      case QUARTIC:
         x = u0_16::narrow(x * x);
         x = u0_16::narrow(x * x);
         break;
@@ -38,13 +35,13 @@ class Control {
 
   Adc adc_;
 
-  PotConditioner<SQUARE, kPotFiltering> warp_pot;
-  PotConditioner<QUAD, kPotFiltering> detune_pot;
+  PotConditioner<QUADRATIC, kPotFiltering> warp_pot;
+  PotConditioner<QUARTIC, kPotFiltering> detune_pot;
   PotConditioner<LINEAR, kPotFiltering> mod_pot;
   PotConditioner<LINEAR, kPotFiltering> root_pot;
   PotConditioner<LINEAR, kPotFiltering> grid_pot;
   PotConditioner<LINEAR, kPotFiltering> pitch_pot;
-  PotConditioner<SQUARE, kPotFiltering> spread_pot;
+  PotConditioner<QUADRATIC, kPotFiltering> spread_pot;
   PotConditioner<LINEAR, kPotFiltering> tilt_pot;
   PotConditioner<LINEAR, kPotFiltering> twist_pot;
 
