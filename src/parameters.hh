@@ -3,9 +3,26 @@
 #pragma once
 
 constexpr struct Frame {
-  int32_t l = 0;
-  int32_t r = 0;
+  s1_15 l = 0._s1_15;
+  s1_15 r = 0._s1_15;
 } zero;
 
-constexpr int kBlockSize = 32;
+constexpr int kBlockSize = 16;
 constexpr int kSampleRate = 96000;
+constexpr int kNumOsc = 1;      // TODO pq 1 marche pas?
+
+struct Parameters {
+  f pitch;                       // midi note
+  f spread;                      // semitones
+  f detune;                     // semitones
+
+  struct Twist {
+    enum Mode { FEEDBACK, PULSAR, DECIMATE } mode;
+    f value;                    // 0..1
+  } twist;
+
+  struct Warp {
+    enum Mode { CRUSH, CHEBY, FOLD } mode;
+    f value;                    // 0..1
+  } warp;
+};

@@ -36,8 +36,8 @@ struct Codec : Nocopy {
   DMA_HandleTypeDef hdma_rx;
   DMA_HandleTypeDef hdma_tx;
 
-  volatile int32_t tx_buffer[kBlockSize * 2];
-  volatile int32_t rx_buffer[kBlockSize * 2];
+  volatile int16_t tx_buffer[kBlockSize * 2 * 2];
+  volatile int16_t rx_buffer[kBlockSize * 2 * 2];
 
 private:
 

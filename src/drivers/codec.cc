@@ -267,18 +267,21 @@ void Codec::I2C::Init(uint32_t sample_rate)
     (PD_MIC
      | PD_OSC
      | PD_CLKOUT),		// Reg 06: Power Down Control (Clkout, Osc, Mic Off) 0x062
-    (format_24b			// Reg 07: Digital Audio Interface Format (24-bit, slave)
+    (format_16b			// Reg 07: Digital Audio Interface Format (16-bit, slave)
      | format_I2S),
     0x000,				// Reg 08: Sampling Control (USB_NORM=Normal, BOSR=256x, default = 48k)
     0x001				// Reg 09: Active Control
   };
 
-	if (sample_rate==48000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_48K;
-	if (sample_rate==44100)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_44K;
-	if (sample_rate==32000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_32K;
-	if (sample_rate==88200)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_88K;
-	if (sample_rate==96000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_96K;
-  if (sample_rate==8000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_8K;
+
+  // TODO: enabling this leaves high-frequency aliases in the output
+
+	// if (sample_rate==48000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_48K;
+	// if (sample_rate==44100)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_44K;
+	// if (sample_rate==32000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_32K;
+	// if (sample_rate==88200)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_88K;
+	// if (sample_rate==96000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_96K;
+  // if (sample_rate==8000)					codec_init_data[WM8731_REG_SAMPLE_CTRL] |= SR_NORM_8K;
 
   Write(WM8731_REG_RESET, 0);
 
@@ -305,8 +308,8 @@ void Codec::init_audio_DMA()
   hdma_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
   hdma_rx.Init.PeriphInc = DMA_PINC_DISABLE;
   hdma_rx.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  hdma_rx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+  hdma_rx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
   hdma_rx.Init.Mode = DMA_CIRCULAR;
   hdma_rx.Init.Priority = DMA_PRIORITY_HIGH;
   hdma_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
@@ -318,8 +321,8 @@ void Codec::init_audio_DMA()
   hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
   hdma_tx.Init.PeriphInc = DMA_PINC_DISABLE;
   hdma_tx.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  hdma_tx.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+  hdma_tx.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
   hdma_tx.Init.Mode = DMA_CIRCULAR;
   hdma_tx.Init.Priority = DMA_PRIORITY_HIGH;
   hdma_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
@@ -333,8 +336,8 @@ void Codec::init_audio_DMA()
 	// Must initialize the SAI before initializing the DMA
 	//
 
-  hal_assert(HAL_SAI_InitProtocol(&hsai_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
-  hal_assert(HAL_SAI_InitProtocol(&hsai_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
+  hal_assert(HAL_SAI_InitProtocol(&hsai_rx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2));
+  hal_assert(HAL_SAI_InitProtocol(&hsai_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2));
 
 	//
 	// Initialize the DMA, and link to SAI
@@ -350,11 +353,11 @@ void Codec::init_audio_DMA()
   //
 
 	HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
-  HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer, kBlockSize * 2);
+  HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer, kBlockSize * 2 * 2);
 
 	HAL_NVIC_SetPriority(CODEC_SAI_RX_DMA_IRQn, 0, 0);
 	HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
-  HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer, kBlockSize * 2);
+  HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer, kBlockSize * 2 * 2);
 }
 
 
@@ -509,8 +512,8 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
   if ((tmpisr & __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_rx))
       && __HAL_DMA_GET_IT_SOURCE(&Codec::instance_->hdma_rx, DMA_IT_TC)) {
     // Transfer Complete (TC) -> Point to 2nd half of buffers
-    src = (Frame *)(&Codec::instance_->rx_buffer[kBlockSize]);
-    dst = (Frame *)(&Codec::instance_->tx_buffer[kBlockSize]);
+    src = (Frame *)(&Codec::instance_->rx_buffer[kBlockSize*2]);
+    dst = (Frame *)(&Codec::instance_->tx_buffer[kBlockSize*2]);
     __HAL_DMA_CLEAR_FLAG(&Codec::instance_->hdma_rx,
                          __HAL_DMA_GET_TC_FLAG_INDEX(&Codec::instance_->hdma_rx));
   } else if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx))
@@ -522,8 +525,7 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
                          __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx));
   }
 
-  // TODO why /2??
-  Codec::instance_->callback_(src, dst, kBlockSize/2);
+  Codec::instance_->callback_(src, dst, kBlockSize);
 }
 
 
