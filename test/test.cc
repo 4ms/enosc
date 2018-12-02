@@ -14,6 +14,30 @@ struct Main {
     FourPoleLadderLp lp;
     MagicSine sine (0.000002_f);
 
+    CubicOnePoleLp<1> filt;
+
+    for (int time=0; time<1500; time++) {
+
+      // noisy input generation
+      float input;
+      if (time<300) input=0.0f;
+      else if (time<500) input=((float)time-300.0f)/(500.0f-300.0f);
+      else if (time<700) input=1.0f;
+      else if (time<1000)
+        input = cos(time * 0.1f) * 0.1f + 0.5f;
+      else input=0.0f;
+      f inp = f(input);
+      inp += (Random::Float01() * 2_f - 1_f) * 0.05_f;
+      inp *= 0.8_f;
+      inp += 0.1_f;
+
+      s1_15 in = s1_15(inp);
+      s1_15 out = filt.Process(in);
+
+      printf("%d, %f\n", time, out.to_float().repr());
+
+    }
+
     while(size -= kBlockSize) {
       // process by engine
       // conversion to short

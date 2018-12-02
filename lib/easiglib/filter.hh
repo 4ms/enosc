@@ -58,6 +58,37 @@ public:
   }
 };
 
+template<class transfer>
+class NonLinearOnePoleLp {
+  s1_15 state_ = 0._s1_15;
+public:
+  s1_15 Process(s1_15 input) {
+    state_ += transfer::Process(input-state_);
+    return state_;
+  }
+};
+
+template<int divisor>
+struct TransferLinear {
+  static s1_15 Process(s1_15 x) { return x / divisor; }
+};
+
+template<int divisor>
+struct TransferQuadratic {
+  static s1_15 Process(s1_15 x) { return (x.abs() * x).shiftr<16>() / divisor; }
+};
+
+template<int divisor>
+struct TransferCubic {
+  static s1_15 Process(s1_15 x) { return ((x * x).shiftr<16>() * x).shiftr<16>() / divisor; }
+};
+
+
+template<int divisor>
+class QuadraticOnePoleLp : public NonLinearOnePoleLp<TransferQuadratic<divisor>> {};
+template<int divisor>
+class CubicOnePoleLp : public NonLinearOnePoleLp<TransferCubic<divisor>> {};
+
 struct FourPoleLadderLp {
   OnePoleLp lp_[4];
   Float fb = 0_f;
