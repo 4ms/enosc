@@ -37,7 +37,7 @@ data['exp2_u0_23'] = (exp2*(2**23)).astype(np.uint32)
 # [-1..1], and for each take the value at which they pass a certain threshold
 # of "acceptable distortion probability"
 
-size = 127
+size = 128
 resolution = 512
 threshold = 0.00001
 
@@ -54,6 +54,25 @@ for i in range(size):
     u = np.convolve(u, v) / resolution
 
 data['normalization_factors'] = factors
+
+# Chebyschev polynomials
+
+size = 256
+number = 16
+cheby = []
+
+lin = np.linspace(-1, 1, size)
+chm = [1] * size                # F_{n-1}
+chn = lin  # F_{n}
+
+for i in range(number):
+    y = 2 * lin * chn - chm
+    chm = chn
+    chn = y
+    cheby.append(chm)
+
+data['cheby'] = cheby
+
 
 # Generate
 
