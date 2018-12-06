@@ -9,7 +9,7 @@ constexpr struct Frame {
 
 constexpr int kBlockSize = 16;
 constexpr int kSampleRate = 96000;
-constexpr int kNumOsc = 1;      // TODO pq 1 marche pas?
+constexpr int kNumOsc = 16;
 
 struct Parameters {
   f pitch;                       // midi note
