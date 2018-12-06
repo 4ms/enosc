@@ -29,18 +29,8 @@ class Oscillator : Nocopy {
   Phasor phasor_;
   SineShaper shaper_;
 
-public:
-  s1_15 Process(u0_32 freq, u0_16 feedback) {
-    u0_32 phase = phasor_.Process(freq);
-    return shaper_.Process(phase, feedback);
-  }
-};
-
-class Oscillators : Nocopy {
-  Oscillator osc_[kNumOsc];
-
   // TODO optimize
-  s1_15 crush(s1_15 sample, f amount) {
+  static s1_15 crush(s1_15 sample, f amount) {
     amount *= 15_f;
     f integral = amount.integral();
     s1_15 fractional = s1_15(amount.fractional() * 2_f - 1_f);
@@ -48,6 +38,18 @@ class Oscillators : Nocopy {
     sample = sample.div2(integral.repr()).mul2(integral.repr());
     return sample;
   }
+
+public:
+  f Process(u0_32 freq, u0_16 feedback, f crush_amount) {
+    u0_32 phase = phasor_.Process(freq);
+    s1_15 sample = shaper_.Process(phase, feedback);
+    sample = crush(sample, crush_amount);
+    return sample.to_float();
+  }
+};
+
+class Oscillators : Nocopy {
+  Oscillator osc_[kNumOsc];
 
 public:
   void Process(Parameters &params, f *out1, f *out2, int size) {
@@ -67,10 +69,8 @@ public:
       pitch += detune;
       f freq = Freq::of_pitch(pitch).repr();
       for (f *o1=out1, *o2=out2; o1<out1+size; o1++, o2++) {
-        s1_15 sample = osc_[i].Process(u0_32(freq), u0_16(twist));
-        sample = crush(sample, warp);
-        f t = sample.to_float();
-        if (oc) *o1 += t; else *o2 += t;
+        f sample = osc_[i].Process(u0_32(freq), u0_16(twist), warp);
+        if (oc) *o1 += sample; else *o2 += sample;
       }
     }
   }
