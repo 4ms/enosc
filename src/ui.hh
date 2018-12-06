@@ -4,7 +4,10 @@
 #include "leds.hh"
 #include "adc.hh"
 
-const int kPotFiltering = 6;     // 0..16
+const int kPotFiltering = 1;     // 0..16
+const f kPotDeadZone = 0.01_f;
+
+f test;
 
 // law + one-pole filter + crop ends -> float(0..1)
 // TODO one-pole --> nonlinear square
@@ -36,13 +39,13 @@ class Control {
 
   Adc adc_;
 
-  PotConditioner<QUADRATIC, kPotFiltering> warp_pot;
-  PotConditioner<CUBIC, kPotFiltering> detune_pot;
+  PotConditioner<LINEAR, kPotFiltering> warp_pot;
+  PotConditioner<LINEAR, kPotFiltering> detune_pot;
   PotConditioner<LINEAR, kPotFiltering> mod_pot;
   PotConditioner<LINEAR, kPotFiltering> root_pot;
   PotConditioner<LINEAR, kPotFiltering> grid_pot;
   PotConditioner<LINEAR, kPotFiltering> pitch_pot;
-  PotConditioner<QUADRATIC, kPotFiltering> spread_pot;
+  PotConditioner<LINEAR, kPotFiltering> spread_pot;
   PotConditioner<LINEAR, kPotFiltering> tilt_pot;
   PotConditioner<LINEAR, kPotFiltering> twist_pot;
 
@@ -51,9 +54,10 @@ class Control {
 public:
   void Process(Parameters &params) {
 
-    s1_15 detune = detune_pot.Process(adc_.get_adc(Adc::DETUNE_POT));
-    // TODO cleanup the max: crop ends
-    params.detune = (detune.to_float() - 0.0006_f).max(0_f);
+    s1_15 d = detune_pot.Process(adc_.get_adc(Adc::DETUNE_POT));
+    f detune = Math::crop_down(kPotDeadZone, d.to_float());
+    detune = (detune * detune) * (detune * detune);
+    params.detune = detune;
 
     s1_15 warp = warp_pot.Process(adc_.get_adc(Adc::WARP_POT));
     params.warp.value = warp.to_float();
@@ -64,9 +68,10 @@ public:
     s1_15 pitch = pitch_pot.Process(adc_.get_adc(Adc::PITCH_POT));
     params.pitch = pitch.to_float() * 12_f * 8_f + 24_f;
     
-    s1_15 spread = spread_pot.Process(adc_.get_adc(Adc::SPREAD_POT));
-    // TODO cleanup the max
-    params.spread = (spread.to_float() * 12_f - 0.05_f).max(0_f);
+    s1_15 s = spread_pot.Process(adc_.get_adc(Adc::SPREAD_POT));
+    f spread = Math::crop_down(kPotDeadZone, s.to_float());
+    spread *= spread;
+    params.spread = spread * 12_f;
     
     // warp_pot = adc_.get_adc(Adc::WARP_POT);
     // detune_pot = adc_.get_adc(Adc::DETUNE_POT);
