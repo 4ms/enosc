@@ -79,6 +79,7 @@ public:
     buffer_[(idx).repr()] = x;
   }
   T Read(index n) {
+    // TODO specialized version when S is 2^n
     return buffer_[((cursor_ - n) % S).repr()];
   }
   T ReadLast() {

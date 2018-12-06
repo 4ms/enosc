@@ -2,7 +2,7 @@
 
 #include "dsp.hh"
 
-class Phasor {
+class Phasor : Nocopy {
   u0_32 phase_ = u0_32::of_repr(Random::Word());
 public:
   u0_32 Process(u0_32 freq) {
@@ -11,7 +11,7 @@ public:
   }
 };
 
-class SineShaper {
+class SineShaper : Nocopy {
   s1_15 history_ = 0._s1_15;
   IOnePoleLp<s1_15, 2> lp_;
 public:
@@ -25,7 +25,7 @@ public:
   }
 };
 
-class Oscillator {
+class Oscillator : Nocopy {
   Phasor phasor_;
   SineShaper shaper_;
 
@@ -36,7 +36,7 @@ public:
   }
 };
 
-class Oscillators {
+class Oscillators : Nocopy {
   Oscillator osc_[kNumOsc];
 
   // TODO optimize
