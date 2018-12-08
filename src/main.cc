@@ -4,11 +4,18 @@
 #include "debug.hh"
 #include "ui.hh"
 #include "polyptic_oscillator.hh"
+#include "textile_oscillator.hh"
+
+#define TEXTILE
 
 struct Main : Nocopy {
   System sys_;
   Ui ui_;
+#ifdef TEXTILE
+  TextileOscillator osc_;
+#else
   PolypticOscillator osc_;
+#endif
   Parameters params_;
 
   Codec codec_{kSampleRate,
@@ -24,7 +31,6 @@ struct Main : Nocopy {
   }
 
   void Process(Frame *in, Frame *out, int size) {
-    debug.set(3, true);
     ui_.Process(params_);
 
     if (ui_.bypass) {
@@ -36,7 +42,12 @@ struct Main : Nocopy {
       return;
     }
 
+    debug.set(3, true);
+#ifdef TEXTILE
+    osc_.Process(params_, out, size);
+#else
     osc_.Process(params_, in, out, size);
+#endif
     debug.set(3, false);
   }
 } _;

@@ -13,6 +13,13 @@ constexpr int kNumOsc = 16;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
 enum WarpMode { CRUSH, CHEBY, FOLD };
+
+
+// textile oscillator:
+enum DivisionMode { INTEGER, ODD, POW_OF_TWO };
+enum TranspositionMode { CHROMATIC, THREE_ST, OCTAVE };
+
+
 struct Parameters {
   f pitch;                       // midi note
   f spread;                      // semitones
@@ -27,4 +34,26 @@ struct Parameters {
     WarpMode mode;
     f value;                    // 0..1
   } warp;
+
+
+  // textile oscillator:
+  f pitch_offset = 0.2_f;
+  f timbre = 0.1_f;
+  f delay = 0_f;
+  f drunk_delay = 0_f;
+  f polyphony = 1_f;
+  f ornament_proba = 0_f;
+  f proba_window_scale = 0_f;
+  f division = 0_f;
+  int division_window = 16;
+
+  f transposition = 0_f;
+
+  f attack = 0.0002_f;
+  f decay = 0.00002_f;
+
+  DivisionMode division_mode;
+  TranspositionMode transposition_mode;
+
+  bool quantize;
 };
