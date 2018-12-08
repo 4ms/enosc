@@ -79,6 +79,7 @@ CFLAGS= $(ARCHFLAGS) \
 	-O$(OPTIM) \
 	-DUSE_HAL_DRIVER \
 	-DUSE_FULL_ASSERT \
+	-ffast-math \
 	-fdata-sections \
 	-ffunction-sections \
 	-ffreestanding \
