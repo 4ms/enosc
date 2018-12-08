@@ -11,18 +11,20 @@ constexpr int kBlockSize = 16;
 constexpr int kSampleRate = 96000;
 constexpr int kNumOsc = 16;
 
+enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
+enum WarpMode { CRUSH, CHEBY, FOLD };
 struct Parameters {
   f pitch;                       // midi note
   f spread;                      // semitones
   f detune;                     // semitones
 
   struct Twist {
-    enum Mode { FEEDBACK, PULSAR, DECIMATE } mode;
+    TwistMode mode;
     f value;                    // 0..1
   } twist;
 
   struct Warp {
-    enum Mode { CRUSH, CHEBY, FOLD } mode;
+    WarpMode mode;
     f value;                    // 0..1
   } warp;
 };

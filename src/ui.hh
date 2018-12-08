@@ -128,8 +128,8 @@ public:
     grid_sw = switches_.grid_.get();
     twist_sw = switches_.twist_.get();
 
-    params.twist.mode = static_cast<Parameters::Twist::Mode>(switches_.twist_.get());    
-    params.warp.mode = static_cast<Parameters::Warp::Mode>(switches_.warp_.get());
+    params.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
+    params.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
 
     bypass = switches_.mod_.get() == Switches::DOWN;
   }
