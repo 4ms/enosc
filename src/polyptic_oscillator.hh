@@ -30,21 +30,46 @@ class Oscillator : Nocopy {
   SineShaper shaper_;
 
   // TODO optimize
-  static s1_15 crush(s1_15 sample, f amount) {
+  static f crush(s1_15 sample, f amount) {
     amount *= 15_f;
     f integral = amount.integral();
     s1_15 fractional = s1_15(amount.fractional() * 2_f - 1_f);
     if (sample < fractional) integral++;
     sample = sample.div2(integral.repr()).mul2(integral.repr());
-    return sample;
+    return sample.to_float();
+  }
+
+  static f cheby(s1_15 x, f amount) {
+    amount *= Data::cheby.size().to_float();
+    f s = 0_f;//Data::cheby[3].interpolate(x);
+    return s;
+  }
+
+  static f fold(s1_15 x, f amount) {
+    return x.to_float() * amount;
   }
 
 public:
-  f Process(u0_32 freq, u0_16 feedback, f crush_amount) {
+  template<TwistMode twist_mode, WarpMode warp_mode>
+  f Process(u0_32 freq, f twist, f warp) {
     u0_32 phase = phasor_.Process(freq);
-    s1_15 sample = shaper_.Process(phase, feedback);
-    sample = crush(sample, crush_amount);
-    return sample.to_float();
+
+    f feedback = 0_f;
+    if (twist_mode == FEEDBACK) {
+      feedback = twist;
+    }
+
+    s1_15 sine = shaper_.Process(phase, u0_16(feedback));
+    f output;
+
+    if (warp_mode == CRUSH) {
+      output = crush(sine, warp);
+    } else if (warp_mode == CHEBY) {
+      output = cheby(sine, warp);
+    } else if (warp_mode == FOLD) {
+      output = fold(sine, warp);
+    }
+    return output;
   }
 };
 
@@ -63,14 +88,47 @@ public:
     f detune = params.detune;
 
     bool oc = false;
+
+    f (Oscillator::*process)(u0_32, f, f);
+
+    if (params.twist.mode == FEEDBACK &&
+        params.warp.mode == CRUSH) {
+      process = &Oscillator::Process<FEEDBACK, CRUSH>;
+    } else if (params.twist.mode == FEEDBACK &&
+               params.warp.mode == CHEBY) {
+      process = &Oscillator::Process<FEEDBACK, CHEBY>;
+    } else if (params.twist.mode == FEEDBACK &&
+               params.warp.mode == FOLD) {
+      process = &Oscillator::Process<FEEDBACK, FOLD>;
+    } else if (params.twist.mode == PULSAR &&
+        params.warp.mode == CRUSH) {
+      process = &Oscillator::Process<PULSAR, CRUSH>;
+    } else if (params.twist.mode == PULSAR &&
+               params.warp.mode == CHEBY) {
+      process = &Oscillator::Process<PULSAR, CHEBY>;
+    } else if (params.twist.mode == PULSAR &&
+               params.warp.mode == FOLD) {
+      process = &Oscillator::Process<PULSAR, FOLD>;
+    } else if (params.twist.mode == DECIMATE &&
+        params.warp.mode == CRUSH) {
+      process = &Oscillator::Process<DECIMATE, CRUSH>;
+    } else if (params.twist.mode == DECIMATE &&
+               params.warp.mode == CHEBY) {
+      process = &Oscillator::Process<DECIMATE, CHEBY>;
+    } else if (params.twist.mode == DECIMATE &&
+               params.warp.mode == FOLD) {
+      process = &Oscillator::Process<DECIMATE, FOLD>;
+    }
+
+
     for (int i=0; i<kNumOsc; i++) {
-      oc = !oc;
       pitch += spread;
       pitch += detune;
       f freq = Freq::of_pitch(pitch).repr();
-      for (f *o1=out1, *o2=out2; o1<out1+size; o1++, o2++) {
-        f sample = osc_[i].Process(u0_32(freq), u0_16(twist), warp);
-        if (oc) *o1 += sample; else *o2 += sample;
+      oc = !oc;
+      f *output = oc ? out1 : out2;
+      for (f *out = output; out<output+size; out++) {
+        *out += (osc_[i].*process)(u0_32(freq), twist, warp);
       }
     }
   }
