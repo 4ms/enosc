@@ -31,7 +31,7 @@ public:
   constexpr T operator[](size_t idx) const { return this->data_[idx]; }
 
   // zero-order hold
-  constexpr T operator[](f const phase) const {
+  constexpr T operator[](f phase) const {
     phase *= (size()-1_u32).to_float();
     index integral = index(phase);
     return this->data_[integral];;
@@ -45,12 +45,12 @@ public:
     return this->data_[i];
   }
 
-  constexpr T interpolate(f phase) const {
+  constexpr f interpolate(f phase) const {
     phase *= (size()-1_u32).to_float();
     index integral = index(phase);
     f fractional = phase - integral.to_float();
-    T a = this->data_[integral];
-    T b = this->data_[integral+1_u32];
+    f a = this->data_[integral];
+    f b = this->data_[integral+1_u32];
     return a + (b - a) * fractional;
   }
 
