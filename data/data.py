@@ -57,7 +57,7 @@ data['normalization_factors'] = factors
 
 # Chebyschev polynomials
 
-size = 256
+size = 256 + 1
 number = 12
 cheby = []
 
