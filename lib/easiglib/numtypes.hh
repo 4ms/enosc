@@ -266,10 +266,22 @@ public:
     return Fixed<SIGNED, INT+1, FRAC-1>::of_repr((signed)(val_ >> 1));
   }
 
+  // remaps MIN..MAX to MIN..MAX (e.g. 0..1 --> -1..1)
+  constexpr Fixed<SIGNED, INT+1, FRAC-1> const to_signed_scale() const {
+    static_assert(SIGN==UNSIGNED, "Only signed-to-unsigned conversion supported");
+    return Fixed<SIGNED, INT+1, FRAC-1>::of_repr((signed)(val_ - (1 << (WIDTH-1))));
+  }
+
   // preserves the represented value if it is positive
   constexpr Fixed<UNSIGNED, INT-1, FRAC+1> const to_unsigned() const {
     static_assert(SIGN==SIGNED, "Only unsigned-to-signed conversion supported");
     return Fixed<UNSIGNED, INT-1, FRAC+1>::of_repr((unsigned)(val_ << 1));
+  }
+
+  // remaps MIN..MAX to MIN..MAX (e.g. -1..1 --> 0..1)
+  constexpr Fixed<UNSIGNED, INT-1, FRAC+1> const to_unsigned_scale() const {
+    static_assert(SIGN==SIGNED, "Only unsigned-to-signed conversion supported");
+    return Fixed<UNSIGNED, INT-1, FRAC+1>::of_repr((unsigned)(val_ + (1 << (WIDTH-1))));
   }
 
   // template<sign SIGN2>
