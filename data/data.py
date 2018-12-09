@@ -58,7 +58,7 @@ data['normalization_factors'] = factors
 # Chebyschev polynomials
 
 size = 256
-number = 16
+number = 12
 cheby = []
 
 lin = np.linspace(-1, 1, size)

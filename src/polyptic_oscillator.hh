@@ -39,10 +39,15 @@ class Oscillator : Nocopy {
     return sample.to_float();
   }
 
+  // TODO optimize
   static f cheby(s1_15 x, f amount) {
-    amount *= Data::cheby.size().to_float();
-    f s = 0_f;//Data::cheby[3].interpolate(x);
-    return s;
+    amount *= (Data::cheby.size() - 1_u32).to_float();
+    int index = amount.floor();
+    f frac = amount.fractional();
+    f phase = x.to_float() * 0.5_f + 0.5_f;
+    f s1 = Data::cheby[index].interpolate(phase);
+    f s2 = Data::cheby[index+1].interpolate(phase);
+    return s1 + (s2 - s1) * frac;
   }
 
   static f fold(s1_15 x, f amount) {

@@ -6,7 +6,7 @@
 #include "polyptic_oscillator.hh"
 #include "textile_oscillator.hh"
 
-#define TEXTILE
+// #define TEXTILE
 
 struct Main : Nocopy {
   System sys_;
