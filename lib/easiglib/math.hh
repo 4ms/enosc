@@ -65,6 +65,10 @@ struct Math {
     return x * (1.875_f + s * (-1.25_f + 0.375_f * s));
   }
 
+  static constexpr f crossfade(f x, f y, f phase) {
+    return x + (y - x) * phase;
+  }
+
   // (p..1 -> 0..1)
   static constexpr f crop_down(f p, f x) {
     return ((x-p) / (1_f-p)).max(0_f);

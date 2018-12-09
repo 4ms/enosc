@@ -47,7 +47,7 @@ class Oscillator : Nocopy {
     u0_16 phase = x.to_unsigned_scale();
     f s1 = Data::cheby[idx].interpolate(phase);
     f s2 = Data::cheby[idx+1_u32].interpolate(phase);
-    return s1 + (s2 - s1) * frac;
+    return Math::crossfade(s1, s2, frac);
   }
 
   static f fold(s1_15 x, f amount) {
