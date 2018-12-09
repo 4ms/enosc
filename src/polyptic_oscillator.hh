@@ -100,6 +100,17 @@ public:
 class Oscillators : Nocopy {
   Oscillator osc_[kNumOsc];
 
+  // simple linear piecewise function: 0->1, 0.5->1, 1->0
+  static f antialias(f factor) {
+    f amplitude = 1_f;
+      if (factor > 0.5_f) {
+        amplitude = 0_f;
+      } else if (factor > 0.25_f) {
+        amplitude *= 2_f - 4_f * factor;
+      }
+      return amplitude;
+  }
+
 public:
   void Process(Parameters &params, f *out1, f *out2, int size) {
     std::fill(out1, out1+size, 0_f);
@@ -149,15 +160,9 @@ public:
       oc = !oc;
       f *output = oc ? out1 : out2;
 
-      f amplitude = 1_f;
-
       // antialias
       f aliasing_factor = freq;
-      if (aliasing_factor > 0.5_f) {
-        amplitude = 0_f;
-      } else if (aliasing_factor > 0.25_f) {
-        amplitude *= 2_f - 4_f * aliasing_factor;
-      }
+      f amplitude = antialias(aliasing_factor);
 
       (osc_[i].*process)(u0_32(freq), twist, warp, amplitude, output, size);
       pitch += spread;
