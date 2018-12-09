@@ -87,6 +87,14 @@ public:
     }
     return output;
   }
+
+  template<TwistMode twist_mode, WarpMode warp_mode>
+  void Process(u0_32 freq, f twist, f warp, f amplitude, f *output, int size) {
+      for (f *out = output; out<output+size; out++) {
+        f sample = Process<twist_mode, warp_mode>(u0_32(freq), twist, warp);
+        *out += sample * amplitude;
+      }
+  }
 };
 
 class Oscillators : Nocopy {
@@ -105,7 +113,7 @@ public:
 
     bool oc = false;
 
-    f (Oscillator::*process)(u0_32, f, f);
+    void (Oscillator::*process)(u0_32, f, f, f, f*, int);
 
     if (params.twist.mode == FEEDBACK &&
         params.warp.mode == CRUSH) {
@@ -136,16 +144,24 @@ public:
       process = &Oscillator::Process<DECIMATE, FOLD>;
     }
 
-
     for (int i=0; i<kNumOsc; i++) {
-      pitch += spread;
-      pitch += detune;
       f freq = Freq::of_pitch(pitch).repr();
       oc = !oc;
       f *output = oc ? out1 : out2;
-      for (f *out = output; out<output+size; out++) {
-        *out += (osc_[i].*process)(u0_32(freq), twist, warp);
+
+      f amplitude = 1_f;
+
+      // antialias
+      f aliasing_factor = freq;
+      if (aliasing_factor > 0.5_f) {
+        amplitude = 0_f;
+      } else if (aliasing_factor > 0.25_f) {
+        amplitude *= 2_f - 4_f * aliasing_factor;
       }
+
+      (osc_[i].*process)(u0_32(freq), twist, warp, amplitude, output, size);
+      pitch += spread;
+      pitch += detune;
     }
   }
 };
