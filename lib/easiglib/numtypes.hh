@@ -68,8 +68,12 @@ public:
   constexpr T clip(const T x, const T y) const { return max(x).min(y); }
   constexpr T clip() const { return clip(T(-1.0f), T(1.0f)); }
 
+  constexpr int32_t floor() const {
+    return static_cast<int32_t>(val_);
+  }
+
   constexpr T fractional() const {
-    return T(static_cast<float>(val_ - static_cast<int32_t>(val_)));
+    return T(static_cast<float>(val_ - floor()));
   }
 
   constexpr T integral() const {
