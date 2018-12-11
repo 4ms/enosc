@@ -60,7 +60,7 @@ class Oscillator : Nocopy {
 
   // TODO rewrite with Numtypes
   static u0_32 pulsar(u0_32 phase, f amount) {
-    u0_16 p = u0_16::inclusive(1_f - amount);
+    u0_16 p = u0_16::inclusive(amount);
     uint32_t x = (phase.repr() / (p.repr()+1));
     if (x > UINT16_MAX) x = UINT16_MAX;
     x <<= 16;
@@ -74,6 +74,7 @@ class Oscillator : Nocopy {
     x ^= (uint32_t)(UINT32_MAX/4 * amount.repr());
     return u0_32::of_repr(x);
   }
+
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   f Process(u0_32 freq, f twist, f warp) {
@@ -81,8 +82,11 @@ public:
 
     f feedback = 0_f;
     if (twist_mode == FEEDBACK) {
+      twist *= twist;
       feedback = twist;
     } else if (twist_mode == PULSAR) {
+      twist = 1_f - twist;
+      twist *= twist;
       phase = pulsar(phase, twist);
     } else if (twist_mode == DECIMATE) {
       twist *= twist * 0.5_f;
