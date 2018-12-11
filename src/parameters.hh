@@ -12,7 +12,7 @@ constexpr int kSampleRate = 96000;
 constexpr int kNumOsc = 16;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
-enum WarpMode { CRUSH, CHEBY, FOLD };
+enum WarpMode { FOLD, CHEBY, CRUSH };
 
 
 // textile oscillator:
