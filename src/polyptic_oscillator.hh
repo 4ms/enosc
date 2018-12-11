@@ -31,12 +31,11 @@ class Oscillator : Nocopy {
 
   // TODO optimize
   static f crush(s1_15 sample, f amount) {
-    amount *= 15_f;
-    f integral = amount.integral();
-    s1_15 fractional = s1_15(amount.fractional() * 2_f - 1_f);
-    if (sample < fractional) integral++;
-    sample = sample.div2(integral.repr()).mul2(integral.repr());
-    return sample.to_float();
+    f x = sample.to_float();
+    union { float a; uint32_t b; } t = {x.repr()};
+    t.b ^= (uint32_t)((t.b & ((1 << 23)-1)) * amount.repr());
+    // t.b ^= (int32_t)(((1<<23)-1) * amount.repr());
+    return f(t.a);
   }
 
   // TODO optimize
