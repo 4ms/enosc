@@ -83,4 +83,9 @@ struct Math {
   static constexpr f crop(f p, f x) {
     return ((x - p) / (1_f - 2_f * p)).min(1_f).max(0_f);
   }
+
+  template <typename T>
+  static constexpr int sgn(T val) {
+    return (T(0) < val) - (val < T(0));
+  }
 };
