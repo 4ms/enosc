@@ -51,7 +51,12 @@ class Oscillator : Nocopy {
   }
 
   static f fold(s1_15 x, f amount) {
-    return x.to_float() * amount;
+    constexpr Buffer<f, 12> fold = {{-1_f, 1_f, -1_f, 1_f, -1_f, 1_f,
+                                    -1_f, 1_f, -1_f, 1_f, -1_f, 1_f, -1_f}};
+    f sample = x.to_float() * 0.5_f + 0.5_f;
+    amount = (amount + 1_f/fold.size().to_float());
+    f phase = sample * amount;
+    return fold.interpolate(phase);
   }
 
   // TODO rewrite with Numtypes
