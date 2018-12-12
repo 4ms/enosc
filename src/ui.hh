@@ -106,8 +106,6 @@ class Ui {
   Switches::State mod_sw, grid_sw, twist_sw, warp_sw;
 
 public:
-  bool bypass = false;
-
   Ui() {
   }
 
@@ -131,7 +129,6 @@ public:
     params.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
     params.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
 
-    bypass = switches_.mod_.get() == Switches::DOWN;
   }
 
 };
