@@ -82,14 +82,10 @@ public:
 
     f feedback = 0_f;
     if (twist_mode == FEEDBACK) {
-      twist *= twist;
       feedback = twist;
     } else if (twist_mode == PULSAR) {
-      twist = 1_f - twist;
-      twist *= twist;
       phase = pulsar(phase, twist);
     } else if (twist_mode == DECIMATE) {
-      twist *= twist * 0.5_f;
       phase = decimate(phase, twist);
     }
 
@@ -134,14 +130,6 @@ public:
     std::fill(out1, out1+size, 0_f);
     std::fill(out2, out2+size, 0_f);
 
-    f pitch = params.pitch;
-    f spread = params.spread;
-    f twist = params.twist.value;
-    f warp = params.warp.value;
-    f detune = params.detune;
-
-    bool oc = false;
-
     void (Oscillator::*process)(u0_32, f, f, f, f*, int);
 
     if (params.twist.mode == FEEDBACK &&
@@ -172,6 +160,25 @@ public:
                params.warp.mode == FOLD) {
       process = &Oscillator::Process<DECIMATE, FOLD>;
     }
+
+    // scaling and response of common parameters
+    f twist = params.twist.value;
+    f warp = params.warp.value;
+
+    if (params.twist.mode == FEEDBACK) {
+      twist *= twist;
+    } else if (params.twist.mode == PULSAR) {
+      twist = 1_f - twist;
+      twist *= twist;
+    } else if (params.twist.mode == DECIMATE) {
+      twist *= twist * 0.5_f;
+    }
+
+    f pitch = params.pitch;
+    f spread = params.spread;
+    f detune = params.detune;
+
+    bool oc = false;
 
     for (int i=0; i<kNumOsc; i++) {
       f freq = Freq::of_pitch(pitch).repr();
