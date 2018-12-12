@@ -21,21 +21,20 @@ class Control {
     QuadraticOnePoleLp<LP> lp_;
   public:
     s1_15 Process(u0_16 in) {
-      s1_15 x = in.to_signed();
       switch(LAW) {
       case LINEAR: break;
-      case QUADRATIC: x = s1_15::narrow(x * x); break;
-      case CUBIC: x = s1_15::narrow(s1_15::narrow(x * x) * x); break;
+      case QUADRATIC: in = u0_16::narrow(in * in); break;
+      case CUBIC: in = u0_16::narrow(u0_16::narrow(in * in) * in); break;
       case QUARTIC:
-        x = s1_15::narrow(x * x);
-        x = s1_15::narrow(x * x);
+        in = u0_16::narrow(in * in);
+        in = u0_16::narrow(in * in);
         break;
       }
+      s1_15 x = in.to_signed();
       x = lp_.Process(x);
       return x;
     }
   };
-
 
   Adc adc_;
 
