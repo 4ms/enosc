@@ -20,6 +20,8 @@ enum DivisionMode { INTEGER, ODD, POW_OF_TWO };
 enum TranspositionMode { CHROMATIC, THREE_ST, OCTAVE };
 
 struct Parameters {
+  f tilt;                       // -1..1
+  f root;
   f pitch;                       // midi note
   f spread;                      // semitones
   f detune;                     // semitones

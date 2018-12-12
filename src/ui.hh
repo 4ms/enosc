@@ -58,11 +58,19 @@ public:
     detune = (detune * detune) * (detune * detune);
     params.detune = detune;
 
+    s1_15 t = tilt_pot.Process(adc_.get_adc(Adc::TILT_POT));
+    f tilt = Math::crop(kPotDeadZone, t.to_float());
+    tilt = tilt * 2_f - 1_f;
+    params.tilt = tilt;
+
     s1_15 warp = warp_pot.Process(adc_.get_adc(Adc::WARP_POT));
     params.warp.value = warp.to_float();
 
     s1_15 twist = twist_pot.Process(adc_.get_adc(Adc::TWIST_POT));
     params.twist.value = twist.to_float();
+
+    s1_15 root = root_pot.Process(adc_.get_adc(Adc::ROOT_POT));
+    params.root = root.to_float();
 
     s1_15 pitch = pitch_pot.Process(adc_.get_adc(Adc::PITCH_POT));
     params.pitch = pitch.to_float() * 12_f * 8_f + 24_f;
