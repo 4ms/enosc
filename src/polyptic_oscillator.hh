@@ -165,15 +165,7 @@ public:
     f twist = params.twist.value;
     f warp = params.warp.value;
 
-    if (params.twist.mode == FEEDBACK) {
-      twist *= twist;
-    } else if (params.twist.mode == PULSAR) {
-      twist = 1_f - twist;
-      twist *= twist;
-    } else if (params.twist.mode == DECIMATE) {
-      twist *= twist * 0.5_f;
-    }
-
+    f root = params.root;
     f pitch = params.pitch;
     f spread = params.spread;
     f detune = params.detune;

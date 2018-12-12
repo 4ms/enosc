@@ -48,8 +48,6 @@ class Control {
   PotConditioner<LINEAR, kPotFiltering> tilt_pot;
   PotConditioner<LINEAR, kPotFiltering> twist_pot;
 
-  u0_16 spread1_cv, warp_cv, spread2_cv, twist_cv, tilt_cv, grid_cv, mod_cv;
-
 public:
   void Process(Parameters &params) {
 
@@ -66,8 +64,19 @@ public:
     s1_15 warp = warp_pot.Process(adc_.get_adc(Adc::WARP_POT));
     params.warp.value = warp.to_float();
 
-    s1_15 twist = twist_pot.Process(adc_.get_adc(Adc::TWIST_POT));
-    params.twist.value = twist.to_float();
+    s1_15 w = twist_pot.Process(adc_.get_adc(Adc::TWIST_POT));
+    f twist = w.to_float();
+
+    if (params.twist.mode == FEEDBACK) {
+      twist *= twist;
+    } else if (params.twist.mode == PULSAR) {
+      twist = 1_f - twist;
+      twist *= twist;
+    } else if (params.twist.mode == DECIMATE) {
+      twist *= twist * 0.5_f;
+    }
+
+    params.twist.value = twist;
 
     s1_15 root = root_pot.Process(adc_.get_adc(Adc::ROOT_POT));
     params.root = root.to_float();
@@ -80,6 +89,8 @@ public:
     spread *= spread;
     params.spread = spread * 12_f;
     
+
+
     // warp_pot = adc_.get_adc(Adc::WARP_POT);
     // detune_pot = adc_.get_adc(Adc::DETUNE_POT);
     // mod_pot = adc_.get_adc(Adc::MOD_POT);
