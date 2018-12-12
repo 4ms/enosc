@@ -178,12 +178,17 @@ public:
     f spread = params.spread;
     f detune = params.detune;
 
-    bool oc = false;
-
     for (int i=0; i<kNumOsc; i++) {
       f freq = Freq::of_pitch(pitch).repr();
-      oc = !oc;
-      f *output = oc ? out1 : out2;
+
+      f *output;
+      if (params.stereo_mode == ALTERNATE) {
+        output = i&1 ? out1 : out2;
+      } else if (params.stereo_mode == SPLIT) {
+        output = i<=kNumOsc/2 ? out1 : out2;
+      } else {
+        output = i==0 ? out1 : out2;
+      }
 
       // antialias
       f aliasing_factor = freq;

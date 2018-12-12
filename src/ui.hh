@@ -129,6 +129,7 @@ public:
     params.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
     params.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
 
+    params.stereo_mode = static_cast<StereoMode>(switches_.mod_.get());
   }
 
 };

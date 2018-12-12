@@ -13,12 +13,11 @@ constexpr int kNumOsc = 16;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
 enum WarpMode { FOLD, CHEBY, CRUSH };
-
+enum StereoMode { ALTERNATE, SPLIT, LOWER_REST };
 
 // textile oscillator:
 enum DivisionMode { INTEGER, ODD, POW_OF_TWO };
 enum TranspositionMode { CHROMATIC, THREE_ST, OCTAVE };
-
 
 struct Parameters {
   f pitch;                       // midi note
@@ -35,6 +34,7 @@ struct Parameters {
     f value;                    // 0..1
   } warp;
 
+  StereoMode stereo_mode = ALTERNATE;
 
   // textile oscillator:
   f pitch_offset = 0.2_f;
