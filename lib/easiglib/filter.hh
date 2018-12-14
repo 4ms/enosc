@@ -75,12 +75,12 @@ struct TransferLinear {
 
 template<int divisor>
 struct TransferQuadratic {
-  static s1_15 Process(s1_15 x) { return (x.abs() * x).shiftr<16>() / divisor; }
+  static s1_15 Process(s1_15 x) { return s1_15::narrow(x.abs() * x) / divisor; }
 };
 
 template<int divisor>
 struct TransferCubic {
-  static s1_15 Process(s1_15 x) { return ((x * x).shiftr<16>() * x).shiftr<16>() / divisor; }
+  static s1_15 Process(s1_15 x) { return s1_15::narrow(s1_15::narrow(x * x) * x) / divisor; }
 };
 
 

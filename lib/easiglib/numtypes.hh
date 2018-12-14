@@ -278,15 +278,6 @@ public:
     return Fixed<UNSIGNED, INT-1, FRAC+1>::of_repr((unsigned)(val_ + (1 << (WIDTH-1))));
   }
 
-  // template<sign SIGN2>
-  // constexpr Fixed<SIGN2, INT, FRAC> const to() const {
-  //   if (SIGN==UNSIGNED && SIGN2==SIGNED) {
-  //     return Fixed<SIGN2, INT, FRAC>::of_repr((signed)val_ >> 1);
-  //   } else if (SIGN==SIGNED && SIGN2==UNSIGNED) {
-  //     return Fixed<SIGN2, INT, FRAC>::of_repr((unsigned)val_);
-  //   }
-  // }
-
   template <int SHIFT>
   constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> movr() const {
     return Fixed<SIGN, INT+SHIFT, FRAC-SHIFT>::of_repr(val_);
@@ -298,13 +289,13 @@ public:
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT, FRAC-SHIFT> shiftr() const {
-    return Fixed<SIGN, INT, FRAC-SHIFT>::of_repr(val_ >> SHIFT);
+  constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> shiftr() const {
+    return Fixed<SIGN, INT+SHIFT, FRAC-SHIFT>::of_repr(val_ >> SHIFT);
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT, FRAC+SHIFT> shiftl() const {
-    return Fixed<SIGN, INT, FRAC+SHIFT>::of_repr(val_ << SHIFT);
+  constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> shiftl() const {
+    return Fixed<SIGN, INT-SHIFT, FRAC+SHIFT>::of_repr(val_ << SHIFT);
   }
 
   // Operations:

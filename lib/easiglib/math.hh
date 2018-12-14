@@ -17,7 +17,7 @@ struct Math {
   static constexpr s1_15 faster_sine(u0_32 x) {
     s1_31 y = x.to_signed_scale();
     s1_15 z = s1_15::narrow(y * 2);
-    z -= (z * z.abs()).shiftr<16>();
+    z -= s1_15::narrow(z * z.abs());
     z *= 2;
     z = z.add_sat(z);
     return z;
