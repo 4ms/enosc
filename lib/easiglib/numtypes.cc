@@ -87,8 +87,8 @@ static_assert(u0_32(0.5_u0_16) == 0.5_u0_32, "");
 static_assert(s10_22(0.5_s1_15) == 0.5_s10_22, "");
 static_assert(s10_22(-0.5_s1_15) == -0.5_s10_22, "");
 // narrowing (fractional part)
-static_assert((0.50001_s1_31).to_narrow<1, 15>() == 0.5_s1_15, "");
-static_assert((-0.49999_s1_31).to_narrow<1, 15>() == -0.5_s1_15, "");
+static_assert(s1_15::narrow(0.50001_s1_31) == 0.5_s1_15, "");
+static_assert(s1_15::narrow(-0.49999_s1_31) == -0.5_s1_15, "");
 // saturating
 #ifndef __arm__
 static_assert((0.25_s10_22).to_sat<1, 31>() == 0.25_s1_31, "");

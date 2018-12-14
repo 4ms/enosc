@@ -172,32 +172,17 @@ class Fixed {
 
 public:
 
-  // to construct arrays
+  // CONSTRUCTORS
+
+  // default constructor for arrays
   explicit Fixed() {}
 
-  explicit constexpr Fixed(Float x) :
-    val_(static_cast<Base>((x * Float(1ULL << FRAC)).repr())) { }
-
-  static constexpr T inclusive(Float x) {
-    return T::of_repr(static_cast<Base>((x * Float((1ULL << FRAC) - 1)).repr()));
-  }
-
+  // unsafe constructor from representation
   static constexpr T of_repr(Base x) {
     return T(dangerous::DANGER, x);
   }
 
-  template<int INT2, int FRAC2>
-  explicit constexpr Fixed(Fixed<SIGN, INT2, FRAC2> const that) :
-    val_(Fixed<SIGN, INT, FRAC>::of_repr((unsigned)that.repr() << (FRAC - FRAC2)).repr()) {
-    static_assert(FRAC2 <= FRAC, "Conversion with possible loss of precision");
-    static_assert(INT2 <= INT, "Conversion with possible wrapover");
-  }
-
-  template<int INT2, int FRAC2>
-  static constexpr T narrow(Fixed<SIGN, INT2, FRAC2> const that) {
-    return that.template to_narrow<INT, FRAC>();
-  }
-
+  // from base types, for literal notations (see below)
   static constexpr T of_long_long(unsigned long long int x) {
     return T::of_repr(x * (1ULL << FRAC));
   }
@@ -206,6 +191,31 @@ public:
     return T(dangerous::DANGER, static_cast<long long int>((x * (long double)(1ULL << FRAC))));
   }
 
+  // from Float:
+  explicit constexpr Fixed(Float x) :
+    val_(static_cast<Base>((x * Float(1ULL << FRAC)).repr())) { }
+
+  static constexpr T inclusive(Float x) {
+    return T::of_repr(static_cast<Base>((x * Float((1ULL << FRAC) - 1)).repr()));
+  }
+
+  // from Fixed:
+  template<int INT2, int FRAC2>
+  explicit constexpr Fixed(Fixed<SIGN, INT2, FRAC2> const that) :
+    val_(Fixed<SIGN, INT, FRAC>::of_repr((unsigned)that.repr() << (FRAC - FRAC2)).repr()) {
+    static_assert(FRAC2 <= FRAC, "Conversion with possible loss of precision");
+    static_assert(INT2 <= INT, "Conversion with possible wrapover");
+  }
+
+  // from Fixed with narrowing (allows loss of precision)
+  template<int INT2, int FRAC2>
+  static constexpr T narrow(Fixed<SIGN, INT2, FRAC2> const that) {
+    static_assert(FRAC2 > FRAC, "This is not a narrowing: use default constructor");
+    static_assert(INT2 <= INT, "Conversion with possible wrapover");
+    return T::of_repr(that.repr() >> (FRAC2 - FRAC));
+  }
+
+  // Boundary values:
   static constexpr T min_val = T::of_repr(SIGN==SIGNED ? (Base)(1 << (WIDTH-1)) : 0);
   static constexpr T max_val = T::of_repr(SIGN==SIGNED ? (Base)(~(1 << (WIDTH-1))) : -1);
   static constexpr T increment = T::of_repr(1);
@@ -215,17 +225,6 @@ public:
   constexpr Base repr() const { return val_; }
   constexpr Float const to_float() const { return Float(repr()) / Float(1ULL << FRAC); }
   constexpr Float const to_float_inclusive() const { return Float(repr()) / Float((1ULL << FRAC) - 1); }
-
-  // narrowing conversion => possible loss of precision
-  template <int INT2, int FRAC2>
-  constexpr Fixed<SIGN, INT2, FRAC2> const to_narrow() const {
-    static_assert(FRAC2 < FRAC, "This is a promotion: use to()");
-    static_assert(INT2 >= INT, "Conversion with possible wrapover");
-
-    Base x = repr();
-    // narrowing the fractional part => rounding
-    return Fixed<SIGN, INT2, FRAC2>::of_repr(x >> (FRAC - FRAC2));
-  }
 
   // TODO cleanup + test! this one has no safeguard
   template <sign SIGN2, int INT2, int FRAC2>
@@ -314,7 +313,7 @@ public:
   constexpr T abs() const { return T::of_repr(libc_abs(val_)); }
 
   constexpr Fixed<SIGN, WIDTH, 0> integral() const {
-    return to_narrow<WIDTH, 0>();
+    return Fixed<SIGN, WIDTH, 0>::narrow(*this);
   }
 
   constexpr Fixed<SIGN, 0, WIDTH> fractional() const {
