@@ -355,11 +355,8 @@ public:
   template <int BITS>
   constexpr T div2() const {
     static_assert(BITS >= 0 && BITS < WIDTH, "Invalid bit count");
-    return T::of_repr(repr() >> BITS);
+    return this->template shiftr<BITS>().template movl<BITS>();
   }
-
-  constexpr T div2(int bits) const { return T::of_repr(repr() >> bits); }
-  constexpr T mul2(int bits) const { return T::of_repr(repr() << bits); }
 
   constexpr void operator+=(T const that) { *this = *this + that; }
   constexpr void operator-=(T const that) { *this = *this - that; }
