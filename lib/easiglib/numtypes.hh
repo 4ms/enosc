@@ -207,7 +207,7 @@ public:
     static_assert(INT2 <= INT, "Conversion with possible wrapover");
   }
 
-  // from Fixed with narrowing (allows loss of precision)
+  // from Fixed with truncation of fractional part (allows loss of precision)
   template<int INT2, int FRAC2>
   static constexpr T narrow(Fixed<SIGN, INT2, FRAC2> const that) {
     static_assert(FRAC2 > FRAC, "This is not a narrowing: use default constructor");
@@ -215,26 +215,31 @@ public:
     return T::of_repr(that.repr() >> (FRAC2 - FRAC));
   }
 
+  // from Fixed with truncation of integer & fractional part (allows
+  // wrapping & loss of precision); also allows changing sign!
+  // TODO test
+  template<sign SIGN2, int INT2, int FRAC2>
+  static constexpr T wrap(Fixed<SIGN2, INT2, FRAC2> const that) {
+    static_assert(INT2 > INT, "This does not wrap: use default constructor");
+    if (FRAC2 >= FRAC) {
+      return T::of_repr(that.repr() >> (FRAC2 - FRAC));
+    } else
+      return T::of_repr(that.repr() << (FRAC - FRAC2));
+  }
+
   // Boundary values:
   static constexpr T min_val = T::of_repr(SIGN==SIGNED ? (Base)(1 << (WIDTH-1)) : 0);
   static constexpr T max_val = T::of_repr(SIGN==SIGNED ? (Base)(~(1 << (WIDTH-1))) : -1);
   static constexpr T increment = T::of_repr(1);
 
-  // Conversions:
+  // CONVERSIONS
 
+  // unsafe getter for representation
   constexpr Base repr() const { return val_; }
+
+  // TODO put these as constructors in Float
   constexpr Float const to_float() const { return Float(repr()) / Float(1ULL << FRAC); }
   constexpr Float const to_float_inclusive() const { return Float(repr()) / Float((1ULL << FRAC) - 1); }
-
-  // TODO cleanup + test! this one has no safeguard
-  template <sign SIGN2, int INT2, int FRAC2>
-  constexpr Fixed<SIGN2, INT2, FRAC2> const to_wrap() const {
-    if (FRAC2 >= FRAC) {
-      return Fixed<SIGN2, INT2, FRAC2>::of_repr((unsigned)val_ << (FRAC2 - FRAC));
-    } else {
-      return Fixed<SIGN2, INT2, FRAC2>::of_repr(val_ >> (FRAC - FRAC2));
-    }
-  }
 
   // TODO optimize for ARM: SAT/USAT instructions have built-in shift
   template <int INT2, int FRAC2>
@@ -317,7 +322,7 @@ public:
   }
 
   constexpr Fixed<SIGN, 0, WIDTH> fractional() const {
-    return to_wrap<SIGN, 0, WIDTH>();
+    return Fixed<SIGN, 0, WIDTH>::wrap(*this);
   }
 
   constexpr T operator-() const {
