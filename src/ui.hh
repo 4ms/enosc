@@ -59,6 +59,9 @@ public:
     s1_15 t = tilt_pot.Process(adc_.get_adc(Adc::TILT_POT));
     f tilt = Math::crop(kPotDeadZone, t.to_float());
     tilt = tilt * 2_f - 1_f;
+    tilt *= tilt * tilt;
+    tilt *= 10_f;
+    tilt = Math::fast_exp2(tilt);
     params.tilt = tilt;
 
     s1_15 warp = warp_pot.Process(adc_.get_adc(Adc::WARP_POT));

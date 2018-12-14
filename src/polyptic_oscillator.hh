@@ -169,26 +169,54 @@ public:
     f pitch = params.pitch;
     f spread = params.spread;
     f detune = params.detune;
+    f tilt = params.tilt;
+
+    f amp1 = 0_f;
+    f amp2 = 0_f;
+
+    f volume = 1_f;
+    f max_volume = 0_f;
 
     for (int i=0; i<kNumOsc; i++) {
       f freq = Freq::of_pitch(pitch).repr();
 
-      f *output;
+      bool voice;
       if (params.stereo_mode == ALTERNATE) {
-        output = i&1 ? out1 : out2;
+        voice = i&1;
       } else if (params.stereo_mode == SPLIT) {
-        output = i<=kNumOsc/2 ? out1 : out2;
+        voice = i<=kNumOsc/2;
       } else {
-        output = i==0 ? out1 : out2;
+        voice = i==0;
+      }
+
+      f *output;
+      if (voice) {
+        output = out1;
+        amp1 += 1_f;
+      } else {
+        output = out2;
+        amp2 += 1_f;
       }
 
       // antialias
       f aliasing_factor = freq;
       f amplitude = antialias(aliasing_factor);
+      amplitude = volume;
 
       (osc_[i].*process)(u0_32(freq), twist, warp, amplitude, output, size);
+
       pitch += spread;
       pitch += detune;
+      max_volume += volume;
+      volume *= tilt;
+    }
+
+    f atten1 = 1_f / amp1 / max_volume;
+    f atten2 = 1_f / amp2 / max_volume;
+    for(f *o1=out1, *o2=out2; size--;) {
+      *o1 *= atten1;
+      *o2 *= atten2;
+      o1++; o2++;
     }
   }
 };
@@ -197,14 +225,13 @@ struct PolypticOscillator : Nocopy {
   Oscillators oscs_;
 
   void Process(Parameters &params, Frame *in, Frame *out, int size) {
-    f out1[size];
-    f out2[size];
+    f buffer[2][size];
 
-    oscs_.Process(params, out1, out2, size);
+    oscs_.Process(params, buffer[0], buffer[1], size);
 
-    for(f *o1=out1, *o2=out2; size--;) {
-      f s1 = *o1 / f(kNumOsc); // TODO: kNumOsc/2 because only half the voices
-      f s2 = *o2 / f(kNumOsc);
+    for(f *o1=buffer[0], *o2=buffer[1]; size--;) {
+      f s1 = *o1;
+      f s2 = *o2;
       out->l = s1_15(s1);
       out->r = s1_15(s2);
       out++; o1++; o2++;
