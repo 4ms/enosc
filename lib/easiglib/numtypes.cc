@@ -78,13 +78,14 @@ static_assert((-1.2_s10_22).clip() == -1.0_s10_22, "");
 #endif
 
 // pure widening
-static_assert((42_u).to<32, 0>().to_float() == 42_f, "");
-static_assert((42_s).to<32, 0>().to_float() == 42_f, "");
-static_assert((-42_s).to<32, 0>().to_float() == -42_f, "");
+static_assert(u32(42_u) == u32(42_u));
+static_assert(u32(42_u).to_float() == 42_f, "");
+static_assert(s32(42_s).to_float() == 42_f, "");
+static_assert(s32(-42_s).to_float() == -42_f, "");
 // widening with shift
-static_assert((0.5_u0_16).to<0, 32>() == 0.5_u0_32, "");
-static_assert((0.5_s1_15).to<10, 22>() == 0.5_s10_22, "");
-static_assert((-0.5_s1_15).to<10, 22>() == -0.5_s10_22, "");
+static_assert(u0_32(0.5_u0_16) == 0.5_u0_32, "");
+static_assert(s10_22(0.5_s1_15) == 0.5_s10_22, "");
+static_assert(s10_22(-0.5_s1_15) == -0.5_s10_22, "");
 // narrowing (fractional part)
 static_assert((0.50001_s1_31).to_narrow<1, 15>() == 0.5_s1_15, "");
 static_assert((-0.49999_s1_31).to_narrow<1, 15>() == -0.5_s1_15, "");

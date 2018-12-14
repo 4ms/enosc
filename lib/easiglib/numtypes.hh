@@ -182,19 +182,20 @@ public:
     return T::of_repr(static_cast<Base>((x * Float((1ULL << FRAC) - 1)).repr()));
   }
 
+  static constexpr T of_repr(Base x) {
+    return T(dangerous::DANGER, x);
+  }
+
   template<int INT2, int FRAC2>
-  explicit constexpr Fixed(Fixed<SIGN, INT2, FRAC2> const that) {
-    Fixed<SIGN, INT, FRAC> y = that.template to<INT, FRAC>();
-    val_ = y.repr();
+  explicit constexpr Fixed(Fixed<SIGN, INT2, FRAC2> const that) :
+    val_(Fixed<SIGN, INT, FRAC>::of_repr((unsigned)that.repr() << (FRAC - FRAC2)).repr()) {
+    static_assert(FRAC2 <= FRAC, "Conversion with possible loss of precision");
+    static_assert(INT2 <= INT, "Conversion with possible wrapover");
   }
 
   template<int INT2, int FRAC2>
   static constexpr T narrow(Fixed<SIGN, INT2, FRAC2> const that) {
     return that.template to_narrow<INT, FRAC>();
-  }
-
-  static constexpr T of_repr(Base x) {
-    return T(dangerous::DANGER, x);
   }
 
   static constexpr T of_long_long(unsigned long long int x) {
@@ -214,17 +215,6 @@ public:
   constexpr Base repr() const { return val_; }
   constexpr Float const to_float() const { return Float(repr()) / Float(1ULL << FRAC); }
   constexpr Float const to_float_inclusive() const { return Float(repr()) / Float((1ULL << FRAC) - 1); }
-
-  // promotion => no loss of information
-  template <sign SIGN2, int INT2, int FRAC2>
-  constexpr Fixed<SIGN2, INT2, FRAC2> const to() const {
-    static_assert(SIGN2 == SIGN, "Conversion with different signs");
-    static_assert(FRAC2 >= FRAC, "Conversion with possible loss of precision");
-    static_assert(INT2 >= INT, "Conversion with possible wrapover");
-
-    // WARNING! possibly shifting negative integer
-    return Fixed<SIGN2, INT2, FRAC2>::of_repr((unsigned)repr() << (FRAC2 - FRAC));
-  }
 
   // narrowing conversion => possible loss of precision
   template <int INT2, int FRAC2>
@@ -292,11 +282,6 @@ public:
   //     return Fixed<SIGN2, INT, FRAC>::of_repr((unsigned)val_);
   //   }
   // }
-
-  template<int INT2, int FRAC2>
-  constexpr Fixed<SIGN, INT2, FRAC2> const to() const {
-    return to<SIGN, INT2, FRAC2>();
-  }
 
   template <int SHIFT>
   constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> movr() const {
