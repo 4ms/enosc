@@ -60,7 +60,7 @@ public:
     f tilt = Math::crop(kPotDeadZone, t.to_float());
     tilt = tilt * 2_f - 1_f;
     tilt *= tilt * tilt;
-    tilt *= 10_f;
+    tilt *= 8_f;
     tilt = Math::fast_exp2(tilt);
     params.tilt = tilt;
 
