@@ -132,6 +132,36 @@ class Oscillators : Nocopy {
       i == 0;
   }
 
+  class AmplitudeAccumulator {
+    f amplitude = 1_f;
+    f amplitudes = 0_f;
+    f tilt;
+  public:
+    AmplitudeAccumulator(f t) : tilt(t) {}
+    f Next(f aliasing_factor) {
+      f r = amplitude * antialias(aliasing_factor);
+      amplitudes += amplitude;
+      amplitude *= tilt;
+      return r;
+    }
+    f Sum() { return amplitudes; }
+  };
+
+  class FrequencyAccumulator {
+    f root;
+    f pitch;
+    f spread;
+    f detune;
+  public:
+    FrequencyAccumulator(f r, f p, f s, f d) : root(r), pitch(p), spread(s), detune(d) {}
+    f Next() {
+      f freq = Freq::of_pitch(pitch).repr();
+      pitch += spread;
+      pitch += detune;
+      return freq;
+    }
+  };
+
 public:
   void Process(Parameters &params, f *out1, f *out2, int size) {
     std::fill(out1, out1+size, 0_f);
@@ -176,28 +206,21 @@ public:
     f pitch = params.pitch;
     f spread = params.spread;
     f detune = params.detune;
-    f tilt = params.tilt;
 
-    f amplitude = 1_f;
-    f amplitudes = 0_f;
+    AmplitudeAccumulator amplitude {params.tilt};
+    FrequencyAccumulator frequency {root, pitch, spread, detune};
 
     for (int i=0; i<kNumOsc; i++) {
-      f freq = Freq::of_pitch(pitch).repr();
-
       // antialias
+      f freq = frequency.Next();
       f aliasing_factor = freq;
-      amplitude *= antialias(aliasing_factor);
 
+      f amp = amplitude.Next(aliasing_factor);
       f *output = pick_output(params.stereo_mode, i) ? out1 : out2;
-      (osc_[i].*process)(u0_32(freq), twist, warp, amplitude, output, size);
-
-      pitch += spread;
-      pitch += detune;
-      amplitudes += amplitude;
-      amplitude *= tilt;
+      (osc_[i].*process)(u0_32(freq), twist, warp, amp, output, size);
     }
 
-    f atten = 1_f / amplitudes;
+    f atten = 1_f / amplitude.Sum();
     for(f *o1=out1, *o2=out2; size--;) {
       *o1 *= atten;
       *o2 *= atten;
