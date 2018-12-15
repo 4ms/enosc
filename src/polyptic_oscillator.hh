@@ -171,11 +171,8 @@ public:
     f detune = params.detune;
     f tilt = params.tilt;
 
-    f amp1 = 0_f;
-    f amp2 = 0_f;
-
-    f volume = 1_f;
-    f max_volume = 0_f;
+    f amplitude = 1_f;
+    f amplitudes = 0_f;
 
     for (int i=0; i<kNumOsc; i++) {
       f freq = Freq::of_pitch(pitch).repr();
@@ -189,33 +186,29 @@ public:
         voice = i==0;
       }
 
+      // antialias
+      f aliasing_factor = freq;
+      amplitude *= antialias(aliasing_factor);
+      amplitudes += amplitude;
+
       f *output;
       if (voice) {
         output = out1;
-        amp1 += 1_f;
       } else {
         output = out2;
-        amp2 += 1_f;
       }
-
-      // antialias
-      f aliasing_factor = freq;
-      f amplitude = antialias(aliasing_factor);
-      amplitude = volume;
 
       (osc_[i].*process)(u0_32(freq), twist, warp, amplitude, output, size);
 
       pitch += spread;
       pitch += detune;
-      max_volume += volume;
-      volume *= tilt;
+      amplitude *= tilt;
     }
 
-    f atten1 = 1_f / amp1 / max_volume;
-    f atten2 = 1_f / amp2 / max_volume;
+    f atten = 1_f / amplitudes;
     for(f *o1=out1, *o2=out2; size--;) {
-      *o1 *= atten1;
-      *o2 *= atten2;
+      *o1 *= atten;
+      *o2 *= atten;
       o1++; o2++;
     }
   }
