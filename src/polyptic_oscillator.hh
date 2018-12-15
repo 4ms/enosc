@@ -125,6 +125,13 @@ class Oscillators : Nocopy {
       return amplitude;
   }
 
+  static bool pick_output(StereoMode mode, int i) {
+    return
+      mode == ALTERNATE ? i&1 :
+      mode == SPLIT ? i<=kNumOsc/2 :
+      i == 0;
+  }
+
 public:
   void Process(Parameters &params, f *out1, f *out2, int size) {
     std::fill(out1, out1+size, 0_f);
@@ -177,31 +184,16 @@ public:
     for (int i=0; i<kNumOsc; i++) {
       f freq = Freq::of_pitch(pitch).repr();
 
-      bool voice;
-      if (params.stereo_mode == ALTERNATE) {
-        voice = i&1;
-      } else if (params.stereo_mode == SPLIT) {
-        voice = i<=kNumOsc/2;
-      } else {
-        voice = i==0;
-      }
-
       // antialias
       f aliasing_factor = freq;
       amplitude *= antialias(aliasing_factor);
-      amplitudes += amplitude;
 
-      f *output;
-      if (voice) {
-        output = out1;
-      } else {
-        output = out2;
-      }
-
+      f *output = pick_output(params.stereo_mode, i) ? out1 : out2;
       (osc_[i].*process)(u0_32(freq), twist, warp, amplitude, output, size);
 
       pitch += spread;
       pitch += detune;
+      amplitudes += amplitude;
       amplitude *= tilt;
     }
 
@@ -223,10 +215,8 @@ struct PolypticOscillator : Nocopy {
     oscs_.Process(params, buffer[0], buffer[1], size);
 
     for(f *o1=buffer[0], *o2=buffer[1]; size--;) {
-      f s1 = *o1;
-      f s2 = *o2;
-      out->l = s1_15(s1);
-      out->r = s1_15(s2);
+      out->l = s1_15(*o1);
+      out->r = s1_15(*o2);
       out++; o1++; o2++;
     }
   }
