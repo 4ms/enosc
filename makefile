@@ -78,11 +78,11 @@ CFLAGS= $(ARCHFLAGS) \
 	-g \
 	-O$(OPTIM) \
 	-DUSE_HAL_DRIVER \
-	-DUSE_FULL_ASSERT \
 	-ffast-math \
 	-fdata-sections \
 	-ffunction-sections \
 	-ffreestanding \
+#	-DUSE_FULL_ASSERT \
 #       -DTEST \
 
 CXXFLAGS=$(CFLAGS) \
