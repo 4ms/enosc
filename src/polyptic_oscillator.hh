@@ -111,8 +111,20 @@ public:
   }
 };
 
+class DoubleOscillator : Nocopy {
+  Oscillator osc_[2];
+public:
+  template<TwistMode twist_mode, WarpMode warp_mode>
+  void Process(f freq1, f freq2, f phase, f twist, f warp, f amplitude, f *output, int size) {
+    f amp1 = amplitude * phase;
+    f amp2 = amplitude * (1_f - phase);
+    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq1), twist, warp, amp1, output, size);
+    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq2), twist, warp, amp2, output, size);
+  }
+};
+
 class Oscillators : Nocopy {
-  Oscillator osc_[kNumOsc];
+  DoubleOscillator osc_[kNumOsc];
 
   // simple linear piecewise function: 0->1, 0.5->1, 1->0
   static f antialias(f factor) {
@@ -162,28 +174,28 @@ class Oscillators : Nocopy {
     }
   };
 
-  using processor_t = void (Oscillator::*)(u0_32, f, f, f, f*, int);
+  using processor_t = void (DoubleOscillator::*)(f, f, f, f, f, f, f*, int);
 
   processor_t choose_processor(TwistMode t, WarpMode m) {
     processor_t process;
     if (t == FEEDBACK && m == CRUSH) {
-      process = &Oscillator::Process<FEEDBACK, CRUSH>;
+      process = &DoubleOscillator::Process<FEEDBACK, CRUSH>;
     } else if (t == FEEDBACK && m == CHEBY) {
-      process = &Oscillator::Process<FEEDBACK, CHEBY>;
+      process = &DoubleOscillator::Process<FEEDBACK, CHEBY>;
     } else if (t == FEEDBACK && m == FOLD) {
-      process = &Oscillator::Process<FEEDBACK, FOLD>;
+      process = &DoubleOscillator::Process<FEEDBACK, FOLD>;
     } else if (t == PULSAR && m == CRUSH) {
-      process = &Oscillator::Process<PULSAR, CRUSH>;
+      process = &DoubleOscillator::Process<PULSAR, CRUSH>;
     } else if (t == PULSAR && m == CHEBY) {
-      process = &Oscillator::Process<PULSAR, CHEBY>;
+      process = &DoubleOscillator::Process<PULSAR, CHEBY>;
     } else if (t == PULSAR && m == FOLD) {
-      process = &Oscillator::Process<PULSAR, FOLD>;
+      process = &DoubleOscillator::Process<PULSAR, FOLD>;
     } else if (t == DECIMATE && m == CRUSH) {
-      process = &Oscillator::Process<DECIMATE, CRUSH>;
+      process = &DoubleOscillator::Process<DECIMATE, CRUSH>;
     } else if (t == DECIMATE && m == CHEBY) {
-      process = &Oscillator::Process<DECIMATE, CHEBY>;
+      process = &DoubleOscillator::Process<DECIMATE, CHEBY>;
     } else if (t == DECIMATE && m == FOLD) {
-      process = &Oscillator::Process<DECIMATE, FOLD>;
+      process = &DoubleOscillator::Process<DECIMATE, FOLD>;
     }
     return process;
   }
@@ -193,8 +205,6 @@ public:
     std::fill(out1, out1+size, 0_f);
     std::fill(out2, out2+size, 0_f);
 
-    processor_t process = choose_processor(params.twist.mode, params.warp.mode);
-
     // scaling and response of common parameters
     f twist = params.twist.value;
     f warp = params.warp.value;
@@ -203,6 +213,8 @@ public:
     FrequencyAccumulator frequency {params.root, params.pitch,
                                     params.spread, params.detune};
 
+    processor_t process = choose_processor(params.twist.mode, params.warp.mode);
+
     for (int i=0; i<kNumOsc; i++) {
       // antialias
       f freq = frequency.Next();
@@ -210,7 +222,7 @@ public:
 
       f amp = amplitude.Next(aliasing_factor);
       f *output = pick_output(params.stereo_mode, i) ? out1 : out2;
-      (osc_[i].*process)(u0_32(freq), twist, warp, amp, output, size);
+      (osc_[i].*process)(freq, freq, 0.5_f, twist, warp, amp, output, size);
     }
 
     f atten = 1_f / amplitude.Sum();
