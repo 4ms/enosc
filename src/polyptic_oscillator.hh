@@ -162,53 +162,46 @@ class Oscillators : Nocopy {
     }
   };
 
+  using processor_t = void (Oscillator::*)(u0_32, f, f, f, f*, int);
+
+  processor_t choose_processor(TwistMode t, WarpMode m) {
+    processor_t process;
+    if (t == FEEDBACK && m == CRUSH) {
+      process = &Oscillator::Process<FEEDBACK, CRUSH>;
+    } else if (t == FEEDBACK && m == CHEBY) {
+      process = &Oscillator::Process<FEEDBACK, CHEBY>;
+    } else if (t == FEEDBACK && m == FOLD) {
+      process = &Oscillator::Process<FEEDBACK, FOLD>;
+    } else if (t == PULSAR && m == CRUSH) {
+      process = &Oscillator::Process<PULSAR, CRUSH>;
+    } else if (t == PULSAR && m == CHEBY) {
+      process = &Oscillator::Process<PULSAR, CHEBY>;
+    } else if (t == PULSAR && m == FOLD) {
+      process = &Oscillator::Process<PULSAR, FOLD>;
+    } else if (t == DECIMATE && m == CRUSH) {
+      process = &Oscillator::Process<DECIMATE, CRUSH>;
+    } else if (t == DECIMATE && m == CHEBY) {
+      process = &Oscillator::Process<DECIMATE, CHEBY>;
+    } else if (t == DECIMATE && m == FOLD) {
+      process = &Oscillator::Process<DECIMATE, FOLD>;
+    }
+    return process;
+  }
+
 public:
   void Process(Parameters &params, f *out1, f *out2, int size) {
     std::fill(out1, out1+size, 0_f);
     std::fill(out2, out2+size, 0_f);
 
-    void (Oscillator::*process)(u0_32, f, f, f, f*, int);
-
-    if (params.twist.mode == FEEDBACK &&
-        params.warp.mode == CRUSH) {
-      process = &Oscillator::Process<FEEDBACK, CRUSH>;
-    } else if (params.twist.mode == FEEDBACK &&
-               params.warp.mode == CHEBY) {
-      process = &Oscillator::Process<FEEDBACK, CHEBY>;
-    } else if (params.twist.mode == FEEDBACK &&
-               params.warp.mode == FOLD) {
-      process = &Oscillator::Process<FEEDBACK, FOLD>;
-    } else if (params.twist.mode == PULSAR &&
-        params.warp.mode == CRUSH) {
-      process = &Oscillator::Process<PULSAR, CRUSH>;
-    } else if (params.twist.mode == PULSAR &&
-               params.warp.mode == CHEBY) {
-      process = &Oscillator::Process<PULSAR, CHEBY>;
-    } else if (params.twist.mode == PULSAR &&
-               params.warp.mode == FOLD) {
-      process = &Oscillator::Process<PULSAR, FOLD>;
-    } else if (params.twist.mode == DECIMATE &&
-        params.warp.mode == CRUSH) {
-      process = &Oscillator::Process<DECIMATE, CRUSH>;
-    } else if (params.twist.mode == DECIMATE &&
-               params.warp.mode == CHEBY) {
-      process = &Oscillator::Process<DECIMATE, CHEBY>;
-    } else if (params.twist.mode == DECIMATE &&
-               params.warp.mode == FOLD) {
-      process = &Oscillator::Process<DECIMATE, FOLD>;
-    }
+    processor_t process = choose_processor(params.twist.mode, params.warp.mode);
 
     // scaling and response of common parameters
     f twist = params.twist.value;
     f warp = params.warp.value;
 
-    f root = params.root;
-    f pitch = params.pitch;
-    f spread = params.spread;
-    f detune = params.detune;
-
     AmplitudeAccumulator amplitude {params.tilt};
-    FrequencyAccumulator frequency {root, pitch, spread, detune};
+    FrequencyAccumulator frequency {params.root, params.pitch,
+                                    params.spread, params.detune};
 
     for (int i=0; i<kNumOsc; i++) {
       // antialias
