@@ -172,7 +172,7 @@ static_assert(1.0_u0_16 * 0.5_u0_16 == 0.0_u0_32);
 
 // DYNAMIC TESTS
 
-#ifdef __arm__
+#if defined(__arm__) && defined(TEST)
 
 struct Numtypes_Tests {
   Numtypes_Tests() {

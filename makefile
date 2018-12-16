@@ -83,6 +83,7 @@ CFLAGS= $(ARCHFLAGS) \
 	-fdata-sections \
 	-ffunction-sections \
 	-ffreestanding \
+#       -DTEST \
 
 CXXFLAGS=$(CFLAGS) \
 	-std=c++14 \
