@@ -387,7 +387,7 @@ void Codec::Reboot(uint32_t sample_rate)
 
 void Codec::Start()
 {
-	HAL_NVIC_EnableIRQ(CODEC_SAI_RX_DMA_IRQn); 
+  HAL_NVIC_EnableIRQ(CODEC_SAI_RX_DMA_IRQn);
 }
 
 void Codec::DeInit_I2S_Clock()
