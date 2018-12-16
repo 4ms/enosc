@@ -116,8 +116,8 @@ class DoubleOscillator : Nocopy {
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   void Process(f freq1, f freq2, f phase, f twist, f warp, f amplitude, f *output, int size) {
-    f amp1 = amplitude * phase;
-    f amp2 = amplitude * (1_f - phase);
+    f amp1 = amplitude * (1_f - phase);
+    f amp2 = amplitude * phase;
     osc_[0].Process<twist_mode, warp_mode>(u0_32(freq1), twist, warp, amp1, output, size);
     osc_[1].Process<twist_mode, warp_mode>(u0_32(freq2), twist, warp, amp2, output, size);
   }
