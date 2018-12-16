@@ -285,8 +285,9 @@ void Codec::I2C::Init(uint32_t sample_rate)
 
   Write(WM8731_REG_RESET, 0);
 
-  for(i=0;i<W8731_NUM_REGS;i++)
+  for(i=0;i<W8731_NUM_REGS;i++) {
     Write(i, codec_init_data[i]);
+  }
 }
 
 void Codec::I2C::DeInit()
@@ -366,11 +367,9 @@ void Codec::Reboot(uint32_t sample_rate)
   //Take everything down...
   i2c_.PowerDown();
   i2c_.DeInit();
-  HAL_Delay(10);
 
   DeInit_I2S_Clock();
   DeInit_SAIDMA();
-  HAL_Delay(10);
 
   //...and bring it all back up
   init_SAI_clock(sample_rate);

@@ -2,7 +2,8 @@
 
 #include "stm32f7xx.h"
 
-#define hal_assert(E)                           \
-  assert_param((E) == HAL_OK);                  \
-
+#define hal_assert(E) {                         \
+    HAL_StatusTypeDef s = (E);                  \
+    assert_param(s == HAL_OK);                  \
+  }                                             \
 
