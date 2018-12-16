@@ -177,27 +177,17 @@ class Oscillators : Nocopy {
   using processor_t = void (DoubleOscillator::*)(f, f, f, f, f, f, f*, int);
 
   processor_t choose_processor(TwistMode t, WarpMode m) {
-    processor_t process;
-    if (t == FEEDBACK && m == CRUSH) {
-      process = &DoubleOscillator::Process<FEEDBACK, CRUSH>;
-    } else if (t == FEEDBACK && m == CHEBY) {
-      process = &DoubleOscillator::Process<FEEDBACK, CHEBY>;
-    } else if (t == FEEDBACK && m == FOLD) {
-      process = &DoubleOscillator::Process<FEEDBACK, FOLD>;
-    } else if (t == PULSAR && m == CRUSH) {
-      process = &DoubleOscillator::Process<PULSAR, CRUSH>;
-    } else if (t == PULSAR && m == CHEBY) {
-      process = &DoubleOscillator::Process<PULSAR, CHEBY>;
-    } else if (t == PULSAR && m == FOLD) {
-      process = &DoubleOscillator::Process<PULSAR, FOLD>;
-    } else if (t == DECIMATE && m == CRUSH) {
-      process = &DoubleOscillator::Process<DECIMATE, CRUSH>;
-    } else if (t == DECIMATE && m == CHEBY) {
-      process = &DoubleOscillator::Process<DECIMATE, CHEBY>;
-    } else if (t == DECIMATE && m == FOLD) {
-      process = &DoubleOscillator::Process<DECIMATE, FOLD>;
-    }
-    return process;
+    return
+      t == FEEDBACK && m == CRUSH ? &DoubleOscillator::Process<FEEDBACK, CRUSH> :
+      t == FEEDBACK && m == CHEBY ? &DoubleOscillator::Process<FEEDBACK, CHEBY> :
+      t == FEEDBACK && m == FOLD ? &DoubleOscillator::Process<FEEDBACK, FOLD> :
+      t == PULSAR && m == CRUSH ? &DoubleOscillator::Process<PULSAR, CRUSH> :
+      t == PULSAR && m == CHEBY ? &DoubleOscillator::Process<PULSAR, CHEBY> :
+      t == PULSAR && m == FOLD ? &DoubleOscillator::Process<PULSAR, FOLD> :
+      t == DECIMATE && m == CRUSH ? &DoubleOscillator::Process<DECIMATE, CRUSH> :
+      t == DECIMATE && m == CHEBY ? &DoubleOscillator::Process<DECIMATE, CHEBY> :
+      t == DECIMATE && m == FOLD ? &DoubleOscillator::Process<DECIMATE, FOLD> :
+      NULL;
   }
 
 public:
