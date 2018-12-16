@@ -532,7 +532,7 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
 // to call a std::function we need this:
 namespace std {
   void __throw_bad_function_call() {
-    assert_failed(__FILE__, __LINE__);
+    assert_param(false);
     while(1);
   };
 }

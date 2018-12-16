@@ -7,7 +7,7 @@
 #include "textile_oscillator.hh"
 
 // #define TEXTILE
-#define BYPASS false
+// #define BYPASS
 
 struct Main : Nocopy {
   System sys_;
@@ -34,14 +34,14 @@ struct Main : Nocopy {
   void Process(Frame *in, Frame *out, int size) {
     ui_.Process(params_);
 
-    if (BYPASS) {
+#ifdef BYPASS
       while(size--) {
         *out = *in;
         out++;
         in++;
       }
       return;
-    }
+#endif
 
     debug.set(3, true);
 #ifdef TEXTILE
