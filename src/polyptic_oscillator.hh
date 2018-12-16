@@ -164,13 +164,23 @@ class Oscillators : Nocopy {
     f pitch;
     f spread;
     f detune;
+    f detune_accum = 0_f;
   public:
     FrequencyAccumulator(f r, f p, f s, f d) : root(r), pitch(p), spread(s), detune(d) {}
-    f Next() {
-      f freq = Freq::of_pitch(pitch).repr();
-      pitch += spread;
-      pitch += detune;
-      return freq;
+    void Next(f& freq1, f& freq2, f& phase) {
+      // quantize pitch
+      f p1 = (root / 6_f).integral() * 6_f;
+      f p2 = p1 + 6_f;
+      phase = (root - p1) / (p2 - p1);
+
+      p1 += pitch + detune_accum;
+      p2 += pitch + detune_accum;
+
+      freq1 = Freq::of_pitch(p1).repr();
+      freq2 = Freq::of_pitch(p2).repr();
+
+      root += spread;
+      detune_accum += detune;
     }
   };
 
@@ -207,12 +217,13 @@ public:
 
     for (int i=0; i<kNumOsc; i++) {
       // antialias
-      f freq = frequency.Next();
-      f aliasing_factor = freq;
+      f freq1, freq2, phase;
+      frequency.Next(freq1, freq2, phase);
 
+      f aliasing_factor = freq2;
       f amp = amplitude.Next(aliasing_factor);
       f *output = pick_output(params.stereo_mode, i) ? out1 : out2;
-      (osc_[i].*process)(freq, freq, 0.5_f, twist, warp, amp, output, size);
+      (osc_[i].*process)(freq1, freq2, phase, twist, warp, amp, output, size);
     }
 
     f atten = 1_f / amplitude.Sum();
