@@ -82,10 +82,10 @@ public:
     params.twist.value = twist;
 
     s1_15 root = root_pot.Process(adc_.get_adc(Adc::ROOT_POT));
-    params.root = root.to_float() * 12_f * 8_f + 24_f;
+    params.root = root.to_float() * 12_f * 10_f;
 
     s1_15 pitch = pitch_pot.Process(adc_.get_adc(Adc::PITCH_POT));
-    params.pitch = pitch.to_float() * 12_f * 8_f + 24_f;
+    params.pitch = pitch.to_float() * 12_f * 6_f - 24_f;
     
     s1_15 s = spread_pot.Process(adc_.get_adc(Adc::SPREAD_POT));
     f spread = Math::crop_down(kPotDeadZone, s.to_float());
