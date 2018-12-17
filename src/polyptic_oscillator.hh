@@ -233,7 +233,7 @@ public:
       f& o1 = *begin1;
       o1 *= atten;
       o2 *= atten;
-      o1++;
+      begin1++;
     }
   }
 };
