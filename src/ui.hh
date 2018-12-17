@@ -4,13 +4,9 @@
 #include "leds.hh"
 #include "adc.hh"
 
+
 const int kPotFiltering = 1;     // 0..16
 const f kPotDeadZone = 0.01_f;
-
-f test;
-
-// law + one-pole filter + crop ends -> float(0..1)
-// TODO one-pole --> nonlinear square
 
 class Control {
 
@@ -40,11 +36,9 @@ class Control {
     CicDecimator<1, kBlockSize> cic_;
   public:
     f Process(Block<s1_15> in) {
-      // TODO convert CIC to Numtypes
-      int16_t x;
-      cic_.Process((int16_t *)in.data(), &x, in.size());
-      s1_15 y = s1_15::of_repr(x);
-      return y.to_float_inclusive();
+      s1_15 x = in[0];
+      cic_.Process(in.data(), &x, 1);
+      return x.to_float_inclusive();
     }
   };
 
