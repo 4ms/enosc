@@ -24,3 +24,28 @@ protected:
   constexpr Nocopy() = default;
   ~Nocopy() = default;
 };
+
+template<class T>
+struct Block {
+  Block(T* data, int size) : data_(data), size_(size) {}
+  T& operator [] (unsigned int index) {
+    return data_[index];
+  }
+  T const& operator [] (unsigned int index) const {
+    return data_[index];
+  }
+
+  void foreach(std::function<void(T*)> fn) {
+      for (T *x = data_; x<data_+size_; x++) {
+        fn(x);
+      }
+  }
+
+  T* begin() { return data_; }
+  T* end() { return data_ + size_; }
+
+  int size() {return size_; }
+private:
+  T *data_;
+  int size_;
+};

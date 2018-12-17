@@ -45,9 +45,9 @@ struct Main : Nocopy {
 
     debug.set(3, true);
 #ifdef TEXTILE
-    osc_.Process(params_, out, size);
+    osc_.Process(params_, Block<Frame>{out, size});
 #else
-    osc_.Process(params_, in, out, size);
+    osc_.Process(params_, Block<Frame> {out, size});
 #endif
     debug.set(3, false);
   }

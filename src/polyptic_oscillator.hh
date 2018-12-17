@@ -103,11 +103,11 @@ public:
   }
 
   template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(u0_32 freq, f twist, f warp, f amplitude, f *output, int size) {
-      for (f *out = output; out<output+size; out++) {
-        f sample = Process<twist_mode, warp_mode>(u0_32(freq), twist, warp);
-        *out += sample * amplitude;
-      }
+  void Process(u0_32 freq, f twist, f warp, f amplitude, Block<f> output) {
+    for (f &out : output) {
+      f sample = Process<twist_mode, warp_mode>(u0_32(freq), twist, warp);
+      out += sample * amplitude;
+    }
   }
 };
 
@@ -115,11 +115,11 @@ class DoubleOscillator : Nocopy {
   Oscillator osc_[2];
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(f freq1, f freq2, f phase, f twist, f warp, f amplitude, f *output, int size) {
+  void Process(f freq1, f freq2, f phase, f twist, f warp, f amplitude, Block<f> output) {
     f amp1 = amplitude * (1_f - phase);
     f amp2 = amplitude * phase;
-    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq1), twist, warp, amp1, output, size);
-    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq2), twist, warp, amp2, output, size);
+    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq1), twist, warp, amp1, output);
+    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq2), twist, warp, amp2, output);
   }
 };
 
@@ -184,7 +184,7 @@ class Oscillators : Nocopy {
     }
   };
 
-  using processor_t = void (DoubleOscillator::*)(f, f, f, f, f, f, f*, int);
+  using processor_t = void (DoubleOscillator::*)(f, f, f, f, f, f, Block<f>);
 
   processor_t choose_processor(TwistMode t, WarpMode m) {
     return
@@ -222,8 +222,8 @@ public:
 
       f aliasing_factor = freq2;
       f amp = amplitude.Next(aliasing_factor);
-      f *output = pick_output(params.stereo_mode, i) ? out1 : out2;
-      (osc_[i].*process)(freq1, freq2, phase, twist, warp, amp, output, size);
+      Block<f> out = Block<f> {pick_output(params.stereo_mode, i) ? out1 : out2, size};
+      (osc_[i].*process)(freq1, freq2, phase, twist, warp, amp, out);
     }
 
     f atten = 1_f / amplitude.Sum();
@@ -238,15 +238,17 @@ public:
 struct PolypticOscillator : Nocopy {
   Oscillators oscs_;
 
-  void Process(Parameters &params, Frame *in, Frame *out, int size) {
-    f buffer[2][size];
+  void Process(Parameters &params, Block<Frame> out) {
+    f buffer[2][out.size()];
 
-    oscs_.Process(params, buffer[0], buffer[1], size);
+    oscs_.Process(params, buffer[0], buffer[1], out.size());
 
-    for(f *o1=buffer[0], *o2=buffer[1]; size--;) {
-      out->l = s1_15(*o1);
-      out->r = s1_15(*o2);
-      out++; o1++; o2++;
+    f *b1 = buffer[0];
+    f *b2 = buffer[1];
+    for (Frame& o : out) {
+      o.l = s1_15(*b1);
+      o.r = s1_15(*b2);
+      b1++; b2++;
     }
   }
 };
