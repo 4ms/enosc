@@ -9,7 +9,7 @@ constexpr struct Frame {
 
 constexpr int kBlockSize = 16;
 constexpr int kSampleRate = 96000;
-constexpr int kNumOsc = 12;
+constexpr int kNumOsc = 10;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
 enum WarpMode { FOLD, CHEBY, CRUSH };

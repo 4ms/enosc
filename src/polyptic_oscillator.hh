@@ -169,12 +169,20 @@ class Oscillators : Nocopy {
     FrequencyAccumulator(f r, f p, f s, f d) : root(r), pitch(p), spread(s), detune(d) {}
     void Next(f& freq1, f& freq2, f& phase) {
       // quantize pitch
-      f p1 = (root / 6_f).integral() * 6_f;
+      int32_t integral = (root / 6_f).floor();
+      f p1 = f(integral) * 6_f;
       f p2 = p1 + 6_f;
       phase = (root - p1) / (p2 - p1);
 
       p1 += pitch + detune_accum;
       p2 += pitch + detune_accum;
+
+      if (integral & 1) {
+        phase = 1_f - phase;
+        f tmp = p1;
+        p1 = p2;
+        p2 = tmp;
+      }
 
       freq1 = Freq::of_pitch(p1).repr();
       freq2 = Freq::of_pitch(p2).repr();

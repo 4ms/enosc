@@ -82,7 +82,7 @@ extern "C" {
     HAL_IncTick();
   }
   void HardFault_Handler() {
-    uint32_t hfsr,dfsr,afsr,bfar,mmfar,cfsr;
+    volatile uint32_t hfsr,dfsr,afsr,bfar,mmfar,cfsr;
     mmfar=SCB->MMFAR;
     bfar=SCB->BFAR;
 

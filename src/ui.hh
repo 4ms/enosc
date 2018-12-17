@@ -63,8 +63,6 @@ class Control {
   AudioCVConditioner pitch_cv;
   AudioCVConditioner root_cv;
 
-  f test;
-
 public:
   void Process(Block<Frame> codec_in, Parameters &params) {
 
@@ -81,7 +79,6 @@ public:
 
     f p_cv = pitch_cv.Process(Block<s1_15> {in1, size});
     f r_cv = root_cv.Process(Block<s1_15> {in2, size});
-    test = r_cv;
 
     // Process potentiometer
 
