@@ -36,6 +36,18 @@ class Control {
     }
   };
 
+  class AudioCVConditioner {
+    CicDecimator<1, kBlockSize> cic_;
+  public:
+    f Process(Block<s1_15> in) {
+      // TODO convert CIC to Numtypes
+      int16_t x;
+      cic_.Process((int16_t *)in.data(), &x, in.size());
+      s1_15 y = s1_15::of_repr(x);
+      return y.to_float_inclusive();
+    }
+  };
+
   Adc adc_;
 
   PotConditioner<LINEAR, kPotFiltering> warp_pot;
@@ -48,8 +60,30 @@ class Control {
   PotConditioner<LINEAR, kPotFiltering> tilt_pot;
   PotConditioner<LINEAR, kPotFiltering> twist_pot;
 
+  AudioCVConditioner pitch_cv;
+  AudioCVConditioner root_cv;
+
+  f test;
+
 public:
-  void Process(Parameters &params) {
+  void Process(Block<Frame> codec_in, Parameters &params) {
+
+    // Process codec input
+    int size = codec_in.size();
+    s1_15 in1[size];
+    s1_15 in2[size];
+
+    s1_15 *i1=in1, *i2=in2;
+    for (Frame in : codec_in) {
+      *i1++ = in.l;
+      *i2++ = in.r;
+    }
+
+    f p_cv = pitch_cv.Process(Block<s1_15> {in1, size});
+    f r_cv = root_cv.Process(Block<s1_15> {in2, size});
+    test = r_cv;
+
+    // Process potentiometer
 
     s1_15 d = detune_pot.Process(adc_.get_adc(Adc::DETUNE_POT));
     f detune = Math::crop_down(kPotDeadZone, d.to_float());
@@ -83,16 +117,16 @@ public:
 
     s1_15 root = root_pot.Process(adc_.get_adc(Adc::ROOT_POT));
     params.root = root.to_float() * 12_f * 10_f;
+    params.root += r_cv * 12_f * 4_f;
 
     s1_15 pitch = pitch_pot.Process(adc_.get_adc(Adc::PITCH_POT));
     params.pitch = pitch.to_float() * 12_f * 6_f - 24_f;
+    params.pitch += p_cv * 12_f * 4_f;
     
     s1_15 s = spread_pot.Process(adc_.get_adc(Adc::SPREAD_POT));
     f spread = Math::crop_down(kPotDeadZone, s.to_float());
     spread *= spread;
     params.spread = spread * 12_f;
-    
-
 
     // warp_pot = adc_.get_adc(Adc::WARP_POT);
     // detune_pot = adc_.get_adc(Adc::DETUNE_POT);
@@ -130,9 +164,9 @@ public:
   Ui() {
   }
 
-  void Process(Parameters& params) {
+  void Process(Block<Frame> codec_in, Parameters& params) {
 
-    control_.Process(params);
+    control_.Process(codec_in, params);
 
     //Gate jacks
     freeze_jack = gates_.freeze_.get();

@@ -32,7 +32,8 @@ struct Main : Nocopy {
   }
 
   void Process(Block<Frame> in, Block<Frame> out) {
-    ui_.Process(params_);
+    debug.set(3, true);
+    ui_.Process(in, params_);
 
 #ifdef BYPASS
       while(size--) {
@@ -43,7 +44,6 @@ struct Main : Nocopy {
       return;
 #endif
 
-    debug.set(3, true);
 #ifdef TEXTILE
     osc_.Process(params_, out);
 #else

@@ -133,7 +133,7 @@ template<> struct Basetype<64, UNSIGNED> { using T = uint64_t; };
 
 template<sign SIGN, int INT, int FRAC>
 class Fixed {
-  static constexpr int WIDTH = INT + FRAC;
+  static constexpr const int WIDTH = INT + FRAC;
 
   using Base = typename Basetype<WIDTH, SIGN>::T;
   using T = Fixed<SIGN, INT, FRAC>;
