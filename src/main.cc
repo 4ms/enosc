@@ -36,11 +36,12 @@ struct Main : Nocopy {
     ui_.Process(in, params_);
 
 #ifdef BYPASS
-      while(size--) {
-        *out = *in;
-        out++;
-        in++;
-      }
+    Frame *o_begin = out.begin();
+    for(Frame i : in) {
+      Frame &o = *o_begin;
+      o = i;
+      o_begin++;
+    }
       return;
 #endif
 
