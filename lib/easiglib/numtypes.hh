@@ -532,6 +532,7 @@ constexpr s1_31 operator "" _s1_31(long double x) { return s1_31::of_double(x); 
 constexpr u0_32 operator "" _u0_32(long double x) { return u0_32::of_double(x); }
 constexpr u10_22 operator "" _u10_22(long double x) { return u10_22::of_double(x); }
 constexpr s10_22 operator "" _s10_22(long double x) { return s10_22::of_double(x); }
+constexpr u0_8 operator "" _u0_8(long double x) { return u0_8::of_double(x); }
 
 template<sign SIGN, int INT, int FRAC>
 constexpr Fixed<SIGN, INT, FRAC> Fixed<SIGN, INT, FRAC>::min_val;
