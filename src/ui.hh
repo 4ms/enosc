@@ -76,12 +76,12 @@ public:
 
     // Process potentiometer
 
-    s1_15 d = detune_pot.Process(adc_.get_adc(Adc::DETUNE_POT));
+    s1_15 d = detune_pot.Process(adc_.get(Adc::DETUNE_POT));
     f detune = Math::crop_down(kPotDeadZone, d.to_float());
     detune = (detune * detune) * (detune * detune);
     params.detune = detune;
 
-    s1_15 t = tilt_pot.Process(adc_.get_adc(Adc::TILT_POT));
+    s1_15 t = tilt_pot.Process(adc_.get(Adc::TILT_POT));
     f tilt = Math::crop(kPotDeadZone, t.to_float());
     tilt = tilt * 2_f - 1_f;
     tilt *= tilt * tilt;
@@ -89,10 +89,10 @@ public:
     tilt = Math::fast_exp2(tilt);
     params.tilt = tilt;
 
-    s1_15 warp = warp_pot.Process(adc_.get_adc(Adc::WARP_POT));
+    s1_15 warp = warp_pot.Process(adc_.get(Adc::WARP_POT));
     params.warp.value = warp.to_float();
 
-    s1_15 w = twist_pot.Process(adc_.get_adc(Adc::TWIST_POT));
+    s1_15 w = twist_pot.Process(adc_.get(Adc::TWIST_POT));
     f twist = w.to_float();
 
     if (params.twist.mode == FEEDBACK) {
@@ -106,36 +106,36 @@ public:
 
     params.twist.value = twist;
 
-    s1_15 root = root_pot.Process(adc_.get_adc(Adc::ROOT_POT));
+    s1_15 root = root_pot.Process(adc_.get(Adc::ROOT_POT));
     params.root = root.to_float() * 12_f * 10_f;
     params.root += r_cv * 12_f * 4_f;
 
-    s1_15 pitch = pitch_pot.Process(adc_.get_adc(Adc::PITCH_POT));
+    s1_15 pitch = pitch_pot.Process(adc_.get(Adc::PITCH_POT));
     params.pitch = pitch.to_float() * 12_f * 6_f - 24_f;
     params.pitch += p_cv * 12_f * 4_f;
     
-    s1_15 s = spread_pot.Process(adc_.get_adc(Adc::SPREAD_POT));
+    s1_15 s = spread_pot.Process(adc_.get(Adc::SPREAD_POT));
     f spread = Math::crop_down(kPotDeadZone, s.to_float());
     spread *= spread;
     params.spread = spread * 12_f;
 
-    // warp_pot = adc_.get_adc(Adc::WARP_POT);
-    // detune_pot = adc_.get_adc(Adc::DETUNE_POT);
-    // mod_pot = adc_.get_adc(Adc::MOD_POT);
-    // root_pot = adc_.get_adc(Adc::ROOT_POT);
-    // grid_pot = adc_.get_adc(Adc::GRID_POT);
-    // pitch_pot = adc_.get_adc(Adc::PITCH_POT);
-    // spread_pot = adc_.get_adc(Adc::SPREAD_POT);
-    // tilt_pot = adc_.get_adc(Adc::TILT_POT);
-    // twist_pot = adc_.get_adc(Adc::TWIST_POT);
+    // warp_pot = adc_.get(Adc::WARP_POT);
+    // detune_pot = adc_.get(Adc::DETUNE_POT);
+    // mod_pot = adc_.get(Adc::MOD_POT);
+    // root_pot = adc_.get(Adc::ROOT_POT);
+    // grid_pot = adc_.get(Adc::GRID_POT);
+    // pitch_pot = adc_.get(Adc::PITCH_POT);
+    // spread_pot = adc_.get(Adc::SPREAD_POT);
+    // tilt_pot = adc_.get(Adc::TILT_POT);
+    // twist_pot = adc_.get(Adc::TWIST_POT);
 
-    // spread1_cv = adc_.get_adc(Adc::SPREAD_CV_1);
-    // warp_cv = adc_.get_adc(Adc::WARP_CV);
-    // spread2_cv = adc_.get_adc(Adc::SPREAD_CV_2);
-    // twist_cv = adc_.get_adc(Adc::TWIST_CV);
-    // tilt_cv = adc_.get_adc(Adc::TILT_CV);
-    // grid_cv = adc_.get_adc(Adc::GRID_CV);
-    // mod_cv = adc_.get_adc(Adc::MOD_CV);
+    // spread1_cv = adc_.get(Adc::SPREAD_CV_1);
+    // warp_cv = adc_.get(Adc::WARP_CV);
+    // spread2_cv = adc_.get(Adc::SPREAD_CV_2);
+    // twist_cv = adc_.get(Adc::TWIST_CV);
+    // tilt_cv = adc_.get(Adc::TILT_CV);
+    // grid_cv = adc_.get(Adc::GRID_CV);
+    // mod_cv = adc_.get(Adc::MOD_CV);
   }
 };
 

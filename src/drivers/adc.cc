@@ -299,10 +299,6 @@ void Adc::ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels)
 Adc::Adc()
 {
 	//Initialize and start the ADC and DMA
-  ADC1_Init(adc_raw, NUM_ADC1);
-  ADC3_Init(adc_raw + NUM_ADC1, NUM_ADC3);
-}
-
-u0_16 Adc::get_adc(AdcChannel i) {
-  return adc_raw[(int)i];
+  ADC1_Init(value, NUM_ADC1);
+  ADC3_Init(value + NUM_ADC1, NUM_ADC3);
 }
