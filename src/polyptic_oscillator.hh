@@ -113,18 +113,6 @@ public:
 
 class DoubleOscillator : Nocopy {
   Oscillator osc_[2];
-public:
-  template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(f freq1, f freq2, f phase, f twist, f warp, f amplitude, Block<f> output) {
-    f amp1 = amplitude * (1_f - phase);
-    f amp2 = amplitude * phase;
-    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq1), twist, warp, amp1, output);
-    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq2), twist, warp, amp2, output);
-  }
-};
-
-class Oscillators : Nocopy {
-  DoubleOscillator osc_[kNumOsc];
 
   // simple linear piecewise function: 0->1, 0.5->1, 1->0
   static f antialias(f factor) {
@@ -136,6 +124,24 @@ class Oscillators : Nocopy {
       }
       return amplitude;
   }
+public:
+  template<TwistMode twist_mode, WarpMode warp_mode>
+  void Process(f freq1, f freq2, f phase, f twist, f warp, f amplitude, Block<f> output) {
+    f amp1 = amplitude * (1_f - phase);
+    f amp2 = amplitude * phase;
+
+    f aliasing_factor1 = freq1; // TODO
+    amp1 *= antialias(aliasing_factor1);
+    f aliasing_factor2 = freq2; // TODO
+    amp2 *= antialias(aliasing_factor2);
+
+    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq1), twist, warp, amp1, output);
+    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq2), twist, warp, amp2, output);
+  }
+};
+
+class Oscillators : Nocopy {
+  DoubleOscillator osc_[kNumOsc];
 
   static bool pick_output(StereoMode mode, int i) {
     return
@@ -150,8 +156,8 @@ class Oscillators : Nocopy {
     f tilt;
   public:
     AmplitudeAccumulator(f t) : tilt(t) {}
-    f Next(f aliasing_factor) {
-      f r = amplitude * antialias(aliasing_factor);
+    f Next() {
+      f r = amplitude;
       amplitudes += amplitude;
       amplitude *= tilt;
       return r;
@@ -228,8 +234,7 @@ public:
       f freq1, freq2, phase;
       frequency.Next(freq1, freq2, phase);
 
-      f aliasing_factor = freq2;
-      f amp = amplitude.Next(aliasing_factor);
+      f amp = amplitude.Next();
       Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
       (osc_[i].*process)(freq1, freq2, phase, twist, warp, amp, out);
     }
