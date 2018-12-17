@@ -201,9 +201,9 @@ class Oscillators : Nocopy {
   }
 
 public:
-  void Process(Parameters &params, f *out1, f *out2, int size) {
-    std::fill(out1, out1+size, 0_f);
-    std::fill(out2, out2+size, 0_f);
+  void Process(Parameters &params, Block<f> out1, Block<f> out2) {
+    out1.fill(0_f);
+    out2.fill(0_f);
 
     // scaling and response of common parameters
     f twist = params.twist.value;
@@ -222,15 +222,18 @@ public:
 
       f aliasing_factor = freq2;
       f amp = amplitude.Next(aliasing_factor);
-      Block<f> out = Block<f> {pick_output(params.stereo_mode, i) ? out1 : out2, size};
+      Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
       (osc_[i].*process)(freq1, freq2, phase, twist, warp, amp, out);
     }
 
     f atten = 1_f / amplitude.Sum();
-    for(f *o1=out1, *o2=out2; size--;) {
-      *o1 *= atten;
-      *o2 *= atten;
-      o1++; o2++;
+
+    f *begin1 = out1.begin();
+    for (f& o2 : out2) {
+      f& o1 = *begin1;
+      o1 *= atten;
+      o2 *= atten;
+      o1++;
     }
   }
 };
@@ -240,11 +243,13 @@ struct PolypticOscillator : Nocopy {
 
   void Process(Parameters &params, Block<Frame> out) {
     f buffer[2][out.size()];
+    Block<f> out1 {buffer[0], out.size()};
+    Block<f> out2 {buffer[1], out.size()};
 
-    oscs_.Process(params, buffer[0], buffer[1], out.size());
+    oscs_.Process(params, out1, out2);
 
-    f *b1 = buffer[0];
-    f *b2 = buffer[1];
+    f *b1 = out1.begin();
+    f *b2 = out2.begin();
     for (Frame& o : out) {
       o.l = s1_15(*b1);
       o.r = s1_15(*b2);

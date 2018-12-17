@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 template<int N>
 struct Log2 {
   static constexpr int val = Log2<N/2>::val + 1;
@@ -35,12 +37,7 @@ struct Block {
     return data_[index];
   }
 
-  void foreach(std::function<void(T*)> fn) {
-      for (T *x = data_; x<data_+size_; x++) {
-        fn(x);
-      }
-  }
-
+  void fill(T x) { std::fill(data_, data_+size_, x); }
   T* begin() { return data_; }
   T* end() { return data_ + size_; }
 
