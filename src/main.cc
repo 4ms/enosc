@@ -20,8 +20,8 @@ struct Main : Nocopy {
   Parameters params_;
 
   Codec codec_{kSampleRate,
-               [this](Frame* in, Frame *out, int size) {
-                 this->Process(in, out, size);
+               [this](Block<Frame> in, Block<Frame> out) {
+                 this->Process(in, out);
                }};
 
   Main() {
@@ -31,7 +31,7 @@ struct Main : Nocopy {
     while(1) { }
   }
 
-  void Process(Frame *in, Frame *out, int size) {
+  void Process(Block<Frame> in, Block<Frame> out) {
     ui_.Process(params_);
 
 #ifdef BYPASS
@@ -45,9 +45,9 @@ struct Main : Nocopy {
 
     debug.set(3, true);
 #ifdef TEXTILE
-    osc_.Process(params_, Block<Frame>{out, size});
+    osc_.Process(params_, out);
 #else
-    osc_.Process(params_, Block<Frame> {out, size});
+    osc_.Process(params_, out);
 #endif
     debug.set(3, false);
   }
