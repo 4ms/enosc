@@ -37,7 +37,7 @@ class Control {
   public:
     f Process(Block<s1_15> in) {
       s1_15 x = in[0];
-      cic_.Process(in.data(), &x, 1);
+      cic_.Process(in.begin(), &x, 1);
       return x.to_float_inclusive();
     }
   };

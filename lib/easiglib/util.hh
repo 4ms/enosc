@@ -41,7 +41,6 @@ struct Block {
   T* begin() { return data_; }
   T* end() { return data_ + size_; }
 
-  T* data() {return data_; }
   int size() {return size_; }
 private:
   T *data_;
