@@ -157,9 +157,9 @@ class Ui {
   bool learn_but, freeze_but;
   Switches::State mod_sw, grid_sw, twist_sw, warp_sw;
 
+
 public:
-  Ui() {
-  }
+  Ui() {}
 
   void Process(Block<Frame> codec_in, Parameters& params) {
 

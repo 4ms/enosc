@@ -24,28 +24,28 @@ private:
 // careful: gain must be <= 2^16
 template<int N, int R>
 class CicDecimator {
-  int32_t hi[N] = {0};
-  int32_t hc[N] = {0};
+  s17_15 hi[N] = {0._s17_15};
+  s17_15 hc[N] = {0._s17_15};
   static constexpr int gain = ipow(R, N);
 public:
   // reads [R*size] input samples, writes [size] output samples:
-  void Process(int16_t *input, int16_t *output, int size) {
+  void Process(s1_15 *input, s1_15 *output, int size) {
     while(size--) {
       // N integrators
       for (int i=0; i<R; i++) {
-        hi[0] += *input++;
+        hi[0] += s17_15(*input++);
         for(int n=1; n<N; n++) {
           hi[n] += hi[n-1];
         }
       }
       // N combs
-      int32_t v = hi[N-1];
+      s17_15 v = hi[N-1];
       for (int n=0; n<N; n++) {
-        int32_t in = v;
+        s17_15 in = v;
         v -= hc[n];
         hc[n] = in;
       }
-      *output++ = static_cast<int16_t>(v / gain);
+      *output++ = s1_15::wrap(v / gain);
     }
   }
 };
