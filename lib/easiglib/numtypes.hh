@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cfloat>
 
+#include "util.hh"
+
 #ifdef __arm__
   #include "stm32f7xx.h"
 #endif
@@ -321,7 +323,22 @@ public:
     return T::of_repr(-repr());
   }
 
-  constexpr T operator+(T y) const { return T::of_repr(repr() + y.repr()); }
+  template<int INT2, int FRAC2>
+  constexpr auto operator+(Fixed<SIGN, INT2, FRAC2> y) const {
+    using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
+    T a = T(*this);
+    T b = T(y);
+    return T::of_repr(a.repr() + b.repr());
+  }
+
+  template<int INT2, int FRAC2>
+  constexpr auto operator-(Fixed<SIGN, INT2, FRAC2> y) const {
+    using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
+    T a = T(*this);
+    T b = T(y);
+    return T::of_repr(a.repr() - b.repr());
+  }
+
   constexpr T operator-(T y) const { return T::of_repr(repr() - y.repr()); }
 
   template<int INT2, int FRAC2>
@@ -375,12 +392,43 @@ public:
     return T::of_repr(val_ % that.val_);
   }
   
-  constexpr bool const operator<(const T y) const { return repr() < y.repr(); }
-  constexpr bool const operator>(const T y) const { return repr() > y.repr(); }
-  constexpr bool const operator<=(const T y) const { return repr() <= y.repr(); }
-  constexpr bool const operator>=(const T y) const { return repr() >= y.repr(); }
-  constexpr bool const operator==(const T y) const { return repr() == y.repr(); }
-  constexpr bool const operator!=(const T y) const { return repr() != y.repr(); }
+
+
+  template<int INT2, int FRAC2>
+  constexpr bool const operator<(Fixed<SIGN, INT2, FRAC2> y) const {
+    using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
+    return T(*this).repr() < T(y).repr();
+  }
+
+  template<int INT2, int FRAC2>
+  constexpr bool const operator>(Fixed<SIGN, INT2, FRAC2> y) const {
+    using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
+    return T(*this).repr() > T(y).repr();
+  }
+
+  template<int INT2, int FRAC2>
+  constexpr bool const operator<=(Fixed<SIGN, INT2, FRAC2> y) const {
+    using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
+    return T(*this).repr() <= T(y).repr();
+  }
+
+  template<int INT2, int FRAC2>
+  constexpr bool const operator>=(Fixed<SIGN, INT2, FRAC2> y) const {
+    using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
+    return T(*this).repr() >= T(y).repr();
+  }
+
+  template<int INT2, int FRAC2>
+  constexpr bool const operator==(Fixed<SIGN, INT2, FRAC2> y) const {
+    using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
+    return T(*this).repr() == T(y).repr();
+  }
+
+  template<int INT2, int FRAC2>
+  constexpr bool const operator!=(Fixed<SIGN, INT2, FRAC2> y) const {
+    using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
+    return T(*this).repr() != T(y).repr();
+  }
 
   constexpr T min(const T y) const { return *this < y ? *this : y; }
   constexpr T max(const T y) const { return *this < y ? y : *this; }
