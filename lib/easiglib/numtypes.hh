@@ -354,10 +354,14 @@ public:
     return T::of_repr((repr() * that.repr()));
   }
 
-  // constexpr T operator/(T const y) const {
-  //   using Wider = typename Basetype<WIDTH, SIGN>::Wider;
-  //   return T::of_repr((static_cast<Wider>(repr()) << FRAC) / static_cast<Wider>(y.repr()));
-  // }
+  template<int INT2, int FRAC2>
+  constexpr auto
+  operator/(Fixed<SIGN, INT2, FRAC2> const that) const {
+    using Wider = typename Basetype<WIDTH+INT2+FRAC2, SIGN>::T;
+    Wider x = repr();
+    x <<= INT2 + FRAC2;
+    return Fixed<SIGN, INT+FRAC2, FRAC+INT2>::of_repr(x / that.repr());
+  }
 
   // Degraded basic operators for
   constexpr T operator*(Base const y) const {

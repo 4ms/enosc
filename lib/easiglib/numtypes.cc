@@ -169,6 +169,8 @@ static_assert(0.25_u0_16 * 0.5_u0_16 == 0.125_u0_32);
 static_assert(0._u0_16 * 0.5_u0_16 == 0._u0_32);
 static_assert(1.0_u0_16 * 0.5_u0_16 == 0.0_u0_32);
 
+// Division
+// static_assert(42_u16 / 2_u16 == 21_u32);
 
 // DYNAMIC TESTS
 
