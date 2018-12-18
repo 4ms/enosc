@@ -13,6 +13,22 @@ class Oscillators : Nocopy {
       i == 0;
   }
 
+  using processor_t = void (DoubleOscillator::*)(f, f, f, f, f, f, Block<f>);
+
+  processor_t choose_processor(TwistMode t, WarpMode m) {
+    return
+      t == FEEDBACK && m == CRUSH ? &DoubleOscillator::Process<FEEDBACK, CRUSH> :
+      t == FEEDBACK && m == CHEBY ? &DoubleOscillator::Process<FEEDBACK, CHEBY> :
+      t == FEEDBACK && m == FOLD ? &DoubleOscillator::Process<FEEDBACK, FOLD> :
+      t == PULSAR && m == CRUSH ? &DoubleOscillator::Process<PULSAR, CRUSH> :
+      t == PULSAR && m == CHEBY ? &DoubleOscillator::Process<PULSAR, CHEBY> :
+      t == PULSAR && m == FOLD ? &DoubleOscillator::Process<PULSAR, FOLD> :
+      t == DECIMATE && m == CRUSH ? &DoubleOscillator::Process<DECIMATE, CRUSH> :
+      t == DECIMATE && m == CHEBY ? &DoubleOscillator::Process<DECIMATE, CHEBY> :
+      t == DECIMATE && m == FOLD ? &DoubleOscillator::Process<DECIMATE, FOLD> :
+      NULL;
+  }
+
   class AmplitudeAccumulator {
     f amplitude = 1_f;
     f amplitudes = 0_f;
@@ -61,21 +77,6 @@ class Oscillators : Nocopy {
     }
   };
 
-  using processor_t = void (DoubleOscillator::*)(f, f, f, f, f, f, Block<f>);
-
-  processor_t choose_processor(TwistMode t, WarpMode m) {
-    return
-      t == FEEDBACK && m == CRUSH ? &DoubleOscillator::Process<FEEDBACK, CRUSH> :
-      t == FEEDBACK && m == CHEBY ? &DoubleOscillator::Process<FEEDBACK, CHEBY> :
-      t == FEEDBACK && m == FOLD ? &DoubleOscillator::Process<FEEDBACK, FOLD> :
-      t == PULSAR && m == CRUSH ? &DoubleOscillator::Process<PULSAR, CRUSH> :
-      t == PULSAR && m == CHEBY ? &DoubleOscillator::Process<PULSAR, CHEBY> :
-      t == PULSAR && m == FOLD ? &DoubleOscillator::Process<PULSAR, FOLD> :
-      t == DECIMATE && m == CRUSH ? &DoubleOscillator::Process<DECIMATE, CRUSH> :
-      t == DECIMATE && m == CHEBY ? &DoubleOscillator::Process<DECIMATE, CHEBY> :
-      t == DECIMATE && m == FOLD ? &DoubleOscillator::Process<DECIMATE, FOLD> :
-      NULL;
-  }
 
 public:
   void Process(Parameters &params, Block<f> out1, Block<f> out2) {
