@@ -2,6 +2,11 @@
 
 #include <algorithm>
 
+template<class T, T x, T y>
+struct Max {
+  static constexpr T val = x>y ? x : y;
+};
+
 template<int N>
 struct Log2 {
   static constexpr int val = Log2<N/2>::val + 1;
