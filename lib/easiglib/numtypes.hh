@@ -281,50 +281,50 @@ public:
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> movr() const {
+  constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> const movr() const {
     return Fixed<SIGN, INT+SHIFT, FRAC-SHIFT>::of_repr(val_);
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> movl() const {
+  constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> const movl() const {
     return Fixed<SIGN, INT-SHIFT, FRAC+SHIFT>::of_repr(val_);
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> shiftr() const {
+  constexpr Fixed<SIGN, INT+SHIFT, FRAC-SHIFT> const shiftr() const {
     return Fixed<SIGN, INT+SHIFT, FRAC-SHIFT>::of_repr(val_ >> SHIFT);
   }
 
   template <int SHIFT>
-  constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> shiftl() const {
+  constexpr Fixed<SIGN, INT-SHIFT, FRAC+SHIFT> const shiftl() const {
     return Fixed<SIGN, INT-SHIFT, FRAC+SHIFT>::of_repr(val_ << SHIFT);
   }
 
   // Operations:
 
   // in/decrement by the smallest amount possible in the representation
-  constexpr T succ() const { return T::of_repr(repr()+1L); }
-  constexpr T pred() const { return T::of_repr(repr()-1L); }
+  constexpr T const succ() const { return T::of_repr(repr()+1L); }
+  constexpr T const pred() const { return T::of_repr(repr()-1L); }
 
-  constexpr T floor() const { return T::of_repr(repr() & ~((1ULL << FRAC) - 1ULL)); }
-  constexpr T frac() const { return T::of_repr(repr() & ((1ULL << FRAC) - 1ULL)); }
-  constexpr T abs() const { return T::of_repr(libc_abs(val_)); }
+  constexpr T const floor() const { return T::of_repr(repr() & ~((1ULL << FRAC) - 1ULL)); }
+  constexpr T const frac() const { return T::of_repr(repr() & ((1ULL << FRAC) - 1ULL)); }
+  constexpr T const abs() const { return T::of_repr(libc_abs(val_)); }
 
-  constexpr Fixed<SIGN, WIDTH, 0> integral() const {
+  constexpr Fixed<SIGN, WIDTH, 0> const integral() const {
     return Fixed<SIGN, WIDTH, 0>::narrow(*this);
   }
 
-  constexpr Fixed<SIGN, 0, WIDTH> fractional() const {
+  constexpr Fixed<SIGN, 0, WIDTH> const fractional() const {
     return Fixed<SIGN, 0, WIDTH>::wrap(*this);
   }
 
-  constexpr T operator-() const {
+  constexpr T const operator-() const {
     static_assert(SIGN==SIGNED, "Prefix negation is invalid on unsigned data");
     return T::of_repr(-repr());
   }
 
   template<int INT2, int FRAC2>
-  constexpr auto operator+(Fixed<SIGN, INT2, FRAC2> y) const {
+  constexpr auto const operator+(Fixed<SIGN, INT2, FRAC2> const y) const {
     using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
     T a = T(*this);
     T b = T(y);
@@ -332,40 +332,39 @@ public:
   }
 
   template<int INT2, int FRAC2>
-  constexpr auto operator-(Fixed<SIGN, INT2, FRAC2> y) const {
+  constexpr auto const operator-(Fixed<SIGN, INT2, FRAC2> const y) const {
     using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
     T a = T(*this);
     T b = T(y);
     return T::of_repr(a.repr() - b.repr());
   }
 
-  constexpr T operator-(T y) const { return T::of_repr(repr() - y.repr()); }
-
   template<int INT2, int FRAC2>
-  constexpr Fixed<SIGNED, INT+INT2-1, FRAC+FRAC2+1>
-  operator*(Fixed<SIGNED, INT2, FRAC2> that) const {
+  constexpr auto
+  operator*(Fixed<SIGNED, INT2, FRAC2> const that) const {
     using T = Fixed<SIGNED, INT+INT2-1, FRAC+FRAC2+1>;
     // TODO understand this * 2!
     return T::of_repr((repr() * that.repr()) * 2);
   }
 
   template<int INT2, int FRAC2>
-  constexpr Fixed<UNSIGNED, INT+INT2, FRAC+FRAC2>
-  operator*(Fixed<UNSIGNED, INT2, FRAC2> that) const {
+  constexpr auto
+  operator*(Fixed<UNSIGNED, INT2, FRAC2> const that) const {
     using T = Fixed<UNSIGNED, INT+INT2, FRAC+FRAC2>;
     return T::of_repr((repr() * that.repr()));
   }
 
-  constexpr T operator*(Base y) const {
-    return T::of_repr(repr() * y);
-  }
-
-  // constexpr T operator/(T y) const {
+  // constexpr T operator/(T const y) const {
   //   using Wider = typename Basetype<WIDTH, SIGN>::Wider;
   //   return T::of_repr((static_cast<Wider>(repr()) << FRAC) / static_cast<Wider>(y.repr()));
   // }
 
-  constexpr T operator/(Base y) const {
+  // Degraded basic operators for
+  constexpr T operator*(Base const y) const {
+    return T::of_repr(repr() * y);
+  }
+
+  constexpr T operator/(Base const y) const {
     return T::of_repr(repr() / y);
   }
 
