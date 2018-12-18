@@ -391,47 +391,53 @@ public:
     static_assert(SIGN==UNSIGNED, "modulo undefined on unsigned types");
     return T::of_repr(val_ % that.val_);
   }
-  
-
 
   template<int INT2, int FRAC2>
-  constexpr bool const operator<(Fixed<SIGN, INT2, FRAC2> y) const {
+  constexpr bool const operator<(Fixed<SIGN, INT2, FRAC2> const that) const {
     using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
-    return T(*this).repr() < T(y).repr();
+    return T(*this).repr() < T(that).repr();
   }
 
   template<int INT2, int FRAC2>
-  constexpr bool const operator>(Fixed<SIGN, INT2, FRAC2> y) const {
+  constexpr bool const operator>(Fixed<SIGN, INT2, FRAC2> const that) const {
     using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
-    return T(*this).repr() > T(y).repr();
+    return T(*this).repr() > T(that).repr();
   }
 
   template<int INT2, int FRAC2>
-  constexpr bool const operator<=(Fixed<SIGN, INT2, FRAC2> y) const {
+  constexpr bool const operator<=(Fixed<SIGN, INT2, FRAC2> const that) const {
     using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
-    return T(*this).repr() <= T(y).repr();
+    return T(*this).repr() <= T(that).repr();
   }
 
   template<int INT2, int FRAC2>
-  constexpr bool const operator>=(Fixed<SIGN, INT2, FRAC2> y) const {
+  constexpr bool const operator>=(Fixed<SIGN, INT2, FRAC2> const that) const {
     using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
-    return T(*this).repr() >= T(y).repr();
+    return T(*this).repr() >= T(that).repr();
   }
 
   template<int INT2, int FRAC2>
-  constexpr bool const operator==(Fixed<SIGN, INT2, FRAC2> y) const {
+  constexpr bool const operator==(Fixed<SIGN, INT2, FRAC2> const that) const {
     using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
-    return T(*this).repr() == T(y).repr();
+    return T(*this).repr() == T(that).repr();
   }
 
   template<int INT2, int FRAC2>
-  constexpr bool const operator!=(Fixed<SIGN, INT2, FRAC2> y) const {
+  constexpr bool const operator!=(Fixed<SIGN, INT2, FRAC2> const that) const {
     using T = Fixed<SIGN, Max<int, INT, INT2>::val, Max<int, FRAC, FRAC2>::val>;
-    return T(*this).repr() != T(y).repr();
+    return T(*this).repr() != T(that).repr();
   }
 
-  constexpr T min(const T y) const { return *this < y ? *this : y; }
-  constexpr T max(const T y) const { return *this < y ? y : *this; }
+  template<int INT2, int FRAC2>
+  constexpr auto min(const Fixed<SIGN, INT2, FRAC2> that) const {
+    return *this < that ? *this : that;
+  }
+
+  template<int INT2, int FRAC2>
+  constexpr auto max(const Fixed<SIGN, INT2, FRAC2> that) const {
+    return *this < that ? that : *this;
+  }
+
   constexpr T clip(const T x, const T y) const { return max(x).min(y); }
 
   // saturates between -1 and 1 (signed) or 0 and 1 (unsigned)
