@@ -100,9 +100,10 @@ LDFLAGS= $(ARCHFLAGS) -T $(LDSCRIPT) \
 STARTUP = $(CMSIS_DIR)startup_stm32f722xx
 SYSTEM = $(CMSIS_DIR)system_stm32f7xx
 
-OBJS += $(STARTUP).o \
+OBJS := $(STARTUP).o \
 	$(SYSTEM).o \
 	$(addprefix $(HAL_DIR), $(HAL)) \
+	$(OBJS)
 
 all: $(TARGET).bin
 
