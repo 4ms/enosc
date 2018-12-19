@@ -77,12 +77,13 @@ CPPFLAGS= $(INC)
 CFLAGS= $(ARCHFLAGS) \
 	-g \
 	-O$(OPTIM) \
-	-flto \
-	-DUSE_HAL_DRIVER \
 	-ffast-math \
 	-fdata-sections \
 	-ffunction-sections \
 	-ffreestanding \
+	--param l1-cache-size=8 \
+	--param l1-cache-line-size=32 \
+	-DUSE_HAL_DRIVER \
 #	-DUSE_FULL_ASSERT \
 #       -DTEST \
 
@@ -93,9 +94,11 @@ CXXFLAGS=$(CFLAGS) \
 	-Wfatal-errors \
 	-Werror=return-type \
 	-Wdouble-promotion \
+	-Winline \
 
 LDFLAGS= $(ARCHFLAGS) -T $(LDSCRIPT) \
 	-Wl,--gc-sections \
+	-nostdlib \
 
 STARTUP = $(CMSIS_DIR)startup_stm32f722xx
 SYSTEM = $(CMSIS_DIR)system_stm32f7xx
