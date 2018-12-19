@@ -1,11 +1,8 @@
 #pragma once
 
 struct Gates : Nocopy {
-  struct Gate {
-    virtual bool get() = 0;
-  };
 
-  struct Learn : Gate {
+  struct Learn {
     Learn() {
       __HAL_RCC_GPIOE_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
@@ -14,10 +11,10 @@ struct Gates : Nocopy {
       gpio.Pull = GPIO_PULLDOWN;
       HAL_GPIO_Init(GPIOE, &gpio);
     }
-    bool get() { return HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_7); };
+    inline bool get() { return HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_7); };
   } learn_;
 
-  struct Freeze : Gate {
+  struct Freeze {
     Freeze() {
       __HAL_RCC_GPIOB_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
@@ -26,6 +23,6 @@ struct Gates : Nocopy {
       gpio.Pull = GPIO_PULLDOWN;
       HAL_GPIO_Init(GPIOB, &gpio);
     }
-    bool get() { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2); };
+    inline bool get() { return HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2); };
   } freeze_;
 };

@@ -26,7 +26,6 @@ struct Adc : Nocopy {
     MOD_CV,
     NUM_ADCS
   };
-  
 
   u0_16 get(AdcChannel i) {
     return value[(int)i];

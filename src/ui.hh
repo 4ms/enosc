@@ -153,8 +153,6 @@ class Ui {
 
 
 public:
-  Ui() {}
-
   void Process(Block<Frame> codec_in, Parameters& params) {
 
     control_.Process(codec_in, params);
