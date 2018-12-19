@@ -157,7 +157,7 @@ test/test: data.hh test/test.cc $(TEST_OBJS)
 %.test.o: %.cc %.cc.d
 	$(TEST_CXX) $(DEPFLAGS) $(CPPFLAGS) -c $< -o $@
 
-include $(DEPS)
+-include $(DEPS)
 
 .PRECIOUS: $(DEPS) $(OBJS) $(TEST_OBJS) $(TARGET).elf data.cc data.hh
 .PHONY: all clean flash erase debug debug-server
