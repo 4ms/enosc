@@ -94,7 +94,6 @@ CXXFLAGS=$(CFLAGS) \
 	-Wfatal-errors \
 	-Werror=return-type \
 	-Wdouble-promotion \
-	-Winline \
 
 LDFLAGS= $(ARCHFLAGS) -T $(LDSCRIPT) \
 	-Wl,--gc-sections \
