@@ -293,7 +293,7 @@ Adc::Adc() {
 
 void Adc::Start() {
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)value, NUM_ADC1);
-  HAL_ADC_Start_DMA(&hadc3, (uint32_t*)value + NUM_ADC1, NUM_ADC3);
+  HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(value + NUM_ADC1), NUM_ADC3);
 }
 
 u0_16 Adc::value[NUM_ADCS];
