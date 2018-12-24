@@ -41,7 +41,7 @@ public:
 
   // CV inputs
   struct SpreadCV : Channel {
-    SpreadCV() : Channel(NUM_ADCS) {}
+    SpreadCV() : Channel((AdcChannel)0) {}
     u0_16 get() { return
         u0_16::narrow(u0_32(value[SPREAD_CV_1]) +
                       u0_32(value[SPREAD_CV_2]));

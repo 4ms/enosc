@@ -33,9 +33,9 @@ class Control {
     }
   };
 
-  class CVConditioner {
-    s1_15 Process(u0_16 in) {
-      s1_15 x = in.to_signed();
+  struct CVConditioner {
+    s1_15 Process(Adc::Channel ch) {
+      s1_15 x = ch.get().to_signed();
       return x;
     }
   };
@@ -62,6 +62,13 @@ class Control {
   PotConditioner<LINEAR, kPotFiltering> tilt_pot;
   PotConditioner<LINEAR, kPotFiltering> twist_pot;
 
+  CVConditioner warp_cv;
+  CVConditioner spread_cv;
+  CVConditioner twist_cv;
+  CVConditioner tilt_cv;
+  CVConditioner grid_cv;
+  CVConditioner mod_cv;
+
   AudioCVConditioner pitch_cv;
   AudioCVConditioner root_cv;
 
@@ -82,7 +89,10 @@ public:
     f p_cv = pitch_cv.Process(Block<s1_15> {in1, size});
     f r_cv = root_cv.Process(Block<s1_15> {in2, size});
 
-    // Process potentiometer
+    p_cv = 0_f;                 // TODO
+    r_cv = 0_f;                 // TODO
+
+    // Process potentiometer & CV
 
     s1_15 d = detune_pot.Process(adc_.detune_pot);
     f detune = Math::crop_down(kPotDeadZone, d.to_float_inclusive());
@@ -90,6 +100,7 @@ public:
     params.detune = detune;
 
     s1_15 t = tilt_pot.Process(adc_.tilt_pot);
+    t += tilt_cv.Process(adc_.tilt_cv);
     f tilt = Math::crop(kPotDeadZone, t.to_float_inclusive());
     tilt = tilt * 2_f - 1_f;
     tilt *= tilt * tilt;
