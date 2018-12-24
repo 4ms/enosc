@@ -16,7 +16,8 @@ class Control {
   class PotConditioner {
     QuadraticOnePoleLp<LP> lp_;
   public:
-    s1_15 Process(u0_16 in) {
+    s1_15 Process(Adc::Channel ch) {
+      u0_16 in = ch.get();
       switch(LAW) {
       case LINEAR: break;
       case QUADRATIC: in = u0_16::narrow(in * in); break;
@@ -28,6 +29,13 @@ class Control {
       }
       s1_15 x = in.to_signed();
       x = lp_.Process(x);
+      return x;
+    }
+  };
+
+  class CVConditioner {
+    s1_15 Process(u0_16 in) {
+      s1_15 x = in.to_signed();
       return x;
     }
   };
@@ -76,24 +84,24 @@ public:
 
     // Process potentiometer
 
-    s1_15 d = detune_pot.Process(adc_.get(Adc::DETUNE_POT));
-    f detune = Math::crop_down(kPotDeadZone, d.to_float());
+    s1_15 d = detune_pot.Process(adc_.detune_pot);
+    f detune = Math::crop_down(kPotDeadZone, d.to_float_inclusive());
     detune = (detune * detune) * (detune * detune);
     params.detune = detune;
 
-    s1_15 t = tilt_pot.Process(adc_.get(Adc::TILT_POT));
-    f tilt = Math::crop(kPotDeadZone, t.to_float());
+    s1_15 t = tilt_pot.Process(adc_.tilt_pot);
+    f tilt = Math::crop(kPotDeadZone, t.to_float_inclusive());
     tilt = tilt * 2_f - 1_f;
     tilt *= tilt * tilt;
     tilt *= 8_f;
     tilt = Math::fast_exp2(tilt);
     params.tilt = tilt;
 
-    s1_15 warp = warp_pot.Process(adc_.get(Adc::WARP_POT));
-    params.warp.value = warp.to_float();
+    s1_15 warp = warp_pot.Process(adc_.warp_pot);
+    params.warp.value = warp.to_float_inclusive();
 
-    s1_15 w = twist_pot.Process(adc_.get(Adc::TWIST_POT));
-    f twist = w.to_float();
+    s1_15 w = twist_pot.Process(adc_.twist_pot);
+    f twist = w.to_float_inclusive();
 
     if (params.twist.mode == FEEDBACK) {
       twist *= twist;
@@ -106,16 +114,16 @@ public:
 
     params.twist.value = twist;
 
-    s1_15 root = root_pot.Process(adc_.get(Adc::ROOT_POT));
-    params.root = root.to_float() * 12_f * 10_f;
+    s1_15 root = root_pot.Process(adc_.root_pot);
+    params.root = root.to_float_inclusive() * 12_f * 10_f;
     params.root += r_cv * 12_f * 4_f;
 
-    s1_15 pitch = pitch_pot.Process(adc_.get(Adc::PITCH_POT));
-    params.pitch = pitch.to_float() * 12_f * 6_f - 24_f;
+    s1_15 pitch = pitch_pot.Process(adc_.pitch_pot);
+    params.pitch = pitch.to_float_inclusive() * 12_f * 6_f - 24_f;
     params.pitch += p_cv * 12_f * 4_f;
     
-    s1_15 s = spread_pot.Process(adc_.get(Adc::SPREAD_POT));
-    f spread = Math::crop_down(kPotDeadZone, s.to_float());
+    s1_15 s = spread_pot.Process(adc_.spread_pot);
+    f spread = Math::crop_down(kPotDeadZone, s.to_float_inclusive());
     spread *= spread;
     params.spread = spread * 12_f;
 

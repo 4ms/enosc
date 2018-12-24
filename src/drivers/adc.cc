@@ -55,10 +55,10 @@ typedef struct AdcSetup {
 	uint8_t			sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
 } AdcSetup;
 
-ADC_HandleTypeDef hadc1;
-ADC_HandleTypeDef hadc3;
-DMA_HandleTypeDef hdma_adc1;
-DMA_HandleTypeDef hdma_adc3;
+ADC_HandleTypeDef Adc::hadc1;
+ADC_HandleTypeDef Adc::hadc3;
+DMA_HandleTypeDef Adc::hdma_adc1;
+DMA_HandleTypeDef Adc::hdma_adc3;
 
 // ADC1
 enum Adc1Channels {
@@ -88,7 +88,7 @@ enum Adc3Channels{
 	NUM_ADC3
 };
 
-void Adc::ADC1_Init(u0_16 *adc_buffer, uint32_t num_channels)
+void Adc::ADC1_Init()
 {
   AdcSetup adc_setup[NUM_ADC1];
 
@@ -145,7 +145,7 @@ void Adc::ADC1_Init(u0_16 *adc_buffer, uint32_t num_channels)
 	__HAL_RCC_DMA2_CLK_ENABLE();
 
 	//Set GPIO pins to analog
-	for (i=0; i<num_channels; i++)
+	for (i=0; i<NUM_ADC1; i++)
 	{
 	    gpio.Pin = adc_setup[i].pin;
 	    gpio.Mode = GPIO_MODE_ANALOG;
@@ -179,24 +179,20 @@ void Adc::ADC1_Init(u0_16 *adc_buffer, uint32_t num_channels)
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_LEFT;
-  hadc1.Init.NbrOfConversion = num_channels;
+  hadc1.Init.NbrOfConversion = NUM_ADC1;
   hadc1.Init.DMAContinuousRequests = ENABLE;//DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
   hal_assert(HAL_ADC_Init(&hadc1));
 
-  for (i=0; i<num_channels; i++) {
+  for (i=0; i<NUM_ADC1; i++) {
 		sConfig.Channel 		= adc_setup[i].channel;
 		sConfig.Rank 			= ADC_REGULAR_RANK_1 + i;
 		sConfig.SamplingTime	= adc_setup[i].sample_time;
     hal_assert(HAL_ADC_ConfigChannel(&hadc1, &sConfig));
   }
-
-	//__HAL_ADC_DISABLE_IT(&hadc1, (ADC_IT_EOC | ADC_IT_OVR));
-
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, num_channels);
 }
 
-void Adc::ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels)
+void Adc::ADC3_Init()
 {
   AdcSetup adc_setup[NUM_ADC3];
 
@@ -243,7 +239,7 @@ void Adc::ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels)
 	__HAL_RCC_DMA2_CLK_ENABLE();
 
 	//Set GPIO pins to analog
-  for (i=0; i<num_channels; i++) {
+  for (i=0; i<NUM_ADC3; i++) {
 	    gpio.Pin = adc_setup[i].pin;
 	    gpio.Mode = GPIO_MODE_ANALOG;
 	    gpio.Pull = GPIO_NOPULL;
@@ -276,30 +272,28 @@ void Adc::ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels)
   hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc3.Init.DataAlign = ADC_DATAALIGN_LEFT;
-  hadc3.Init.NbrOfConversion = num_channels;
+  hadc3.Init.NbrOfConversion = NUM_ADC3;
   hadc3.Init.DMAContinuousRequests = ENABLE;//DISABLE;
   hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
   hal_assert(HAL_ADC_Init(&hadc3));
 
-	for (i=0; i<num_channels; i++)
+	for (i=0; i<NUM_ADC3; i++)
 	{
     sConfig.Channel = adc_setup[i].channel;
     sConfig.Rank = ADC_REGULAR_RANK_1 + i;
     sConfig.SamplingTime = adc_setup[i].sample_time;
     hal_assert(HAL_ADC_ConfigChannel(&hadc3, &sConfig));
   }
-
-  HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc_buffer, num_channels);
 }
 
-Adc::Adc()
-{
-	//Initialize and start the ADC and DMA
-  ADC1_Init(value, NUM_ADC1);
-  ADC3_Init(value + NUM_ADC1, NUM_ADC3);
+Adc::Adc() {
+  ADC1_Init();
+  ADC3_Init();
 }
 
 void Adc::Start() {
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)value, NUM_ADC1);
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)value + NUM_ADC1, NUM_ADC3);
 }
+
+u0_16 Adc::value[NUM_ADCS];
