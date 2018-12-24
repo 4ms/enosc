@@ -103,7 +103,7 @@ public:
     t += tilt_cv.Process(adc_.tilt_cv);
     f tilt = Math::crop(kPotDeadZone, t.to_float_inclusive());
     tilt = tilt * 2_f - 1_f;
-    tilt *= tilt * tilt;
+    tilt *= tilt.abs();
     tilt *= 8_f;
     tilt = Math::fast_exp2(tilt);
     params.tilt = tilt;
