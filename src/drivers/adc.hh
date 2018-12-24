@@ -33,6 +33,7 @@ struct Adc : Nocopy {
 
 private:
   u0_16 value[NUM_ADCS];
+  void Start();
   void ADC1_Init(u0_16 *adc_buffer, uint32_t num_channels);
   void ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels);
 };

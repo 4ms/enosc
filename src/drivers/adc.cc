@@ -174,10 +174,10 @@ void Adc::ADC1_Init(u0_16 *adc_buffer, uint32_t num_channels)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ENABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;//ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_CC1;//ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_LEFT;
   hadc1.Init.NbrOfConversion = num_channels;
   hadc1.Init.DMAContinuousRequests = ENABLE;//DISABLE;
@@ -193,8 +193,7 @@ void Adc::ADC1_Init(u0_16 *adc_buffer, uint32_t num_channels)
 
 	//__HAL_ADC_DISABLE_IT(&hadc1, (ADC_IT_EOC | ADC_IT_OVR));
 
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, num_channels);
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, num_channels);
 }
 
 void Adc::ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels)
@@ -204,7 +203,7 @@ void Adc::ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels)
   adc_setup[SPREAD_CV_1_ADC].gpio = SPREAD_CV_1_GPIO_Port;
   adc_setup[SPREAD_CV_1_ADC].pin = SPREAD_CV_1_Pin;
   adc_setup[SPREAD_CV_1_ADC].channel = ADC_CHANNEL_10;
-	adc_setup[SPREAD_CV_1_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[SPREAD_CV_1_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
 
   adc_setup[WARP_CV_ADC].gpio = WARP_CV_GPIO_Port;
   adc_setup[WARP_CV_ADC].pin = WARP_CV_Pin;
@@ -272,10 +271,10 @@ void Adc::ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels)
   hadc3.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
   hadc3.Init.Resolution = ADC_RESOLUTION_12B;
   hadc3.Init.ScanConvMode = ENABLE;
-  hadc3.Init.ContinuousConvMode = ENABLE;
+  hadc3.Init.ContinuousConvMode = DISABLE; //ENABLE;
   hadc3.Init.DiscontinuousConvMode = DISABLE;
   hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc3.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_CC1;//ADC_SOFTWARE_START;
+  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc3.Init.DataAlign = ADC_DATAALIGN_LEFT;
   hadc3.Init.NbrOfConversion = num_channels;
   hadc3.Init.DMAContinuousRequests = ENABLE;//DISABLE;
@@ -290,10 +289,7 @@ void Adc::ADC3_Init(u0_16 *adc_buffer, uint32_t num_channels)
     hal_assert(HAL_ADC_ConfigChannel(&hadc3, &sConfig));
   }
 
-	//__HAL_ADC_DISABLE_IT(&hadc3, (ADC_IT_EOC | ADC_IT_OVR));
-
-	HAL_ADC_Start(&hadc3);
-	HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc_buffer, num_channels);
+  HAL_ADC_Start_DMA(&hadc3, (uint32_t *)adc_buffer, num_channels);
 }
 
 Adc::Adc()
@@ -301,4 +297,9 @@ Adc::Adc()
 	//Initialize and start the ADC and DMA
   ADC1_Init(value, NUM_ADC1);
   ADC3_Init(value + NUM_ADC1, NUM_ADC3);
+}
+
+void Adc::Start() {
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)value, NUM_ADC1);
+  HAL_ADC_Start_DMA(&hadc3, (uint32_t*)value + NUM_ADC1, NUM_ADC3);
 }

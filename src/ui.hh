@@ -136,6 +136,8 @@ public:
     // tilt_cv = adc_.get(Adc::TILT_CV);
     // grid_cv = adc_.get(Adc::GRID_CV);
     // mod_cv = adc_.get(Adc::MOD_CV);
+
+    adc_.Start();
   }
 };
 
@@ -150,7 +152,6 @@ class Ui {
   bool freeze_jack, learn_jack;
   bool learn_but, freeze_but;
   Switches::State mod_sw, grid_sw, twist_sw, warp_sw;
-
 
 public:
   void Process(Block<Frame> codec_in, Parameters& params) {
