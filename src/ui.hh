@@ -94,8 +94,8 @@ public:
 
     // Process potentiometer & CV
 
-    s1_15 d = detune_pot.Process(adc_.detune_pot);
-    f detune = Math::crop_down(kPotDeadZone, d.to_float_inclusive());
+    s1_15 de = detune_pot.Process(adc_.detune_pot);
+    f detune = Math::crop_down(kPotDeadZone, de.to_float_inclusive());
     detune = (detune * detune) * (detune * detune);
     params.detune = detune;
 
@@ -108,11 +108,12 @@ public:
     tilt = Math::fast_exp2(tilt);
     params.tilt = tilt;
 
-    s1_15 warp = warp_pot.Process(adc_.warp_pot);
-    params.warp.value = warp.to_float_inclusive();
+    s1_15 wa = warp_pot.Process(adc_.warp_pot);
+    f warp = wa.to_float_inclusive();
+    params.warp.value = warp;
 
-    s1_15 w = twist_pot.Process(adc_.twist_pot);
-    f twist = w.to_float_inclusive();
+    s1_15 tw = twist_pot.Process(adc_.twist_pot);
+    f twist = tw.to_float_inclusive();
 
     if (params.twist.mode == FEEDBACK) {
       twist *= twist;
