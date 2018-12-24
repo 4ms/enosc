@@ -35,8 +35,8 @@ class Control {
 
   struct CVConditioner {
     s1_15 Process(Adc::Channel ch) {
-      s1_15 x = ch.get().to_signed();
-      return x;
+      s1_15 x = ch.get().to_signed_scale();
+      return x;                 // -1..1
     }
   };
 
@@ -72,6 +72,8 @@ class Control {
   AudioCVConditioner pitch_cv;
   AudioCVConditioner root_cv;
 
+  QuadraticOnePoleLp<4> tilt_lp;
+
 public:
   void Process(Block<Frame> codec_in, Parameters &params) {
 
@@ -99,9 +101,10 @@ public:
     detune = (detune * detune) * (detune * detune);
     params.detune = detune;
 
-    s1_15 t = tilt_pot.Process(adc_.tilt_pot);
-    t += tilt_cv.Process(adc_.tilt_cv);
-    f tilt = Math::crop(kPotDeadZone, t.to_float_inclusive());
+    s1_15 ti = tilt_pot.Process(adc_.tilt_pot);
+    ti = ti.sub_sat(tilt_cv.Process(adc_.tilt_cv));
+    ti = tilt_lp.Process(ti);
+    f tilt = Math::crop(kPotDeadZone, ti.to_float_inclusive());
     tilt = tilt * 2_f - 1_f;
     tilt *= tilt.abs();
     tilt *= 8_f;
