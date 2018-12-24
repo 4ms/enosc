@@ -91,7 +91,6 @@ CXXFLAGS=$(CFLAGS) \
 	-std=c++14 \
 	-fno-rtti \
 	-fno-exceptions \
-	-Wfatal-errors \
 	-Werror=return-type \
 	-Wdouble-promotion \
 
