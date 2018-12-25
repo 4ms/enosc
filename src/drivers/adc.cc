@@ -60,6 +60,8 @@ ADC_HandleTypeDef Adc::hadc3;
 DMA_HandleTypeDef Adc::hdma_adc1;
 DMA_HandleTypeDef Adc::hdma_adc3;
 
+constexpr const int kAdcSampleTime = ADC_SAMPLETIME_480CYCLES;
+
 // ADC1
 enum Adc1Channels {
 	WARP_POT_ADC,		//  0
@@ -95,47 +97,47 @@ void Adc::ADC1_Init()
   adc_setup[WARP_POT_ADC].gpio = WARP_POT_GPIO_Port;
   adc_setup[WARP_POT_ADC].pin = WARP_POT_Pin;
   adc_setup[WARP_POT_ADC].channel = ADC_CHANNEL_3;
-  adc_setup[WARP_POT_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[WARP_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[DETUNE_POT_ADC].gpio = DETUNE_POT_GPIO_Port;
   adc_setup[DETUNE_POT_ADC].pin = DETUNE_POT_Pin;
   adc_setup[DETUNE_POT_ADC].channel = ADC_CHANNEL_4;
-  adc_setup[DETUNE_POT_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[DETUNE_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[MOD_POT_ADC].gpio = MOD_POT_GPIO_Port;
   adc_setup[MOD_POT_ADC].pin = MOD_POT_Pin;
   adc_setup[MOD_POT_ADC].channel = ADC_CHANNEL_5;
-  adc_setup[MOD_POT_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[MOD_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[ROOT_POT_ADC].gpio = ROOT_POT_GPIO_Port;
   adc_setup[ROOT_POT_ADC].pin = ROOT_POT_Pin;
   adc_setup[ROOT_POT_ADC].channel = ADC_CHANNEL_6;
-  adc_setup[ROOT_POT_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[ROOT_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[GRID_POT_ADC].gpio = GRID_POT_GPIO_Port;
   adc_setup[GRID_POT_ADC].pin = GRID_POT_Pin;
   adc_setup[GRID_POT_ADC].channel = ADC_CHANNEL_7;
-  adc_setup[GRID_POT_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[GRID_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[PITCH_POT_ADC].gpio = PITCH_POT_GPIO_Port;
   adc_setup[PITCH_POT_ADC].pin = PITCH_POT_Pin;
   adc_setup[PITCH_POT_ADC].channel = ADC_CHANNEL_14;
-  adc_setup[PITCH_POT_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[PITCH_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[SPREAD_POT_ADC].gpio = SPREAD_POT_GPIO_Port;
   adc_setup[SPREAD_POT_ADC].pin = SPREAD_POT_Pin;
   adc_setup[SPREAD_POT_ADC].channel = ADC_CHANNEL_15;
-  adc_setup[SPREAD_POT_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[SPREAD_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[TILT_POT_ADC].gpio = TILT_POT_GPIO_Port;
   adc_setup[TILT_POT_ADC].pin = TILT_POT_Pin;
   adc_setup[TILT_POT_ADC].channel = ADC_CHANNEL_8;
-  adc_setup[TILT_POT_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[TILT_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[TWIST_POT_ADC].gpio = TWIST_POT_GPIO_Port;
   adc_setup[TWIST_POT_ADC].pin = TWIST_POT_Pin;
   adc_setup[TWIST_POT_ADC].channel = ADC_CHANNEL_9;
-  adc_setup[TWIST_POT_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[TWIST_POT_ADC].sample_time = kAdcSampleTime;
 
   ADC_ChannelConfTypeDef sConfig;
   GPIO_InitTypeDef gpio;
@@ -185,9 +187,9 @@ void Adc::ADC1_Init()
   hal_assert(HAL_ADC_Init(&hadc1));
 
   for (i=0; i<NUM_ADC1; i++) {
-		sConfig.Channel 		= adc_setup[i].channel;
-		sConfig.Rank 			= ADC_REGULAR_RANK_1 + i;
-		sConfig.SamplingTime	= adc_setup[i].sample_time;
+    sConfig.Channel = adc_setup[i].channel;
+    sConfig.Rank = ADC_REGULAR_RANK_1 + i;
+    sConfig.SamplingTime = adc_setup[i].sample_time;
     hal_assert(HAL_ADC_ConfigChannel(&hadc1, &sConfig));
   }
 }
@@ -199,37 +201,37 @@ void Adc::ADC3_Init()
   adc_setup[SPREAD_CV_1_ADC].gpio = SPREAD_CV_1_GPIO_Port;
   adc_setup[SPREAD_CV_1_ADC].pin = SPREAD_CV_1_Pin;
   adc_setup[SPREAD_CV_1_ADC].channel = ADC_CHANNEL_10;
-  adc_setup[SPREAD_CV_1_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[SPREAD_CV_1_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[WARP_CV_ADC].gpio = WARP_CV_GPIO_Port;
   adc_setup[WARP_CV_ADC].pin = WARP_CV_Pin;
   adc_setup[WARP_CV_ADC].channel = ADC_CHANNEL_11;
-  adc_setup[WARP_CV_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[WARP_CV_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[SPREAD_CV_2_ADC].gpio = SPREAD_CV_2_GPIO_Port;
   adc_setup[SPREAD_CV_2_ADC].pin = SPREAD_CV_2_Pin;
   adc_setup[SPREAD_CV_2_ADC].channel = ADC_CHANNEL_12;
-	adc_setup[SPREAD_CV_2_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+	adc_setup[SPREAD_CV_2_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[TWIST_CV_ADC].gpio = TWIST_CV_GPIO_Port;
   adc_setup[TWIST_CV_ADC].pin = TWIST_CV_Pin;
   adc_setup[TWIST_CV_ADC].channel = ADC_CHANNEL_13;
-  adc_setup[TWIST_CV_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[TWIST_CV_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[TILT_CV_ADC].gpio = TILT_CV_GPIO_Port;
   adc_setup[TILT_CV_ADC].pin = TILT_CV_Pin;
   adc_setup[TILT_CV_ADC].channel = ADC_CHANNEL_0;
-  adc_setup[TILT_CV_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[TILT_CV_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[GRID_CV_ADC].gpio = GRID_CV_GPIO_Port;
   adc_setup[GRID_CV_ADC].pin = GRID_CV_Pin;
   adc_setup[GRID_CV_ADC].channel = ADC_CHANNEL_1;
-  adc_setup[GRID_CV_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[GRID_CV_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[MOD_CV_ADC].gpio = MOD_CV_GPIO_Port;
   adc_setup[MOD_CV_ADC].pin = MOD_CV_Pin;
   adc_setup[MOD_CV_ADC].channel = ADC_CHANNEL_2;
-  adc_setup[MOD_CV_ADC].sample_time = ADC_SAMPLETIME_480CYCLES;
+  adc_setup[MOD_CV_ADC].sample_time = kAdcSampleTime;
 
   ADC_ChannelConfTypeDef sConfig;
   GPIO_InitTypeDef gpio;
@@ -277,8 +279,7 @@ void Adc::ADC3_Init()
   hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
   hal_assert(HAL_ADC_Init(&hadc3));
 
-	for (i=0; i<NUM_ADC3; i++)
-	{
+  for (i=0; i<NUM_ADC3; i++) {
     sConfig.Channel = adc_setup[i].channel;
     sConfig.Rank = ADC_REGULAR_RANK_1 + i;
     sConfig.SamplingTime = adc_setup[i].sample_time;
