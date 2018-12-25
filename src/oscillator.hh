@@ -37,8 +37,10 @@ class Oscillator : Nocopy {
   }
 
   // TODO optimize
+  // TODO amount: [0..1[
   static f cheby(s1_15 x, f amount) {
-    amount *= (Data::cheby.size() - 1_u32).to_float();
+    // TODO comprendre -2
+    amount *= (Data::cheby.size() - 2_u32).to_float();
     index idx = index(amount);
     f frac = amount.fractional();
     u0_16 phase = x.to_unsigned_scale();

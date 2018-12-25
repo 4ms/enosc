@@ -46,10 +46,11 @@ class Control {
     CVConditioner cv_;
     QuadraticOnePoleLp<LP> lp_;
     f Process(Adc::Channel pot, Adc::Channel cv) {
-      s1_15 x = pot_.Process(pot).to_signed();
-      x = x.sub_sat(cv_.Process(cv));
-      if (x<0._s1_15) x=0._s1_15; // TODO use saturating add
-      return lp_.Process(x.to_float_inclusive());
+      s17_15 x = s17_15(pot_.Process(pot).to_signed());
+      // TODO use saturating add
+      x -= s17_15(cv_.Process(cv));
+      f y = x.to_float_inclusive().clip(0_f, 1.0_f);
+      return lp_.Process(y);
     }
     f Process(Adc::Channel pot) {
       f x = pot_.Process(pot).to_float_inclusive();
@@ -69,7 +70,6 @@ class Control {
   };
 
   Adc adc_;
-
 
   PotCVCombiner<PotConditioner<LINEAR>, None, kPotFiltering> detune_;
   PotCVCombiner<PotConditioner<LINEAR>, CVConditioner, kPotFiltering> warp_;
@@ -122,7 +122,8 @@ public:
     tilt = Math::fast_exp2(tilt);
     params.tilt = tilt;
 
-    params.warp.value = warp_.Process(adc_.warp_pot);
+    f warp = warp_.Process(adc_.warp_pot, adc_.warp_cv);
+    params.warp.value = warp;
 
     f twist = twist_.Process(adc_.twist_pot, adc_.twist_cv);
     if (params.twist.mode == FEEDBACK) {
@@ -134,6 +135,10 @@ public:
       twist *= twist * 0.5_f;
     }
     params.twist.value = twist;
+
+    f spread = spread_.Process(adc_.spread_pot); // TODO
+    spread *= spread;
+    params.spread = spread * 12_f;
 
     // TODO encapsuer ds classe
     u0_16 r = root_pot.Process(adc_.root_pot);
@@ -148,9 +153,6 @@ public:
     pitch += pitch_cv_lp_.Process(p_cv) * 12_f * 4_f;
     params.pitch = pitch;
     
-    f spread = spread_.Process(adc_.spread_pot);
-    spread *= spread;
-    params.spread = spread * 12_f;
 
     // 
     adc_.Start();
