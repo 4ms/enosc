@@ -78,33 +78,27 @@ class Control {
   PotCVCombiner<PotConditioner<LINEAR>, CVConditioner, kPotFiltering> mod_;
   PotCVCombiner<PotConditioner<LINEAR>, CVConditioner, kPotFiltering> spread_;
 
-  // TODO encapsuler
-  PotConditioner<LINEAR> root_pot;
-  PotConditioner<LINEAR> pitch_pot;
-  AudioCVConditioner pitch_cv;
-  AudioCVConditioner root_cv;
+  PotConditioner<LINEAR> pitch_pot_;
+  PotConditioner<LINEAR> root_pot_;
+  AudioCVConditioner pitch_cv_;
+  AudioCVConditioner root_cv_;
   QuadraticOnePoleLp<2> root_pot_lp_;
   QuadraticOnePoleLp<2> pitch_pot_lp_;
-  QuadraticOnePoleLp<2> root_cv_lp_;
-  QuadraticOnePoleLp<2> pitch_cv_lp_;
 
 public:
   void Process(Block<Frame> codec_in, Parameters &params) {
 
     // Process codec input
     int size = codec_in.size();
-    s1_15 in1[size];
-    s1_15 in2[size];
+    s1_15 in1[size], in2[size];
+    Block<s1_15> pitch_block {in1, size};
+    Block<s1_15> root_block {in2, size};
 
-    s1_15 *i1=in1, *i2=in2;
+    auto *pi=pitch_block.begin(), *ro=root_block.begin();
     for (Frame in : codec_in) {
-      *i1++ = in.l;
-      *i2++ = in.r;
+      *pi++ = in.l;
+      *ro++ = in.r;
     }
-
-    // Root & Pitch
-    f p_cv = pitch_cv.Process(Block<s1_15> {in1, size}); // -1..1
-    f r_cv = root_cv.Process(Block<s1_15> {in2, size});  // -1..1
 
     // Process potentiometer & CV
 
@@ -142,17 +136,19 @@ public:
     spread *= spread;
     params.spread = spread * 12_f;
 
-    // TODO encapsuer ds classe
-    u0_16 r = root_pot.Process(adc_.root_pot());
+    // Root & Pitch
+    u0_16 r = root_pot_.Process(adc_.root_pot());
     f root = root_pot_lp_.Process(r.to_float_inclusive());
     root *= 12_f * 10_f; // 0..120
-    root += root_cv_lp_.Process(r_cv) * 12_f * 4_f;
+    f root_cv = root_cv_.Process(root_block);  // -1..1
+    root += root_cv * 12_f * 4_f;
     params.root = root;
 
-    u0_16 p = pitch_pot.Process(adc_.pitch_pot());
+    u0_16 p = pitch_pot_.Process(adc_.pitch_pot());
     f pitch = pitch_pot_lp_.Process(p.to_float_inclusive());
     pitch = pitch * 12_f * 6_f - 24_f;
-    pitch += pitch_cv_lp_.Process(p_cv) * 12_f * 4_f;
+    f pitch_cv = pitch_cv_.Process(pitch_block); // -1..1
+    pitch += pitch_cv * 12_f * 4_f;
     params.pitch = pitch;
     
     // Start next conversion
