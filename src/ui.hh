@@ -7,6 +7,8 @@
 
 const int kPotFiltering = 1;     // 0..16
 const f kPotDeadZone = 0.01_f;
+const f kPitchPotRange = 8_f * 12_f;
+const f kRootPotRange = 10_f * 12_f;
 
 class Control {
 
@@ -63,8 +65,12 @@ class Control {
   public:
     f Process(Block<s1_15> in) {
       s1_15 x = in[0];
-      cic_.Process(in.begin(), &x, 1);
-      return lp_.Process(x.to_float_inclusive());
+      cic_.Process(in.begin(), &x, 1); // -1..1
+      u0_16 y = x.to_unsigned_scale(); // 0..1
+      f z = lp_.Process(y.to_float_inclusive()); // 0..1
+      z = z * 8_f - 2_f;        // -2..6
+      z *= 12_f;                // -24..72
+      return z;
     }
   };
 
@@ -139,16 +145,16 @@ public:
     // Root & Pitch
     u0_16 r = root_pot_.Process(adc_.root_pot());
     f root = root_pot_lp_.Process(r.to_float_inclusive());
-    root *= 12_f * 10_f; // 0..120
-    f root_cv = root_cv_.Process(root_block);  // -1..1
-    root += root_cv * 12_f * 4_f;
+    root *= kRootPotRange;
+    f root_cv = root_cv_.Process(root_block);  // -24..72
+    root += root_cv;
     params.root = root;
 
     u0_16 p = pitch_pot_.Process(adc_.pitch_pot());
-    f pitch = pitch_pot_lp_.Process(p.to_float_inclusive());
-    pitch = pitch * 12_f * 6_f - 24_f;
-    f pitch_cv = pitch_cv_.Process(pitch_block); // -1..1
-    pitch += pitch_cv * 12_f * 4_f;
+    f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1
+    pitch *= kPitchPotRange;                               // 0..range
+    pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
+    pitch += pitch_cv_.Process(pitch_block); // -24..72
     params.pitch = pitch;
     
     // Start next conversion
