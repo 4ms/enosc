@@ -138,6 +138,7 @@ public:
     params.twist.value = twist;
 
     f spread = spread_.Process(adc_.spread_pot(), adc_.spread_cv());
+    spread = Math::crop(kPotDeadZone, spread);
     spread *= spread;
     params.spread = spread * 12_f;
 
