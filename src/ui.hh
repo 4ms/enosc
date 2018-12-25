@@ -122,9 +122,11 @@ public:
     params.tilt = tilt;
 
     f warp = warp_.Process(adc_.warp_pot(), adc_.warp_cv());
+    warp = Math::crop(kPotDeadZone, warp);
     params.warp.value = warp;
 
     f twist = twist_.Process(adc_.twist_pot(), adc_.twist_cv());
+    twist = Math::crop(kPotDeadZone, twist);
     if (params.twist.mode == FEEDBACK) {
       twist *= twist;
     } else if (params.twist.mode == PULSAR) {
