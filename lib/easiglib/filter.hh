@@ -58,36 +58,51 @@ public:
   }
 };
 
-template<class transfer>
+template<class T, class transfer>
 class NonLinearOnePoleLp {
-  s1_15 state_ = 0._s1_15;
+  T state_;
 public:
-  s1_15 Process(s1_15 input) {
+  T Process(T input) {
     state_ += transfer::Process(input-state_);
     return state_;
   }
 };
 
 template<int divisor>
-struct TransferLinear {
+struct ITransferLinear {
   static s1_15 Process(s1_15 x) { return x / divisor; }
 };
 
 template<int divisor>
-struct TransferQuadratic {
+struct ITransferQuadratic {
   static s1_15 Process(s1_15 x) { return s1_15::narrow(x.abs() * x) / divisor; }
 };
 
 template<int divisor>
-struct TransferCubic {
+struct ITransferCubic {
   static s1_15 Process(s1_15 x) { return s1_15::narrow(s1_15::narrow(x * x) * x) / divisor; }
+};
+
+template<int divisor>
+struct FTransferQuadratic {
+  static f Process(f x) { return x.abs() * x * (1_f / f(divisor)); }
+};
+
+template<int divisor>
+struct FTransferCubic {
+  static f Process(f x) { return ((x * x) * x) * (1_f / f(divisor)); }
 };
 
 
 template<int divisor>
-class QuadraticOnePoleLp : public NonLinearOnePoleLp<TransferQuadratic<divisor>> {};
+class IQuadraticOnePoleLp : public NonLinearOnePoleLp<s1_15, ITransferQuadratic<divisor> > {};
 template<int divisor>
-class CubicOnePoleLp : public NonLinearOnePoleLp<TransferCubic<divisor>> {};
+class ICubicOnePoleLp : public NonLinearOnePoleLp<s1_15, ITransferCubic<divisor> > {};
+
+template<int divisor>
+class QuadraticOnePoleLp : public NonLinearOnePoleLp<f, FTransferQuadratic<divisor> > {};
+template<int divisor>
+class CubicOnePoleLp : public NonLinearOnePoleLp<f, FTransferCubic<divisor> > {};
 
 struct FourPoleLadderLp {
   OnePoleLp lp_[4];
