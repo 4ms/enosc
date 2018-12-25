@@ -7,7 +7,7 @@
 #include "textile_oscillator.hh"
 
 // #define TEXTILE
-// #define BYPASS
+#define BYPASS
 
 struct Main : Nocopy {
   System sys_;
@@ -42,13 +42,12 @@ struct Main : Nocopy {
       o = i;
       o_begin++;
     }
-      return;
-#endif
-
+#else
 #ifdef TEXTILE
     osc_.Process(params_, out);
 #else
     osc_.Process(params_, out);
+#endif
 #endif
     debug.set(3, false);
   }
