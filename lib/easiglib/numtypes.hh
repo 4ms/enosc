@@ -529,6 +529,7 @@ using s14_2 = Fixed<SIGNED, 14, 2>;
 using s15_1 = Fixed<SIGNED, 15, 1>;
 using s16_0 = Fixed<SIGNED, 16, 0>;
 
+using u16_16 = Fixed<UNSIGNED, 16, 16>;
 using s16_16 = Fixed<SIGNED, 16, 16>;
 using s17_15 = Fixed<SIGNED, 17, 15>;
 using s1_31 = Fixed<SIGNED, 1, 31>;

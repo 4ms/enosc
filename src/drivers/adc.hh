@@ -22,34 +22,24 @@ public:
   Adc();
   void Start();
 
-  struct Channel {
-    AdcChannel ch;
-    Channel(AdcChannel c) : ch(c) {}
-    u0_16 get() { return value[(int)ch]; }
-  };
-
   // Potentiometers
-  Channel warp_pot {WARP_POT};
-  Channel detune_pot {DETUNE_POT};
-  Channel mod_pot {MOD_POT};
-  Channel root_pot {ROOT_POT};
-  Channel grid_pot {GRID_POT};
-  Channel pitch_pot {PITCH_POT};
-  Channel spread_pot {SPREAD_POT};
-  Channel tilt_pot {TILT_POT};
-  Channel twist_pot {TWIST_POT};
-
-  // CV inputs
-  struct SpreadCV : Channel {
-    SpreadCV() : Channel((AdcChannel)0) {}
-    u0_16 get() { return
-        u0_16::narrow(u0_32(value[SPREAD_CV_1]) +
-                      u0_32(value[SPREAD_CV_2]));
+  u0_16 warp_pot() { return value[WARP_POT]; }
+  u0_16 detune_pot() { return value[DETUNE_POT]; }
+  u0_16 mod_pot() { return value[MOD_POT]; }
+  u0_16 root_pot() { return value[ROOT_POT]; }
+  u0_16 grid_pot() { return value[GRID_POT]; }
+  u0_16 pitch_pot() { return value[PITCH_POT]; }
+  u0_16 spread_pot() { return value[SPREAD_POT]; }
+  u0_16 tilt_pot() { return value[TILT_POT]; }
+  u0_16 twist_pot() { return value[TWIST_POT]; }
+  u0_16 spread_cv() { return
+      u0_16::wrap((u16_16(value[SPREAD_CV_1]) +
+                     u16_16(value[SPREAD_CV_2])).div2<1>());
     }
-  } spread_cv;
-  Channel warp_cv {WARP_CV};
-  Channel twist_cv {TWIST_CV};
-  Channel tilt_cv {TILT_CV};
-  Channel grid_cv {GRID_CV};
-  Channel mod_cv {MOD_CV};
+
+  u0_16 warp_cv() { return value[WARP_CV]; }
+  u0_16 twist_cv() { return value[TWIST_CV]; }
+  u0_16 tilt_cv() { return value[TILT_CV]; }
+  u0_16 grid_cv() { return value[GRID_CV]; }
+  u0_16 mod_cv() { return value[MOD_CV]; }
 };
