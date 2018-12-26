@@ -7,9 +7,10 @@
 
 const int kPotFiltering = 1;     // 0..16
 const f kPotDeadZone = 0.01_f;
-const f kPitchPotRange = 8_f * 12_f;
+const f kPitchPotRange = 6_f * 12_f;
 const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 24_f;
+const f kCalibration2Voltage = 4_f;
 
 class Control {
 
@@ -61,17 +62,30 @@ class Control {
   };
 
   class AudioCVConditioner {
+    // TODO: convert Average to Numtypes
     Average<8, 2> lp_;
     CicDecimator<1, kBlockSize> cic_;
+    f offset;
+    f slope;
   public:
+    AudioCVConditioner(f o, f s) : offset(o), slope(s) {}
+    void calibrate_offset() {
+      u0_16 o = u0_16::of_repr(lp_.last());
+      offset = o.to_float_inclusive();
+    }
+    void calibrate_slope() {
+      u0_16 reading = u0_16::of_repr(lp_.last());
+      f octave = (reading.to_float_inclusive() - offset) / kCalibration2Voltage;
+      slope = 12_f / octave;
+    }
     f Process(Block<s1_15> in) {
       s1_15 x = in[0];
       cic_.Process(in.begin(), &x, 1); // -1..1
       u0_16 y = x.to_unsigned_scale(); // 0..1
       y = u0_16::of_repr(lp_.Process(y.repr()));
       f z = y.to_float_inclusive(); // 0..1
-      z = z * 8_f - 2_f;        // -2..6
-      z *= 12_f;                // -24..72
+      z -= offset;
+      z *= slope;                // -24..72
       return z;
     }
   };
@@ -88,12 +102,22 @@ class Control {
 
   PotConditioner<LINEAR> pitch_pot_;
   PotConditioner<LINEAR> root_pot_;
-  AudioCVConditioner pitch_cv_;
-  AudioCVConditioner root_cv_;
+  AudioCVConditioner pitch_cv_ {0.240466923_f, 96.8885345_f};
+  AudioCVConditioner root_cv_  {0.24319829_f, 97.4769897_f};
   QuadraticOnePoleLp<2> root_pot_lp_;
   QuadraticOnePoleLp<2> pitch_pot_lp_;
 
 public:
+
+  void Calibrate1() {
+    pitch_cv_.calibrate_offset();
+    root_cv_.calibrate_offset();
+  }
+  void Calibrate2() {
+    pitch_cv_.calibrate_slope();
+    root_cv_.calibrate_slope();
+  }
+
   void Process(Block<Frame> codec_in, Parameters &params) {
 
     // Process codec input
@@ -148,8 +172,7 @@ public:
     u0_16 r = root_pot_.Process(adc_.root_pot());
     f root = root_pot_lp_.Process(r.to_float_inclusive());
     root *= kRootPotRange;
-    f root_cv = root_cv_.Process(root_block);  // -24..72
-    root += root_cv;
+    root += root_cv_.Process(root_block);
     params.root = root;
 
     u0_16 p = pitch_pot_.Process(adc_.pitch_pot());
@@ -178,6 +201,17 @@ class Ui {
 
 public:
   void Process(Block<Frame> codec_in, Parameters& params) {
+
+    buttons_.Debounce();
+
+    if (buttons_.learn_.just_pressed()) {
+      control_.Calibrate1();
+      leds_.learn_.set(u0_8::max_val, u0_8::max_val, u0_8::max_val);
+    }
+    if (buttons_.freeze_.just_pressed()) {
+      control_.Calibrate2();
+      leds_.freeze_.set(u0_8::max_val, u0_8::max_val, u0_8::max_val);
+    }
 
     control_.Process(codec_in, params);
 
