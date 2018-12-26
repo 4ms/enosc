@@ -9,7 +9,7 @@ const int kPotFiltering = 1;     // 0..16
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
 const f kRootPotRange = 10_f * 12_f;
-const f kSpreadRange = 24_f;
+const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 
 class Control {
