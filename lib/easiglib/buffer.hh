@@ -18,6 +18,26 @@ protected:
   const T *data_;
 };
 
+template<class T>
+struct Block {
+  Block(T* data, int size) : data_(data), size_(size) {}
+  T& operator [] (unsigned int index) {
+    return data_[index];
+  }
+  T const& operator [] (unsigned int index) const {
+    return data_[index];
+  }
+
+  void fill(T x) { std::fill(data_, data_+size_, x); }
+  T* begin() { return data_; }
+  T* end() { return data_ + size_; }
+
+  int size() {return size_; }
+private:
+  T *data_;
+  int size_;
+};
+
 template<class T, unsigned int SIZE>
 struct Buffer {
 private:
