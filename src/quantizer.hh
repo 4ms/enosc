@@ -10,7 +10,7 @@ public:
   void Process(f pitch, f &p1, f &p2, f &phase) {
 
     int oct = (pitch / kRepeatSt).floor();
-    f octaves = (pitch / kRepeatSt).integral() * kRepeatSt;
+    f octaves = f(oct) * kRepeatSt;
     f semitones = pitch - octaves;
 
     int index = binary_search(semitones, grid, size);
