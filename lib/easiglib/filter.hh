@@ -42,6 +42,9 @@ class Average {
   uint32_t state_i[STAGES] = {0};
   RingBuffer<uint32_t, SIZE> state_c[STAGES];
 public:
+  uint16_t last() {
+    return state_i[STAGES-1] / gain;
+  }
   uint16_t Process(uint16_t x) {
     uint32_t y = x;
     for (int i=0; i<STAGES; i++) {
