@@ -7,7 +7,7 @@
 #include "textile_oscillator.hh"
 
 // #define TEXTILE
-#define BYPASS
+// #define BYPASS
 
 struct Main : Nocopy {
   System sys_;
