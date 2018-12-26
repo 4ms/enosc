@@ -8,6 +8,23 @@
 using index = u32;
 
 template<class T>
+int binary_search(T const x, T const array[], int const size) {
+  int low = 0;
+  int high = size-1;
+
+  while (low+1 < high) {
+    int mid = (low + high) / 2;
+    if (x < array[mid]) {
+      high = mid;
+    } else {
+      low = mid;
+    }
+  }
+  return low;
+}
+
+
+template<class T>
 struct Table {
   constexpr Table(std::initializer_list<T> data) :
     data_(data.begin()) {};
@@ -38,6 +55,7 @@ private:
   int size_;
 };
 
+// TODO: size not linked to data
 template<class T, unsigned int SIZE>
 struct Buffer {
 private:
