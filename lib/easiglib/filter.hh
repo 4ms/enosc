@@ -254,3 +254,35 @@ public:
     while(size--) Process(*input++, output++);
   }
 };
+
+
+class SimpleFloat {
+  f value_;
+public:
+  SimpleFloat(f value) : value_(value) { }
+  f next() { return value_; }
+  void set(f value, int t) { value_ = value; }
+};
+
+template<class FLOAT>
+class InterpolatedFloat {
+  f value_;
+  FLOAT increment_;
+public:
+  InterpolatedFloat(f value) : increment_(0_f), value_(value) {}
+  /** Returns next interpolated value. Warning: do not call more than
+   * [time] times between two calls to [set]
+   */
+  f next() {
+    value_ += increment_.next();
+    return value_;
+  }
+  /** Initializes a ramp from current value to [value] in [time]
+   * steps (i.e. calls to [next]) */
+  void set(f value, int time) {
+    increment_.set((value - value_) / f(time), time);
+  }
+};
+
+using IFloat = InterpolatedFloat<SimpleFloat>;
+using IIFloat = InterpolatedFloat<InterpolatedFloat<SimpleFloat> >;
