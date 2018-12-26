@@ -21,6 +21,7 @@ class Adc : Nocopy {
 public:
   Adc();
   void Start();
+  void Wait();
 
   // Potentiometers
   u0_16 warp_pot() { return value[WARP_POT]; }

@@ -55,12 +55,12 @@ typedef struct AdcSetup {
 	uint8_t			sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
 } AdcSetup;
 
-ADC_HandleTypeDef Adc::hadc1;
-ADC_HandleTypeDef Adc::hadc3;
-DMA_HandleTypeDef Adc::hdma_adc1;
-DMA_HandleTypeDef Adc::hdma_adc3;
+ADC_HandleTypeDef Adc::hadc1 = {0};
+ADC_HandleTypeDef Adc::hadc3 = {0};
+DMA_HandleTypeDef Adc::hdma_adc1 = {0};
+DMA_HandleTypeDef Adc::hdma_adc3 = {0};
 
-constexpr const int kAdcSampleTime = ADC_SAMPLETIME_480CYCLES;
+constexpr const int kAdcSampleTime = ADC_SAMPLETIME_56CYCLES;
 
 // ADC1
 enum Adc1Channels {
@@ -139,8 +139,8 @@ void Adc::ADC1_Init()
   adc_setup[TWIST_POT_ADC].channel = ADC_CHANNEL_9;
   adc_setup[TWIST_POT_ADC].sample_time = kAdcSampleTime;
 
-  ADC_ChannelConfTypeDef sConfig;
-  GPIO_InitTypeDef gpio;
+  ADC_ChannelConfTypeDef sConfig = {0};
+  GPIO_InitTypeDef gpio = {0};
 	uint8_t i;
 
 	//Enable DMA2 clock
@@ -167,7 +167,7 @@ void Adc::ADC1_Init()
   hdma_adc1.Init.Mode = DMA_CIRCULAR;
   hdma_adc1.Init.Priority = DMA_PRIORITY_MEDIUM;
   hdma_adc1.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-  hal_assert(HAL_DMA_Init(&hdma_adc1))
+  hal_assert(HAL_DMA_Init(&hdma_adc1));
 
   __HAL_LINKDMA(&hadc1, DMA_Handle, hdma_adc1);
 
@@ -176,14 +176,15 @@ void Adc::ADC1_Init()
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ENABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;//ENABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  // ^ Necessary for the EOC flag to be set correctly. Bug?
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_LEFT;
   hadc1.Init.NbrOfConversion = NUM_ADC1;
-  hadc1.Init.DMAContinuousRequests = ENABLE;//DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hal_assert(HAL_ADC_Init(&hadc1));
 
   for (i=0; i<NUM_ADC1; i++) {
@@ -233,8 +234,8 @@ void Adc::ADC3_Init()
   adc_setup[MOD_CV_ADC].channel = ADC_CHANNEL_2;
   adc_setup[MOD_CV_ADC].sample_time = kAdcSampleTime;
 
-  ADC_ChannelConfTypeDef sConfig;
-  GPIO_InitTypeDef gpio;
+  ADC_ChannelConfTypeDef sConfig = {0};
+  GPIO_InitTypeDef gpio = {0};
 	uint8_t i;
 
 	//Enable DMA2 clock
@@ -269,14 +270,16 @@ void Adc::ADC3_Init()
   hadc3.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
   hadc3.Init.Resolution = ADC_RESOLUTION_12B;
   hadc3.Init.ScanConvMode = ENABLE;
-  hadc3.Init.ContinuousConvMode = DISABLE; //ENABLE;
+  hadc3.Init.ContinuousConvMode = DISABLE;
   hadc3.Init.DiscontinuousConvMode = DISABLE;
-  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc3.Init.NbrOfDiscConversion = 0;
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  // ^ Necessary for the EOC flag to be set correctly. Bug?
   hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc3.Init.DataAlign = ADC_DATAALIGN_LEFT;
   hadc3.Init.NbrOfConversion = NUM_ADC3;
-  hadc3.Init.DMAContinuousRequests = ENABLE;//DISABLE;
-  hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;//ADC_EOC_SINGLE_CONV;
+  hadc3.Init.DMAContinuousRequests = DISABLE;
+  hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hal_assert(HAL_ADC_Init(&hadc3));
 
   for (i=0; i<NUM_ADC3; i++) {
@@ -295,6 +298,13 @@ Adc::Adc() {
 void Adc::Start() {
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)value, NUM_ADC1);
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(value + NUM_ADC1), NUM_ADC3);
+}
+
+void Adc::Wait() {
+  if (HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) != HAL_OK)
+    while(1);
+  if (HAL_ADC_PollForConversion(&hadc3, HAL_MAX_DELAY) != HAL_OK)
+    while(1);
 }
 
 u0_16 Adc::value[NUM_ADCS];
