@@ -2,6 +2,7 @@
 
 #include "dsp.hh"
 #include "oscillator.hh"
+#include "quantizer.hh"
 
 class Oscillators : Nocopy {
   DoubleOscillator osc_[kNumOsc];
@@ -50,24 +51,17 @@ class Oscillators : Nocopy {
     f spread;
     f detune;
     f detune_accum = 0_f;
+    Quantizer quantizer;
   public:
-    FrequencyAccumulator(f r, f p, f s, f d) : root(r), pitch(p), spread(s), detune(d) {}
+    FrequencyAccumulator(Quantizer &q, f r, f p, f s, f d) :
+      quantizer(q), root(r), pitch(p), spread(s), detune(d) {}
     void Next(f& freq1, f& freq2, f& phase) {
-      // quantize pitch
-      int32_t integral = (root / 6_f).floor();
-      f p1 = f(integral) * 6_f;
-      f p2 = p1 + 6_f;
-      phase = (root - p1) / (p2 - p1);
+
+      f p1, p2;
+      quantizer.Process(root, p1, p2, phase);
 
       p1 += pitch + detune_accum;
       p2 += pitch + detune_accum;
-
-      if (integral & 1) {
-        phase = 1_f - phase;
-        f tmp = p1;
-        p1 = p2;
-        p2 = tmp;
-      }
 
       freq1 = Freq::of_pitch(p1).repr();
       freq2 = Freq::of_pitch(p2).repr();
@@ -77,21 +71,22 @@ class Oscillators : Nocopy {
     }
   };
 
-
 public:
   void Process(Parameters &params, Block<f> out1, Block<f> out2) {
     out1.fill(0_f);
     out2.fill(0_f);
 
-    // scaling and response of common parameters
-    f twist = params.twist.value;
-    f warp = params.warp.value;
+
+    // TODO
+    Quantizer default_quantizer_;
 
     AmplitudeAccumulator amplitude {params.tilt};
-    FrequencyAccumulator frequency {params.root, params.pitch,
+    FrequencyAccumulator frequency {default_quantizer_, params.root, params.pitch,
                                     params.spread, params.detune};
 
     processor_t process = choose_processor(params.twist.mode, params.warp.mode);
+    f twist = params.twist.value;
+    f warp = params.warp.value;
 
     for (int i=0; i<kNumOsc; i++) {
       // antialias
