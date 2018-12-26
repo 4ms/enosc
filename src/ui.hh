@@ -9,6 +9,7 @@ const int kPotFiltering = 1;     // 0..16
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 8_f * 12_f;
 const f kRootPotRange = 10_f * 12_f;
+const f kSpreadRange = 24_f;
 
 class Control {
 
@@ -141,7 +142,7 @@ public:
     f spread = spread_.Process(adc_.spread_pot(), adc_.spread_cv());
     spread = Math::crop(kPotDeadZone, spread);
     spread *= spread;
-    params.spread = spread * 12_f;
+    params.spread = spread * kSpreadRange;
 
     // Root & Pitch
     u0_16 r = root_pot_.Process(adc_.root_pot());
