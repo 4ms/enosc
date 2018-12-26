@@ -2,49 +2,34 @@
 
 #define SPREAD_CV_1_Pin GPIO_PIN_0
 #define SPREAD_CV_1_GPIO_Port GPIOC
-
 #define WARP_CV_Pin GPIO_PIN_1
 #define WARP_CV_GPIO_Port GPIOC
-
 #define SPREAD_CV_2_Pin GPIO_PIN_2
 #define SPREAD_CV_2_GPIO_Port GPIOC
-
 #define TWIST_CV_Pin GPIO_PIN_3
 #define TWIST_CV_GPIO_Port GPIOC
-
 #define TILT_CV_Pin GPIO_PIN_0
 #define TILT_CV_GPIO_Port GPIOA
-
 #define GRID_CV_Pin GPIO_PIN_1
 #define GRID_CV_GPIO_Port GPIOA
-
 #define MOD_CV_Pin GPIO_PIN_2
 #define MOD_CV_GPIO_Port GPIOA
-
 #define WARP_POT_Pin GPIO_PIN_3
 #define WARP_POT_GPIO_Port GPIOA
-
 #define DETUNE_POT_Pin GPIO_PIN_4
 #define DETUNE_POT_GPIO_Port GPIOA
-
 #define MOD_POT_Pin GPIO_PIN_5
 #define MOD_POT_GPIO_Port GPIOA
-
 #define ROOT_POT_Pin GPIO_PIN_6
 #define ROOT_POT_GPIO_Port GPIOA
-
 #define GRID_POT_Pin GPIO_PIN_7
 #define GRID_POT_GPIO_Port GPIOA
-
 #define PITCH_POT_Pin GPIO_PIN_4
 #define PITCH_POT_GPIO_Port GPIOC
-
 #define SPREAD_POT_Pin GPIO_PIN_5
 #define SPREAD_POT_GPIO_Port GPIOC
-
 #define TILT_POT_Pin GPIO_PIN_0
 #define TILT_POT_GPIO_Port GPIOB
-
 #define TWIST_POT_Pin GPIO_PIN_1
 #define TWIST_POT_GPIO_Port GPIOB
 
@@ -164,7 +149,7 @@ void Adc::ADC1_Init()
   hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
   hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
   hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-  hdma_adc1.Init.Mode = DMA_NORMAL;
+  hdma_adc1.Init.Mode = DMA_CIRCULAR;
   hdma_adc1.Init.Priority = DMA_PRIORITY_MEDIUM;
   hdma_adc1.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
   hal_assert(HAL_DMA_Init(&hdma_adc1));
@@ -179,12 +164,11 @@ void Adc::ADC1_Init()
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc3.Init.NbrOfDiscConversion = 0;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  // ^ Necessary for the EOC flag to be set correctly. Bug?
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_LEFT;
   hadc1.Init.NbrOfConversion = NUM_ADC1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hal_assert(HAL_ADC_Init(&hadc1));
 
@@ -259,7 +243,7 @@ void Adc::ADC3_Init()
   hdma_adc3.Init.MemInc = DMA_MINC_ENABLE;
   hdma_adc3.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
   hdma_adc3.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-  hdma_adc3.Init.Mode = DMA_NORMAL;
+  hdma_adc3.Init.Mode = DMA_CIRCULAR;
   hdma_adc3.Init.Priority = DMA_PRIORITY_MEDIUM;
   hdma_adc3.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
   hal_assert(HAL_DMA_Init(&hdma_adc3));
@@ -274,12 +258,11 @@ void Adc::ADC3_Init()
   hadc3.Init.ContinuousConvMode = DISABLE;
   hadc3.Init.DiscontinuousConvMode = DISABLE;
   hadc3.Init.NbrOfDiscConversion = 0;
-  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  // ^ Necessary for the EOC flag to be set correctly. Bug?
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc3.Init.DataAlign = ADC_DATAALIGN_LEFT;
   hadc3.Init.NbrOfConversion = NUM_ADC3;
-  hadc3.Init.DMAContinuousRequests = DISABLE;
+  hadc3.Init.DMAContinuousRequests = ENABLE;
   hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hal_assert(HAL_ADC_Init(&hadc3));
 
