@@ -136,15 +136,20 @@ struct Leds : Nocopy {
     hal_assert(HAL_TIM_PWM_Start(&timLEARNLED, 	LEARN_LED_PWM_CHAN_BLUE));
   }
 
-  void set_freeze(u0_8 r, u0_8 g, u0_8 b) {
-    FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= r.repr();
-    FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = g.repr();
-    FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= b.repr();
-  }
+  struct {
+    void set(u0_8 r, u0_8 g, u0_8 b) {
+      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= r.repr();
+      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = g.repr();
+      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= b.repr();
+    }
+  } freeze_;
 
-  void set_learn(u0_8 r, u0_8 g, u0_8 b) {
-    LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r.repr();
-    LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = g.repr();
-    LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= b.repr();
-  }
+
+  struct {
+    void set(u0_8 r, u0_8 g, u0_8 b) {
+      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r.repr();
+      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = g.repr();
+      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= b.repr();
+    }
+  } learn_;
 };
