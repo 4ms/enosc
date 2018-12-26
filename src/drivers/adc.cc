@@ -164,7 +164,7 @@ void Adc::ADC1_Init()
   hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
   hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
   hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-  hdma_adc1.Init.Mode = DMA_CIRCULAR;
+  hdma_adc1.Init.Mode = DMA_NORMAL;
   hdma_adc1.Init.Priority = DMA_PRIORITY_MEDIUM;
   hdma_adc1.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
   hal_assert(HAL_DMA_Init(&hdma_adc1));
@@ -178,6 +178,7 @@ void Adc::ADC1_Init()
   hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc3.Init.NbrOfDiscConversion = 0;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   // ^ Necessary for the EOC flag to be set correctly. Bug?
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -258,7 +259,7 @@ void Adc::ADC3_Init()
   hdma_adc3.Init.MemInc = DMA_MINC_ENABLE;
   hdma_adc3.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
   hdma_adc3.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-  hdma_adc3.Init.Mode = DMA_CIRCULAR;
+  hdma_adc3.Init.Mode = DMA_NORMAL;
   hdma_adc3.Init.Priority = DMA_PRIORITY_MEDIUM;
   hdma_adc3.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
   hal_assert(HAL_DMA_Init(&hdma_adc3));
@@ -296,15 +297,16 @@ Adc::Adc() {
 }
 
 void Adc::Start() {
+  // TODO inline
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)value, NUM_ADC1);
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(value + NUM_ADC1), NUM_ADC3);
 }
 
 void Adc::Wait() {
-  if (HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) != HAL_OK)
-    while(1);
-  if (HAL_ADC_PollForConversion(&hadc3, HAL_MAX_DELAY) != HAL_OK)
-    while(1);
+  HAL_DMA_PollForTransfer(&hdma_adc1, HAL_DMA_FULL_TRANSFER, HAL_MAX_DELAY);
+  HAL_DMA_PollForTransfer(&hdma_adc3, HAL_DMA_FULL_TRANSFER, HAL_MAX_DELAY);
+  HAL_ADC_Stop_DMA(&hadc1);
+  HAL_ADC_Stop_DMA(&hadc3);
 }
 
 u0_16 Adc::value[NUM_ADCS];
