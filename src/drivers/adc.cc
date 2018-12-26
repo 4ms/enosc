@@ -60,7 +60,7 @@ ADC_HandleTypeDef Adc::hadc3 = {0};
 DMA_HandleTypeDef Adc::hdma_adc1 = {0};
 DMA_HandleTypeDef Adc::hdma_adc3 = {0};
 
-constexpr const int kAdcSampleTime = ADC_SAMPLETIME_56CYCLES;
+constexpr const int kAdcSampleTime = ADC_SAMPLETIME_144CYCLES;
 
 // ADC1
 enum Adc1Channels {
