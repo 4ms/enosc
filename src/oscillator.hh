@@ -26,6 +26,8 @@ public:
 class Oscillator : Nocopy {
   Phasor phasor_;
   SineShaper shaper_;
+  // TODO: switching to IFloat -> -2% perf!!!
+  IIFloat amplitude {0_f};
 
   // TODO optimize
   static f crush(s1_15 sample, f amount) {
@@ -102,11 +104,15 @@ public:
     return output;
   }
 
+  class Accumulator {
+  };
+
   template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(u0_32 freq, f twist, f warp, f amplitude, Block<f> output) {
+  void Process(u0_32 freq, f twist, f warp, f amp, Block<f> output) {
+    amplitude.set(amp, output.size());
     for (f &out : output) {
       f sample = Process<twist_mode, warp_mode>(u0_32(freq), twist, warp);
-      out += sample * amplitude;
+      out += sample * amplitude.next();
     }
   }
 };
