@@ -60,14 +60,15 @@ class Control {
   };
 
   class AudioCVConditioner {
-    QuadraticOnePoleLp<2> lp_;
+    Average<8, 2> lp_;
     CicDecimator<1, kBlockSize> cic_;
   public:
     f Process(Block<s1_15> in) {
       s1_15 x = in[0];
       cic_.Process(in.begin(), &x, 1); // -1..1
       u0_16 y = x.to_unsigned_scale(); // 0..1
-      f z = lp_.Process(y.to_float_inclusive()); // 0..1
+      y = u0_16::of_repr(lp_.Process(y.repr()));
+      f z = y.to_float_inclusive(); // 0..1
       z = z * 8_f - 2_f;        // -2..6
       z *= 12_f;                // -24..72
       return z;
