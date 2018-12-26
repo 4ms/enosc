@@ -142,8 +142,8 @@ public:
     f tilt = tilt_.Process(adc_.tilt_pot(), adc_.tilt_cv());
     tilt = Math::crop(kPotDeadZone, tilt);
     tilt = tilt * 2_f - 1_f;
-    tilt *= tilt.abs();
-    tilt *= 8_f;
+    tilt *= tilt * tilt;
+    tilt *= 4_f;
     tilt = Math::fast_exp2(tilt);
     params.tilt = tilt;
 
