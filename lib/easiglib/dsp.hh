@@ -24,8 +24,8 @@ private:
 // careful: gain must be <= 2^16
 template<int N, int R>
 class CicDecimator {
-  s17_15 hi[N] = {0._s17_15};
-  s17_15 hc[N] = {0._s17_15};
+  s17_15 hi[N];
+  s17_15 hc[N];
   static constexpr int gain = ipow(R, N);
 public:
   // reads [R*size] input samples, writes [size] output samples:
