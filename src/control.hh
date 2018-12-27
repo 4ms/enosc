@@ -2,6 +2,7 @@
 
 #include "adc.hh"
 #include "dsp.hh"
+#include "polyptic_oscillator.hh"
 
 const int kPotFiltering = 1;     // 0..16
 const f kPotDeadZone = 0.01_f;
@@ -108,7 +109,11 @@ class Control {
 
   ChangeDetector pitch_cv_change_detector_ {0.005_f, 0.01_f};
 
+  PolypticOscillator &osc_;
+
 public:
+
+  Control(PolypticOscillator &osc) : osc_(osc) {}
 
   void Process(Block<Frame> codec_in, Parameters &params,
                bool &pitch_cv_changed) {
@@ -183,6 +188,9 @@ public:
     params.pitch = pitch;
 
     pitch_cv_changed = pitch_cv_change_detector_.Process(pitch_cv);
+    if (pitch_cv_changed) {
+      osc_.new_note(pitch_cv);
+    }
 
     // Start next conversion
     adc_.Start();

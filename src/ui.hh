@@ -12,8 +12,8 @@ class Ui {
   Gates gates_;
   Switches switches_;
   Leds leds_;
-  Control control_;
   PolypticOscillator &osc_;
+  Control control_ {osc_};
 
   // UI state variables
   bool freeze_jack, learn_jack;
