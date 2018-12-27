@@ -22,7 +22,6 @@ class Ui {
 
   enum UiMode {
     NORMAL_MODE,
-    LEARN_MODE,
   } mode = NORMAL_MODE;
 
 public:
@@ -31,8 +30,7 @@ public:
   void button_pressed(Button b) {
     switch(b) {
     case LEARN: {
-      if (mode == LEARN_MODE) mode = NORMAL_MODE;
-      else mode = LEARN_MODE;
+      osc_.learn_enabled() ? osc_.disable_learn() : osc_.enable_learn();
     } break;
     case FREEZE: {
     } break;
@@ -86,11 +84,8 @@ public:
     // LEDs
     switch (mode) {
     case NORMAL_MODE:
-      leds_.learn_.set(BLACK);
-      // leds_.freeze_.set(BLACK);
-      break;
-    case LEARN_MODE:
-      leds_.learn_.set(RED);
+      bool b = osc_.learn_enabled();
+      leds_.learn_.set(b ? RED : BLACK);
       // leds_.freeze_.set(BLACK);
       break;
     }
