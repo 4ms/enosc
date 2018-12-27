@@ -1,3 +1,5 @@
+#pragma once
+
 #include "dsp.hh"
 
 class Phasor : Nocopy {

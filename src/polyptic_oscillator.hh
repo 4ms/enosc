@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 
 #include "dsp.hh"
@@ -107,10 +109,11 @@ public:
   }
 };
 
-struct PolypticOscillator : Nocopy {
+class PolypticOscillator : Nocopy {
   Oscillators oscs_;
   Quantizer quantizer_;
 
+public:
   void Process(Parameters const &params, Block<Frame> out) {
     f buffer[2][out.size()];
     Block<f> out1 {buffer[0], out.size()};
