@@ -3,7 +3,7 @@
 #include "buffer.hh"
 
 constexpr const int kGridNr = 10;
-constexpr const int kMaxGridSize = 16;
+constexpr const int kMaxGridSize = 32;
 constexpr const f kGridUnicityThreshold = 0.1_f;
 
 class Grid {
