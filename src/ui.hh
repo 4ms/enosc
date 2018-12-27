@@ -168,6 +168,10 @@ public:
     spread *= spread;
     params.spread = spread * kSpreadRange;
 
+    f grid = grid_.Process(adc_.grid_pot(), adc_.grid_cv());
+    grid *= 10_f;
+    params.grid.value = grid.floor();
+
     // Root & Pitch
     u0_16 r = root_pot_.Process(adc_.root_pot());
     f root = root_pot_lp_.Process(r.to_float_inclusive());
@@ -181,7 +185,7 @@ public:
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
     pitch += pitch_cv_.Process(pitch_block); // -24..72
     params.pitch = pitch;
-    
+
     // Start next conversion
     adc_.Start();
   }
@@ -204,6 +208,7 @@ public:
 
     buttons_.Debounce();
 
+    // Calibration (TODO temp)
     if (buttons_.learn_.just_pressed()) {
       control_.Calibrate1();
       leds_.learn_.set(u0_8::max_val, u0_8::max_val, u0_8::max_val);
@@ -224,13 +229,11 @@ public:
     learn_but = buttons_.learn_.get();
 
     //Switches
-    mod_sw = switches_.mod_.get();
-    grid_sw = switches_.grid_.get();
-    twist_sw = switches_.twist_.get();
-
     params.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
     params.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
+    params.grid.mode = static_cast<GridMode>(switches_.grid_.get());
 
+    // TODO temp
     params.stereo_mode = static_cast<StereoMode>(switches_.mod_.get());
   }
 

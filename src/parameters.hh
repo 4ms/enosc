@@ -14,6 +14,7 @@ constexpr int kNumOsc = 10;
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
 enum WarpMode { FOLD, CHEBY, CRUSH };
 enum StereoMode { ALTERNATE, SPLIT, LOWER_REST };
+enum GridMode { CHORD, HARM, JUST };
 
 // textile oscillator:
 enum DivisionMode { INTEGER, ODD, POW_OF_TWO };
@@ -25,6 +26,11 @@ struct Parameters {
   f pitch;                       // midi note
   f spread;                      // semitones
   f detune;                     // semitones
+
+  struct Grid {
+    GridMode mode;
+    int value;                     // 0..9
+  } grid;
 
   struct Twist {
     TwistMode mode;
