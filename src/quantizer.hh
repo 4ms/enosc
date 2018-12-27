@@ -8,7 +8,7 @@ constexpr const int kMaxGridSize = 16;
 class Grid {
   f grid[kMaxGridSize];
   int size = 0;
-
+  friend class PreGrid;
 public:
   Grid() {
     grid[0] = 0_f;
@@ -41,10 +41,42 @@ public:
   }
 };
 
+class PreGrid {
+  f grid[kMaxGridSize];
+  int size = 0;
+public:
+  bool add(f x) {
+    if (size < kMaxGridSize-1) {
+      grid[size++] = x;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  void clear() { size = 0; }
+
+  // do not call if size==0
+  void copy_to(Grid g) {
+    // sort table
+    std::sort(grid, grid+size);
+    // normalize from smallest element
+    for (f x : grid) {
+      x -= grid[0];
+    }
+    g.size=size;
+    std::copy(grid, grid+size, g.grid);
+  }
+};
+
 class Quantizer {
   Grid grids_[kGridNr];
 public:
   Grid get_grid(Parameters::Grid grid) {
     return grids_[grid.value];
+  }
+  // TODO temp
+  Grid get_grid(int i) {
+    return grids_[i];
   }
 };
