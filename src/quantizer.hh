@@ -61,8 +61,9 @@ public:
     // sort table
     std::sort(grid, grid+size);
     // normalize from smallest element
+    f base = grid[0];
     for (f& x : grid) {
-      x -= grid[0];
+      x -= base;
     }
     std::copy(grid, grid+size, g.grid);
     g.size=size;
