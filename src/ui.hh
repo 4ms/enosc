@@ -3,7 +3,7 @@
 #include "switches.hh"
 #include "leds.hh"
 #include "adc.hh"
-
+#include "polyptic_oscillator.hh"
 
 const int kPotFiltering = 1;     // 0..16
 const f kPotDeadZone = 0.01_f;
@@ -41,26 +41,6 @@ class Control {
     }
   };
 
-  struct None { s1_15 Process(u0_16) { return 0._s1_15; } };
-
-  template<class PotConditioner, class CVConditioner, int LP>
-  struct PotCVCombiner {
-    PotConditioner pot_;
-    CVConditioner cv_;
-    QuadraticOnePoleLp<LP> lp_;
-    f Process(u0_16 pot, u0_16 cv) {
-      s17_15 x = s17_15(pot_.Process(pot).to_signed());
-      // TODO use saturating add
-      x -= s17_15(cv_.Process(cv));
-      f y = x.to_float_inclusive().clip(0_f, 1.0_f);
-      return lp_.Process(y);
-    }
-    f Process(u0_16 pot) {
-      f x = pot_.Process(pot).to_float_inclusive();
-      return lp_.Process(x);
-    }
-  };
-
   class AudioCVConditioner {
     // TODO: convert Average to Numtypes
     Average<8, 2> lp_;
@@ -87,6 +67,26 @@ class Control {
       z -= offset;
       z *= slope;                // -24..72
       return z;
+    }
+  };
+
+  struct None { s1_15 Process(u0_16) { return 0._s1_15; } };
+
+  template<class PotConditioner, class CVConditioner, int LP>
+  struct PotCVCombiner {
+    PotConditioner pot_;
+    CVConditioner cv_;
+    QuadraticOnePoleLp<LP> lp_;
+    f Process(u0_16 pot, u0_16 cv) {
+      s17_15 x = s17_15(pot_.Process(pot).to_signed());
+      // TODO use saturating add
+      x -= s17_15(cv_.Process(cv));
+      f y = x.to_float_inclusive().clip(0_f, 1.0_f);
+      return lp_.Process(y);
+    }
+    f Process(u0_16 pot) {
+      f x = pot_.Process(pot).to_float_inclusive();
+      return lp_.Process(x);
     }
   };
 
@@ -199,28 +199,32 @@ class Ui {
   Switches switches_;
   Leds leds_;
   Control control_;
+  PolypticOscillator &osc_;
 
   // UI state variables
   bool freeze_jack, learn_jack;
   bool learn_but, freeze_but;
   Switches::State mod_sw, grid_sw, twist_sw, warp_sw;
 
+  enum UiMode {
+    NORMAL_MODE,
+    LEARN_MODE,
+  } mode = NORMAL_MODE;
+
 public:
+  Ui(PolypticOscillator &osc) : osc_(osc) {}
+
   void Process(Block<Frame> codec_in, Parameters& params) {
 
     buttons_.Debounce();
 
-    // Calibration (TODO temp)
-    if (buttons_.learn_.just_pressed()) {
-      control_.Calibrate1();
-      leds_.learn_.set(u0_8::max_val, u0_8::max_val, u0_8::max_val);
-    }
-    if (buttons_.freeze_.just_pressed()) {
-      control_.Calibrate2();
-      leds_.freeze_.set(u0_8::max_val, u0_8::max_val, u0_8::max_val);
-    }
-
     control_.Process(codec_in, params);
+
+    // Mode switches
+    if (buttons_.learn_.just_pressed()) {
+      if (mode == LEARN_MODE) mode = NORMAL_MODE;
+      else mode = LEARN_MODE;
+    }
 
     //Gate jacks
     freeze_jack = gates_.freeze_.get();
@@ -234,9 +238,20 @@ public:
     params.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
     params.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
     params.grid.mode = static_cast<GridMode>(switches_.grid_.get());
-
     // TODO temp
     params.stereo_mode = static_cast<StereoMode>(switches_.mod_.get());
+
+    // LEDs
+    switch (mode) {
+    case NORMAL_MODE:
+      leds_.learn_.set(u0_8::min_val, u0_8::min_val, u0_8::min_val);
+      leds_.freeze_.set(u0_8::min_val, u0_8::min_val, u0_8::min_val);
+      break;
+    case LEARN_MODE:
+      leds_.learn_.set(u0_8::max_val, u0_8::min_val, u0_8::min_val);
+      leds_.freeze_.set(u0_8::min_val, u0_8::min_val, u0_8::min_val);
+      break;
+    }
   }
 
 };

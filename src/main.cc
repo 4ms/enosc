@@ -11,7 +11,7 @@
 
 struct Main : Nocopy {
   System sys_;
-  Ui ui_;
+  Ui ui_ {osc_};
 #ifdef TEXTILE
   TextileOscillator osc_;
 #else
