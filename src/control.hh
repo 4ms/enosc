@@ -87,18 +87,6 @@ struct PotCVCombiner {
   }
 };
 
-class ChangeDetector {
-  f previous = 0_f;
-public:
-  bool Process(f in) {
-    f err = (in - previous).abs();
-    if (err > kChangeThreshold) {
-      previous = in;
-      return true;
-    } else return false;
-  }
-};
-
 class Control {
 
   Adc adc_;
@@ -118,7 +106,7 @@ class Control {
   QuadraticOnePoleLp<2> root_pot_lp_;
   QuadraticOnePoleLp<2> pitch_pot_lp_;
 
-  ChangeDetector pitch_cv_change_detector_;
+  ChangeDetector pitch_cv_change_detector_ {0.005_f, 0.01_f};
 
 public:
 

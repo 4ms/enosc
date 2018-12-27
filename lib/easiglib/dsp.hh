@@ -165,3 +165,51 @@ public:
   // value is f = 2sin(pi f_n T) (T sampling period, f_n freq)
   }
 };
+
+class Hysteresis {
+  bool armed = true;
+  f low, high;
+public:
+  Hysteresis(f l, f h) : low(l), high(h) {}
+  bool Process(f x) {
+    if (armed && x > high) {
+      armed = false;
+      return true;
+    } else if (x < low) {
+      armed = true;
+    }
+    return false;
+  }
+};
+
+class Derivator {
+  f state;
+public:
+  Derivator(f s) : state(s) {}
+  f Process(f x) {
+    f d = x - state;
+    state = x;
+    return d;
+  }
+};
+
+class ChangeDetector {
+  Derivator d1{0_f}, d2{0_f};
+  Hysteresis hy_pos, hy_neg;
+  bool armed_pos=true, armed_neg=true;
+public:
+  ChangeDetector(f lo, f hi) : hy_pos(lo, hi), hy_neg(lo, hi) {}
+  bool Process(f input) {
+    f speed = d1.Process(input);
+    f accel = d2.Process(speed);
+    bool pos = hy_pos.Process(accel);
+    bool neg = hy_neg.Process(-accel);
+    if (pos) armed_pos=true;
+    if (neg) armed_neg=true;
+    if (neg && armed_pos || pos && armed_neg) {
+      armed_pos = armed_neg = false;
+      return true;
+    }
+    return false;
+  }
+};
