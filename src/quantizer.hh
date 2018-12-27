@@ -18,7 +18,7 @@ public:
     size = 4;
   }
 
-  void Process(f pitch, f &p1, f &p2, f &phase) {
+  void Process(f const pitch, f &p1, f &p2, f &phase) const {
     f max = grid[size-1];
     // quotient by the max
     int oct = (pitch / max).floor();
@@ -57,11 +57,11 @@ public:
   void clear() { size = 0; }
 
   // do not call if size==0
-  void copy_to(Grid g) {
+  void copy_to(Grid &g) {
     // sort table
     std::sort(grid, grid+size);
     // normalize from smallest element
-    for (f x : grid) {
+    for (f& x : grid) {
       x -= grid[0];
     }
     std::copy(grid, grid+size, g.grid);
@@ -72,11 +72,11 @@ public:
 class Quantizer {
   Grid grids_[kGridNr];
 public:
-  Grid get_grid(Parameters::Grid grid) {
+  Grid &get_grid(Parameters::Grid grid) {
     return grids_[grid.value];
   }
   // TODO temp
-  Grid get_grid(int i) {
+  Grid &get_grid(int i) {
     return grids_[i];
   }
 };
