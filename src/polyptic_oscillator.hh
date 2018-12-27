@@ -112,8 +112,27 @@ public:
 class PolypticOscillator : Nocopy {
   Oscillators oscs_;
   Quantizer quantizer_;
+  PreGrid pre_grid_;
 
+  bool learn_mode = false;
 public:
+  bool learn_enabled() { return learn_mode; }
+  void enable_learn() {
+    pre_grid_.clear();
+    learn_mode = true;
+  }
+  void disable_learn() {
+    pre_grid_.copy_to(quantizer_.get_grid(0)); // TODO
+    learn_mode = true;
+  }
+
+  void new_note(f x) {
+    if (learn_mode) {
+      // TODO exploit function return for display
+      pre_grid_.add(x);
+    }
+  }
+
   void Process(Parameters const &params, Block<Frame> out) {
     f buffer[2][out.size()];
     Block<f> out1 {buffer[0], out.size()};
