@@ -30,7 +30,13 @@ public:
   void button_pressed(Button b) {
     switch(b) {
     case LEARN: {
-      osc_.learn_enabled() ? osc_.disable_learn() : osc_.enable_learn();
+      if (osc_.learn_enabled()) {
+        osc_.disable_learn();
+        control_.release_pitch_cv();
+      } else {
+        osc_.enable_learn();
+        control_.hold_pitch_cv();
+      }
     } break;
     case FREEZE: {
     } break;

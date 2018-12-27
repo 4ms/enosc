@@ -113,6 +113,8 @@ class Control {
 
   PolypticOscillator &osc_;
 
+  Sampler<f> pitch_cv_sampler_;
+
 public:
 
   Control(PolypticOscillator &osc) : osc_(osc) {}
@@ -185,18 +187,24 @@ public:
     f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1
     pitch *= kPitchPotRange;                               // 0..range
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
-    f pitch_cv = pitch_cv_.Process(pitch_block);
-    pitch += pitch_cv;
-    params.pitch = pitch;
 
+    f pitch_cv = pitch_cv_.Process(pitch_block);
     pitch_cv_changed = pitch_cv_change_detector_.Process(pitch_cv);
     if (pitch_cv_changed) {
       osc_.new_note(pitch_cv);
     }
 
+    pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
+    pitch += pitch_cv;
+    params.pitch = pitch;
+
+
     // Start next conversion
     adc_.Start();
   }
+
+  void hold_pitch_cv() { pitch_cv_sampler_.hold(); }
+  void release_pitch_cv() { pitch_cv_sampler_.release(); }
 
   void Calibrate1() {
     pitch_cv_.calibrate_offset();
