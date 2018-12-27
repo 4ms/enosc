@@ -132,7 +132,9 @@ class DoubleOscillator : Nocopy {
   }
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(f freq1, f freq2, f phase, f twist, f warp, f amplitude, Block<f> output) {
+  void Process(f const freq1, f const freq2, f const phase,
+               f const twist, f const warp, f const amplitude,
+               Block<f> output) {
     f amp1 = amplitude * (1_f - phase);
     f amp2 = amplitude * phase;
 

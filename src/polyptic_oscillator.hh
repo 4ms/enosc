@@ -72,7 +72,8 @@ class Oscillators : Nocopy {
   };
 
 public:
-  void Process(Parameters &params, Block<f> out1, Block<f> out2) {
+  void Process(Parameters const &params, Grid grid,
+               Block<f> out1, Block<f> out2) {
     out1.fill(0_f);
     out2.fill(0_f);
 
@@ -113,7 +114,7 @@ public:
 struct PolypticOscillator : Nocopy {
   Oscillators oscs_;
 
-  void Process(Parameters &params, Block<Frame> out) {
+  void Process(Parameters const &params, Block<Frame> out) {
     f buffer[2][out.size()];
     Block<f> out1 {buffer[0], out.size()};
     Block<f> out2 {buffer[1], out.size()};
