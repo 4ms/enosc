@@ -107,7 +107,9 @@ class Control {
   QuadraticOnePoleLp<2> root_pot_lp_;
   QuadraticOnePoleLp<2> pitch_pot_lp_;
 
-  ChangeDetector pitch_cv_change_detector_ {0.005_f, 0.01_f};
+  // delay is 5 ms
+  ChangeDetector<int(0.05 * kSampleRate / kBlockSize)>
+  pitch_cv_change_detector_ {0.005_f, 0.01_f};
 
   PolypticOscillator &osc_;
 

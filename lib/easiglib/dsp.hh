@@ -193,10 +193,12 @@ public:
   }
 };
 
+template<int DELAY>
 class ChangeDetector {
   Derivator d1{0_f}, d2{0_f};
   Hysteresis hy_pos, hy_neg;
   bool armed_pos=true, armed_neg=true;
+  int delay=0;
 public:
   ChangeDetector(f lo, f hi) : hy_pos(lo, hi), hy_neg(lo, hi) {}
   bool Process(f input) {
@@ -204,11 +206,12 @@ public:
     f accel = d2.Process(speed);
     bool pos = hy_pos.Process(accel);
     bool neg = hy_neg.Process(-accel);
-    if (pos) armed_pos=true;
-    if (neg) armed_neg=true;
+    if (delay && delay-- == 1) { return true; }
+    if (pos) { armed_pos=true; }
+    if (neg) { armed_neg=true; }
     if (neg && armed_pos || pos && armed_neg) {
       armed_pos = armed_neg = false;
-      return true;
+      delay = DELAY;
     }
     return false;
   }
