@@ -54,6 +54,14 @@
 #define LEARN_LED_PWM_GPIO 			LEARN_RED_GPIO_Port
 
 
+enum Color {
+  BLACK = 0x00,
+  RED = 0x0000FF,
+  GREEN = 0x00FF00,
+  BLUE = 0xFF0000,
+  WHITE = RED|GREEN|BLUE,
+};
+
 struct Leds : Nocopy {
 
   TIM_HandleTypeDef	timFREEZELED;
@@ -142,6 +150,12 @@ struct Leds : Nocopy {
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = g.repr();
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= b.repr();
     }
+
+    void set(Color c) {
+      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= (c & 255);
+      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = ((c >> 8) & 255);
+      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= ((c >> 16) & 255);
+    }
   } freeze_;
 
 
@@ -150,6 +164,12 @@ struct Leds : Nocopy {
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r.repr();
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = g.repr();
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= b.repr();
+    }
+
+    void set(Color c) {
+      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= (c & 255);
+      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = ((c >> 8) & 255);
+      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= ((c >> 16) & 255);
     }
   } learn_;
 };
