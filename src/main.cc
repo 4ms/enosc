@@ -27,7 +27,6 @@ struct Main : Nocopy {
   Main() {
     //Start audio processing
     codec_.Start();
-
     while(1) { }
   }
 
@@ -43,11 +42,7 @@ struct Main : Nocopy {
       o_begin++;
     }
 #else
-#ifdef TEXTILE
     osc_.Process(params_, out);
-#else
-    osc_.Process(params_, out);
-#endif
 #endif
     debug.set(3, false);
   }
