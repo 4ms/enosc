@@ -216,3 +216,13 @@ public:
     return false;
   }
 };
+
+template<class T>
+class Sampler {
+  T buffer;
+  bool hold_ = false;
+public:
+  T Process(T x) { return hold_ ? buffer : buffer=x; }
+  void hold() { hold_ = true; }
+  void release() { hold_ = false; }
+};
