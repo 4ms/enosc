@@ -223,6 +223,7 @@ public:
       else mode = LEARN_MODE;
     } break;
     case FREEZE: {
+    } break;
     }
   }
 
@@ -231,6 +232,7 @@ public:
     case LEARN: {
     } break;
     case FREEZE: {
+    } break;
     }
   }
 
@@ -242,13 +244,13 @@ public:
 
     // Mode switches
     if (buttons_.learn_.just_pressed())
-      button_pressed(Learn);
+      button_pressed(LEARN);
     else if (buttons_.learn_.just_released())
-      button_released(Learn);
+      button_released(LEARN);
     if (buttons_.freeze_.just_pressed())
-      button_pressed(Freeze);
+      button_pressed(FREEZE);
     else if (buttons_.freeze_.just_released())
-      button_released(Freeze);
+      button_released(FREEZE);
 
     //Gate jacks
     freeze_jack = gates_.freeze_.get();
