@@ -16,7 +16,7 @@ struct Buttons : Nocopy {
     }
     bool get() { return HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9); };
     void Debounce() { state_ = (state_ << 1) | get(); }
-    bool released() const { return state_ == 0b01111111; }
+    bool just_released() const { return state_ == 0b01111111; }
     bool just_pressed() const { return state_ == 0b10000000; }
     bool pressed() const { return state_ == 0b00000000; }
   } learn_;
@@ -33,7 +33,7 @@ struct Buttons : Nocopy {
     }
     bool get() { return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_11); };
     void Debounce() { state_ = (state_ << 1) | get(); }
-    bool released() const { return state_ == 0b01111111; }
+    bool just_released() const { return state_ == 0b01111111; }
     bool just_pressed() const { return state_ == 0b10000000; }
     bool pressed() const { return state_ == 0b00000000; }
   } freeze_;
