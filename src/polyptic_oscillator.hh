@@ -123,7 +123,7 @@ public:
   }
   void disable_learn() {
     pre_grid_.copy_to(quantizer_.get_grid(0)); // TODO
-    learn_mode = true;
+    learn_mode = false;
   }
 
   void new_note(f x) {

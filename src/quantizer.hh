@@ -64,8 +64,8 @@ public:
     for (f x : grid) {
       x -= grid[0];
     }
-    g.size=size;
     std::copy(grid, grid+size, g.grid);
+    g.size=size;
   }
 };
 
