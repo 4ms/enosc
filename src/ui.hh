@@ -193,6 +193,8 @@ public:
   }
 };
 
+enum Button {LEARN, FREEZE};
+
 class Ui {
   Buttons buttons_;
   Gates gates_;
@@ -214,17 +216,39 @@ class Ui {
 public:
   Ui(PolypticOscillator &osc) : osc_(osc) {}
 
-  void Process(Block<Frame> codec_in, Parameters& params) {
+  void button_pressed(Button b) {
+    switch(b) {
+    case LEARN: {
+      if (mode == LEARN_MODE) mode = NORMAL_MODE;
+      else mode = LEARN_MODE;
+    } break;
+    case FREEZE: {
+    }
+  }
 
-    buttons_.Debounce();
+  void button_released(Button b) {
+    switch(b) {
+    case LEARN: {
+    } break;
+    case FREEZE: {
+    }
+  }
+
+  void Process(Block<Frame> codec_in, Parameters& params) {
 
     control_.Process(codec_in, params);
 
+    buttons_.Debounce();
+
     // Mode switches
-    if (buttons_.learn_.just_pressed()) {
-      if (mode == LEARN_MODE) mode = NORMAL_MODE;
-      else mode = LEARN_MODE;
-    }
+    if (buttons_.learn_.just_pressed())
+      button_pressed(Learn);
+    else if (buttons_.learn_.just_released())
+      button_released(Learn);
+    if (buttons_.freeze_.just_pressed())
+      button_pressed(Freeze);
+    else if (buttons_.freeze_.just_released())
+      button_released(Freeze);
 
     //Gate jacks
     freeze_jack = gates_.freeze_.get();
@@ -244,14 +268,13 @@ public:
     // LEDs
     switch (mode) {
     case NORMAL_MODE:
-      leds_.learn_.set(u0_8::min_val, u0_8::min_val, u0_8::min_val);
-      leds_.freeze_.set(u0_8::min_val, u0_8::min_val, u0_8::min_val);
+      leds_.learn_.set(BLACK);
+      leds_.freeze_.set(BLACK);
       break;
     case LEARN_MODE:
-      leds_.learn_.set(u0_8::max_val, u0_8::min_val, u0_8::min_val);
-      leds_.freeze_.set(u0_8::min_val, u0_8::min_val, u0_8::min_val);
+      leds_.learn_.set(RED);
+      leds_.freeze_.set(BLACK);
       break;
     }
   }
-
 };
