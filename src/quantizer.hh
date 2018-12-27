@@ -1,8 +1,9 @@
 #include "buffer.hh"
 
+constexpr const int kGridNr = 10;
 constexpr const f kRepeatSt = 14_f;
 
-class Quantizer {
+class Grid {
   f grid[5] = {0_f, 3_f, 7_f, 10_f, f(kRepeatSt)};
   int size = 5;
 
@@ -26,5 +27,13 @@ public:
       p1 = p2;
       p2 = tmp;
     }
+  }
+};
+
+class Quantizer {
+  Grid grids_[kGridNr];
+public:
+  Grid get_grid(Parameters::Grid grid) {
+    return grids_[grid.value];
   }
 };

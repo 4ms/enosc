@@ -51,14 +51,14 @@ class Oscillators : Nocopy {
     f spread;
     f detune;
     f detune_accum = 0_f;
-    Quantizer quantizer;
+    Grid grid;
   public:
-    FrequencyAccumulator(Quantizer &q, f r, f p, f s, f d) :
-      quantizer(q), root(r), pitch(p), spread(s), detune(d) {}
+    FrequencyAccumulator(Grid &g, f r, f p, f s, f d) :
+      grid(g), root(r), pitch(p), spread(s), detune(d) {}
     void Next(f& freq1, f& freq2, f& phase) {
 
       f p1, p2;
-      quantizer.Process(root, p1, p2, phase);
+      grid.Process(root, p1, p2, phase);
 
       p1 += pitch + detune_accum;
       p2 += pitch + detune_accum;
@@ -77,12 +77,8 @@ public:
     out1.fill(0_f);
     out2.fill(0_f);
 
-
-    // TODO
-    Quantizer default_quantizer_;
-
     AmplitudeAccumulator amplitude {params.tilt};
-    FrequencyAccumulator frequency {default_quantizer_, params.root, params.pitch,
+    FrequencyAccumulator frequency {grid, params.root, params.pitch,
                                     params.spread, params.detune};
 
     processor_t process = choose_processor(params.twist.mode, params.warp.mode);
@@ -113,13 +109,16 @@ public:
 
 struct PolypticOscillator : Nocopy {
   Oscillators oscs_;
+  Quantizer quantizer_;
 
   void Process(Parameters const &params, Block<Frame> out) {
     f buffer[2][out.size()];
     Block<f> out1 {buffer[0], out.size()};
     Block<f> out2 {buffer[1], out.size()};
 
-    oscs_.Process(params, out1, out2);
+    Grid grid = quantizer_.get_grid(params.grid);
+
+    oscs_.Process(params, grid, out1, out2);
 
     f *b1 = out1.begin();
     f *b2 = out2.begin();
