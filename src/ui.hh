@@ -169,8 +169,10 @@ public:
     params.spread = spread * kSpreadRange;
 
     f grid = grid_.Process(adc_.grid_pot(), adc_.grid_cv());
-    grid *= 10_f;
-    params.grid.value = grid.floor();
+    grid = Math::crop(kPotDeadZone, grid); // [0..1]
+    grid *= 9_f;                           // [0..9]
+    grid += 0.5_f;                         // [0.5..9.5]
+    params.grid.value = grid.floor(); // [0..9]
 
     // Root & Pitch
     u0_16 r = root_pot_.Process(adc_.root_pot());
