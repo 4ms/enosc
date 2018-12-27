@@ -23,6 +23,17 @@ int binary_search(T const x, T const array[], int const size) {
   return low;
 }
 
+// precondition: sorted [array] of [size]
+// postcondition: deleted all elements closer than [threshold] to
+// their predecessor
+template<class T>
+void uniquify(T array[], int &size, T threshold) {
+  int j=1;
+  for(int i=1; i<size; i++)
+    if (array[i] - array[i-1] > threshold)
+      array[j++] = array[i];
+  size = j;
+}
 
 template<class T>
 struct Table {

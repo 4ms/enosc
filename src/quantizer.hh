@@ -4,6 +4,7 @@
 
 constexpr const int kGridNr = 10;
 constexpr const int kMaxGridSize = 16;
+constexpr const f kGridUnicityThreshold = 0.1_f;
 
 class Grid {
   f grid[kMaxGridSize];
@@ -65,6 +66,10 @@ public:
     for (f& x : grid) {
       x -= base;
     }
+    // remove duplicate elements
+    uniquify(grid, size, kGridUnicityThreshold);
+
+    // copy to real grid
     std::copy(grid, grid+size, g.grid);
     g.size=size;
   }
