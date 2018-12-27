@@ -50,11 +50,19 @@ public:
 
   void Process(Block<Frame> codec_in, Parameters& params) {
 
-    control_.Process(codec_in, params);
-
-    buttons_.Debounce();
+    // Controls
+    bool pitch_cv_changed = false;
+    control_.Process(codec_in, params, pitch_cv_changed);
+    // TODO: remove after use
+    if (pitch_cv_changed) {
+      leds_.freeze_.set(WHITE);
+    } else {
+      leds_.freeze_.set(BLACK);
+    }
 
     // Buttons
+    buttons_.Debounce();
+
     if (buttons_.learn_.just_pressed())
       button_pressed(LEARN);
     else if (buttons_.learn_.just_released())
@@ -79,11 +87,11 @@ public:
     switch (mode) {
     case NORMAL_MODE:
       leds_.learn_.set(BLACK);
-      leds_.freeze_.set(BLACK);
+      // leds_.freeze_.set(BLACK);
       break;
     case LEARN_MODE:
       leds_.learn_.set(RED);
-      leds_.freeze_.set(BLACK);
+      // leds_.freeze_.set(BLACK);
       break;
     }
   }

@@ -9,6 +9,9 @@ const f kPitchPotRange = 6_f * 12_f;
 const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
+const f kChangeThreshold = 0.03_f;
+
+enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
 
 template<Law LAW>  // Lp = 0..16
 class PotConditioner {
@@ -84,6 +87,20 @@ struct PotCVCombiner {
   }
 };
 
+class ChangeDetector {
+  f previous = 0_f;
+public:
+  bool Process(f in) {
+    f err = (in - previous).abs();
+    if (err > kChangeThreshold) {
+      previous = in;
+      return true;
+    } else return false;
+  }
+};
+
+class Control {
+
   Adc adc_;
 
   PotCVCombiner<PotConditioner<LINEAR>, None, kPotFiltering> detune_;
@@ -101,9 +118,12 @@ struct PotCVCombiner {
   QuadraticOnePoleLp<2> root_pot_lp_;
   QuadraticOnePoleLp<2> pitch_pot_lp_;
 
+  ChangeDetector pitch_cv_change_detector_;
+
 public:
 
-  void Process(Block<Frame> codec_in, Parameters &params) {
+  void Process(Block<Frame> codec_in, Parameters &params,
+               bool &pitch_cv_changed) {
 
     // Process codec input
     int size = codec_in.size();
@@ -170,8 +190,11 @@ public:
     f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1
     pitch *= kPitchPotRange;                               // 0..range
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
-    pitch += pitch_cv_.Process(pitch_block); // -24..72
+    f pitch_cv = pitch_cv_.Process(pitch_block);
+    pitch += pitch_cv;
     params.pitch = pitch;
+
+    pitch_cv_changed = pitch_cv_change_detector_.Process(pitch_cv);
 
     // Start next conversion
     adc_.Start();
