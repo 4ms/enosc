@@ -10,83 +10,79 @@ const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 
-class Control {
+template<Law LAW>  // Lp = 0..16
+class PotConditioner {
+public:
+  u0_16 Process(u0_16 x) {
+    switch(LAW) {
+    case LINEAR: break;
+    case QUADRATIC: x = u0_16::narrow(x * x); break;
+    case CUBIC: x = u0_16::narrow(u0_16::narrow(x * x) * x); break;
+    case QUARTIC:
+      x = u0_16::narrow(x * x);
+      x = u0_16::narrow(x * x);
+      break;
+    }
+    return x;
+  }
+};
 
-  enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
+struct CVConditioner {
+  s1_15 Process(u0_16 in) {
+    // TODO calibration
+    s1_15 x = in.to_signed_scale();
+    return x;                 // -1..1
+  }
+};
 
-  template<Law LAW>  // Lp = 0..16
-  class PotConditioner {
-  public:
-    u0_16 Process(u0_16 x) {
-      switch(LAW) {
-      case LINEAR: break;
-      case QUADRATIC: x = u0_16::narrow(x * x); break;
-      case CUBIC: x = u0_16::narrow(u0_16::narrow(x * x) * x); break;
-      case QUARTIC:
-        x = u0_16::narrow(x * x);
-        x = u0_16::narrow(x * x);
-        break;
-      }
-      return x;
-    }
-  };
+class AudioCVConditioner {
+  // TODO: convert Average to Numtypes
+  Average<8, 2> lp_;
+  CicDecimator<1, kBlockSize> cic_;
+  f offset;
+  f slope;
+public:
+  AudioCVConditioner(f o, f s) : offset(o), slope(s) {}
+  void calibrate_offset() {
+    u0_16 o = u0_16::of_repr(lp_.last());
+    offset = o.to_float_inclusive();
+  }
+  void calibrate_slope() {
+    u0_16 reading = u0_16::of_repr(lp_.last());
+    f octave = (reading.to_float_inclusive() - offset) / kCalibration2Voltage;
+    slope = 12_f / octave;
+  }
+  f Process(Block<s1_15> in) {
+    s1_15 x = in[0];
+    cic_.Process(in.begin(), &x, 1); // -1..1
+    u0_16 y = x.to_unsigned_scale(); // 0..1
+    y = u0_16::of_repr(lp_.Process(y.repr()));
+    f z = y.to_float_inclusive(); // 0..1
+    z -= offset;
+    z *= slope;                // -24..72
+    return z;
+  }
+};
 
-  struct CVConditioner {
-    s1_15 Process(u0_16 in) {
-      // TODO calibration
-      s1_15 x = in.to_signed_scale();
-      return x;                 // -1..1
-    }
-  };
+struct None { s1_15 Process(u0_16) { return 0._s1_15; } };
 
-  class AudioCVConditioner {
-    // TODO: convert Average to Numtypes
-    Average<8, 2> lp_;
-    CicDecimator<1, kBlockSize> cic_;
-    f offset;
-    f slope;
-  public:
-    AudioCVConditioner(f o, f s) : offset(o), slope(s) {}
-    void calibrate_offset() {
-      u0_16 o = u0_16::of_repr(lp_.last());
-      offset = o.to_float_inclusive();
-    }
-    void calibrate_slope() {
-      u0_16 reading = u0_16::of_repr(lp_.last());
-      f octave = (reading.to_float_inclusive() - offset) / kCalibration2Voltage;
-      slope = 12_f / octave;
-    }
-    f Process(Block<s1_15> in) {
-      s1_15 x = in[0];
-      cic_.Process(in.begin(), &x, 1); // -1..1
-      u0_16 y = x.to_unsigned_scale(); // 0..1
-      y = u0_16::of_repr(lp_.Process(y.repr()));
-      f z = y.to_float_inclusive(); // 0..1
-      z -= offset;
-      z *= slope;                // -24..72
-      return z;
-    }
-  };
-
-  struct None { s1_15 Process(u0_16) { return 0._s1_15; } };
-
-  template<class PotConditioner, class CVConditioner, int LP>
-  struct PotCVCombiner {
-    PotConditioner pot_;
-    CVConditioner cv_;
-    QuadraticOnePoleLp<LP> lp_;
-    f Process(u0_16 pot, u0_16 cv) {
-      s17_15 x = s17_15(pot_.Process(pot).to_signed());
-      // TODO use saturating add
-      x -= s17_15(cv_.Process(cv));
-      f y = x.to_float_inclusive().clip(0_f, 1.0_f);
-      return lp_.Process(y);
-    }
-    f Process(u0_16 pot) {
-      f x = pot_.Process(pot).to_float_inclusive();
-      return lp_.Process(x);
-    }
-  };
+template<class PotConditioner, class CVConditioner, int LP>
+struct PotCVCombiner {
+  PotConditioner pot_;
+  CVConditioner cv_;
+  QuadraticOnePoleLp<LP> lp_;
+  f Process(u0_16 pot, u0_16 cv) {
+    s17_15 x = s17_15(pot_.Process(pot).to_signed());
+    // TODO use saturating add
+    x -= s17_15(cv_.Process(cv));
+    f y = x.to_float_inclusive().clip(0_f, 1.0_f);
+    return lp_.Process(y);
+  }
+  f Process(u0_16 pot) {
+    f x = pot_.Process(pot).to_float_inclusive();
+    return lp_.Process(x);
+  }
+};
 
   Adc adc_;
 
