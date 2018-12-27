@@ -144,3 +144,33 @@ public:
   void Read(index n) { return buffer_; }
   void ReadLast() { return buffer_; }
 };
+
+// WARNING: untested
+template <class T, int SIZE>
+class Queue {
+  T buf_[SIZE];
+  int head_ = 0;
+  int tail_ = 0;
+  bool full_ = false;
+public:
+  bool put(T item) {
+    if(full_) return false;
+    buf_[head_] = item;
+    head_ = (head_+1) % SIZE;
+    full_ = head_ == tail_;
+    return true;
+  }
+
+  bool get(T& x) {
+    if(empty()) return false;
+    x = buf_[tail_];
+    full_ = false;
+    tail_ = (tail_+1) % SIZE;
+    return true;
+  }
+
+  T get() { T x; get(x); return x; }
+  void reset() { head_ = tail_; full_ = false; }
+  bool empty() const { return (!full_ && (head_ == tail_)); };
+  bool full() const { return full_; };
+};
