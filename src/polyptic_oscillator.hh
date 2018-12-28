@@ -123,7 +123,11 @@ public:
     learn_mode = true;
   }
   void disable_learn() {
-    pre_grid_.copy_to(current_grid_);
+    if (pre_grid_.size() >= 2) {
+      pre_grid_.copy_to(current_grid_);
+    } else {
+      // TODO display error
+    }
     learn_mode = false;
   }
 
