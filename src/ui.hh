@@ -24,19 +24,23 @@ class Ui {
     NORMAL_MODE,
   } mode = NORMAL_MODE;
 
+  void set_learn(bool b) {
+    if (b) {
+      osc_.enable_learn();
+      control_.hold_pitch_cv();
+    } else {
+      osc_.disable_learn();
+      control_.release_pitch_cv();
+    }
+  }
+
 public:
   Ui(PolypticOscillator &osc) : osc_(osc) {}
 
   void button_pressed(Button b) {
     switch(b) {
     case LEARN: {
-      if (osc_.learn_enabled()) {
-        osc_.disable_learn();
-        control_.release_pitch_cv();
-      } else {
-        osc_.enable_learn();
-        control_.hold_pitch_cv();
-      }
+      set_learn(!osc_.learn_enabled());
     } break;
     case FREEZE: {
     } break;
