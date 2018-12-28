@@ -6,6 +6,11 @@
 struct Math {
   static constexpr f pi = f(3.14159265358979323846264338327950288);
 
+  // [0..1] --> [0..1], f(0)=0, f(1)=1, f'(0)=0, f'(1)=0
+  static constexpr f fast_raised_cosine(f x) {
+    return x * x * (3_f - x * 2_f);
+  }
+
   // [-1; +1] --> [-1; +1]
   static constexpr f faster_sine(f x) {
     x = (x * 2_f) - 1_f;
