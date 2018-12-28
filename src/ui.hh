@@ -5,7 +5,8 @@
 #include "control.hh"
 #include "polyptic_oscillator.hh"
 
-enum Button {LEARN, FREEZE};
+enum Button {BUTTON_LEARN, BUTTON_FREEZE};
+enum Gate {GATE_LEARN, GATE_FREEZE};
 
 class Ui {
   Buttons buttons_;
@@ -14,11 +15,6 @@ class Ui {
   Leds leds_;
   PolypticOscillator &osc_;
   Control control_ {osc_};
-
-  // UI state variables
-  bool freeze_jack, learn_jack;
-  bool learn_but, freeze_but;
-  Switches::State mod_sw, grid_sw, twist_sw, warp_sw;
 
   enum UiMode {
     NORMAL_MODE,
@@ -39,20 +35,40 @@ public:
 
   void button_pressed(Button b) {
     switch(b) {
-    case LEARN: {
+    case BUTTON_LEARN: {
       set_learn(!osc_.learn_enabled());
     } break;
-    case FREEZE: {
+    case BUTTON_FREEZE: {
     } break;
     }
   }
 
   void button_released(Button b) {
     switch(b) {
-    case LEARN: {
+    case BUTTON_LEARN: {
     } break;
-    case FREEZE: {
+    case BUTTON_FREEZE: {
     } break;
+    }
+  }
+
+  void gate_enabled(Gate g) {
+    switch(g) {
+    case GATE_LEARN:
+      set_learn(true);
+      break;
+    case GATE_FREEZE:
+      break;
+    }
+  }
+
+  void gate_disabled(Gate g) {
+    switch(g) {
+    case GATE_LEARN:
+      set_learn(false);
+      break;
+    case GATE_FREEZE:
+      break;
     }
   }
 
@@ -72,17 +88,25 @@ public:
     buttons_.Debounce();
 
     if (buttons_.learn_.just_pressed())
-      button_pressed(LEARN);
+      button_pressed(BUTTON_LEARN);
     else if (buttons_.learn_.just_released())
-      button_released(LEARN);
+      button_released(BUTTON_LEARN);
     if (buttons_.freeze_.just_pressed())
-      button_pressed(FREEZE);
+      button_pressed(BUTTON_FREEZE);
     else if (buttons_.freeze_.just_released())
-      button_released(FREEZE);
+      button_released(BUTTON_FREEZE);
 
     //Gate jacks
-    freeze_jack = gates_.freeze_.get();
-    learn_jack = gates_.learn_.get();
+    gates_.Debounce();
+
+    if (gates_.learn_.just_enabled())
+      gate_enabled(GATE_LEARN);
+    else if (gates_.learn_.just_disabled())
+      gate_disabled(GATE_LEARN);
+    if (gates_.freeze_.just_enabled())
+      gate_enabled(GATE_FREEZE);
+    else if (gates_.freeze_.just_disabled())
+      gate_disabled(GATE_FREEZE);
 
     //Switches
     params.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
