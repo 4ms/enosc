@@ -23,11 +23,14 @@ public:
     lp_.Process(sample, &history_);
     return sample;
   }
+
+  // without Feedback
+  s1_15 Process(u0_32 phase) {
+    return Data::short_sine.interpolate(phase).movl<15>();
+  }
 };
 
-class Oscillator : Nocopy {
-  Phasor phasor_;
-  SineShaper shaper_;
+class Oscillator : Phasor, SineShaper {
   // TODO: switching to IFloat -> -2% perf!!!
   IIFloat amplitude {0_f};
 
@@ -82,7 +85,7 @@ class Oscillator : Nocopy {
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   f Process(u0_32 freq, f twist, f warp) {
-    u0_32 phase = phasor_.Process(freq);
+    u0_32 phase = Phasor::Process(freq);
 
     f feedback = 0_f;
     if (twist_mode == FEEDBACK) {
@@ -93,7 +96,10 @@ public:
       phase = decimate(phase, twist);
     }
 
-    s1_15 sine = shaper_.Process(phase, u0_16(feedback));
+    s1_15 sine = twist_mode == FEEDBACK ?
+      SineShaper::Process(phase, u0_16(feedback)) :
+      SineShaper::Process(phase);
+
     f output;
 
     if (warp_mode == CRUSH) {
