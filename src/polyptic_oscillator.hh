@@ -88,7 +88,6 @@ public:
     f warp = params.warp.value;
 
     for (int i=0; i<kNumOsc; i++) {
-      // antialias
       f freq1, freq2, phase;
       frequency.Next(freq1, freq2, phase);
 

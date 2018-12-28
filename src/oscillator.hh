@@ -85,6 +85,7 @@ class Oscillator : Phasor, SineShaper {
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   f Process(u0_32 freq, f twist, f warp) {
+
     u0_32 phase = Phasor::Process(freq);
 
     f feedback = 0_f;
@@ -111,9 +112,6 @@ public:
     }
     return output;
   }
-
-  class Accumulator {
-  };
 
   template<TwistMode twist_mode, WarpMode warp_mode>
   void Process(u0_32 freq, f twist, f warp, f amp, Block<f> output) {
