@@ -138,12 +138,12 @@ class DoubleOscillator : Nocopy {
   }
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(f const freq1, f const freq2, f phase,
+  void Process(f const freq1, f const freq2, f crossfade,
                f const twist, f const warp, f const amplitude,
                Block<f> output) {
-    phase *= phase;             // helps find the 0 point
-    f amp1 = amplitude * (1_f - phase);
-    f amp2 = amplitude * phase;
+    crossfade *= crossfade;             // helps find the 0 point
+    f amp1 = amplitude * (1_f - crossfade);
+    f amp2 = amplitude * crossfade;
 
     f aliasing_factor1 = freq1; // TODO
     amp1 *= antialias(aliasing_factor1);

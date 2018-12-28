@@ -57,10 +57,10 @@ class Oscillators : Nocopy {
   public:
     FrequencyAccumulator(Grid const &g, f r, f p, f s, f d) :
       grid(g), root(r), pitch(p), spread(s), detune(d) {}
-    void Next(f& freq1, f& freq2, f& phase) {
+    void Next(f& freq1, f& freq2, f& crossfade) {
 
       f p1, p2;
-      grid.Process(root, p1, p2, phase);
+      grid.Process(root, p1, p2, crossfade);
 
       p1 += pitch + detune_accum;
       p2 += pitch + detune_accum;
@@ -88,12 +88,12 @@ public:
     f warp = params.warp.value;
 
     for (int i=0; i<kNumOsc; i++) {
-      f freq1, freq2, phase;
-      frequency.Next(freq1, freq2, phase);
+      f freq1, freq2, crossfade;
+      frequency.Next(freq1, freq2, crossfade);
 
       f amp = amplitude.Next();
       Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
-      (osc_[i].*process)(freq1, freq2, phase, twist, warp, amp, out);
+      (osc_[i].*process)(freq1, freq2, crossfade, twist, warp, amp, out);
     }
 
     f atten = 1_f / amplitude.Sum();
