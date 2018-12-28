@@ -43,35 +43,36 @@ public:
 };
 
 class PreGrid {
-  f grid[kMaxGridSize];
-  int size = 0;
+  f grid_[kMaxGridSize];
+  int size_ = 0;
 public:
   bool add(f x) {
-    if (size < kMaxGridSize-1) {
-      grid[size++] = x;
+    if (size_ < kMaxGridSize-1) {
+      grid_[size_++] = x;
       return true;
     } else {
       return false;
     }
   }
 
-  void clear() { size = 0; }
+  int size() { return size_; }
+  void clear() { size_ = 0; }
 
   // do not call if size==0
   void copy_to(Grid &g) {
     // sort table
-    std::sort(grid, grid+size);
+    std::sort(grid_, grid_+size_);
     // normalize from smallest element
-    f base = grid[0];
-    for (f& x : grid) {
+    f base = grid_[0];
+    for (f& x : grid_) {
       x -= base;
     }
     // remove duplicate elements
-    uniquify(grid, size, kGridUnicityThreshold);
+    uniquify(grid_, size_, kGridUnicityThreshold);
 
     // copy to real grid
-    std::copy(grid, grid+size, g.grid);
-    g.size=size;
+    std::copy(grid_, grid_+size_, g.grid);
+    g.size=size_;
   }
 };
 
