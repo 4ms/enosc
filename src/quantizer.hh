@@ -59,7 +59,7 @@ public:
   void clear() { size_ = 0; }
 
   // do not call if size==0
-  void copy_to(Grid &g) {
+  void copy_to(Grid *g) {
     // sort table
     std::sort(grid_, grid_+size_);
     // normalize from smallest element
@@ -71,19 +71,19 @@ public:
     uniquify(grid_, size_, kGridUnicityThreshold);
 
     // copy to real grid
-    std::copy(grid_, grid_+size_, g.grid);
-    g.size=size_;
+    std::copy(grid_, grid_+size_, g->grid);
+    g->size=size_;
   }
 };
 
 class Quantizer {
   Grid grids_[kGridNr];
 public:
-  Grid &get_grid(Parameters::Grid grid) {
-    return grids_[grid.value];
+  Grid *get_grid(Parameters::Grid grid) {
+    return &grids_[grid.value];
   }
   // TODO temp
-  Grid &get_grid(int i) {
-    return grids_[i];
+  Grid *get_grid(int i) {
+    return &grids_[i];
   }
 };

@@ -113,7 +113,7 @@ class PolypticOscillator : Nocopy {
   Oscillators oscs_;
   Quantizer quantizer_;
   PreGrid pre_grid_;
-  Grid &current_grid_ = quantizer_.get_grid(0);
+  Grid *current_grid_ = quantizer_.get_grid(0);
 
   bool learn_mode = false;
 public:
@@ -145,7 +145,7 @@ public:
 
     current_grid_ = quantizer_.get_grid(params.grid);
 
-    oscs_.Process(params, current_grid_, out1, out2);
+    oscs_.Process(params, *current_grid_, out1, out2);
 
     f *b1 = out1.begin();
     f *b2 = out2.begin();
