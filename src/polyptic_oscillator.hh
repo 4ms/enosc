@@ -140,19 +140,18 @@ public:
 
   void Process(Parameters const &params, Block<Frame> out) {
     f buffer[2][out.size()];
-    Block<f> out1 {buffer[0], out.size()};
-    Block<f> out2 {buffer[1], out.size()};
+    TripleBlock<f, f, Frame> block {buffer[0], buffer[1], out.begin(), out.size()};
 
     current_grid_ = quantizer_.get_grid(params.grid);
 
-    oscs_.Process(params, *current_grid_, out1, out2);
+    oscs_.Process(params, *current_grid_, block.first(), block.second());
 
-    f *b1 = out1.begin();
-    f *b2 = out2.begin();
-    for (Frame& o : out) {
-      o.l = s1_15(*b1);
-      o.r = s1_15(*b2);
-      b1++; b2++;
+    for (auto x : block) {
+      f &o1 = std::get<0>(x);
+      f &o2 = std::get<1>(x);
+      Frame &o = std::get<2>(x);
+      o.l = s1_15(o1);
+      o.r = s1_15(o2);
     }
   }
 };
