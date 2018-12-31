@@ -25,7 +25,17 @@
 struct Switches : Nocopy {
   enum State { UP, CENTER, DOWN, ERROR };
 
-  struct Grid {
+  template<class T>
+  struct Combiner : crtp<T, Combiner>{
+    State get() {
+      return (**this).get1() && (**this).get2() ? CENTER :
+        (**this).get1() ? DOWN :
+        (**this).get2() ? UP :
+        ERROR;
+    }
+  };
+
+  struct Grid : Combiner<Grid> {
     Grid() {
       __HAL_RCC_GPIOB_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
@@ -36,15 +46,9 @@ struct Switches : Nocopy {
     }
     bool get1() { return HAL_GPIO_ReadPin(GRIDSW_TOP_GPIO_Port, GRIDSW_TOP_Pin); }
     bool get2() { return HAL_GPIO_ReadPin(GRIDSW_BOT_GPIO_Port, GRIDSW_BOT_Pin); }
-    State get() {
-      return get1() && get2() ? CENTER :
-        get1() ? DOWN :
-        get2() ? UP :
-        ERROR;
-    }
   } grid_;
 
-  struct Mod {
+  struct Mod : Combiner<Mod> {
     Mod() {
       __HAL_RCC_GPIOE_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
@@ -55,15 +59,9 @@ struct Switches : Nocopy {
     }
     bool get1() { return HAL_GPIO_ReadPin(MODSW_TOP_GPIO_Port, MODSW_TOP_Pin); }
     bool get2() { return HAL_GPIO_ReadPin(MODSW_BOT_GPIO_Port, MODSW_BOT_Pin); }
-    State get() {
-      return get1() && get2() ? CENTER :
-        get1() ? DOWN :
-        get2() ? UP :
-        ERROR;
-    }
   } mod_;
 
-  struct Twist {
+  struct Twist : Combiner<Mod> {
     Twist() {
       __HAL_RCC_GPIOD_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
@@ -74,15 +72,9 @@ struct Switches : Nocopy {
     }
     bool get1() { return HAL_GPIO_ReadPin(TWISTSW_TOP_GPIO_Port, TWISTSW_TOP_Pin); }
     bool get2() { return HAL_GPIO_ReadPin(TWISTSW_BOT_GPIO_Port, TWISTSW_BOT_Pin); }
-    State get() {
-      return get1() && get2() ? CENTER :
-        get1() ? DOWN :
-        get2() ? UP :
-        ERROR;
-    }
   } twist_;
 
-  struct Warp {
+  struct Warp : Combiner<Mod> {
     Warp() {
       __HAL_RCC_GPIOC_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
@@ -93,11 +85,5 @@ struct Switches : Nocopy {
     }
     bool get1() { return HAL_GPIO_ReadPin(WARPSW_TOP_GPIO_Port, WARPSW_TOP_Pin); }
     bool get2() { return HAL_GPIO_ReadPin(WARPSW_BOT_GPIO_Port, WARPSW_BOT_Pin); }
-    State get() {
-      return get1() && get2() ? CENTER :
-        get1() ? DOWN :
-        get2() ? UP :
-        ERROR;
-    }
   } warp_;
 };
