@@ -66,6 +66,66 @@ private:
   int size_;
 };
 
+template<class T, class U>
+struct DoubleBlock {
+  struct iterator {
+    iterator(T* x, U* y) : x_(x), y_(y) {}
+    void operator++() { x_++; y_++; }
+    bool operator!=(iterator &that) { return this->x_ != that.x_ || this->y_ != that.y_; }
+    std::pair<T&, U&> operator*() { return std::pair<T&,U&>(*x_, *y_); }
+  private:
+    T *x_;
+    U *y_;
+  };
+
+  iterator begin() {
+    return iterator(x_,y_);
+  }
+  iterator end() {
+    return iterator(x_+size_, y_+size_);
+  }
+public:
+  DoubleBlock(T* x, U* y, int size) : x_(x), y_(y), size_(size) {}
+  T *x_;
+  U *y_;
+  int size_;
+
+  Block<T> first() { return Block<T>(x_, size_); }
+  Block<U> second() { return Block<U>(y_, size_); }
+};
+template<class T, class U, class V>
+struct TripleBlock {
+  struct iterator {
+    iterator(T* x, U* y, V* z) : x_(x), y_(y), z_(z) {}
+    void operator++() { x_++; y_++; z_++; }
+    bool operator!=(iterator &that) {
+      return this->x_ != that.x_ || this->y_ != that.y_ || this->z_ != that.z_;
+    }
+    std::tuple<T&,U&,V&> operator*() { return std::tuple<T&,U&,V&>(*x_, *y_, *z_); }
+  private:
+    T *x_;
+    U *y_;
+    V *z_;
+  };
+
+  iterator begin() {
+    return iterator(x_, y_, z_);
+  }
+  iterator end() {
+    return iterator(x_+size_, y_+size_, z_+size_);
+  }
+public:
+  TripleBlock(T* x, U* y, V* z, int size) : x_(x), y_(y), z_(z), size_(size) {}
+  T *x_;
+  U *y_;
+  V *z_;
+  int size_;
+
+  Block<T> first() { return Block<T>(x_, size_); }
+  Block<U> second() { return Block<U>(y_, size_); }
+  Block<V> third() { return Block<V>(z_, size_); }
+};
+
 // TODO: size not linked to data
 template<class T, unsigned int SIZE>
 struct Buffer {
