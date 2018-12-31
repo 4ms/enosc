@@ -60,6 +60,9 @@ enum Color {
   GREEN = 0x00FF00,
   BLUE = 0xFF0000,
   WHITE = RED|GREEN|BLUE,
+  YELLOW = RED|GREEN,
+  MAGENTA = RED|BLUE,
+  CYAN = GREEN|BLUE,
 };
 
 struct Leds : Nocopy {
