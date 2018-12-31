@@ -521,9 +521,8 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
                          __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx));
   }
 
-  Block<Frame> in {src, kBlockSize};
-  Block<Frame> out {dst, kBlockSize};
-  Codec::instance_->callback_(in, out);
+  DoubleBlock<Frame, Frame> inout {src, dst, kBlockSize};
+  Codec::instance_->callback_(inout);
 }
 
 
