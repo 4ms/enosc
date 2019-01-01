@@ -282,7 +282,7 @@ void Codec::I2C::Init(uint32_t sample_rate)
 
   Write(WM8731_REG_RESET, 0);
 
-  for(i=0;i<W8731_NUM_REGS;i++) {
+  for(i=0;i<W8731_NUM_REGS;++i) {
     Write(i, codec_init_data[i]);
   }
 }

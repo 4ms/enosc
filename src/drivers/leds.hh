@@ -161,7 +161,6 @@ struct Leds : Nocopy {
     }
   } freeze_;
 
-
   struct {
     void set(u0_8 r, u0_8 g, u0_8 b) {
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r.repr();

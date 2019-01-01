@@ -127,7 +127,7 @@ public:
     s1_15 in1[size], in2[size];
     Block<s1_15> pitch_block {in1, size};
     Block<s1_15> root_block {in2, size};
-
+    // TODO change to TripleBlock
     auto *pi=pitch_block.begin(), *ro=root_block.begin();
     for (Frame in : codec_in) {
       *pi++ = in.l;

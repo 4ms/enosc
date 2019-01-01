@@ -35,6 +35,7 @@ struct Main : Nocopy {
     ui_.Process(inout.first(), params_);
 
 #ifdef BYPASS
+    // TODO double block
     Frame *o_begin = out.begin();
     for(Frame i : in) {
       Frame &o = *o_begin;
