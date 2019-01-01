@@ -118,6 +118,10 @@ class PolypticOscillator : Nocopy {
 
   bool learn_mode = false;
 public:
+  PolypticOscillator(std::function<void(bool)> onNewNote) : onNewNote_(onNewNote) {}
+
+  Subject<bool> onNewNote_;
+
   bool learn_enabled() { return learn_mode; }
   void enable_learn() {
     pre_grid_.clear();
@@ -135,7 +139,8 @@ public:
   void new_note(f x) {
     if (learn_mode) {
       // TODO exploit function return for display
-      pre_grid_.add(x);
+      bool success = pre_grid_.add(x);
+      onNewNote_.notify(success);
     }
   }
 

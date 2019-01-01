@@ -96,7 +96,6 @@ CXXFLAGS=$(CFLAGS) \
 
 LDFLAGS= $(ARCHFLAGS) -T $(LDSCRIPT) \
 	-Wl,--gc-sections \
-	-nostdlib \
 
 STARTUP = $(CMSIS_DIR)startup_stm32f722xx
 SYSTEM = $(CMSIS_DIR)system_stm32f7xx

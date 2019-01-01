@@ -15,7 +15,9 @@ struct Main : Nocopy {
 #ifdef TEXTILE
   TextileOscillator osc_;
 #else
-  PolypticOscillator osc_;
+  PolypticOscillator osc_ {
+    [this](bool success) {},
+  };
 #endif
   Parameters params_;
 
