@@ -30,9 +30,6 @@ class Ui {
     }
   }
 
-public:
-  Ui(PolypticOscillator &osc) : osc_(osc) {}
-
   void button_pressed(Button b) {
     switch(b) {
     case BUTTON_LEARN: {
@@ -71,6 +68,9 @@ public:
       break;
     }
   }
+
+public:
+  Ui(PolypticOscillator &osc) : osc_(osc) {}
 
   void Process(Block<Frame> codec_in, Parameters& params) {
 
