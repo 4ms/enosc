@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 
 template<class T, T x, T y>
 struct Max {
@@ -39,4 +40,13 @@ struct crtp {
 private:
   crtp(){}
   friend crtpType<T>;
+};
+
+// Observer pattern
+template<typename ... DATA>
+struct Subject {
+  void notify(DATA ... args) { observer_(args ...); }
+  Subject(std::function<void(DATA ...)> observer) : observer_(observer) {}
+private:
+  std::function<void(DATA ...)> observer_;
 };
