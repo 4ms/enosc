@@ -61,7 +61,7 @@ struct Switches : Nocopy {
     bool get2() { return HAL_GPIO_ReadPin(MODSW_BOT_GPIO_Port, MODSW_BOT_Pin); }
   } mod_;
 
-  struct Twist : Combiner<Mod> {
+  struct Twist : Combiner<Twist> {
     Twist() {
       __HAL_RCC_GPIOD_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
@@ -74,7 +74,7 @@ struct Switches : Nocopy {
     bool get2() { return HAL_GPIO_ReadPin(TWISTSW_BOT_GPIO_Port, TWISTSW_BOT_Pin); }
   } twist_;
 
-  struct Warp : Combiner<Mod> {
+  struct Warp : Combiner<Warp> {
     Warp() {
       __HAL_RCC_GPIOC_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
