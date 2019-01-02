@@ -60,6 +60,9 @@ enum Color {
   GREEN = 0x00FF00,
   BLUE = 0xFF0000,
   WHITE = RED|GREEN|BLUE,
+  YELLOW = RED|GREEN,
+  MAGENTA = RED|BLUE,
+  CYAN = GREEN|BLUE,
 };
 
 struct Leds : Nocopy {
@@ -144,7 +147,13 @@ struct Leds : Nocopy {
     hal_assert(HAL_TIM_PWM_Start(&timLEARNLED, 	LEARN_LED_PWM_CHAN_BLUE));
   }
 
-  struct {
+  template<class T>
+  struct ILed : crtp<T, ILed> {
+    void set(u0_8 r, u0_8 g, u0_8 b) { return (**this).set(r, g, b); }
+    void set(Color c) { return (**this).set(c); }
+  };
+
+  struct Freeze : ILed<Freeze> {
     void set(u0_8 r, u0_8 g, u0_8 b) {
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= r.repr();
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = g.repr();
@@ -158,8 +167,7 @@ struct Leds : Nocopy {
     }
   } freeze_;
 
-
-  struct {
+  struct Learn : ILed<Learn> {
     void set(u0_8 r, u0_8 g, u0_8 b) {
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r.repr();
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = g.repr();

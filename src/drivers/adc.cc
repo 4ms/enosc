@@ -132,7 +132,7 @@ void Adc::ADC1_Init()
 	__HAL_RCC_DMA2_CLK_ENABLE();
 
 	//Set GPIO pins to analog
-	for (i=0; i<NUM_ADC1; i++)
+  for (i=0; i<NUM_ADC1; ++i)
 	{
 	    gpio.Pin = adc_setup[i].pin;
 	    gpio.Mode = GPIO_MODE_ANALOG;
@@ -172,7 +172,7 @@ void Adc::ADC1_Init()
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hal_assert(HAL_ADC_Init(&hadc1));
 
-  for (i=0; i<NUM_ADC1; i++) {
+  for (i=0; i<NUM_ADC1; ++i) {
     sConfig.Channel = adc_setup[i].channel;
     sConfig.Rank = ADC_REGULAR_RANK_1 + i;
     sConfig.SamplingTime = adc_setup[i].sample_time;
@@ -227,7 +227,7 @@ void Adc::ADC3_Init()
 	__HAL_RCC_DMA2_CLK_ENABLE();
 
 	//Set GPIO pins to analog
-  for (i=0; i<NUM_ADC3; i++) {
+  for (i=0; i<NUM_ADC3; ++i) {
 	    gpio.Pin = adc_setup[i].pin;
 	    gpio.Mode = GPIO_MODE_ANALOG;
 	    gpio.Pull = GPIO_NOPULL;
@@ -266,7 +266,7 @@ void Adc::ADC3_Init()
   hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hal_assert(HAL_ADC_Init(&hadc3));
 
-  for (i=0; i<NUM_ADC3; i++) {
+  for (i=0; i<NUM_ADC3; ++i) {
     sConfig.Channel = adc_setup[i].channel;
     sConfig.Rank = ADC_REGULAR_RANK_1 + i;
     sConfig.SamplingTime = adc_setup[i].sample_time;

@@ -89,7 +89,7 @@ public:
     f twist = params.twist.value;
     f warp = params.warp.value;
 
-    for (int i=0; i<kNumOsc; i++) {
+    for (int i=0; i<kNumOsc; ++i) {
       f freq1, freq2, crossfade;
       frequency.Next(freq1, freq2, crossfade);
 
@@ -104,6 +104,7 @@ public:
 
     f atten = 1_f / amplitude.Sum();
 
+    // TODO double iteration on out1 and out2
     f *begin1 = out1.begin();
     for (f& o2 : out2) {
       f& o1 = *begin1;
@@ -122,6 +123,10 @@ class PolypticOscillator : Nocopy {
 
   bool learn_mode = false;
 public:
+  PolypticOscillator(std::function<void(bool)> onNewNote) : onNewNote_(onNewNote) {}
+
+  Subject<bool> onNewNote_;
+
   bool learn_enabled() { return learn_mode; }
   void enable_learn() {
     pre_grid_.clear();
@@ -139,25 +144,25 @@ public:
   void new_note(f x) {
     if (learn_mode) {
       // TODO exploit function return for display
-      pre_grid_.add(x);
+      bool success = pre_grid_.add(x);
+      onNewNote_.notify(success);
     }
   }
 
   void Process(Parameters const &params, Block<Frame> out) {
     f buffer[2][out.size()];
-    Block<f> out1 {buffer[0], out.size()};
-    Block<f> out2 {buffer[1], out.size()};
+    TripleBlock<f, f, Frame> block {buffer[0], buffer[1], out.begin(), out.size()};
 
     current_grid_ = quantizer_.get_grid(params.grid);
 
-    oscs_.Process(params, *current_grid_, out1, out2);
+    oscs_.Process(params, *current_grid_, block.first(), block.second());
 
-    f *b1 = out1.begin();
-    f *b2 = out2.begin();
-    for (Frame& o : out) {
-      o.l = s1_15(*b1);
-      o.r = s1_15(*b2);
-      b1++; b2++;
+    for (auto x : block) {
+      f &o1 = std::get<0>(x);
+      f &o2 = std::get<1>(x);
+      Frame &o = std::get<2>(x);
+      o.l = s1_15(o1);
+      o.r = s1_15(o2);
     }
   }
 };

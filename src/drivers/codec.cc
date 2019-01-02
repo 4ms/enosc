@@ -282,7 +282,7 @@ void Codec::I2C::Init(uint32_t sample_rate)
 
   Write(WM8731_REG_RESET, 0);
 
-  for(i=0;i<W8731_NUM_REGS;i++) {
+  for(i=0;i<W8731_NUM_REGS;++i) {
     Write(i, codec_init_data[i]);
   }
 }
@@ -521,9 +521,8 @@ extern "C" void CODEC_SAI_RX_DMA_IRQHandler()
                          __HAL_DMA_GET_HT_FLAG_INDEX(&Codec::instance_->hdma_rx));
   }
 
-  Block<Frame> in {src, kBlockSize};
-  Block<Frame> out {dst, kBlockSize};
-  Codec::instance_->callback_(in, out);
+  DoubleBlock<Frame, Frame> inout {src, dst, kBlockSize};
+  Codec::instance_->callback_(inout);
 }
 
 

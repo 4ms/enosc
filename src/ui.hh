@@ -8,6 +8,20 @@
 enum Button {BUTTON_LEARN, BUTTON_FREEZE};
 enum Gate {GATE_LEARN, GATE_FREEZE};
 
+template<class T>
+struct LedManager : Leds::ILed<T> {
+  using L = Leds::ILed<T>;
+  void flash(Color c) {
+    L::set(RED);
+  }
+  void Update() {
+    Color c = RED;
+    Leds::ILed<T>::set(c);
+  }
+private:
+  int flash_time = 0;
+};
+
 class Ui {
   Buttons buttons_;
   Gates gates_;
@@ -15,6 +29,9 @@ class Ui {
   Leds leds_;
   PolypticOscillator &osc_;
   Control control_ {osc_};
+
+  LedManager<Leds::Learn> learn_led_;
+  LedManager<Leds::Freeze> freeze_led_;
 
   enum UiMode {
     NORMAL_MODE,
@@ -29,9 +46,6 @@ class Ui {
       control_.release_pitch_cv();
     }
   }
-
-public:
-  Ui(PolypticOscillator &osc) : osc_(osc) {}
 
   void button_pressed(Button b) {
     switch(b) {
@@ -71,6 +85,9 @@ public:
       break;
     }
   }
+
+public:
+  Ui(PolypticOscillator &osc) : osc_(osc) {}
 
   void Process(Block<Frame> codec_in, Parameters& params) {
 
@@ -120,8 +137,11 @@ public:
     case NORMAL_MODE:
       bool b = osc_.learn_enabled();
       leds_.learn_.set(b ? RED : BLACK);
-      // leds_.freeze_.set(BLACK);
+      leds_.freeze_.set(BLACK);
       break;
     }
+
+    learn_led_.Update();
+    freeze_led_.Update();
   }
 };
