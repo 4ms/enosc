@@ -84,7 +84,7 @@ class Oscillator : Phasor, SineShaper {
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  f Process(u0_32 freq, f twist, f warp) {
+  f Process(s1_15 in, u0_32 freq, f twist, f warp, s1_15 &out) {
 
     u0_32 phase = Phasor::Process(freq);
 
@@ -97,12 +97,16 @@ public:
       phase = decimate(phase, twist);
     }
 
+    // TODO
+    // phase = phase + in;
+
     s1_15 sine = twist_mode == FEEDBACK ?
       SineShaper::Process(phase, u0_16(feedback)) :
       SineShaper::Process(phase);
 
-    f output;
+    out = sine;
 
+    f output;
     if (warp_mode == CRUSH) {
       output = crush(sine, warp);
     } else if (warp_mode == CHEBY) {
@@ -114,11 +118,18 @@ public:
   }
 
   template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(u0_32 freq, f twist, f warp, f amp, Block<f> output) {
-    amplitude.set(amp, output.size());
-    for (f &out : output) {
-      f sample = Process<twist_mode, warp_mode>(u0_32(freq), twist, warp);
-      out += sample * amplitude.next();
+  void Process(u0_32 freq, f twist, f warp, f amp,
+               Block<s1_15> input, Block<s1_15> out, Block<f> sum_output) {
+    amplitude.set(amp, sum_output.size());
+    s1_15 *in_it = input.begin();
+    s1_15 *out_it = out.begin();
+    for (f &sum : sum_output) {
+      s1_15 &in = *in_it;
+      s1_15 &out = *out_it;
+      f sample = Process<twist_mode, warp_mode>(in, u0_32(freq), twist, warp, out);
+      sum += sample * amplitude.next();
+      in_it++;
+      out_it++;
     }
   }
 };
@@ -140,7 +151,8 @@ public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   void Process(f const freq1, f const freq2, f crossfade,
                f const twist, f const warp, f const amplitude,
-               Block<f> output) {
+               Block<s1_15> input, Block<s1_15> out1, Block<s1_15> out2,
+               Block<f> sum_output) {
     crossfade *= crossfade;             // helps find the 0 point
     f amp1 = amplitude * (1_f - crossfade);
     f amp2 = amplitude * crossfade;
@@ -150,7 +162,9 @@ public:
     f aliasing_factor2 = freq2; // TODO
     amp2 *= antialias(aliasing_factor2);
 
-    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq1), twist, warp, amp1, output);
-    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq2), twist, warp, amp2, output);
+    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq1), twist, warp, amp1,
+                                           input, out1, sum_output);
+    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq2), twist, warp, amp2,
+                                           input, out2, sum_output);
   }
 };
