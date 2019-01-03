@@ -143,7 +143,7 @@ public:
     switch (mode) {
     case NORMAL_MODE:
       bool b = osc_.learn_enabled();
-      learn_led_.set_background(b ? Colors::red : Colors::black);
+      learn_led_.set_background(b ? Colors::dark_red : Colors::black);
       break;
     }
 
