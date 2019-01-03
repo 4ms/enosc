@@ -119,8 +119,7 @@ public:
 
   Control(PolypticOscillator &osc) : osc_(osc) {}
 
-  void Process(Block<Frame> codec_in, Parameters &params,
-               bool &pitch_cv_changed) {
+  void Process(Block<Frame> codec_in, Parameters &params) {
 
     // Process codec input
     int size = codec_in.size();
@@ -189,7 +188,7 @@ public:
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
 
     f pitch_cv = pitch_cv_.Process(pitch_block);
-    pitch_cv_changed = pitch_cv_change_detector_.Process(pitch_cv);
+    bool pitch_cv_changed = pitch_cv_change_detector_.Process(pitch_cv);
     if (pitch_cv_changed) {
       osc_.new_note(pitch_cv);
     }

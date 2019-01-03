@@ -101,14 +101,7 @@ public:
   void Process(Block<Frame> codec_in, Parameters& params) {
 
     // Controls
-    bool pitch_cv_changed = false;
-    control_.Process(codec_in, params, pitch_cv_changed);
-    // TODO: remove after use
-    if (pitch_cv_changed) {
-      leds_.freeze_.set(WHITE);
-    } else {
-      leds_.freeze_.set(BLACK);
-    }
+    control_.Process(codec_in, params);
 
     // Buttons
     buttons_.Debounce();
