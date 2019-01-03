@@ -532,6 +532,7 @@ using s16_0 = Fixed<SIGNED, 16, 0>;
 using u16_16 = Fixed<UNSIGNED, 16, 16>;
 using s16_16 = Fixed<SIGNED, 16, 16>;
 using s17_15 = Fixed<SIGNED, 17, 15>;
+using s15_17 = Fixed<SIGNED, 15, 17>;
 using s1_31 = Fixed<SIGNED, 1, 31>;
 using u0_32 = Fixed<UNSIGNED, 0, 32>;
 using s10_22 = Fixed<SIGNED, 10, 22>;
@@ -591,6 +592,8 @@ constexpr u0_32 operator "" _u0_32(long double x) { return u0_32::of_double(x); 
 constexpr u10_22 operator "" _u10_22(long double x) { return u10_22::of_double(x); }
 constexpr s10_22 operator "" _s10_22(long double x) { return s10_22::of_double(x); }
 constexpr u0_8 operator "" _u0_8(long double x) { return u0_8::of_double(x); }
+constexpr s1_7 operator "" _s1_7(long double x) { return s1_7::of_double(x); }
+constexpr s8_8 operator "" _s8_8(long double x) { return s8_8::of_double(x); }
 
 template<sign SIGN, int INT, int FRAC>
 constexpr Fixed<SIGN, INT, FRAC> Fixed<SIGN, INT, FRAC>::min_val;
