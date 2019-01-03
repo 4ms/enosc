@@ -34,8 +34,13 @@ class Ui {
   Leds leds_;
   PolypticOscillator osc_ {
     [this](bool success) {
+      // on new note
       learn_led_.flash(success ? Colors::white : Colors::black);
     },
+    [this](bool success) {
+      // on exit of Learn
+      if(success) learn_led_.flash(Colors::magenta);
+    }
   };
   Control control_ {osc_};
 
