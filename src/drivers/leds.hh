@@ -53,16 +53,40 @@
 #define LEARN_LED_PWM_pins 			(LEARN_RED_Pin | LEARN_GREEN_Pin | LEARN_BLUE_Pin)
 #define LEARN_LED_PWM_GPIO 			LEARN_RED_GPIO_Port
 
+struct Color {
+  explicit constexpr Color(u0_8 r, u0_8 g, u0_8 b) : r_(r), g_(g), b_(b) {}
+  u0_8 red() { return r_; }
+  u0_8 green() { return g_; }
+  u0_8 blue() { return b_; }
+  constexpr const Color operator+(Color const that) const {
+    return Color(this->r_.add_sat(that.r_),
+                 this->g_.add_sat(that.g_),
+                 this->b_.add_sat(that.b_));
+  }
+  const Color blend(Color const that) const {
+    return Color(this->r_.div2<1>() + that.r_.div2<1>(),
+                 this->g_.div2<1>() + that.g_.div2<1>(),
+                 this->b_.div2<1>() + that.b_.div2<1>());
+  }
+  constexpr const Color blend(Color const that, u0_8 const phase) const {
+    u0_8 r = u0_8::narrow(phase * that.r_ + (u0_8::max_val - phase) * this->r_);
+    u0_8 g = u0_8::narrow(phase * that.g_ + (u0_8::max_val - phase) * this->g_);
+    u0_8 b = u0_8::narrow(phase * that.b_ + (u0_8::max_val - phase) * this->b_);
+    return Color(u0_8(r), u0_8(g), u0_8(b));
+  }
+private:
+  u0_8 r_, g_, b_;
+};
 
-enum Color {
-  BLACK = 0x00,
-  RED = 0x0000FF,
-  GREEN = 0x00FF00,
-  BLUE = 0xFF0000,
-  WHITE = RED|GREEN|BLUE,
-  YELLOW = RED|GREEN,
-  MAGENTA = RED|BLUE,
-  CYAN = GREEN|BLUE,
+struct Colors {
+  static constexpr Color black = Color(0._u0_8, 0._u0_8, 0._u0_8);
+  static constexpr Color white = Color(u0_8::max_val, u0_8::max_val, u0_8::max_val);
+  static constexpr Color red = Color(u0_8::max_val, 0._u0_8, 0._u0_8);
+  static constexpr Color green = Color(0._u0_8, u0_8::max_val, 0._u0_8);
+  static constexpr Color blue = Color(0._u0_8, 0._u0_8, u0_8::max_val);
+  static constexpr Color yellow = Color(u0_8::max_val, u0_8::max_val, 0._u0_8);
+  static constexpr Color magenta = Color(u0_8::max_val, 0._u0_8, u0_8::max_val);
+  static constexpr Color cyan = Color(0._u0_8, u0_8::max_val, u0_8::max_val);
 };
 
 struct Leds : Nocopy {
@@ -150,34 +174,23 @@ struct Leds : Nocopy {
   template<class T>
   struct ILed : crtp<T, ILed> {
     void set(u0_8 r, u0_8 g, u0_8 b) { return (**this).set(r, g, b); }
-    void set(Color c) { return (**this).set(c); }
+    void set(Color c) { set(c.red(), c.green(), c.blue()); }
   };
 
-  struct Freeze : ILed<Freeze> {
+  struct Freeze : public ILed<Freeze> {
     void set(u0_8 r, u0_8 g, u0_8 b) {
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= r.repr();
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = g.repr();
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= b.repr();
     }
-
-    void set(Color c) {
-      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= (c & 255);
-      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = ((c >> 8) & 255);
-      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= ((c >> 16) & 255);
-    }
   } freeze_;
 
-  struct Learn : ILed<Learn> {
+  struct Learn : public ILed<Learn> {
     void set(u0_8 r, u0_8 g, u0_8 b) {
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r.repr();
-      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = g.repr();
-      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= b.repr();
-    }
-
-    void set(Color c) {
-      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= (c & 255);
-      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = ((c >> 8) & 255);
-      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= ((c >> 16) & 255);
+      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = b.repr(); // WARNING:
+                                                            // inverted here!
+      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= g.repr();
     }
   } learn_;
 };
