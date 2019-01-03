@@ -24,7 +24,7 @@ struct Color {
                  this->g_.add_sat(that.g_),
                  this->b_.add_sat(that.b_));
   }
-  const Color blend(Color const that) const {
+  constexpr Color blend(Color const that) const {
     return Color(this->r_.div2<1>() + that.r_.div2<1>(),
                  this->g_.div2<1>() + that.g_.div2<1>(),
                  this->b_.div2<1>() + that.b_.div2<1>());
@@ -48,6 +48,12 @@ struct Colors {
   static constexpr Color yellow = Color(u0_8::max_val, u0_8::max_val, 0._u0_8);
   static constexpr Color magenta = Color(u0_8::max_val, 0._u0_8, u0_8::max_val);
   static constexpr Color cyan = Color(0._u0_8, u0_8::max_val, u0_8::max_val);
+  static constexpr Color dark_red = red.blend(black);
+  static constexpr Color dark_green = green.blend(black);
+  static constexpr Color dark_blue = blue.blend(black);
+  static constexpr Color dark_yellow = yellow.blend(black);
+  static constexpr Color dark_magenta = magenta.blend(black);
+  static constexpr Color dark_cyan = cyan.blend(black);
 };
 
 struct Leds : Nocopy {
