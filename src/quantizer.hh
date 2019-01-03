@@ -6,6 +6,10 @@ constexpr const int kGridNr = 10;
 constexpr const int kMaxGridSize = 32;
 constexpr const f kGridUnicityThreshold = 0.1_f;
 
+struct PitchPair {
+  f p1, p2, crossfade;
+};
+
 class Grid {
   f grid[kMaxGridSize];
   int size = 0;
@@ -19,7 +23,7 @@ public:
     size = 4;
   }
 
-  void Process(f const pitch, f &p1, f &p2, f &phase) const {
+  PitchPair Process(f const pitch) const {
     f max = grid[size-1];
     // quotient by the max
     int oct = (pitch / max).floor();
@@ -27,18 +31,20 @@ public:
     f semitones = pitch - octaves;
     // invariant: 0 < semitones < max
     int index = binary_search(semitones, grid, size);
-    p1 = grid[index];
-    p2 = grid[index+1];
-    phase = (semitones - p1) / (p2 - p1);
+    f p1 = grid[index];
+    f p2 = grid[index+1];
+    f crossfade = (semitones - p1) / (p2 - p1);
     p1 += octaves;
     p2 += octaves;
 
     if ((index + (oct * (size+1))) & 1) {
-      phase = 1_f - phase;
+      crossfade = 1_f - crossfade;
       f tmp = p1;
       p1 = p2;
       p2 = tmp;
     }
+
+    return {p1, p2, crossfade};
   }
 };
 

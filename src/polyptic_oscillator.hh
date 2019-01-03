@@ -7,7 +7,7 @@
 #include "quantizer.hh"
 
 class Oscillators : Nocopy {
-  DoubleOscillator osc_[kNumOsc];
+  OscillatorPair osc_[kNumOsc];
   s1_15 modulation_blocks_[kBlockSize][kNumOsc];
 
   static bool pick_output(StereoMode mode, int i) {
@@ -17,20 +17,20 @@ class Oscillators : Nocopy {
       i == 0;
   }
 
-  using processor_t = void (DoubleOscillator::*)(f, f, f, f, f, f,
+  using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f,
                                                  Block<s1_15>, Block<s1_15>, Block<s1_15>, Block<f>);
 
   processor_t choose_processor(TwistMode t, WarpMode m) {
     return
-      t == FEEDBACK && m == CRUSH ? &DoubleOscillator::Process<FEEDBACK, CRUSH> :
-      t == FEEDBACK && m == CHEBY ? &DoubleOscillator::Process<FEEDBACK, CHEBY> :
-      t == FEEDBACK && m == FOLD ? &DoubleOscillator::Process<FEEDBACK, FOLD> :
-      t == PULSAR && m == CRUSH ? &DoubleOscillator::Process<PULSAR, CRUSH> :
-      t == PULSAR && m == CHEBY ? &DoubleOscillator::Process<PULSAR, CHEBY> :
-      t == PULSAR && m == FOLD ? &DoubleOscillator::Process<PULSAR, FOLD> :
-      t == DECIMATE && m == CRUSH ? &DoubleOscillator::Process<DECIMATE, CRUSH> :
-      t == DECIMATE && m == CHEBY ? &DoubleOscillator::Process<DECIMATE, CHEBY> :
-      t == DECIMATE && m == FOLD ? &DoubleOscillator::Process<DECIMATE, FOLD> :
+      t == FEEDBACK && m == CRUSH ? &OscillatorPair::Process<FEEDBACK, CRUSH> :
+      t == FEEDBACK && m == CHEBY ? &OscillatorPair::Process<FEEDBACK, CHEBY> :
+      t == FEEDBACK && m == FOLD ? &OscillatorPair::Process<FEEDBACK, FOLD> :
+      t == PULSAR && m == CRUSH ? &OscillatorPair::Process<PULSAR, CRUSH> :
+      t == PULSAR && m == CHEBY ? &OscillatorPair::Process<PULSAR, CHEBY> :
+      t == PULSAR && m == FOLD ? &OscillatorPair::Process<PULSAR, FOLD> :
+      t == DECIMATE && m == CRUSH ? &OscillatorPair::Process<DECIMATE, CRUSH> :
+      t == DECIMATE && m == CHEBY ? &OscillatorPair::Process<DECIMATE, CHEBY> :
+      t == DECIMATE && m == FOLD ? &OscillatorPair::Process<DECIMATE, FOLD> :
       NULL;
   }
 
@@ -59,19 +59,20 @@ class Oscillators : Nocopy {
   public:
     FrequencyAccumulator(Grid const &g, f r, f p, f s, f d) :
       grid(g), root(r), pitch(p), spread(s), detune(d) {}
-    void Next(f& freq1, f& freq2, f& crossfade) {
+    FrequencyPair Next() {
 
-      f p1, p2;
-      grid.Process(root, p1, p2, crossfade);
+      PitchPair p = grid.Process(root);
 
-      p1 += pitch + detune_accum;
-      p2 += pitch + detune_accum;
+      p.p1 += pitch + detune_accum;
+      p.p2 += pitch + detune_accum;
 
-      freq1 = Freq::of_pitch(p1).repr();
-      freq2 = Freq::of_pitch(p2).repr();
+      f freq1 = Freq::of_pitch(p.p1).repr();
+      f freq2 = Freq::of_pitch(p.p2).repr();
 
       root += spread;
       detune_accum += detune;
+
+      return {freq1, freq2, p.crossfade};
     }
   };
 
@@ -90,12 +91,11 @@ public:
     f warp = params.warp.value;
 
     for (int i=0; i<kNumOsc; ++i) {
-      f freq1, freq2, crossfade;
-      frequency.Next(freq1, freq2, crossfade);
+      FrequencyPair p = frequency.Next();
 
       f amp = amplitude.Next();
       Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
-      (osc_[i].*process)(freq1, freq2, crossfade, twist, warp, amp,
+      (osc_[i].*process)(p, twist, warp, amp,
                          Block<s1_15>(modulation_blocks_[i], kBlockSize), // in
                          Block<s1_15>(modulation_blocks_[i], kBlockSize), // out1
                          Block<s1_15>(modulation_blocks_[i], kBlockSize), // out2
