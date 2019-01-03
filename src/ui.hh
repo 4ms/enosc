@@ -13,18 +13,19 @@ struct LedManager : Leds::ILed<T> {
   using L = Leds::ILed<T>;
   void flash(Color c) {
     flash_color = c;
-    flash_time = u0_16::max_val;
+    flash_phase = u0_16::max_val;
   }
   void set_background(Color b) { background = b; }
   void Update() {
-    Color c = background.blend(flash_color, u0_8::narrow(flash_time));
+    Color c = background.blend(flash_color, u0_8::narrow(flash_phase));
     Leds::ILed<T>::set(c);
-    if (flash_time > 0.001_u0_16) flash_time -= 0.0015_u0_16;
+    if (flash_phase > flash_time) flash_phase -= flash_time;
   }
 private:
   Color background = Colors::black;
   Color flash_color = Colors::white;
-  u0_16 flash_time = 0._u0_16;
+  u0_16 flash_time = 0.0014_u0_16;
+  u0_16 flash_phase = 0._u0_16;
 };
 
 class Ui {
