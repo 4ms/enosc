@@ -12,14 +12,19 @@ template<class T>
 struct LedManager : Leds::ILed<T> {
   using L = Leds::ILed<T>;
   void flash(Color c) {
-    L::set(RED);
+    flash_color = c;
+    flash_time = u0_16::max_val;
   }
+  void set_background(Color b) { background = b; }
   void Update() {
-    Color c = RED;
+    Color c = background.blend(flash_color, u0_8::narrow(flash_time));
     Leds::ILed<T>::set(c);
+    if (flash_time > 0.001_u0_16) flash_time -= 0.0015_u0_16;
   }
 private:
-  int flash_time = 0;
+  Color background = Colors::black;
+  Color flash_color = Colors::white;
+  u0_16 flash_time = 0._u0_16;
 };
 
 class Ui {
@@ -27,7 +32,11 @@ class Ui {
   Gates gates_;
   Switches switches_;
   Leds leds_;
-  PolypticOscillator &osc_;
+  PolypticOscillator osc_ {
+    [this](bool success) {
+      learn_led_.flash(success ? Colors::white : Colors::black);
+    },
+  };
   Control control_ {osc_};
 
   LedManager<Leds::Learn> learn_led_;
@@ -87,7 +96,7 @@ class Ui {
   }
 
 public:
-  Ui(PolypticOscillator &osc) : osc_(osc) {}
+  PolypticOscillator& osc() { return osc_; }
 
   void Process(Block<Frame> codec_in, Parameters& params) {
 
@@ -136,8 +145,7 @@ public:
     switch (mode) {
     case NORMAL_MODE:
       bool b = osc_.learn_enabled();
-      leds_.learn_.set(b ? RED : BLACK);
-      leds_.freeze_.set(BLACK);
+      learn_led_.set_background(b ? Colors::red : Colors::black);
       break;
     }
 

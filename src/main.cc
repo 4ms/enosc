@@ -6,19 +6,11 @@
 #include "polyptic_oscillator.hh"
 #include "textile_oscillator.hh"
 
-// #define TEXTILE
 // #define BYPASS
 
 struct Main : Nocopy {
   System sys_;
-  Ui ui_ {osc_};
-#ifdef TEXTILE
-  TextileOscillator osc_;
-#else
-  PolypticOscillator osc_ {
-    [this](bool success) {},
-  };
-#endif
+  Ui ui_;
   Parameters params_;
 
   Codec codec_{kSampleRate,
@@ -45,7 +37,7 @@ struct Main : Nocopy {
       o_begin++;
     }
 #else
-    osc_.Process(params_, inout.second());
+    ui_.osc().Process(params_, inout.second());
 #endif
     debug.set(3, false);
   }
