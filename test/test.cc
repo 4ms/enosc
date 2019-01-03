@@ -8,25 +8,22 @@
 constexpr int kDuration = 10;    // seconds
 
 struct Main {
-  WavWriter<short, 1> wav_{"test.wav", kDuration * kSampleRate};
+  WavWriter<Frame, 2> wav_{"test.wav", kDuration * kSampleRate};
   Main() {
     int size = kDuration * kSampleRate;
 
     Parameters params;
-    PolypticOscillator osc;
+    PolypticOscillator osc {[](bool){}};
 
     while(size -= kBlockSize) {
 
-      Float out[kBlockSize];
+      Frame out[kBlockSize];
+      Block<Frame> output {out, kBlockSize};
 
-      osc.Process(params, out, out, kBlockSize);
+      osc.Process(params, output);
 
-      short output[kBlockSize];
-      for(int i=0; i<kBlockSize; i++) {
-        output[i] = s1_15::inclusive(out[i]).repr();
-      }
       // write
-      wav_.Write(output, kBlockSize);
+      wav_.Write(out, kBlockSize);
     }
   }
 } _;
