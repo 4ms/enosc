@@ -33,7 +33,7 @@ struct Buttons : Nocopy {
     bool get() { return HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9); };
   } learn_;
 
-  struct Freeze : Debouncer<Learn> {
+  struct Freeze : Debouncer<Freeze> {
     Freeze() {
       __HAL_RCC_GPIOA_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
