@@ -48,7 +48,7 @@ protected:
 
 template<class T>
 struct Block {
-  Block(T* data, int size) : data_(data), size_(size) {}
+  constexpr Block(T* data, int size) : data_(data), size_(size) {}
   T& operator [] (unsigned int index) {
     return data_[index];
   }
@@ -57,8 +57,8 @@ struct Block {
   }
 
   void fill(T x) { std::fill(data_, data_+size_, x); }
-  T* begin() { return data_; }
-  T* end() { return data_ + size_; }
+  T* const begin() const { return data_; }
+  T* const end() const { return data_ + size_; }
 
   int size() {return size_; }
 private:
