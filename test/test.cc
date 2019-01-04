@@ -13,14 +13,14 @@ struct Main {
     int size = kDuration * kSampleRate;
 
     Parameters params;
-    PolypticOscillator osc {[](bool){}};
+    PolypticOscillator osc {[](bool){}, [](bool){}};
 
     while(size -= kBlockSize) {
 
       Frame out[kBlockSize];
       Block<Frame> output {out, kBlockSize};
 
-      osc.Process(params, output);
+      // osc.Process(params, output);
 
       // write
       wav_.Write(out, kBlockSize);
