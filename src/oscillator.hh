@@ -84,7 +84,7 @@ class Oscillator : Phasor, SineShaper {
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  f Process(s1_15 in, u0_32 freq, f twist, f warp, s1_15 &out) {
+  f Process(u0_32 freq, f twist, f warp) {
 
     u0_32 phase = Phasor::Process(freq);
 
@@ -97,14 +97,9 @@ public:
       phase = decimate(phase, twist);
     }
 
-    // TODO
-    // phase = phase + in;
-
     s1_15 sine = twist_mode == FEEDBACK ?
       SineShaper::Process(phase, u0_16(feedback)) :
       SineShaper::Process(phase);
-
-    out = sine;
 
     f output;
     if (warp_mode == CRUSH) {
@@ -126,7 +121,7 @@ public:
     for (f &sum : sum_output) {
       s1_15 &in = *in_it;
       s1_15 &out = *out_it;
-      f sample = Process<twist_mode, warp_mode>(in, freq, twist, warp, out);
+      f sample = Process<twist_mode, warp_mode>(freq, twist, warp);
       sum += sample * amplitude.next();
       in_it++;
       out_it++;
