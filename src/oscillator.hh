@@ -83,17 +83,17 @@ class Oscillator : Phasor, SineShaper {
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  f Process(u0_32 freq, f twist, f warp) {
+  f Process(u0_32 freq, f twist_amount, f warp_amount) {
 
     u0_32 phase = Phasor::Process(freq);
 
     f feedback = 0_f;
     if (twist_mode == FEEDBACK) {
-      feedback = twist;
+      feedback = twist_amount;
     } else if (twist_mode == PULSAR) {
-      phase = pulsar(phase, twist);
+      phase = pulsar(phase, twist_amount);
     } else if (twist_mode == DECIMATE) {
-      phase = decimate(phase, twist);
+      phase = decimate(phase, twist_amount);
     }
 
     s1_15 sine = twist_mode == FEEDBACK ?
@@ -102,11 +102,11 @@ public:
 
     f output;
     if (warp_mode == CRUSH) {
-      output = crush(sine, warp);
+      output = crush(sine, warp_amount);
     } else if (warp_mode == CHEBY) {
-      output = cheby(sine, warp);
+      output = cheby(sine, warp_amount);
     } else if (warp_mode == FOLD) {
-      output = fold(sine, warp);
+      output = fold(sine, warp_amount);
     }
     return output;
   }
