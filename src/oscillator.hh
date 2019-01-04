@@ -84,7 +84,7 @@ class Oscillator : Phasor, SineShaper {
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  f Process(u0_32 freq, f twist, f warp) {
+  f Process(s1_15 in, u0_32 freq, f twist, f warp, s1_15 &out) {
 
     u0_32 phase = Phasor::Process(freq);
 
@@ -97,9 +97,14 @@ public:
       phase = decimate(phase, twist);
     }
 
+    // TODO
+    // phase = phase + in;
+
     s1_15 sine = twist_mode == FEEDBACK ?
       SineShaper::Process(phase, u0_16(feedback)) :
       SineShaper::Process(phase);
+
+    out = sine;
 
     f output;
     if (warp_mode == CRUSH) {
@@ -113,20 +118,18 @@ public:
   }
 
   template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(f freq, f twist, f warp, f amp,
-               Block<f> const mod_return, Block<f> mod_send, Block<f> sum_output) {
+  void Process(u0_32 freq, f twist, f warp, f amp,
+               Block<s1_15> input, Block<s1_15> out, Block<f> sum_output) {
     amplitude.set(amp, sum_output.size());
-    f *mod_return_it = mod_return.begin();
-    f *mod_send_it = mod_send.begin();
+    s1_15 *in_it = input.begin();
+    s1_15 *out_it = out.begin();
     for (f &sum : sum_output) {
-      f &mod_ret = *mod_return_it;
-      f &mod_snd = *mod_send_it;
-      f sample = Process<twist_mode, warp_mode>(u0_32(freq), twist, warp);
-      if (sample > 1_f) while(1);
-      sample *= amplitude.next();
-      sum += sample;
-      mod_return_it++;
-      mod_send_it++;
+      s1_15 &in = *in_it;
+      s1_15 &out = *out_it;
+      f sample = Process<twist_mode, warp_mode>(in, u0_32(freq), twist, warp, out);
+      sum += sample * amplitude.next();
+      in_it++;
+      out_it++;
     }
   }
 };
@@ -150,8 +153,8 @@ class OscillatorPair : Nocopy {
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   void Process(FrequencyPair const p,
-               f const twist, f const warp, f const amplitude, f const modulation,
-               Block<f> mod_return, Block<f> mod_send,
+               f const twist, f const warp, f const amplitude,
+               Block<s1_15> input, Block<s1_15> out1, Block<s1_15> out2,
                Block<f> sum_output) {
     f crossfade = p.crossfade * p.crossfade;             // helps find the 0 point
     f amp1 = amplitude * (1_f - p.crossfade);
@@ -162,11 +165,9 @@ public:
     f aliasing_factor2 = p.freq2; // TODO
     amp2 *= antialias(aliasing_factor2);
 
-    osc_[0].Process<twist_mode, warp_mode>(p.freq1, twist, warp, amp1,
-                                           mod_return, mod_send, sum_output);
-    osc_[1].Process<twist_mode, warp_mode>(p.freq2, twist, warp, amp2,
-                                           mod_return, mod_send, sum_output);
+    osc_[0].Process<twist_mode, warp_mode>(u0_32(p.freq1), twist, warp, amp1,
+                                           input, out1, sum_output);
+    osc_[1].Process<twist_mode, warp_mode>(u0_32(p.freq2), twist, warp, amp2,
+                                           input, out2, sum_output);
   }
 };
-
-// f Oscillator::test = 0_f;
