@@ -114,13 +114,13 @@ public:
 
   template<TwistMode twist_mode, WarpMode warp_mode>
   void Process(u0_32 const freq, f const twist, f const warp, f const amp, f const modulation,
-               Block<s1_15> mod_in, Block<s1_15> mod_out, Block<f> sum_output) {
+               Block<f> mod_in, Block<f> mod_out, Block<f> sum_output) {
     amplitude.set(amp, sum_output.size());
-    s1_15 *mod_in_it = mod_in.begin();
-    s1_15 *mod_out_it = mod_out.begin();
+    f *mod_in_it = mod_in.begin();
+    f *mod_out_it = mod_out.begin();
     for (f &sum : sum_output) {
-      s1_15 &m_in = *mod_in_it;
-      s1_15 &m_out = *mod_out_it;
+      f &m_in = *mod_in_it;
+      f &m_out = *mod_out_it;
       f sample = Process<twist_mode, warp_mode>(freq, twist, warp);
       sum += sample * amplitude.next();
       mod_in_it++;
@@ -149,7 +149,7 @@ public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   void Process(FrequencyPair const p,
                f const twist, f const warp, f const amplitude, f const modulation,
-               Block<s1_15> input, Block<s1_15> out1, Block<s1_15> out2,
+               Block<f> mod_in, Block<f> mod_out,
                Block<f> sum_output) {
     f crossfade = p.crossfade * p.crossfade;             // helps find the 0 point
     f amp1 = amplitude * (1_f - p.crossfade);
@@ -161,8 +161,8 @@ public:
     amp2 *= antialias(aliasing_factor2);
 
     osc_[0].Process<twist_mode, warp_mode>(u0_32(p.freq1), twist, warp, amp1, modulation,
-                                           input, out1, sum_output);
+                                           mod_in, mod_out, sum_output);
     osc_[1].Process<twist_mode, warp_mode>(u0_32(p.freq2), twist, warp, amp2, modulation,
-                                           input, out2, sum_output);
+                                           mod_in, mod_out, sum_output);
   }
 };
