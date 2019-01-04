@@ -26,6 +26,7 @@ struct Parameters {
   f pitch;                       // midi note
   f spread;                      // semitones
   f detune;                     // semitones
+  f modulation;                 // 0..1
 
   struct Grid {
     GridMode mode;
