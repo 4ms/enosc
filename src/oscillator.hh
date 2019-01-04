@@ -126,7 +126,7 @@ public:
     for (f &sum : sum_output) {
       s1_15 &in = *in_it;
       s1_15 &out = *out_it;
-      f sample = Process<twist_mode, warp_mode>(in, u0_32(freq), twist, warp, out);
+      f sample = Process<twist_mode, warp_mode>(in, freq, twist, warp, out);
       sum += sample * amplitude.next();
       in_it++;
       out_it++;
