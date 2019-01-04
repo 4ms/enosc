@@ -99,10 +99,10 @@ class Oscillator : Phasor, SineShaper {
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  f Process(u0_32 freq, f twist_amount, f warp_amount) {
+  f Process(u0_32 freq, u0_32 mod, f twist_amount, f warp_amount) {
 
     u0_32 phase = Phasor::Process(freq);
-
+    phase += mod;
     phase = Distortion::twist<twist_mode>(phase, twist_amount);
 
     s1_15 sine = twist_mode == FEEDBACK ?
@@ -121,8 +121,11 @@ public:
     for (f &sum : sum_output) {
       f &m_in = *mod_in_it;
       f &m_out = *mod_out_it;
-      f sample = Process<twist_mode, warp_mode>(freq, twist, warp);
-      sum += sample * amplitude.next();
+      u0_32 mod = u0_32(m_in * modulation * 5_f);
+      f sample = Process<twist_mode, warp_mode>(freq, mod, twist, warp);
+      sample *= amplitude.next();
+      sum += sample;
+      m_out += sample;
       mod_in_it++;
       mod_out_it++;
     }
@@ -160,6 +163,7 @@ public:
     f aliasing_factor2 = p.freq2; // TODO
     amp2 *= antialias(aliasing_factor2);
 
+    mod_out.fill(0_f);
     osc_[0].Process<twist_mode, warp_mode>(u0_32(p.freq1), twist, warp, amp1, modulation,
                                            mod_in, mod_out, sum_output);
     osc_[1].Process<twist_mode, warp_mode>(u0_32(p.freq2), twist, warp, amp2, modulation,
