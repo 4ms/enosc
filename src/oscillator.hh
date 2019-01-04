@@ -30,11 +30,38 @@ public:
   }
 };
 
-class Oscillator : Phasor, SineShaper {
-  IFloat amplitude {0_f};
+namespace Distortion {
+
+  template<WarpMode> inline f warp(s1_15, f);
+  template<TwistMode> inline u0_32 twist(u0_32, f);
+
+  // TODO rewrite with Numtypes
+  template<>
+  inline u0_32 twist<PULSAR>(u0_32 phase, f amount) {
+    u0_16 p = u0_16::inclusive(amount);
+    uint32_t x = (phase.repr() / (p.repr()+1));
+    if (x > UINT16_MAX) x = UINT16_MAX;
+    x <<= 16;
+    return u0_32::of_repr(x);
+  }
+
+  // TODO rewrite and optimize
+  template<>
+  inline u0_32 twist<DECIMATE>(u0_32 phase, f amount) {
+    uint32_t x = phase.repr();
+    x = (x ^ (uint32_t)(x*amount.repr())) * Math::sgn(x);
+    x ^= (uint32_t)(UINT32_MAX/4 * amount.repr());
+    return u0_32::of_repr(x);
+  }
+
+  template<>
+  inline u0_32 twist<FEEDBACK>(u0_32 phase, f amount) {
+    return phase;
+  }
 
   // TODO optimize
-  static f crush(s1_15 sample, f amount) {
+  template<>
+  inline f warp<CRUSH>(s1_15 sample, f amount) {
     f x = sample.to_float();
     union { float a; uint32_t b; } t = {x.repr()};
     t.b ^= (uint32_t)((t.b & ((1 << 23)-1)) * amount.repr());
@@ -44,7 +71,8 @@ class Oscillator : Phasor, SineShaper {
 
   // TODO optimize
   // TODO amount: [0..1[
-  static f cheby(s1_15 x, f amount) {
+  template<>
+  inline f warp<CHEBY>(s1_15 x, f amount) {
     // TODO comprendre -2
     amount *= (Data::cheby.size() - 2_u32).to_float();
     index idx = index(amount);
@@ -55,7 +83,8 @@ class Oscillator : Phasor, SineShaper {
     return Math::crossfade(s1, s2, frac);
   }
 
-  static f fold(s1_15 x, f amount) {
+  template<>
+  inline f warp<FOLD>(s1_15 x, f amount) {
     constexpr Buffer<f, 12> fold = {{-1_f, 1_f, -1_f, 1_f, -1_f, 1_f,
                                     -1_f, 1_f, -1_f, 1_f, -1_f, 1_f, -1_f}};
     f sample = x.to_float() * 0.5_f + 0.5_f;
@@ -63,23 +92,10 @@ class Oscillator : Phasor, SineShaper {
     f phase = sample * amount;
     return fold.interpolate(phase);
   }
+};
 
-  // TODO rewrite with Numtypes
-  static u0_32 pulsar(u0_32 phase, f amount) {
-    u0_16 p = u0_16::inclusive(amount);
-    uint32_t x = (phase.repr() / (p.repr()+1));
-    if (x > UINT16_MAX) x = UINT16_MAX;
-    x <<= 16;
-    return u0_32::of_repr(x);
-  }
-
-  // TODO rewrite and optimize
-  static u0_32 decimate(u0_32 phase, f amount) {
-    uint32_t x = phase.repr();
-    x = (x ^ (uint32_t)(x*amount.repr())) * Math::sgn(x);
-    x ^= (uint32_t)(UINT32_MAX/4 * amount.repr());
-    return u0_32::of_repr(x);
-  }
+class Oscillator : Phasor, SineShaper {
+  IFloat amplitude {0_f};
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
@@ -87,28 +103,13 @@ public:
 
     u0_32 phase = Phasor::Process(freq);
 
-    f feedback = 0_f;
-    if (twist_mode == FEEDBACK) {
-      feedback = twist_amount;
-    } else if (twist_mode == PULSAR) {
-      phase = pulsar(phase, twist_amount);
-    } else if (twist_mode == DECIMATE) {
-      phase = decimate(phase, twist_amount);
-    }
+    phase = Distortion::twist<twist_mode>(phase, twist_amount);
 
     s1_15 sine = twist_mode == FEEDBACK ?
-      SineShaper::Process(phase, u0_16(feedback)) :
+      SineShaper::Process(phase, u0_16(twist_amount)) :
       SineShaper::Process(phase);
 
-    f output;
-    if (warp_mode == CRUSH) {
-      output = crush(sine, warp_amount);
-    } else if (warp_mode == CHEBY) {
-      output = cheby(sine, warp_amount);
-    } else if (warp_mode == FOLD) {
-      output = fold(sine, warp_amount);
-    }
-    return output;
+    return Distortion::warp<warp_mode>(sine, warp_amount);
   }
 
   template<TwistMode twist_mode, WarpMode warp_mode>
