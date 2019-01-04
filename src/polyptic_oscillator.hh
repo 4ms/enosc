@@ -8,7 +8,7 @@
 
 class Oscillators : Nocopy {
   OscillatorPair osc_[kNumOsc];
-  s1_15 modulation_blocks_[kBlockSize][kNumOsc];
+  f modulation_blocks_[kBlockSize][kNumOsc];
 
   static bool pick_output(StereoMode mode, int i) {
     return
@@ -17,8 +17,8 @@ class Oscillators : Nocopy {
       i == 0;
   }
 
-  using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f,
-                                                 Block<s1_15>, Block<s1_15>, Block<s1_15>, Block<f>);
+  using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f,
+                                                 Block<f>, Block<f>, Block<f>);
 
   processor_t choose_processor(TwistMode t, WarpMode m) {
     return
@@ -89,17 +89,16 @@ public:
     processor_t process = choose_processor(params.twist.mode, params.warp.mode);
     f twist = params.twist.value;
     f warp = params.warp.value;
+    f mod = params.modulation;
 
     for (int i=0; i<kNumOsc; ++i) {
       FrequencyPair p = frequency.Next();
-
       f amp = amplitude.Next();
+      // TODO grouper les blocks
+      Block<f> mod_return = Block<f>(modulation_blocks_[0], kBlockSize); // TODO
+      Block<f> mod_send = Block<f>(modulation_blocks_[1], kBlockSize); // TODO
       Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
-      (osc_[i].*process)(p, twist, warp, amp,
-                         Block<s1_15>(modulation_blocks_[i], kBlockSize), // in
-                         Block<s1_15>(modulation_blocks_[i], kBlockSize), // out1
-                         Block<s1_15>(modulation_blocks_[i], kBlockSize), // out2
-                         out);
+      (osc_[i].*process)(p, twist, warp, amp, mod, mod_return, mod_send, out);
     }
 
     f atten = 1_f / amplitude.Sum();
