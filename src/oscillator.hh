@@ -31,8 +31,7 @@ public:
 };
 
 class Oscillator : Phasor, SineShaper {
-  // TODO: switching to IFloat -> -2% perf!!!
-  IIFloat amplitude {0_f};
+  IFloat amplitude {0_f};
 
   // TODO optimize
   static f crush(s1_15 sample, f amount) {
