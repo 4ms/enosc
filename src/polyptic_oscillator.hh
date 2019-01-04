@@ -17,7 +17,7 @@ class Oscillators : Nocopy {
       i == 0;
   }
 
-  using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f,
+  using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f,
                                                  Block<s1_15>, Block<s1_15>, Block<s1_15>, Block<f>);
 
   processor_t choose_processor(TwistMode t, WarpMode m) {
@@ -89,13 +89,14 @@ public:
     processor_t process = choose_processor(params.twist.mode, params.warp.mode);
     f twist = params.twist.value;
     f warp = params.warp.value;
+    f modulation = params.modulation;
 
     for (int i=0; i<kNumOsc; ++i) {
       FrequencyPair p = frequency.Next();
 
       f amp = amplitude.Next();
       Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
-      (osc_[i].*process)(p, twist, warp, amp,
+      (osc_[i].*process)(p, twist, warp, amp, modulation,
                          Block<s1_15>(modulation_blocks_[i], kBlockSize), // in
                          Block<s1_15>(modulation_blocks_[i], kBlockSize), // out1
                          Block<s1_15>(modulation_blocks_[i], kBlockSize), // out2
