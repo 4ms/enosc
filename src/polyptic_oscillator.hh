@@ -8,7 +8,9 @@
 
 class Oscillators : Nocopy {
   OscillatorPair osc_[kNumOsc];
-  f modulation_blocks_[kBlockSize][kNumOsc];
+  f modulation_blocks_[kNumOsc+1][kBlockSize];
+
+  f papou[kBlockSize];
 
   static bool pick_output(StereoMode mode, int i) {
     return
@@ -93,11 +95,10 @@ public:
 
     for (int i=0; i<kNumOsc; ++i) {
       FrequencyPair p = frequency.Next();
-
       f amp = amplitude.Next();
       Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
-      Block<f> mod_in = Block<f>(modulation_blocks_[i], kBlockSize);
-      Block<f> mod_out = Block<f>(modulation_blocks_[i], kBlockSize);
+      Block<f> mod_in(modulation_blocks_[i], kBlockSize);
+      Block<f> mod_out(modulation_blocks_[i+1], kBlockSize);
       (osc_[i].*process)(p, twist, warp, amp, modulation, mod_in, mod_out, out);
     }
 
