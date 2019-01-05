@@ -8,7 +8,7 @@
 
 class Oscillators : Nocopy {
   OscillatorPair osc_[kNumOsc];
-  f modulation_blocks_[kNumOsc+1][kBlockSize];
+  u0_16 modulation_blocks_[kNumOsc+1][kBlockSize];
 
   f papou[kBlockSize];
 
@@ -20,7 +20,7 @@ class Oscillators : Nocopy {
   }
 
   using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f,
-                                                 Block<f>, Block<f>, Block<f>);
+                                                 Block<u0_16>, Block<u0_16>, Block<f>);
 
   processor_t choose_processor(TwistMode t, WarpMode m) {
     return
@@ -97,8 +97,8 @@ public:
       FrequencyPair p = frequency.Next();
       f amp = amplitude.Next();
       Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
-      Block<f> mod_in(modulation_blocks_[i], kBlockSize);
-      Block<f> mod_out(modulation_blocks_[i+1], kBlockSize);
+      Block<u0_16> mod_in(modulation_blocks_[i], kBlockSize);
+      Block<u0_16> mod_out(modulation_blocks_[i+1], kBlockSize);
       (osc_[i].*process)(p, twist, warp, amp, modulation, mod_in, mod_out, out);
     }
 

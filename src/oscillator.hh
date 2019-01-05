@@ -102,7 +102,6 @@ class Oscillator : Phasor, SineShaper {
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   f Process(u0_32 freq, u0_32 mod, f twist_amount, f warp_amount) {
-
     u0_32 phase = Phasor::Process(freq);
     phase += mod;
     phase = Distortion::twist<twist_mode>(phase, twist_amount);
@@ -116,18 +115,18 @@ public:
 
   template<TwistMode twist_mode, WarpMode warp_mode>
   void Process(u0_32 const freq, f const twist, f const warp, f const amp, f const modulation,
-               Block<f> mod_in, Block<f> mod_out, Block<f> sum_output) {
+               Block<u0_16> mod_in, Block<u0_16> mod_out, Block<f> sum_output) {
     amplitude.set(amp, sum_output.size());
-    f *mod_in_it = mod_in.begin();
-    f *mod_out_it = mod_out.begin();
+    u0_16 *mod_in_it = mod_in.begin();
+    u0_16 *mod_out_it = mod_out.begin();
     for (f &sum : sum_output) {
-      f &m_in = *mod_in_it;
-      f &m_out = *mod_out_it;
-      u0_32 mod = u0_32(u0_16((m_in * modulation * kMaxModulationIndex)));
+      u0_16 &m_in = *mod_in_it;
+      u0_16 &m_out = *mod_out_it;
+      u0_32 mod = u0_32(m_in);
       f sample = Process<twist_mode, warp_mode>(freq, mod, twist, warp);
       sample *= amplitude.next();
       sum += sample;
-      m_out += sample + 1_f;
+      m_out += u0_16((sample + 1_f) * modulation * kMaxModulationIndex);
       mod_in_it++;
       mod_out_it++;
     }
@@ -154,7 +153,7 @@ public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   void Process(FrequencyPair const p,
                f const twist, f const warp, f const amplitude, f const modulation,
-               Block<f> mod_in, Block<f> mod_out,
+               Block<u0_16> mod_in, Block<u0_16> mod_out,
                Block<f> sum_output) {
     f crossfade = p.crossfade * p.crossfade;             // helps find the 0 point
     f amp1 = amplitude * (1_f - p.crossfade);
@@ -165,7 +164,7 @@ public:
     f aliasing_factor2 = p.freq2; // TODO
     amp2 *= antialias(aliasing_factor2);
 
-    mod_out.fill(0_f);
+    mod_out.fill(0._u0_16);
     osc_[0].Process<twist_mode, warp_mode>(u0_32(p.freq1), twist, warp, amp1, modulation,
                                            mod_in, mod_out, sum_output);
     osc_[1].Process<twist_mode, warp_mode>(u0_32(p.freq2), twist, warp, amp2, modulation,
