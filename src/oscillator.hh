@@ -2,7 +2,7 @@
 
 #include "dsp.hh"
 
-constexpr const f kMaxModulationIndex = 5_f;
+constexpr const f kMaxModulationIndex = 5_f / f(kNumOsc);
 
 class Phasor : Nocopy {
   u0_32 phase_ = u0_32::of_repr(Random::Word());
