@@ -91,7 +91,7 @@ public:
     processor_t process = choose_processor(params.twist.mode, params.warp.mode);
     f twist = params.twist.value;
     f warp = params.warp.value;
-    f modulation = params.modulation;
+    f modulation = params.modulation.value;
 
     for (int i=0; i<kNumOsc; ++i) {
       FrequencyPair p = frequency.Next();

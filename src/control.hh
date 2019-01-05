@@ -166,7 +166,7 @@ public:
 
     f mod = mod_.Process(adc_.mod_pot(), adc_.mod_cv());
     mod = Math::crop(kPotDeadZone, mod);
-    params.modulation = mod;
+    params.modulation.value = mod;
 
     f spread = spread_.Process(adc_.spread_pot(), adc_.spread_cv());
     spread = Math::crop(kPotDeadZone, spread);

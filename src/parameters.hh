@@ -9,12 +9,13 @@ constexpr struct Frame {
 
 constexpr int kBlockSize = 16;
 constexpr int kSampleRate = 96000;
-constexpr int kNumOsc = 10;
+constexpr int kNumOsc = 8;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
 enum WarpMode { FOLD, CHEBY, CRUSH };
 enum StereoMode { ALTERNATE, SPLIT, LOWER_REST };
 enum GridMode { CHORD, HARM, JUST };
+enum ModulationMode { ONE, TWO, THREE };
 
 // textile oscillator:
 enum DivisionMode { INTEGER, ODD, POW_OF_TWO };
@@ -26,7 +27,11 @@ struct Parameters {
   f pitch;                       // midi note
   f spread;                      // semitones
   f detune;                     // semitones
-  f modulation;                 // 0..1
+
+  struct Modulation {
+    ModulationMode mode;
+    f value;                 // 0..1
+  } modulation;
 
   struct Grid {
     GridMode mode;

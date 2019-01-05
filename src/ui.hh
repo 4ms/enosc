@@ -138,7 +138,7 @@ public:
     params.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
     params.grid.mode = static_cast<GridMode>(switches_.grid_.get());
     // TODO temp
-    params.stereo_mode = static_cast<StereoMode>(switches_.mod_.get());
+    params.modulation.mode = static_cast<ModulationMode>(switches_.mod_.get());
 
     // LEDs
     switch (mode) {
