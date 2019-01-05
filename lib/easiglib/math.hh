@@ -11,7 +11,7 @@ struct Math {
     return x * x * (3_f - x * 2_f);
   }
 
-  // [-1; +1] --> [-1; +1]
+  // [0..1] --> [-1..1]
   static constexpr f faster_sine(f x) {
     x = (x * 2_f) - 1_f;
     return 4_f * (x - x * x.abs());
@@ -28,7 +28,7 @@ struct Math {
     return z;
   }
 
-  // [-1; +1] --> [-1; +1]
+  // [0..1] --> [-1..1]
   static constexpr f fast_sine(f x) {
     f y = faster_sine(x);
     y = 0.225_f * (y * y.abs() - y) + y;
