@@ -12,11 +12,34 @@ class Oscillators : Nocopy {
 
   f papou[kBlockSize];
 
-  static bool pick_output(StereoMode mode, int i) {
+  static inline bool pick_output(StereoMode mode, int i) {
     return
       mode == ALTERNATE ? i&1 :
       mode == SPLIT ? i<=kNumOsc/2 :
       i == 0;
+  }
+
+  inline std::pair<u0_16*, u0_16*>
+  pick_modulation_blocks(ModulationMode mode, int i) {
+    if(mode == ONE) {
+      if (i==0) {
+        return std::make_pair(nullptr, modulation_blocks_[i+1]);
+      } else {
+        return std::make_pair(modulation_blocks_[i], modulation_blocks_[i+1]);
+      }
+    } else if (mode == TWO) {
+      if (i==0) {
+        return std::make_pair(nullptr, modulation_blocks_[0]);
+      } else {
+        return std::make_pair(modulation_blocks_[0], nullptr);
+      }
+    } else { // mode == THREE
+      if (i&1) {
+        return std::make_pair(nullptr, modulation_blocks_[i]);
+      } else {
+        return std::make_pair(modulation_blocks_[i+1], nullptr);
+      }
+    }
   }
 
   using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f,
@@ -97,9 +120,11 @@ public:
       FrequencyPair p = frequency.Next();
       f amp = amplitude.Next();
       Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
-      Block<u0_16> mod_in(modulation_blocks_[i], kBlockSize);
-      Block<u0_16> mod_out(modulation_blocks_[i+1], kBlockSize);
-      (osc_[i].*process)(p, twist, warp, amp, modulation, mod_in, mod_out, out);
+      std::pair<u0_16*, u0_16*> mod_blocks = pick_modulation_blocks(params.modulation.mode, i);
+      Block<u0_16> mod_in(mod_blocks.first, kBlockSize);
+      Block<u0_16> mod_out(mod_blocks.second, kBlockSize);
+      (osc_[i].*process)(p, twist, warp, amp, modulation,
+                         mod_in, mod_out, out);
     }
 
     f atten = 1_f / amplitude.Sum();
