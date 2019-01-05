@@ -2,6 +2,8 @@
 
 #include "dsp.hh"
 
+constexpr const f kMaxModulationIndex = 5_f;
+
 class Phasor : Nocopy {
   u0_32 phase_ = u0_32::of_repr(Random::Word());
 public:
@@ -121,11 +123,11 @@ public:
     for (f &sum : sum_output) {
       f &m_in = *mod_in_it;
       f &m_out = *mod_out_it;
-      u0_32 mod = u0_32(m_in * modulation * 5_f);
+      u0_32 mod = u0_32(u0_16((m_in * modulation * kMaxModulationIndex)));
       f sample = Process<twist_mode, warp_mode>(freq, mod, twist, warp);
       sample *= amplitude.next();
       sum += sample;
-      m_out += sample;
+      m_out += sample + 1_f;
       mod_in_it++;
       mod_out_it++;
     }
