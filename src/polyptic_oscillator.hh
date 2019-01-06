@@ -9,8 +9,7 @@
 class Oscillators : Nocopy {
   OscillatorPair osc_[kNumOsc];
   u0_16 modulation_blocks_[kNumOsc+1][kBlockSize];
-
-  f papou[kBlockSize];
+  u0_16 dummy_block_[kBlockSize];
 
   static inline bool pick_output(StereoMode mode, int i) {
     return
@@ -23,21 +22,21 @@ class Oscillators : Nocopy {
   pick_modulation_blocks(ModulationMode mode, int i) {
     if(mode == ONE) {
       if (i==0) {
-        return std::make_pair(nullptr, modulation_blocks_[i+1]);
+        return std::make_pair(dummy_block_, modulation_blocks_[i+1]);
       } else {
         return std::make_pair(modulation_blocks_[i], modulation_blocks_[i+1]);
       }
     } else if (mode == TWO) {
       if (i==0) {
-        return std::make_pair(nullptr, modulation_blocks_[0]);
+        return std::make_pair(dummy_block_, modulation_blocks_[0]);
       } else {
-        return std::make_pair(modulation_blocks_[0], nullptr);
+        return std::make_pair(modulation_blocks_[0], dummy_block_);
       }
     } else { // mode == THREE
       if (i&1) {
-        return std::make_pair(nullptr, modulation_blocks_[i]);
+        return std::make_pair(dummy_block_, modulation_blocks_[i]);
       } else {
-        return std::make_pair(modulation_blocks_[i+1], nullptr);
+        return std::make_pair(modulation_blocks_[i+1], dummy_block_);
       }
     }
   }
@@ -123,6 +122,7 @@ public:
       std::pair<u0_16*, u0_16*> mod_blocks = pick_modulation_blocks(params.modulation.mode, i);
       Block<u0_16> mod_in(mod_blocks.first, kBlockSize);
       Block<u0_16> mod_out(mod_blocks.second, kBlockSize);
+      std::fill(dummy_block_, dummy_block_+kBlockSize, 0._u0_16);
       (osc_[i].*process)(p, twist, warp, amp, modulation,
                          mod_in, mod_out, out);
     }

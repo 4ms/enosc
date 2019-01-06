@@ -119,42 +119,16 @@ public:
     amplitude.set(amp, sum_output.size());
     u0_16 *mod_in_it = mod_in.begin();
     u0_16 *mod_out_it = mod_out.begin();
-    if (mod_in_it == nullptr && mod_out_it == nullptr) {
-      for (f &sum : sum_output) {
-        f sample = Process<twist_mode, warp_mode>(freq, 0._u0_32, twist, warp);
-        sample *= amplitude.next();
-        sum += sample;
-      }
-    } else if (mod_in_it == nullptr) {
-      for (f &sum : sum_output) {
-        u0_16 &m_out = *mod_out_it;
-        f sample = Process<twist_mode, warp_mode>(freq, 0._u0_32, twist, warp);
-        sample *= amplitude.next();
-        sum += sample;
-        m_out += u0_16((sample + 1_f) * modulation * kMaxModulationIndex);
-        mod_out_it++;
-      }
-    } else if (mod_out_it == nullptr) {
-      for (f &sum : sum_output) {
-        u0_16 &m_in = *mod_in_it;
-        u0_32 mod = u0_32(m_in);
-        f sample = Process<twist_mode, warp_mode>(freq, mod, twist, warp);
-        sample *= amplitude.next();
-        sum += sample;
-        mod_in_it++;
-      }
-    } else {
-      for (f &sum : sum_output) {
-        u0_16 &m_in = *mod_in_it;
-        u0_16 &m_out = *mod_out_it;
-        u0_32 mod = u0_32(m_in);
-        f sample = Process<twist_mode, warp_mode>(freq, mod, twist, warp);
-        sample *= amplitude.next();
-        sum += sample;
-        m_out += u0_16((sample + 1_f) * modulation * kMaxModulationIndex);
-        mod_in_it++;
-        mod_out_it++;
-      }
+    for (f &sum : sum_output) {
+      u0_16 &m_in = *mod_in_it;
+      u0_16 &m_out = *mod_out_it;
+      u0_32 mod = u0_32(m_in);
+      f sample = Process<twist_mode, warp_mode>(freq, mod, twist, warp);
+      sample *= amplitude.next();
+      sum += sample;
+      m_out += u0_16((sample + 1_f) * modulation * kMaxModulationIndex);
+      mod_in_it++;
+      mod_out_it++;
     }
   }
 };
