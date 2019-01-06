@@ -137,6 +137,8 @@ struct FrequencyPair { f freq1, freq2, crossfade; };
 
 class OscillatorPair : Nocopy {
   Oscillator osc_[2];
+  bool frozen;
+  FrequencyPair previous_freq;
 
   // simple linear piecewise function: 0->1, 0.5->1, 1->0
   static f antialias(f factor) {
@@ -149,24 +151,29 @@ class OscillatorPair : Nocopy {
       return amplitude;
   }
 public:
+  void set_freeze(bool b) { frozen = b; }
+
   template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(FrequencyPair const p,
+  void Process(FrequencyPair freq,
                f const twist, f const warp, f const amplitude, f const modulation,
                Block<u0_16> mod_in, Block<u0_16> mod_out,
                Block<f> sum_output) {
-    f crossfade = p.crossfade * p.crossfade;             // helps find the 0 point
-    f amp1 = amplitude * (1_f - p.crossfade);
-    f amp2 = amplitude * p.crossfade;
+    if (frozen) freq = previous_freq;
+    else previous_freq = freq;
 
-    f aliasing_factor1 = p.freq1; // TODO
+    f crossfade = freq.crossfade * freq.crossfade;             // helps find the 0 point
+    f amp1 = amplitude * (1_f - freq.crossfade);
+    f amp2 = amplitude * freq.crossfade;
+
+    f aliasing_factor1 = freq.freq1; // TODO
     amp1 *= antialias(aliasing_factor1);
-    f aliasing_factor2 = p.freq2; // TODO
+    f aliasing_factor2 = freq.freq2; // TODO
     amp2 *= antialias(aliasing_factor2);
 
     mod_out.fill(0._u0_16);
-    osc_[0].Process<twist_mode, warp_mode>(u0_32(p.freq1), twist, warp, amp1, modulation,
+    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq.freq1), twist, warp, amp1, modulation,
                                            mod_in, mod_out, sum_output);
-    osc_[1].Process<twist_mode, warp_mode>(u0_32(p.freq2), twist, warp, amp2, modulation,
+    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq.freq2), twist, warp, amp2, modulation,
                                            mod_in, mod_out, sum_output);
   }
 };
