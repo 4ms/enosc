@@ -97,7 +97,7 @@ namespace Distortion {
 };
 
 class Oscillator : Phasor, SineShaper {
-  IFloat amplitude {0_f};
+  IFloat fader {0_f};
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
@@ -114,9 +114,10 @@ public:
   }
 
   template<TwistMode twist_mode, WarpMode warp_mode>
-  void Process(u0_32 const freq, f const twist, f const warp, f const amp, f const modulation,
+  void Process(u0_32 const freq, f const twist, f const warp,
+               f const fade, f const amplitude, f const modulation,
                Block<u0_16> mod_in, Block<u0_16> mod_out, Block<f> sum_output) {
-    amplitude.set(amp, sum_output.size());
+    fader.set(fade, sum_output.size());
     u0_16 *mod_in_it = mod_in.begin();
     u0_16 *mod_out_it = mod_out.begin();
     for (f &sum : sum_output) {
@@ -124,9 +125,9 @@ public:
       u0_16 &m_out = *mod_out_it;
       u0_32 mod = u0_32(m_in);
       f sample = Process<twist_mode, warp_mode>(freq, mod, twist, warp);
-      sample *= amplitude.next();
-      sum += sample;
+      sample *= fader.next();
       m_out += u0_16((sample + 1_f) * modulation * kMaxModulationIndex);
+      sum += sample * amplitude;
       mod_in_it++;
       mod_out_it++;
     }
@@ -162,18 +163,20 @@ public:
     else previous_freq = freq;
 
     f crossfade = freq.crossfade * freq.crossfade;             // helps find the 0 point
-    f amp1 = amplitude * (1_f - freq.crossfade);
-    f amp2 = amplitude * freq.crossfade;
+    f fade1 = 1_f - freq.crossfade;
+    f fade2 = freq.crossfade;
 
     f aliasing_factor1 = freq.freq1; // TODO
-    amp1 *= antialias(aliasing_factor1);
+    fade1 *= antialias(aliasing_factor1);
     f aliasing_factor2 = freq.freq2; // TODO
-    amp2 *= antialias(aliasing_factor2);
+    fade2 *= antialias(aliasing_factor2);
 
     mod_out.fill(0._u0_16);
-    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq.freq1), twist, warp, amp1, modulation,
+    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq.freq1), twist, warp,
+                                           fade1, amplitude, modulation,
                                            mod_in, mod_out, sum_output);
-    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq.freq2), twist, warp, amp2, modulation,
+    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq.freq2), twist, warp,
+                                           fade2, amplitude, modulation,
                                            mod_in, mod_out, sum_output);
   }
 };
