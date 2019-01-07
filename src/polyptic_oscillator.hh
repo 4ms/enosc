@@ -142,8 +142,7 @@ public:
 };
 
 template<int size>
-class PolypticOscillator : Nocopy {
-  Oscillators<size> oscs_;
+class PolypticOscillator : Oscillators<size> {
   Quantizer quantizer_;
   PreGrid pre_grid_;
   Grid *current_grid_ = quantizer_.get_grid(0);
@@ -186,7 +185,7 @@ public:
 
     current_grid_ = quantizer_.get_grid(params.grid);
 
-    oscs_.Process(params, *current_grid_, block.first(), block.second());
+    Oscillators<size>::Process(params, *current_grid_, block.first(), block.second());
 
     for (auto x : block) {
       f &o1 = std::get<0>(x);
