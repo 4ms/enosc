@@ -68,7 +68,6 @@ class Ui {
   void button_pressed(Button b) {
     switch(b) {
     case BUTTON_LEARN: {
-      set_learn(!osc_.learn_enabled());
     } break;
     case BUTTON_FREEZE: {
     } break;
@@ -78,6 +77,7 @@ class Ui {
   void button_released(Button b) {
     switch(b) {
     case BUTTON_LEARN: {
+      set_learn(!osc_.learn_enabled());
     } break;
     case BUTTON_FREEZE: {
     } break;
