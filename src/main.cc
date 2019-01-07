@@ -11,12 +11,8 @@
 struct Main : Nocopy {
   System sys_;
   Ui<kBlockSize> ui_;
-  Parameters params_;
 
-  Codec codec_{kSampleRate,
-               [this](DoubleBlock<Frame, Frame, kBlockSize> inout) {
-                 this->Process(inout);
-               }};
+  Codec codec_{kSampleRate, [this](auto inout) {this->Process(inout);}};
 
   Main() {
     //Start audio processing
@@ -27,7 +23,7 @@ struct Main : Nocopy {
   template<int size>
   void Process(DoubleBlock<Frame, Frame, size> inout) {
     debug.set(3, true);
-    ui_.Process(inout.first(), params_);
+    ui_.Process(inout.first());
 
 #ifdef BYPASS
     // TODO double block
@@ -38,7 +34,7 @@ struct Main : Nocopy {
       o_begin++;
     }
 #else
-    ui_.osc().Process(params_, inout.second());
+    ui_.osc().Process(inout.second());
 #endif
     debug.set(3, false);
   }

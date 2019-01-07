@@ -30,11 +30,13 @@ private:
 
 template<int size>
 class Ui {
+  Parameters params_;
   Buttons buttons_;
   Gates gates_;
   Switches switches_;
   Leds leds_;
   PolypticOscillator<size> osc_ {
+    params_,
     [this](bool success) {
       // on new note
       learn_led_.flash(success ? Colors::white : Colors::black);
@@ -105,10 +107,10 @@ class Ui {
 public:
   PolypticOscillator<size>& osc() { return osc_; }
 
-  void Process(Block<Frame, size> codec_in, Parameters& params) {
+  void Process(Block<Frame, size> codec_in) {
 
     // Controls
-    control_.Process(codec_in, params);
+    control_.Process(codec_in, params_);
 
     // Buttons
     buttons_.Debounce();
@@ -135,11 +137,11 @@ public:
       gate_disabled(GATE_FREEZE);
 
     //Switches
-    params.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
-    params.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
-    params.grid.mode = static_cast<GridMode>(switches_.grid_.get());
+    params_.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
+    params_.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
+    params_.grid.mode = static_cast<GridMode>(switches_.grid_.get());
     // TODO temp
-    params.modulation.mode = static_cast<ModulationMode>(switches_.mod_.get());
+    params_.modulation.mode = static_cast<ModulationMode>(switches_.mod_.get());
 
     // LEDs
     switch (mode) {

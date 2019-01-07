@@ -142,7 +142,8 @@ public:
 };
 
 template<int size>
-class PolypticOscillator : Oscillators<size> {
+class PolypticOscillator : public Oscillators<size> {
+  Parameters& params_;
   Quantizer quantizer_;
   PreGrid pre_grid_;
   Grid *current_grid_ = quantizer_.get_grid(0);
@@ -150,9 +151,10 @@ class PolypticOscillator : Oscillators<size> {
   bool learn_mode = false;
 public:
   PolypticOscillator(
+    Parameters& params,
     std::function<void(bool)> onNewNote,
     std::function<void(bool)> onExitLearn)
-    : onNewNote_(onNewNote), onExitLearn_(onExitLearn) {}
+    : params_(params), onNewNote_(onNewNote), onExitLearn_(onExitLearn) {}
 
   Subject<bool> onNewNote_;
   Subject<bool> onExitLearn_;
@@ -179,13 +181,13 @@ public:
     }
   }
 
-  void Process(Parameters const &params, Block<Frame, size> out) {
+  void Process(Block<Frame, size> out) {
     f buffer[2][size];
     TripleBlock<f, f, Frame, size> block {buffer[0], buffer[1], out.begin()};
 
-    current_grid_ = quantizer_.get_grid(params.grid);
+    current_grid_ = quantizer_.get_grid(params_.grid);
 
-    Oscillators<size>::Process(params, *current_grid_, block.first(), block.second());
+    Oscillators<size>::Process(params_, *current_grid_, block.first(), block.second());
 
     for (auto x : block) {
       f &o1 = std::get<0>(x);
