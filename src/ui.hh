@@ -28,12 +28,13 @@ private:
   u0_16 flash_phase = 0._u0_16;
 };
 
+template<int size>
 class Ui {
   Buttons buttons_;
   Gates gates_;
   Switches switches_;
   Leds leds_;
-  PolypticOscillator osc_ {
+  PolypticOscillator<size> osc_ {
     [this](bool success) {
       // on new note
       learn_led_.flash(success ? Colors::white : Colors::black);
@@ -43,7 +44,7 @@ class Ui {
       if(success) learn_led_.flash(Colors::magenta);
     }
   };
-  Control control_ {osc_};
+  Control<size> control_ {osc_};
 
   LedManager<Leds::Learn> learn_led_;
   LedManager<Leds::Freeze> freeze_led_;
@@ -102,9 +103,9 @@ class Ui {
   }
 
 public:
-  PolypticOscillator& osc() { return osc_; }
+  PolypticOscillator<size>& osc() { return osc_; }
 
-  void Process(Block<Frame> codec_in, Parameters& params) {
+  void Process(Block<Frame, size> codec_in, Parameters& params) {
 
     // Controls
     control_.Process(codec_in, params);

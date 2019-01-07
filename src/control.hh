@@ -39,10 +39,11 @@ struct CVConditioner {
   }
 };
 
+template<int size>
 class AudioCVConditioner {
   // TODO: convert Average to Numtypes
   Average<8, 2> lp_;
-  CicDecimator<1, kBlockSize> cic_;
+  CicDecimator<1, size> cic_;
   f offset;
   f slope;
 public:
@@ -56,7 +57,7 @@ public:
     f octave = (reading.to_float_inclusive() - offset) / kCalibration2Voltage;
     slope = 12_f / octave;
   }
-  f Process(Block<s1_15> in) {
+  f Process(Block<s1_15, size> in) {
     s1_15 x = in[0];
     cic_.Process(in.begin(), &x, 1); // -1..1
     u0_16 y = x.to_unsigned_scale(); // 0..1
@@ -88,6 +89,7 @@ struct PotCVCombiner {
   }
 };
 
+template<int size>
 class Control {
 
   Adc adc_;
@@ -102,30 +104,29 @@ class Control {
 
   PotConditioner<LINEAR> pitch_pot_;
   PotConditioner<LINEAR> root_pot_;
-  AudioCVConditioner pitch_cv_ {0.240466923_f, 96.8885345_f};
-  AudioCVConditioner root_cv_  {0.24319829_f, 97.4769897_f};
+  AudioCVConditioner<size> pitch_cv_ {0.240466923_f, 96.8885345_f};
+  AudioCVConditioner<size> root_cv_  {0.24319829_f, 97.4769897_f};
   QuadraticOnePoleLp<2> root_pot_lp_;
   QuadraticOnePoleLp<2> pitch_pot_lp_;
 
   // delay is 5 ms
-  ChangeDetector<int(0.05 * kSampleRate / kBlockSize)>
+  ChangeDetector<int(0.05 * kSampleRate / size)>
   pitch_cv_change_detector_ {0.005_f, 0.01_f};
 
-  PolypticOscillator &osc_;
+  PolypticOscillator<size> &osc_;
 
   Sampler<f> pitch_cv_sampler_;
 
 public:
 
-  Control(PolypticOscillator &osc) : osc_(osc) {}
+  Control(PolypticOscillator<size> &osc) : osc_(osc) {}
 
-  void Process(Block<Frame> codec_in, Parameters &params) {
+  void Process(Block<Frame, size> codec_in, Parameters &params) {
 
     // Process codec input
-    int size = codec_in.size();
     s1_15 in1[size], in2[size];
-    Block<s1_15> pitch_block {in1, size};
-    Block<s1_15> root_block {in2, size};
+    Block<s1_15, size> pitch_block {in1};
+    Block<s1_15, size> root_block {in2};
     // TODO change to TripleBlock
     auto *pi=pitch_block.begin(), *ro=root_block.begin();
     for (Frame in : codec_in) {

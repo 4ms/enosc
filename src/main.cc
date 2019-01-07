@@ -10,11 +10,11 @@
 
 struct Main : Nocopy {
   System sys_;
-  Ui ui_;
+  Ui<kBlockSize> ui_;
   Parameters params_;
 
   Codec codec_{kSampleRate,
-               [this](DoubleBlock<Frame, Frame> inout) {
+               [this](DoubleBlock<Frame, Frame, kBlockSize> inout) {
                  this->Process(inout);
                }};
 
@@ -24,7 +24,8 @@ struct Main : Nocopy {
     while(1) { }
   }
 
-  void Process(DoubleBlock<Frame, Frame> inout) {
+  template<int size>
+  void Process(DoubleBlock<Frame, Frame, size> inout) {
     debug.set(3, true);
     ui_.Process(inout.first(), params_);
 

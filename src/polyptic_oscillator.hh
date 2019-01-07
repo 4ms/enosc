@@ -6,10 +6,11 @@
 #include "oscillator.hh"
 #include "quantizer.hh"
 
+template<int size>
 class Oscillators : Nocopy {
   OscillatorPair osc_[kNumOsc];
-  u0_16 modulation_blocks_[kNumOsc+1][kBlockSize];
-  u0_16 dummy_block_[kBlockSize];
+  u0_16 modulation_blocks_[kNumOsc+1][size];
+  u0_16 dummy_block_[size];
 
   static inline bool pick_output(StereoMode mode, int i) {
     return
@@ -42,19 +43,19 @@ class Oscillators : Nocopy {
   }
 
   using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f,
-                                                 Block<u0_16>, Block<u0_16>, Block<f>);
+                                               Block<u0_16, size>, Block<u0_16, size>, Block<f, size>);
 
   processor_t choose_processor(TwistMode t, WarpMode m) {
     return
-      t == FEEDBACK && m == CRUSH ? &OscillatorPair::Process<FEEDBACK, CRUSH> :
-      t == FEEDBACK && m == CHEBY ? &OscillatorPair::Process<FEEDBACK, CHEBY> :
-      t == FEEDBACK && m == FOLD ? &OscillatorPair::Process<FEEDBACK, FOLD> :
-      t == PULSAR && m == CRUSH ? &OscillatorPair::Process<PULSAR, CRUSH> :
-      t == PULSAR && m == CHEBY ? &OscillatorPair::Process<PULSAR, CHEBY> :
-      t == PULSAR && m == FOLD ? &OscillatorPair::Process<PULSAR, FOLD> :
-      t == DECIMATE && m == CRUSH ? &OscillatorPair::Process<DECIMATE, CRUSH> :
-      t == DECIMATE && m == CHEBY ? &OscillatorPair::Process<DECIMATE, CHEBY> :
-      t == DECIMATE && m == FOLD ? &OscillatorPair::Process<DECIMATE, FOLD> :
+      t == FEEDBACK && m == CRUSH ? &OscillatorPair::Process<FEEDBACK, CRUSH, size> :
+      t == FEEDBACK && m == CHEBY ? &OscillatorPair::Process<FEEDBACK, CHEBY, size> :
+      t == FEEDBACK && m == FOLD ? &OscillatorPair::Process<FEEDBACK, FOLD, size> :
+      t == PULSAR && m == CRUSH ? &OscillatorPair::Process<PULSAR, CRUSH, size> :
+      t == PULSAR && m == CHEBY ? &OscillatorPair::Process<PULSAR, CHEBY, size> :
+      t == PULSAR && m == FOLD ? &OscillatorPair::Process<PULSAR, FOLD, size> :
+      t == DECIMATE && m == CRUSH ? &OscillatorPair::Process<DECIMATE, CRUSH, size> :
+      t == DECIMATE && m == CHEBY ? &OscillatorPair::Process<DECIMATE, CHEBY, size> :
+      t == DECIMATE && m == FOLD ? &OscillatorPair::Process<DECIMATE, FOLD, size> :
       NULL;
   }
 
@@ -102,7 +103,7 @@ class Oscillators : Nocopy {
 
 public:
   void Process(Parameters const &params, Grid const &grid,
-               Block<f> out1, Block<f> out2) {
+               Block<f, size> out1, Block<f, size> out2) {
     out1.fill(0_f);
     out2.fill(0_f);
 
@@ -118,11 +119,11 @@ public:
     for (int i=0; i<kNumOsc; ++i) {
       FrequencyPair p = frequency.Next();
       f amp = amplitude.Next();
-      Block<f> out = pick_output(params.stereo_mode, i) ? out1 : out2;
+      Block<f, size> out = pick_output(params.stereo_mode, i) ? out1 : out2;
       std::pair<u0_16*, u0_16*> mod_blocks = pick_modulation_blocks(params.modulation.mode, i);
-      Block<u0_16> mod_in(mod_blocks.first, kBlockSize);
-      Block<u0_16> mod_out(mod_blocks.second, kBlockSize);
-      std::fill(dummy_block_, dummy_block_+kBlockSize, 0._u0_16);
+      Block<u0_16, size> mod_in(mod_blocks.first);
+      Block<u0_16, size> mod_out(mod_blocks.second);
+      std::fill(dummy_block_, dummy_block_+size, 0._u0_16);
       (osc_[i].*process)(p, twist, warp, amp, modulation,
                          mod_in, mod_out, out);
     }
@@ -140,8 +141,9 @@ public:
   }
 };
 
+template<int size>
 class PolypticOscillator : Nocopy {
-  Oscillators oscs_;
+  Oscillators<size> oscs_;
   Quantizer quantizer_;
   PreGrid pre_grid_;
   Grid *current_grid_ = quantizer_.get_grid(0);
@@ -178,9 +180,9 @@ public:
     }
   }
 
-  void Process(Parameters const &params, Block<Frame> out) {
-    f buffer[2][out.size()];
-    TripleBlock<f, f, Frame> block {buffer[0], buffer[1], out.begin(), out.size()};
+  void Process(Parameters const &params, Block<Frame, size> out) {
+    f buffer[2][size];
+    TripleBlock<f, f, Frame, size> block {buffer[0], buffer[1], out.begin()};
 
     current_grid_ = quantizer_.get_grid(params.grid);
 

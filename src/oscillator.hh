@@ -50,10 +50,10 @@ public:
     return Distortion::warp<warp_mode>(sine, warp_amount);
   }
 
-  template<TwistMode twist_mode, WarpMode warp_mode>
+  template<TwistMode twist_mode, WarpMode warp_mode, int size>
   void Process(u0_32 const freq, f const twist, f const warp,
                f const fade, f const amplitude, f const modulation,
-               Block<u0_16> mod_in, Block<u0_16> mod_out, Block<f> sum_output) {
+               Block<u0_16, size> mod_in, Block<u0_16, size> mod_out, Block<f, size> sum_output) {
     fader.set(fade, sum_output.size());
     u0_16 *mod_in_it = mod_in.begin();
     u0_16 *mod_out_it = mod_out.begin();
@@ -90,11 +90,11 @@ class OscillatorPair : Nocopy {
 public:
   void set_freeze(bool b) { frozen = b; }
 
-  template<TwistMode twist_mode, WarpMode warp_mode>
+  template<TwistMode twist_mode, WarpMode warp_mode, int size>
   void Process(FrequencyPair freq,
                f const twist, f const warp, f const amplitude, f const modulation,
-               Block<u0_16> mod_in, Block<u0_16> mod_out,
-               Block<f> sum_output) {
+               Block<u0_16, size> mod_in, Block<u0_16, size> mod_out,
+               Block<f, size> sum_output) {
     if (frozen) freq = previous_freq;
     else previous_freq = freq;
 

@@ -46,9 +46,9 @@ protected:
   const T *data_;
 };
 
-template<class T>
+template<class T, int SIZE>
 struct Block {
-  constexpr Block(T* data, int size) : data_(data), size_(size) {}
+  constexpr Block(T* data) : data_(data) {}
   T& operator [] (unsigned int index) {
     return data_[index];
   }
@@ -56,17 +56,16 @@ struct Block {
     return data_[index];
   }
 
-  void fill(T x) { std::fill(data_, data_+size_, x); }
+  void fill(T x) { std::fill(data_, data_+SIZE, x); }
   T* const begin() const { return data_; }
-  T* const end() const { return data_ + size_; }
+  T* const end() const { return data_ + SIZE; }
 
-  int size() {return size_; }
+  int size() {return SIZE; }
 private:
   T *data_;
-  int size_;
 };
 
-template<class T, class U>
+template<class T, class U, int SIZE>
 struct DoubleBlock {
   struct iterator {
     iterator(T* x, U* y) : x_(x), y_(y) {}
@@ -82,18 +81,18 @@ struct DoubleBlock {
     return iterator(x_,y_);
   }
   iterator end() {
-    return iterator(x_+size_, y_+size_);
+    return iterator(x_+SIZE, y_+SIZE);
   }
 public:
-  DoubleBlock(T* x, U* y, int size) : x_(x), y_(y), size_(size) {}
+  DoubleBlock(T* x, U* y) : x_(x), y_(y) {}
   T *x_;
   U *y_;
-  int size_;
 
-  Block<T> first() { return Block<T>(x_, size_); }
-  Block<U> second() { return Block<U>(y_, size_); }
+  Block<T, SIZE> first() { return Block<T, SIZE>(x_); }
+  Block<U, SIZE> second() { return Block<U, SIZE>(y_); }
 };
-template<class T, class U, class V>
+
+template<class T, class U, class V, int SIZE>
 struct TripleBlock {
   struct iterator {
     iterator(T* x, U* y, V* z) : x_(x), y_(y), z_(z) {}
@@ -112,18 +111,17 @@ struct TripleBlock {
     return iterator(x_, y_, z_);
   }
   iterator end() {
-    return iterator(x_+size_, y_+size_, z_+size_);
+    return iterator(x_+SIZE, y_+SIZE, z_+SIZE);
   }
 public:
-  TripleBlock(T* x, U* y, V* z, int size) : x_(x), y_(y), z_(z), size_(size) {}
+  TripleBlock(T* x, U* y, V* z) : x_(x), y_(y), z_(z) {}
   T *x_;
   U *y_;
   V *z_;
-  int size_;
 
-  Block<T> first() { return Block<T>(x_, size_); }
-  Block<U> second() { return Block<U>(y_, size_); }
-  Block<V> third() { return Block<V>(z_, size_); }
+  Block<T, SIZE> first() { return Block<T, SIZE>(x_); }
+  Block<U, SIZE> second() { return Block<U, SIZE>(y_); }
+  Block<V, SIZE> third() { return Block<V, SIZE>(z_); }
 };
 
 // TODO: size not linked to data
