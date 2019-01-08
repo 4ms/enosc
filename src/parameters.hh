@@ -50,6 +50,8 @@ struct Parameters {
 
   StereoMode stereo_mode = ALTERNATE;
 
+  int selected_osc = 0;             // 0..kNumOsc
+
   // textile oscillator:
   f pitch_offset = 0.2_f;
   f timbre = 0.1_f;

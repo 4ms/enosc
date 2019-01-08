@@ -80,6 +80,12 @@ class Ui {
       set_learn(!osc_.learn_enabled());
     } break;
     case BUTTON_FREEZE: {
+      osc_.freeze_selected_osc();
+      params_.selected_osc++;
+      if (params_.selected_osc == kNumOsc) {
+        params_.selected_osc = 0;
+        osc_.unfreeze_all();
+      }
     } break;
     }
   }
@@ -148,6 +154,8 @@ public:
     case NORMAL_MODE:
       bool b = osc_.learn_enabled();
       learn_led_.set_background(b ? Colors::dark_red : Colors::black);
+      u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(kNumOsc));
+      freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
       break;
     }
 

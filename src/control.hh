@@ -202,6 +202,7 @@ public:
     pitch += pitch_cv;
     params.pitch = pitch;
 
+    // params.selected_osc = (r.to_float() * f(kNumOsc-1) + 0.5_f).floor();
 
     // Start next conversion
     adc_.Start();
