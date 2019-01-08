@@ -15,12 +15,9 @@ class Grid {
   int size_ = 0;
   friend class PreGrid;
 public:
-  Grid() {
-    grid_[0] = 0_f;
-    grid_[1] = 3_f;
-    grid_[2] = 7_f;
-    grid_[3] = 12_f;
-    size_ = 4;
+  Grid(std::initializer_list<f> grid) {
+    size_ = grid.size();
+    std::copy(grid.begin(), grid.end(), grid_);
   }
 
   PitchPair Process(f const pitch) const {
@@ -83,7 +80,18 @@ public:
 };
 
 class Quantizer {
-  Grid grids_[kGridNr];
+  Grid grids_[kGridNr] = {
+    {0_f, 12_f},
+    {0_f, 7_f, 12_f},
+    {0_f, 5_f, 12_f},
+    {0_f, 3_f, 7_f, 12_f},
+    {0_f, 4_f, 7_f, 9_f, 12_f},
+    {0_f, 3_f, 5_f, 10_f, 12_f},
+    {0_f, 1_f, 5_f, 8_f, 12_f},
+    {0_f, 2_f, 4_f, 8_f, 9_f, 12_f},
+    {0_f, 2_f, 3_f, 5_f, 7_f, 9_f, 11_f, 12_f},
+    {0_f, 1_f, 2_f, 3_f, 4_f, 5_f, 6_f, 7_f, 8_f, 9_f, 10_f, 11_f, 12_f},
+  };
 public:
   Grid *get_grid(Parameters::Grid grid) {
     return &grids_[grid.value];
