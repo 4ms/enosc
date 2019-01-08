@@ -68,16 +68,15 @@ struct Leds : Nocopy {
   struct Freeze : public ILed<Freeze> {
     void set(u0_8 r, u0_8 g, u0_8 b) {
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= r.repr();
-      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = g.repr();
-      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= b.repr();
+      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = b.repr(); // WARNING: inverted
+      FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_BLUE 	= g.repr();
     }
   } freeze_;
 
   struct Learn : public ILed<Learn> {
     void set(u0_8 r, u0_8 g, u0_8 b) {
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r.repr();
-      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = b.repr(); // WARNING:
-                                                            // inverted here!
+      LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = b.repr(); // WARNING: inverted
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_BLUE 	= g.repr();
     }
   } learn_;
