@@ -8,7 +8,7 @@
 
 template<int size>
 class Oscillators : Nocopy {
-  OscillatorPair osc_[kNumOsc];
+  OscillatorPair oscs_[kNumOsc];
   u0_16 modulation_blocks_[kNumOsc+1][size];
   u0_16 dummy_block_[size];
 
@@ -124,7 +124,7 @@ public:
       Block<u0_16, size> mod_in(mod_blocks.first);
       Block<u0_16, size> mod_out(mod_blocks.second);
       std::fill(dummy_block_, dummy_block_+size, 0._u0_16);
-      (osc_[i].*process)(p, twist, warp, amp, modulation,
+      (oscs_[i].*process)(p, twist, warp, amp, modulation,
                          mod_in, mod_out, out);
     }
 
@@ -139,10 +139,19 @@ public:
       begin1++;
     }
   }
+
+  void set_freeze(int voiceNr) {
+    oscs_[voiceNr].set_freeze(true);
+  }
+
+  void unfreeze_all() {
+    for (auto& o : oscs_) o.set_freeze(false);
+  }
 };
 
 template<int size>
-class PolypticOscillator : public Oscillators<size> {
+class PolypticOscillator : Oscillators<size> {
+  using Base = Oscillators<size>;
   Parameters& params_;
   Quantizer quantizer_;
   PreGrid pre_grid_;
@@ -181,13 +190,16 @@ public:
     }
   }
 
+  void freeze_selected_osc() { Base::set_freeze(params_.selected_osc); }
+  void unfreeze_all() { Base::unfreeze_all(); }
+
   void Process(Block<Frame, size> out) {
     f buffer[2][size];
     TripleBlock<f, f, Frame, size> block {buffer[0], buffer[1], out.begin()};
 
     current_grid_ = quantizer_.get_grid(params_.grid);
 
-    Oscillators<size>::Process(params_, *current_grid_, block.first(), block.second());
+    Base::Process(params_, *current_grid_, block.first(), block.second());
 
     for (auto x : block) {
       f &o1 = std::get<0>(x);
