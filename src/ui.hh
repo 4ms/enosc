@@ -82,7 +82,7 @@ class Ui {
     case BUTTON_FREEZE: {
       osc_.freeze_selected_osc();
       params_.selected_osc++;
-      if (params_.selected_osc == kNumOsc) {
+      if (params_.selected_osc == kNumOsc+1) {
         params_.selected_osc = 0;
         osc_.unfreeze_all();
       }
@@ -154,7 +154,7 @@ public:
     case NORMAL_MODE:
       bool b = osc_.learn_enabled();
       learn_led_.set_background(b ? Colors::dark_red : Colors::black);
-      u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(kNumOsc));
+      u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(kNumOsc+1));
       freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
       break;
     }
