@@ -6,7 +6,7 @@ struct Buttons : Nocopy {
 
   template<class T>
   struct Debouncer : crtp<T, Debouncer> {
-    uint8_t state_;
+    uint8_t state_ = 0xFF;
     void Debounce() {
       state_ = (state_ << 1) | (**this).get();
     }
