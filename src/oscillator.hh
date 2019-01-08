@@ -74,7 +74,7 @@ struct FrequencyPair { f freq1, freq2, crossfade; };
 
 class OscillatorPair : Nocopy {
   Oscillator osc_[2];
-  bool frozen;
+  bool frozen = false;
   FrequencyPair previous_freq;
 
   // simple linear piecewise function: 0->1, 0.5->1, 1->0
