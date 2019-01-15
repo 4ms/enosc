@@ -66,6 +66,8 @@ struct Leds : Nocopy {
   };
 
   struct Freeze : public ILed<Freeze> {
+    // TODO: understand why it is needed here too:
+    void set(Color c) { set(c.red(), c.green(), c.blue()); }
     void set(u0_8 r, u0_8 g, u0_8 b) {
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_RED 	= r.repr();
       FREEZE_LED_PWM_TIM->FREEZE_LED_PWM_CC_GREEN = b.repr(); // WARNING: inverted
@@ -74,6 +76,8 @@ struct Leds : Nocopy {
   } freeze_;
 
   struct Learn : public ILed<Learn> {
+    // TODO: understand why it is needed here too:
+    void set(Color c) { set(c.red(), c.green(), c.blue()); }
     void set(u0_8 r, u0_8 g, u0_8 b) {
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_RED 	= r.repr();
       LEARN_LED_PWM_TIM->LEARN_LED_PWM_CC_GREEN = b.repr(); // WARNING: inverted

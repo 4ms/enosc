@@ -20,7 +20,7 @@ struct LedManager : Leds::ILed<T> {
   void set_background(Color b) { background = b; }
   void Update() {
     Color c = background.blend(flash_color, u0_8::narrow(flash_phase));
-    Leds::ILed<T>::set(c);
+    L::set(c);
     if (flash_phase > flash_time) flash_phase -= flash_time;
   }
 private:
@@ -114,6 +114,11 @@ class Ui {
 
 public:
   PolypticOscillator<size>& osc() { return osc_; }
+
+  Ui() {
+    leds_.learn_.set(Colors::red);
+    leds_.freeze_.set(Colors::red);
+  }
 
   void Process(Block<Frame, size> codec_in) {
 
