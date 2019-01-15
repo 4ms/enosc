@@ -1,3 +1,5 @@
+#pragma once
+
 #include "buttons.hh"
 #include "gates.hh"
 #include "switches.hh"
