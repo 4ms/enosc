@@ -15,20 +15,23 @@ struct Codec : Nocopy {
 
     // Setup PLL clock for codec
     init_SAI_clock(sample_rate);
+    HAL_Delay(50);
 
-   	//De-init the codec to force it to reset
+    //De-init the codec to force it to reset
     i2c_.DeInit();
-    HAL_Delay(10);
+    HAL_Delay(50);
 
     //Start Codec I2C
     gpio_.Init();
-    HAL_Delay(100);
+    HAL_Delay(50);
     i2c_.Init(sample_rate);
-    HAL_Delay(100);
+    HAL_Delay(50);
 
     //Start Codec SAI
     SAI_init(sample_rate);
+    HAL_Delay(50);
     init_audio_DMA();
+    HAL_Delay(50);
   }
 
   void Start();
