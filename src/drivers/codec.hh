@@ -18,10 +18,13 @@ struct Codec : Nocopy {
 
    	//De-init the codec to force it to reset
     i2c_.DeInit();
+    HAL_Delay(10);
 
     //Start Codec I2C
     gpio_.Init();
+    HAL_Delay(100);
     i2c_.Init(sample_rate);
+    HAL_Delay(100);
 
     //Start Codec SAI
     SAI_init(sample_rate);
