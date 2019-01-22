@@ -364,9 +364,11 @@ void Codec::Reboot(uint32_t sample_rate)
   //Take everything down...
   i2c_.PowerDown();
   i2c_.DeInit();
+  HAL_Delay(10);
 
   DeInit_I2S_Clock();
   DeInit_SAIDMA();
+  HAL_Delay(10);
 
   //...and bring it all back up
   init_SAI_clock(sample_rate);

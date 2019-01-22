@@ -11,33 +11,30 @@ struct PitchPair {
 };
 
 class Grid : Nocopy {
-  f grid[kMaxGridSize];
-  int size = 0;
+  f grid_[kMaxGridSize];
+  int size_ = 0;
   friend class PreGrid;
 public:
-  Grid() {
-    grid[0] = 0_f;
-    grid[1] = 3_f;
-    grid[2] = 7_f;
-    grid[3] = 12_f;
-    size = 4;
+  Grid(std::initializer_list<f> grid) {
+    size_ = grid.size();
+    std::copy(grid.begin(), grid.end(), grid_);
   }
 
   PitchPair Process(f const pitch) const {
-    f max = grid[size-1];
+    f max = grid_[size_-1];
     // quotient by the max
     int oct = (pitch / max).floor();
     f octaves = f(oct) * max;
     f semitones = pitch - octaves;
     // invariant: 0 < semitones < max
-    int index = binary_search(semitones, grid, size);
-    f p1 = grid[index];
-    f p2 = grid[index+1];
+    int index = binary_search(semitones, grid_, size_);
+    f p1 = grid_[index];
+    f p2 = grid_[index+1];
     f crossfade = (semitones - p1) / (p2 - p1);
     p1 += octaves;
     p2 += octaves;
 
-    if ((index + (oct * (size+1))) & 1) {
+    if ((index + (oct * (size_+1))) & 1) {
       crossfade = 1_f - crossfade;
       f tmp = p1;
       p1 = p2;
@@ -77,13 +74,24 @@ public:
     uniquify(grid_, size_, kGridUnicityThreshold);
 
     // copy to real grid
-    std::copy(grid_, grid_+size_, g->grid);
-    g->size=size_;
+    std::copy(grid_, grid_+size_, g->grid_);
+    g->size_=size_;
   }
 };
 
 class Quantizer {
-  Grid grids_[kGridNr];
+  Grid grids_[kGridNr] = {
+    {0_f, 12_f},
+    {0_f, 7_f, 12_f},
+    {0_f, 5_f, 12_f},
+    {0_f, 3_f, 8_f, 12_f},
+    {0_f, 4_f, 7_f, 9_f, 12_f},
+    {0_f, 3_f, 5_f, 10_f, 12_f},
+    {0_f, 1_f, 5_f, 8_f, 12_f},
+    {0_f, 2_f, 4_f, 8_f, 9_f, 12_f},
+    {0_f, 2_f, 3_f, 5_f, 7_f, 9_f, 11_f, 12_f},
+    {0_f, 1_f, 2_f, 3_f, 4_f, 5_f, 6_f, 7_f, 8_f, 9_f, 10_f, 11_f, 12_f},
+  };
 public:
   Grid *get_grid(Parameters::Grid grid) {
     return &grids_[grid.value];

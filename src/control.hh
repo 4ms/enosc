@@ -156,7 +156,7 @@ public:
     f twist = twist_.Process(adc_.twist_pot(), adc_.twist_cv());
     twist = Math::crop(kPotDeadZone, twist);
     if (params.twist.mode == FEEDBACK) {
-      twist *= twist;
+      twist *= twist * 0.7_f;
     } else if (params.twist.mode == PULSAR) {
       twist = 1_f - twist;
       twist *= twist;
