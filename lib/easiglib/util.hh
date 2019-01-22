@@ -50,3 +50,59 @@ struct Subject {
 private:
   std::function<void(DATA ...)> observer_;
 };
+
+
+// N-ary Zip class
+
+// inductive case
+template<typename T, typename... Ts>
+struct Zip: public Zip<Ts...> {
+  static_assert(std::tuple_size<T>::value == std::tuple_size<Zip<Ts...>>::value,
+                "Cannot zip over structures of different sizes");
+
+  using head_value_type = std::tuple<typename T::value_type>;
+  using tail_value_type = typename Zip<Ts...>::value_type;
+  using value_type = decltype(std::tuple_cat(std::declval<head_value_type>(),
+                                             std::declval<tail_value_type>()));
+
+  Zip(T t, Ts... ts): Zip<Ts...>(ts...), t_(t) {}
+
+  struct iterator : Zip<Ts...>::iterator {
+    using head_iterator = typename T::iterator;
+    using tail_iterator = typename Zip<Ts...>::iterator;
+    bool operator!=(iterator& that) { return it != that.it; }
+    void operator++() { ++it; tail_iterator::operator++(); }
+
+    value_type operator*() {
+      return std::tuple_cat<head_value_type, tail_value_type>
+        (std::make_tuple(*it), tail_iterator::operator*());
+    }
+
+    // TODO: pb: copy of i and t?
+    iterator(head_iterator i, tail_iterator t) :
+      it(i), tail_iterator(t) {}
+
+    head_iterator it;
+  };
+
+  iterator begin() { return iterator(t_.begin(), Zip<Ts...>::begin()); }
+  iterator end() { return iterator(t_.end(), Zip<Ts...>::end()); }
+  T t_;
+};
+
+// base case
+template<typename T>
+struct Zip<T> : public T {
+  using value_type = std::tuple<typename T::value_type>;
+  Zip<T>(T t) : T(t) {};
+};
+
+// must implement tuple_size to check size equality
+template<typename T, typename... Ts>
+struct std::tuple_size<Zip<T, Ts...>> {
+  static constexpr int value = std::tuple_size<T>::value;
+};
+
+// smart instantiation function
+template<typename... Ts>
+Zip<Ts...> zip(Ts... ts) { return Zip<Ts...>(ts...); }
