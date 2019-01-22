@@ -127,11 +127,13 @@ public:
     s1_15 in1[size], in2[size];
     Block<s1_15, size> pitch_block {in1};
     Block<s1_15, size> root_block {in2};
-    // TODO change to TripleBlock
-    auto *pi=pitch_block.begin(), *ro=root_block.begin();
-    for (Frame in : codec_in) {
-      *pi++ = in.l;
-      *ro++ = in.r;
+
+    for (auto x : zip(codec_in, pitch_block, root_block)) {
+      Frame &in = get<0>(x);
+      s1_15 &pi = get<1>(x);
+      s1_15 &ro = get<2>(x);
+      pi = in.l;
+      ro = in.r;
     }
 
     // Process potentiometer & CV
