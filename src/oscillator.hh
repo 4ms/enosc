@@ -55,17 +55,14 @@ public:
                f const fade, f const amplitude, f const modulation,
                Block<u0_16, size> mod_in, Block<u0_16, size> mod_out, Block<f, size> sum_output) {
     fader.set(fade, sum_output.size());
-    u0_16 *mod_in_it = mod_in.begin();
-    u0_16 *mod_out_it = mod_out.begin();
-    for (f &sum : sum_output) {
-      u0_16 &m_in = *mod_in_it;
-      u0_16 &m_out = *mod_out_it;
+    for (auto x : zip(sum_output, mod_in, mod_out)) {
+      f &sum = get<0>(x);
+      u0_16 &m_in = get<1>(x);
+      u0_16 &m_out = get<2>(x);
       f sample = Process<twist_mode, warp_mode>(freq, m_in, twist, warp);
       sample *= fader.next();
       m_out += u0_16((sample + 1_f) * modulation * kMaxModulationIndex);
       sum += sample * amplitude;
-      mod_in_it++;
-      mod_out_it++;
     }
   }
 };
