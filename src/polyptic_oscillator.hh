@@ -194,13 +194,14 @@ public:
 
   void Process(Block<Frame, size> out) {
     f buffer[2][size];
-    TripleBlock<f, f, Frame, size> block {buffer[0], buffer[1], out.begin()};
+    Block<f, size> out1 {buffer[0]};
+    Block<f, size> out2 {buffer[1]};
 
     current_grid_ = quantizer_.get_grid(params_.grid);
 
-    Base::Process(params_, *current_grid_, block.first(), block.second());
+    Base::Process(params_, *current_grid_, out1, out2);
 
-    for (auto x : block) {
+    for (auto x : zip(out1, out2, out)) {
       f &o1 = std::get<0>(x);
       f &o2 = std::get<1>(x);
       Frame &o = std::get<2>(x);
