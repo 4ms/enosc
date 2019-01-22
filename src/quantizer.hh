@@ -10,7 +10,7 @@ struct PitchPair {
   f p1, p2, crossfade;
 };
 
-class Grid {
+class Grid : Nocopy {
   f grid[kMaxGridSize];
   int size = 0;
   friend class PreGrid;
@@ -48,7 +48,7 @@ public:
   }
 };
 
-class PreGrid {
+class PreGrid : Nocopy {
   f grid_[kMaxGridSize];
   int size_ = 0;
 public:
