@@ -48,6 +48,16 @@ protected:
 
 template<class T, int SIZE>
 struct Block {
+  using value_type = T;
+  struct iterator {
+    iterator(T* x) : x_(x) {}
+    void operator++() { x_++; }
+    bool operator!=(iterator &that) { return this->x_ != that.x_; }
+    T& operator*() { return *x_; }
+  private:
+    T *x_;
+  };
+
   constexpr Block(T* data) : data_(data) {}
   T& operator [] (unsigned int index) {
     return data_[index];
@@ -57,13 +67,19 @@ struct Block {
   }
 
   void fill(T x) { std::fill(data_, data_+SIZE, x); }
-  T* const begin() const { return data_; }
-  T* const end() const { return data_ + SIZE; }
+  iterator const begin() const { return data_; }
+  iterator const end() const { return data_ + SIZE; }
 
-  int size() {return SIZE; }
+  T* data() { return data_; }
+  int size() { return SIZE; }
 private:
   T *data_;
 };
+
+// must have a tuple_size implementation
+template<int SIZE, class T>
+struct std::tuple_size<Block<T, SIZE>> { static constexpr int value = SIZE; };
+
 
 template<class T, class U, int SIZE>
 struct DoubleBlock {
