@@ -7,7 +7,7 @@
 
 struct Codec : Nocopy {
 
-  using callback_t = const std::function<void(DoubleBlock<Frame, Frame, kBlockSize> inout)>;
+  using callback_t = const std::function<void(Block<Frame, kBlockSize> in, Block<Frame, kBlockSize> out)>;
 
   Codec(int sample_rate, callback_t &callback) :
     callback_(callback) {
