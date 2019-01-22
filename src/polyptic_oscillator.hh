@@ -131,12 +131,11 @@ public:
     f atten = 1_f / amplitude.Sum();
 
     // TODO double iteration on out1 and out2
-    f *begin1 = out1.begin();
-    for (f& o2 : out2) {
-      f& o1 = *begin1;
+    for (auto o : zip(out1, out2)) {
+      f& o1 = get<0>(o);
+      f& o2 = get<1>(o);
       o1 *= atten;
       o2 *= atten;
-      begin1++;
     }
   }
 
