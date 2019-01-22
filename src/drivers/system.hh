@@ -8,6 +8,7 @@ struct System : Nocopy {
     SystemClock_Config();
 
     SCB_InvalidateDCache();
+    SCB_InvalidateICache();
 
     SCB_EnableICache();
     SCB_EnableDCache();
