@@ -53,7 +53,7 @@ struct Block {
     iterator(T* x) : x_(x) {}
     void operator++() { x_++; }
     bool operator!=(iterator &that) { return this->x_ != that.x_; }
-    T& operator*() { return *x_; }
+    value_type operator*() { return *x_; }
   private:
     T *x_;
   };
