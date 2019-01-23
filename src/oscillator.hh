@@ -104,6 +104,7 @@ public:
     f aliasing_factor2 = freq.freq2; // TODO
     fade2 *= antialias(aliasing_factor2);
 
+    // mod_out is accumulated in the two calls, so we need to zero it here
     mod_out.fill(0._u0_16);
     osc_[0].Process<twist_mode, warp_mode>(u0_32(freq.freq1), twist, warp,
                                            fade1, amplitude, modulation,

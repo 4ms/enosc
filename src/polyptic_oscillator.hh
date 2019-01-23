@@ -123,6 +123,7 @@ public:
       std::pair<u0_16*, u0_16*> mod_blocks = pick_modulation_blocks(params.modulation.mode, i);
       Block<u0_16, size> mod_in(mod_blocks.first);
       Block<u0_16, size> mod_out(mod_blocks.second);
+      // TODO cleanup: avoid manipulating bare pointers to buffers
       std::fill(dummy_block_, dummy_block_+size, 0._u0_16);
       (oscs_[i].*process)(p, twist, warp, amp, modulation,
                          mod_in, mod_out, out);
@@ -130,7 +131,6 @@ public:
 
     f atten = 1_f / amplitude.Sum();
 
-    // TODO double iteration on out1 and out2
     for (auto o : zip(out1, out2)) {
       f& o1 = get<0>(o);
       f& o2 = get<1>(o);

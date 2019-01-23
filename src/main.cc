@@ -6,7 +6,7 @@
 #include "polyptic_oscillator.hh"
 #include "textile_oscillator.hh"
 
-// #define BYPASS
+#define BYPASS
 
 struct Main : Nocopy {
   System sys_;
@@ -26,12 +26,8 @@ struct Main : Nocopy {
     ui_.Process(in);
 
 #ifdef BYPASS
-    // TODO double block
-    Frame *o_begin = out.begin();
-    for(Frame i : in) {
-      Frame &o = *o_begin;
-      o = i;
-      o_begin++;
+    for(auto x : zip(in, out)) {
+      get<1>(x) = get<0>(x);
     }
 #else
     ui_.osc().Process(out);
