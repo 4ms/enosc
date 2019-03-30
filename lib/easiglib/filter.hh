@@ -31,7 +31,6 @@ private:
   T state_ = T(0_f);
 };
 
-// TODO: convert to numtypes
 // complexity:
 // size=size * (stages+1) * 4 + 4,
 // time=O(stages)
