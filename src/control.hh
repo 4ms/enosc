@@ -168,6 +168,13 @@ public:
 
     f mod = mod_.Process(adc_.mod_pot(), adc_.mod_cv());
     mod = Math::crop(kPotDeadZone, mod);
+    if (params.modulation.mode == ONE) {
+      mod *= 0.9_f;
+    } else if (params.modulation.mode == TWO) {
+      mod *= 6.0_f;
+    } else if (params.modulation.mode == THREE) {
+      mod *= 2.0_f;
+    }
     params.modulation.value = mod;
 
     f spread = spread_.Process(adc_.spread_pot(), adc_.spread_cv());
