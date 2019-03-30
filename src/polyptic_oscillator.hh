@@ -34,10 +34,10 @@ class Oscillators : Nocopy {
         return std::make_pair(modulation_blocks_[0], dummy_block_);
       }
     } else { // mode == THREE
-      if (i&1) {
-        return std::make_pair(dummy_block_, modulation_blocks_[i]);
+      if (i==kNumOsc-1) {
+        return std::make_pair(dummy_block_, modulation_blocks_[0]);
       } else {
-        return std::make_pair(modulation_blocks_[i+1], dummy_block_);
+        return std::make_pair(modulation_blocks_[0], dummy_block_);
       }
     }
   }
