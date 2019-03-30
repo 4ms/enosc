@@ -41,19 +41,18 @@ struct CVConditioner {
 
 template<int size>
 class AudioCVConditioner {
-  // TODO: convert Average to Numtypes
-  Average<8, 2> lp_;
+  Average<8, 1> lp_;
   CicDecimator<1, size> cic_;
   f offset;
   f slope;
 public:
   AudioCVConditioner(f o, f s) : offset(o), slope(s) {}
   void calibrate_offset() {
-    u0_16 o = u0_16::of_repr(lp_.last());
+    u0_16 o = lp_.last();
     offset = o.to_float_inclusive();
   }
   void calibrate_slope() {
-    u0_16 reading = u0_16::of_repr(lp_.last());
+    u0_16 reading = lp_.last();
     f octave = (reading.to_float_inclusive() - offset) / kCalibration2Voltage;
     slope = 12_f / octave;
   }
@@ -61,7 +60,7 @@ public:
     s1_15 x = in[0];
     cic_.Process(in.data(), &x, 1); // -1..1
     u0_16 y = x.to_unsigned_scale(); // 0..1
-    y = u0_16::of_repr(lp_.Process(y.repr()));
+    y = lp_.Process(y);
     f z = y.to_float_inclusive(); // 0..1
     z -= offset;
     z *= slope;                // -24..72

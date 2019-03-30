@@ -39,14 +39,14 @@ template<int SIZE, int STAGES>
 class Average {
   static constexpr int gain = ipow(SIZE - 1, STAGES);
   static_assert(gain < (1<<16), "Error: gain must be less than 65536");
-  uint32_t state_i[STAGES] = {0};
-  RingBuffer<uint32_t, SIZE> state_c[STAGES];
+  u16_16 state_i[STAGES];
+  RingBuffer<u16_16, SIZE> state_c[STAGES];
 public:
-  uint16_t last() {
+  u0_16 last() {
     return state_i[STAGES-1] / gain;
   }
-  uint16_t Process(uint16_t x) {
-    uint32_t y = x;
+  u0_16 Process(u0_16 x) {
+    u16_16 y = u16_16(x);
     for (int i=0; i<STAGES; i++) {
       state_c[i].Write(y);
       y -= state_c[i].ReadLast();
@@ -56,8 +56,8 @@ public:
     for (int i=1; i<STAGES; i++) {
       state_i[i] += state_i[i-1];
     }
-    uint32_t z = state_i[STAGES-1];
-    return z / gain;
+    u16_16 z = state_i[STAGES-1];
+    return u0_16::wrap(z / gain);
   }
 };
 
