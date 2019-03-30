@@ -60,7 +60,7 @@ struct Zip: public Zip<Ts...> {
   static_assert(std::tuple_size<T>::value == std::tuple_size<Zip<Ts...>>::value,
                 "Cannot zip over structures of different sizes");
 
-  using head_value_type = std::tuple<typename T::value_type>;
+  using head_value_type = std::tuple<typename T::value_type&>;
   using tail_value_type = typename Zip<Ts...>::value_type;
   using value_type = decltype(std::tuple_cat(std::declval<head_value_type>(),
                                              std::declval<tail_value_type>()));
@@ -75,7 +75,7 @@ struct Zip: public Zip<Ts...> {
 
     value_type operator*() {
       return std::tuple_cat<head_value_type, tail_value_type>
-        (std::make_tuple(*it), tail_iterator::operator*());
+        (std::forward_as_tuple(*it), tail_iterator::operator*());
     }
 
     // TODO: pb: copy of i and t?
@@ -93,7 +93,7 @@ struct Zip: public Zip<Ts...> {
 // base case
 template<typename T>
 struct Zip<T> : public T {
-  using value_type = std::tuple<typename T::value_type>;
+  using value_type = std::tuple<typename T::value_type&>;
   Zip<T>(T t) : T(t) {};
 };
 
