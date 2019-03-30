@@ -82,8 +82,6 @@ CFLAGS= $(ARCHFLAGS) \
 	-fdata-sections \
 	-ffunction-sections \
 	-ffreestanding \
-	-finline-functions \
-	-funroll-loops \
 	--param l1-cache-size=8 \
 	--param l1-cache-line-size=32 \
 	-DUSE_HAL_DRIVER \
