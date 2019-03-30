@@ -23,15 +23,12 @@
 #define WARPSW_BOT_GPIO_Port GPIOC
 
 struct Switches : Nocopy {
-  enum State { UP, CENTER, DOWN, ERROR };
+  enum State { UP, CENTER, DOWN };
 
   template<class T>
   struct Combiner : crtp<T, Combiner> {
     State get() {
-      return (**this).get1() && (**this).get2() ? CENTER :
-        (**this).get1() ? DOWN :
-        (**this).get2() ? UP :
-        ERROR;
+      return (**this).get1() ? ((**this).get2() ? CENTER : DOWN) : UP;
     }
   };
 
