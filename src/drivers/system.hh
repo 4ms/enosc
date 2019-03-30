@@ -9,9 +9,11 @@ struct System : Nocopy {
 
     SCB_InvalidateDCache();
     SCB_InvalidateICache();
-
     SCB_EnableICache();
     SCB_EnableDCache();
+
+    FPU->FPDSCR |= FPU_FPDSCR_FZ_Msk;
+    FPU->FPDSCR |= FPU_FPDSCR_DN_Msk;
   }
 
 private:
