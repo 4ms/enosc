@@ -65,8 +65,26 @@ public:
   static constexpr T min_val = T(FLT_MIN);
   static constexpr T max_val = T(FLT_MIN);
 
-  constexpr T min(const T y) const { return *this < y ? *this : y; }
-  constexpr T max(const T y) const { return *this < y ? y : *this; }
+  T min(const T y) const {
+#ifdef __arm__
+    float res;
+    __ASM volatile ("VMINNM.F32 %0, %1, %2" : "=t" (res) : "t" (val_), "t" (y.repr()));
+    return T(res);
+#else
+    return *this < y ? *this : y;
+#endif
+  }
+
+  T max(const T y) const {
+#ifdef __arm__
+    float res;
+    __ASM volatile ("VMAXNM.F32 %0, %1, %2" : "=t" (res) : "t" (val_), "t" (y.repr()));
+    return T(res);
+#else
+    return *this < y ? y : *this;
+#endif
+  }
+
   constexpr T clip(const T x, const T y) const { return max(x).min(y); }
   constexpr T clip() const { return clip(T(-1.0f), T(1.0f)); }
 
