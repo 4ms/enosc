@@ -137,7 +137,7 @@ public:
     else if (buttons_.freeze_.just_released())
       button_released(BUTTON_FREEZE);
 
-    //Gate jacks
+    // Gate jacks
     gates_.Debounce();
 
     if (gates_.learn_.just_enabled())
@@ -149,11 +149,10 @@ public:
     else if (gates_.freeze_.just_disabled())
       gate_disabled(GATE_FREEZE);
 
-    //Switches
+    // Switches
     params_.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
     params_.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
     params_.grid.mode = static_cast<GridMode>(switches_.grid_.get());
-    // TODO temp
     params_.modulation.mode = static_cast<ModulationMode>(switches_.mod_.get());
 
     // LEDs
