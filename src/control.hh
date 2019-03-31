@@ -173,7 +173,7 @@ public:
     } else if (params.modulation.mode == TWO) {
       mod *= 6.0_f;
     } else if (params.modulation.mode == THREE) {
-      mod *= 2.0_f;
+      mod *= 4.0_f;
     }
     params.modulation.value = mod;
 
