@@ -45,7 +45,7 @@ class Oscillators : Nocopy {
   using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f,
                                                Block<u0_16, size>, Block<u0_16, size>, Block<f, size>);
 
-  processor_t choose_processor(TwistMode t, WarpMode m) {
+  processor_t pick_processor(TwistMode t, WarpMode m) {
     return
       t == FEEDBACK && m == CRUSH ? &OscillatorPair::Process<FEEDBACK, CRUSH, size> :
       t == FEEDBACK && m == CHEBY ? &OscillatorPair::Process<FEEDBACK, CHEBY, size> :
@@ -86,7 +86,7 @@ class Oscillators : Nocopy {
       grid(g), root(r), pitch(p), spread(s), detune(d) {}
     FrequencyPair Next() {
 
-      PitchPair p = grid.Process(root);
+      PitchPair p = grid.Process(root); // 2%
 
       p.p1 += pitch + detune_accum;
       p.p2 += pitch + detune_accum;
@@ -111,19 +111,20 @@ public:
     FrequencyAccumulator frequency {grid, params.root, params.pitch,
                                     params.spread, params.detune};
 
-    processor_t process = choose_processor(params.twist.mode, params.warp.mode);
+    processor_t process = pick_processor(params.twist.mode, params.warp.mode);
     f twist = params.twist.value;
     f warp = params.warp.value;
     f modulation = params.modulation.value;
 
     for (int i=0; i<kNumOsc; ++i) {
-      FrequencyPair p = frequency.Next();
+      FrequencyPair p = frequency.Next(); // 3%
       f amp = amplitude.Next();
       Block<f, size> out = pick_output(params.stereo_mode, i) ? out1 : out2;
       std::pair<u0_16*, u0_16*> mod_blocks = pick_modulation_blocks(params.modulation.mode, i);
       Block<u0_16, size> mod_in(mod_blocks.first);
       Block<u0_16, size> mod_out(mod_blocks.second);
       // TODO cleanup: avoid manipulating bare pointers to buffers
+      // need to declare the Blocks globally, ie. with an allocating constructor
       std::fill(dummy_block_, dummy_block_+size, 0._u0_16);
       (oscs_[i].*process)(p, twist, warp, amp, modulation,
                          mod_in, mod_out, out);
