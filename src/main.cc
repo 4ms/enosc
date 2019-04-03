@@ -8,20 +8,20 @@
 
 // #define BYPASS
 
-struct Main : Nocopy {
+struct Main :
+  Codec<kSampleRate, kBlockSize, Main> {
+  // TODO passer en dépendance?
   System sys_;
   Ui<kBlockSize> ui_;
 
-  Codec codec_{kSampleRate, [this](auto in, auto out) {this->Process(in, out);}};
-
   Main() {
     //Start audio processing
-    codec_.Start();
+    Codec<kSampleRate, kBlockSize, Main>::Start();
     while(1) { }
   }
 
-  template<int size>
-  void Process(Block<Frame, size> in, Block<Frame, size> out) {
+  template<int block_size>
+  void codec_callback(Block<Frame, block_size> in, Block<Frame, block_size> out) {
     debug.set(3, true);
     ui_.Process(in);
 

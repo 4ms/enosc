@@ -80,6 +80,13 @@ private:
 
 };
 
+namespace std {
+  void __throw_bad_function_call() {
+    assert_param(false);
+    while(1);
+  };
+}
+
 extern "C" {
   void SysTick_Handler(void) {
     HAL_IncTick();
