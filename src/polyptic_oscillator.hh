@@ -6,11 +6,11 @@
 #include "oscillator.hh"
 #include "quantizer.hh"
 
-template<int size>
+template<int block_size>
 class Oscillators : Nocopy {
   OscillatorPair oscs_[kNumOsc];
-  u0_16 modulation_blocks_[kNumOsc+1][size];
-  u0_16 dummy_block_[size];
+  u0_16 modulation_blocks_[kNumOsc+1][block_size];
+  u0_16 dummy_block_[block_size];
 
   static inline bool pick_output(StereoMode mode, int i) {
     return
@@ -43,19 +43,19 @@ class Oscillators : Nocopy {
   }
 
   using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f,
-                                               Block<u0_16, size>, Block<u0_16, size>, Block<f, size>);
+                                               Block<u0_16, block_size>, Block<u0_16, block_size>, Block<f, block_size>);
 
   processor_t pick_processor(TwistMode t, WarpMode m) {
     return
-      t == FEEDBACK && m == CRUSH ? &OscillatorPair::Process<FEEDBACK, CRUSH, size> :
-      t == FEEDBACK && m == CHEBY ? &OscillatorPair::Process<FEEDBACK, CHEBY, size> :
-      t == FEEDBACK && m == FOLD ? &OscillatorPair::Process<FEEDBACK, FOLD, size> :
-      t == PULSAR && m == CRUSH ? &OscillatorPair::Process<PULSAR, CRUSH, size> :
-      t == PULSAR && m == CHEBY ? &OscillatorPair::Process<PULSAR, CHEBY, size> :
-      t == PULSAR && m == FOLD ? &OscillatorPair::Process<PULSAR, FOLD, size> :
-      t == DECIMATE && m == CRUSH ? &OscillatorPair::Process<DECIMATE, CRUSH, size> :
-      t == DECIMATE && m == CHEBY ? &OscillatorPair::Process<DECIMATE, CHEBY, size> :
-      t == DECIMATE && m == FOLD ? &OscillatorPair::Process<DECIMATE, FOLD, size> :
+      t == FEEDBACK && m == CRUSH ? &OscillatorPair::Process<FEEDBACK, CRUSH, block_size> :
+      t == FEEDBACK && m == CHEBY ? &OscillatorPair::Process<FEEDBACK, CHEBY, block_size> :
+      t == FEEDBACK && m == FOLD ? &OscillatorPair::Process<FEEDBACK, FOLD, block_size> :
+      t == PULSAR && m == CRUSH ? &OscillatorPair::Process<PULSAR, CRUSH, block_size> :
+      t == PULSAR && m == CHEBY ? &OscillatorPair::Process<PULSAR, CHEBY, block_size> :
+      t == PULSAR && m == FOLD ? &OscillatorPair::Process<PULSAR, FOLD, block_size> :
+      t == DECIMATE && m == CRUSH ? &OscillatorPair::Process<DECIMATE, CRUSH, block_size> :
+      t == DECIMATE && m == CHEBY ? &OscillatorPair::Process<DECIMATE, CHEBY, block_size> :
+      t == DECIMATE && m == FOLD ? &OscillatorPair::Process<DECIMATE, FOLD, block_size> :
       NULL;
   }
 
@@ -103,7 +103,7 @@ class Oscillators : Nocopy {
 
 public:
   void Process(Parameters const &params, Grid const &grid,
-               Block<f, size> out1, Block<f, size> out2) {
+               Block<f, block_size> out1, Block<f, block_size> out2) {
     out1.fill(0_f);
     out2.fill(0_f);
 
@@ -119,13 +119,13 @@ public:
     for (int i=0; i<kNumOsc; ++i) {
       FrequencyPair p = frequency.Next(); // 3%
       f amp = amplitude.Next();
-      Block<f, size> out = pick_output(params.stereo_mode, i) ? out1 : out2;
+      Block<f, block_size> out = pick_output(params.stereo_mode, i) ? out1 : out2;
       std::pair<u0_16*, u0_16*> mod_blocks = pick_modulation_blocks(params.modulation.mode, i);
-      Block<u0_16, size> mod_in(mod_blocks.first);
-      Block<u0_16, size> mod_out(mod_blocks.second);
+      Block<u0_16, block_size> mod_in(mod_blocks.first);
+      Block<u0_16, block_size> mod_out(mod_blocks.second);
       // TODO cleanup: avoid manipulating bare pointers to buffers
       // need to declare the Blocks globally, ie. with an allocating constructor
-      std::fill(dummy_block_, dummy_block_+size, 0._u0_16);
+      std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
       (oscs_[i].*process)(p, twist, warp, amp, modulation,
                          mod_in, mod_out, out);
     }
@@ -149,9 +149,9 @@ public:
   }
 };
 
-template<int size>
-class PolypticOscillator : Oscillators<size> {
-  using Base = Oscillators<size>;
+template<int block_size>
+class PolypticOscillator : Oscillators<block_size> {
+  using Base = Oscillators<block_size>;
   Parameters& params_;
   Quantizer quantizer_;
   PreGrid pre_grid_;
@@ -193,10 +193,10 @@ public:
   void freeze_selected_osc() { Base::set_freeze(params_.selected_osc); }
   void unfreeze_all() { Base::unfreeze_all(); }
 
-  void Process(Block<Frame, size> out) {
-    f buffer[2][size];
-    Block<f, size> out1 {buffer[0]};
-    Block<f, size> out2 {buffer[1]};
+  void Process(Block<Frame, block_size> out) {
+    f buffer[2][block_size];
+    Block<f, block_size> out1 {buffer[0]};
+    Block<f, block_size> out2 {buffer[1]};
 
     current_grid_ = quantizer_.get_grid(params_.grid);
 
