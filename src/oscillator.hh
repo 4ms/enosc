@@ -88,7 +88,7 @@ public:
   void set_freeze(bool b) { frozen = b; }
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(FrequencyPair freq,
+  void Process__IN_ITCM_(FrequencyPair freq,
                f const twist, f const warp, f const amplitude, f const modulation,
                Block<u0_16, block_size> mod_in, Block<u0_16, block_size> mod_out,
                Block<f, block_size> sum_output) {
