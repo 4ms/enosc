@@ -35,10 +35,10 @@ private:
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
     RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    RCC_OscInitStruct.PLL.PLLM = 16;
+    RCC_OscInitStruct.PLL.PLLM = 25;
     RCC_OscInitStruct.PLL.PLLN = 432;
     RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-    RCC_OscInitStruct.PLL.PLLQ = 2; // TODO check
+    RCC_OscInitStruct.PLL.PLLQ = 9;
     hal_assert(HAL_RCC_OscConfig(&RCC_OscInitStruct));
 
     //Activate the OverDrive to reach the 216 MHz Frequency 
