@@ -56,6 +56,13 @@ defined in linker script */
 .word  _sdata
 /* end address for the .data section. defined in linker script */
 .word  _edata
+/* start address for the initialization values of the .itcm_text section.
+defined in linker script */
+.word  _siitcm
+/* start address for the .itcm_text section. defined in linker script */
+.word  _sitcm
+/* end address for the .itcm_text section. defined in linker script */
+.word  _eitcm
 /* start address for the .bss section. defined in linker script */
 .word  _sbss
 /* end address for the .bss section. defined in linker script */
@@ -93,8 +100,23 @@ LoopCopyDataInit:
   adds  r2, r0, r1
   cmp  r2, r3
   bcc  CopyDataInit
+  b LoopCopyItcm
+
+CopyItcmInit:
+  ldr  r3, =_siitcm
+  ldr  r3, [r3, r1]
+  str  r3, [r0, r1]
+  adds  r1, r1, #4
+    
+LoopCopyItcm:
+  ldr  r0, =_sitcm
+  ldr  r3, =_eitcm
+  adds  r2, r0, r1
+  cmp  r2, r3
+  bcc  CopyItcmInit
   ldr  r2, =_sbss
   b  LoopFillZerobss
+
 /* Zero fill the bss segment. */  
 FillZerobss:
   movs  r3, #0

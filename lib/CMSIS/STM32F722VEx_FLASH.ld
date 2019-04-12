@@ -41,6 +41,7 @@ _Min_Stack_Size = 0x800; /* required amount of stack */
 /* Specify the memory areas */
 MEMORY
 {
+ITCM_RAM (rx)  : ORIGIN = 0x00000000, LENGTH = 16K
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 256K
 FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 512K
 }
@@ -55,6 +56,18 @@ SECTIONS
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
   } >FLASH
+
+  _siitcm = LOADADDR(.itcm_text);
+  .itcm_text :
+  {
+    . = ALIGN(4);
+    _sitcm = .;        /* create a global symbol at data start */
+    *(.itcm_text)
+    *(.itcm_text*)
+    *(*__IN_ITCM_*)
+    . = ALIGN(4);
+    _eitcm = .;        /* create a global symbol at data start */
+  } >ITCM_RAM AT> FLASH
 
   /* The program code and other data goes into FLASH */
   .text :
