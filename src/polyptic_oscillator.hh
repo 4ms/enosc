@@ -46,17 +46,19 @@ class Oscillators : Nocopy {
                                                Block<u0_16, block_size>, Block<u0_16, block_size>, Block<f, block_size>);
 
   processor_t pick_processor(TwistMode t, WarpMode m) {
-    return
-      t == FEEDBACK && m == CRUSH ? &OscillatorPair::Process<FEEDBACK, CRUSH, block_size> :
-      t == FEEDBACK && m == CHEBY ? &OscillatorPair::Process<FEEDBACK, CHEBY, block_size> :
-      t == FEEDBACK && m == FOLD ? &OscillatorPair::Process<FEEDBACK, FOLD, block_size> :
-      t == PULSAR && m == CRUSH ? &OscillatorPair::Process<PULSAR, CRUSH, block_size> :
-      t == PULSAR && m == CHEBY ? &OscillatorPair::Process<PULSAR, CHEBY, block_size> :
-      t == PULSAR && m == FOLD ? &OscillatorPair::Process<PULSAR, FOLD, block_size> :
-      t == DECIMATE && m == CRUSH ? &OscillatorPair::Process<DECIMATE, CRUSH, block_size> :
-      t == DECIMATE && m == CHEBY ? &OscillatorPair::Process<DECIMATE, CHEBY, block_size> :
-      t == DECIMATE && m == FOLD ? &OscillatorPair::Process<DECIMATE, FOLD, block_size> :
-      NULL;
+    static processor_t tab[3][3] = {
+      &OscillatorPair::Process__IN_ITCM_<FEEDBACK, CRUSH, block_size>,
+      &OscillatorPair::Process__IN_ITCM_<FEEDBACK, CHEBY, block_size>,
+      &OscillatorPair::Process__IN_ITCM_<FEEDBACK, FOLD, block_size>,
+      &OscillatorPair::Process__IN_ITCM_<PULSAR, CRUSH, block_size>,
+      &OscillatorPair::Process__IN_ITCM_<PULSAR, CHEBY, block_size>,
+      &OscillatorPair::Process__IN_ITCM_<PULSAR, FOLD, block_size>,
+      &OscillatorPair::Process__IN_ITCM_<DECIMATE, CRUSH, block_size>,
+      &OscillatorPair::Process__IN_ITCM_<DECIMATE, CHEBY, block_size>,
+      &OscillatorPair::Process__IN_ITCM_<DECIMATE, FOLD, block_size>,
+    };
+
+    return tab[t][m];
   }
 
   class AmplitudeAccumulator {
