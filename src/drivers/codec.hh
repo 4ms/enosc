@@ -117,7 +117,7 @@
 #define MUTEMIC			(1 << 1)	/* Mute Mic to ADC */
 #define INSEL_mic		(1 << 2)	/* Mic Select*/
 #define INSEL_line		(0 << 2)	/* LineIn Select*/
-#define BYPASS			(1 << 3)	/* Bypass Enable */
+#define BYPASS_EN			(1 << 3)	/* Bypass Enable */
 #define DACSEL			(1 << 4)	/* Select DAC */
 #define SIDETONE		(1 << 5)	/* Enable Sidetone */
 #define SIDEATT_neg15dB	(0b11 << 6)
