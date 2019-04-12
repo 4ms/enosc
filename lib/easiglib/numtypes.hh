@@ -51,7 +51,7 @@ public:
   constexpr void operator++(int) { val_++; }
   constexpr void operator--(int) { val_--; }
 
-  constexpr T const abs() const { return T(fabsf(val_)); }
+  constexpr T const abs() const { return T(val_ > 0 ? val_ : -val_); }
   T const sqrt() const {
 #ifdef __arm__
     float y;
