@@ -553,6 +553,8 @@ using s17_15 = Fixed<SIGNED, 17, 15>;
 using s15_17 = Fixed<SIGNED, 15, 17>;
 using s1_31 = Fixed<SIGNED, 1, 31>;
 using u0_32 = Fixed<UNSIGNED, 0, 32>;
+using u8_24 = Fixed<UNSIGNED, 8, 24>;
+using u24_8 = Fixed<UNSIGNED, 24, 8>;
 using s10_22 = Fixed<SIGNED, 10, 22>;
 using u10_22 = Fixed<UNSIGNED, 10, 22>;
 
