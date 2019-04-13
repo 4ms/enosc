@@ -159,8 +159,9 @@ public:
     if (params.twist.mode == FEEDBACK) {
       twist *= twist * 0.7_f;
     } else if (params.twist.mode == PULSAR) {
-      twist = 1_f - twist;
       twist *= twist;
+      twist = Math::fast_exp2(twist * 6_f);
+      // twist: 0..2^6
     } else if (params.twist.mode == DECIMATE) {
       twist *= twist * 0.5_f;
     }

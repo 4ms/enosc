@@ -10,11 +10,9 @@ namespace Distortion {
   // TODO rewrite with Numtypes
   template<>
   inline u0_32 twist<PULSAR>(u0_32 phase, f amount) {
-    u0_16 p = u0_16::inclusive(amount);
-    uint32_t x = (phase.repr() / (p.repr()+1));
-    if (x > UINT16_MAX) x = UINT16_MAX;
-    x <<= 16;
-    return u0_32::of_repr(x);
+    // amount: 0..255
+    u8_8 p = u8_8(amount);
+    return u0_32::wrap((u0_16::narrow(phase) * p).clip());
   }
 
   // TODO rewrite and optimize
