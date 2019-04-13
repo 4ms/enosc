@@ -9,9 +9,9 @@
 // #define BYPASS
 
 struct Main :
+  System,
   Codec<kSampleRate, kBlockSize, Main> {
   // TODO passer en dépendance?
-  System sys_;
   Ui<kBlockSize> ui_;
 
   Main() {
