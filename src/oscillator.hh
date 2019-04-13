@@ -40,7 +40,7 @@ class Oscillator {
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  f Process(Phasor& ph, SineShaper& sh, u0_32 freq, u0_16 mod, f twist_amount, f warp_amount) {
+  static f Process(Phasor& ph, SineShaper& sh, u0_32 freq, u0_16 mod, f twist_amount, f warp_amount) {
     u0_32 phase = ph.Process(freq);
     phase += u0_32(mod);
     phase = Distortion::twist<twist_mode>(phase, twist_amount);
