@@ -5,7 +5,7 @@
 
 constexpr const f kMaxModulationIndex = 4_f / f(kNumOsc);
 
-class Phasor : Nocopy {
+class Phasor {
   u0_32 phase_ = u0_32::of_repr(Random::Word());
 public:
   u0_32 Process(u0_32 freq) {
@@ -14,7 +14,7 @@ public:
   }
 };
 
-class SineShaper : Nocopy {
+class SineShaper {
   s1_15 history_ = 0._s1_15;
   IOnePoleLp<s1_15, 2> lp_;
 public:
@@ -33,19 +33,21 @@ public:
   }
 };
 
-class Oscillator : Phasor, SineShaper {
-  IFloat fader {0_f};
+class Oscillator {
+  Phasor phasor_;
+  SineShaper sine_shaper_;
+  IFloat fader_ {0_f};
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
-  f Process(u0_32 freq, u0_16 mod, f twist_amount, f warp_amount) {
-    u0_32 phase = Phasor::Process(freq);
+  f Process(Phasor& ph, SineShaper& sh, u0_32 freq, u0_16 mod, f twist_amount, f warp_amount) {
+    u0_32 phase = ph.Process(freq);
     phase += u0_32(mod);
     phase = Distortion::twist<twist_mode>(phase, twist_amount);
 
     s1_15 sine = twist_mode == FEEDBACK ?
-      SineShaper::Process(phase, u0_16(twist_amount)) :
-      SineShaper::Process(phase);
+      sh.Process(phase, u0_16(twist_amount)) :
+      sh.Process(phase);
 
     return Distortion::warp<warp_mode>(sine, warp_amount);
   }
@@ -54,16 +56,24 @@ public:
   void Process(u0_32 const freq, f const twist, f const warp,
                f const fade, f const amplitude, f const modulation,
                Block<u0_16, block_size> mod_in, Block<u0_16, block_size> mod_out, Block<f, block_size> sum_output) {
-    fader.set(fade, block_size);
+    Phasor ph = phasor_;
+    SineShaper sh = sine_shaper_;
+    IFloat fd = fader_;
+    fd.set(fade, block_size);
+
     for (auto x : zip(sum_output, mod_in, mod_out)) {
       f &sum = get<0>(x);
       u0_16 &m_in = get<1>(x);
       u0_16 &m_out = get<2>(x);
-      f sample = Process<twist_mode, warp_mode>(freq, m_in, twist, warp);
-      sample *= fader.next();
+      f sample = Process<twist_mode, warp_mode>(ph, sh, freq, m_in, twist, warp);
+      sample *= fd.next();
       m_out += u0_16((sample + 1_f) * modulation * kMaxModulationIndex);
       sum += sample * amplitude;
     }
+
+    phasor_ = ph;
+    sine_shaper_ = sh;
+    fader_ = fd;
   }
 };
 
