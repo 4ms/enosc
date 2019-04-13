@@ -15,7 +15,7 @@ data['short_sine'] = (sine*32767.0).astype(np.int16)
 
 # base-2 exponential
 
-size = 256
+size = 128
 spc = np.arange(0., size) / size
 exp2 = 2 ** spc
 
@@ -27,9 +27,9 @@ data['exp2_u0_23'] = (exp2*(2**23)).astype(np.uint32)
 # [-1..1], and for each take the value at which they pass a certain threshold
 # of "acceptable distortion probability"
 
-size = 128
+size = 32
 resolution = 512
-threshold = 0.00001
+threshold = 0.000001
 
 u = np.ones(resolution)
 v = u
