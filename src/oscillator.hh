@@ -54,7 +54,7 @@ public:
   void Process(u0_32 const freq, f const twist, f const warp,
                f const fade, f const amplitude, f const modulation,
                Block<u0_16, block_size> mod_in, Block<u0_16, block_size> mod_out, Block<f, block_size> sum_output) {
-    fader.set(fade, sum_output.size());
+    fader.set(fade, block_size);
     for (auto x : zip(sum_output, mod_in, mod_out)) {
       f &sum = get<0>(x);
       u0_16 &m_in = get<1>(x);
@@ -87,6 +87,7 @@ public:
                Block<u0_16, block_size> mod_in, Block<u0_16, block_size> mod_out,
                Block<f, block_size> sum_output) {
     if (frozen) freq = previous_freq;
+    // TODO essayer sans le else
     else previous_freq = freq;
 
     f crossfade = freq.crossfade * freq.crossfade;             // helps find the 0 point
