@@ -67,6 +67,7 @@ public:
       u0_16 &m_out = get<2>(x);
       f sample = Process<twist_mode, warp_mode>(ph, sh, freq, m_in, twist, warp);
       sample *= fd.next();
+      // TODO comprendre +1
       m_out += u0_16((sample + 1_f) * modulation * kMaxModulationIndex);
       sum += sample * amplitude;
     }
