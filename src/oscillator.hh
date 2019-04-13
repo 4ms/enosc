@@ -76,13 +76,7 @@ class OscillatorPair : Nocopy {
 
   // simple linear piecewise function: 0->1, 0.5->1, 1->0
   static f antialias(f factor) {
-    f amplitude = 1_f;
-      if (factor > 0.5_f) {
-        amplitude = 0_f;
-      } else if (factor > 0.25_f) {
-        amplitude *= 2_f - 4_f * factor;
-      }
-      return amplitude;
+    return (2_f - 4_f * factor).clip(0_f,1_f);
   }
 public:
   void set_freeze(bool b) { frozen = b; }
