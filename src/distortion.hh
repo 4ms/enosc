@@ -7,7 +7,6 @@ namespace Distortion {
   template<WarpMode> inline f warp(s1_15, f);
   template<TwistMode> inline u0_32 twist(u0_32, f);
 
-  // TODO rewrite with Numtypes
   template<>
   inline u0_32 twist<PULSAR>(u0_32 phase, f amount) {
     // amount: 0..255
@@ -15,12 +14,12 @@ namespace Distortion {
     return u0_32::wrap((u0_16::narrow(phase) * p).clip());
   }
 
-  // TODO rewrite and optimize
   template<>
   inline u0_32 twist<DECIMATE>(u0_32 phase, f amount) {
+    u0_16 am = u0_16(amount);
     uint32_t x = phase.repr();
-    x = (x ^ (uint32_t)(x*amount.repr())) * Math::sgn(x);
-    x ^= (uint32_t)(UINT32_MAX/4 * amount.repr());
+    x ^= (u0_16::narrow(phase)*am).repr();
+    x ^= (0.25_u0_16 * am).repr();
     return u0_32::of_repr(x);
   }
 
