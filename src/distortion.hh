@@ -38,8 +38,6 @@ namespace Distortion {
     return f(t.a);
   }
 
-  // TODO optimize
-  // TODO amount: [0..1[
   template<>
   inline f warp<CHEBY>(s1_15 x, f amount) {
     amount *= (Data::cheby.size() - 2_u32).to_float();
