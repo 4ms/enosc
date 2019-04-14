@@ -101,9 +101,9 @@ public:
     // TODO essayer sans le else
     else previous_freq = freq;
 
-    f crossfade = freq.crossfade * freq.crossfade;             // helps find the 0 point
-    f fade1 = 1_f - freq.crossfade;
-    f fade2 = freq.crossfade;
+    f crossfade = freq.crossfade;
+    f fade1 = 1_f - crossfade;
+    f fade2 = crossfade;
 
     f aliasing_factor1 = freq.freq1; // TODO
     fade1 *= antialias(aliasing_factor1);
