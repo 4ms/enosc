@@ -1,45 +1,50 @@
 #!/usr/bin/env python
 
-import numpy
+import numpy as np
+
+class s1_15(np.float64): pass
 
 def type_of(value):
     return {
+        s1_15: lambda: "s1_15",
         int: lambda: "s32",
-        numpy.int32: lambda: "s32",
-        numpy.int16: lambda: "s16",
-        numpy.uint32: lambda: "u32",
-        numpy.uint16: lambda: "u16",
+        np.int32: lambda: "s32",
+        np.int16: lambda: "s16",
+        np.uint32: lambda: "u32",
+        np.uint16: lambda: "u16",
         bool: lambda: "bool",
         float: lambda: "f",
-        numpy.float64: lambda: "f",
+        np.float64: lambda: "f",
         str: lambda: "string",
         tuple: lambda: ("tuple<%s>" % (", ".join(map(type_of, value)))),
         list: lambda: ("Buffer<%s, %d>" % (type_of(value[0]), len(value))),
-        numpy.ndarray: lambda: ("Buffer<%s, %d>" % (type_of(value[0]), len(value))),
+        np.ndarray: lambda: ("Buffer<%s, %d>" % (type_of(value[0]), len(value))),
     }[type(value)]()
 
 def is_base_type(value):
     t = type(value)
     if (t is int or
         t is bool or
-        t is numpy.int16 or
-        t is numpy.int32 or
-        t is numpy.uint16 or
-        t is numpy.uint32 or
-        t is numpy.float64 or
-        t is numpy.float32):
+        t is s1_15 or
+        t is np.int16 or
+        t is np.int32 or
+        t is np.uint16 or
+        t is np.uint32 or
+        t is np.float64 or
+        t is np.float32):
         return True;
     else:
         return False;
 
 def write_value_of(file, value, indent_level):
     t = type(value)
-    if (t is int or t is numpy.int32): file.write("%d_s32" % (value))
-    elif (t is numpy.int16): file.write("%d_s16" % (value))
-    elif (t is numpy.uint16): file.write("%d_u16" % (value))
-    elif (t is numpy.uint32): file.write("%d_u32" % (value))
+    if (t is int or t is np.int32): file.write("%d_s32" % (value))
+    elif (t is np.int16): file.write("%d_s16" % (value))
+    elif (t is np.uint16): file.write("%d_u16" % (value))
+    elif (t is np.uint32): file.write("%d_u32" % (value))
+    elif (t is s1_15): file.write("s1_15::inclusive(f(%f))" % (value))
     elif (t is bool): file.write("true" if value else "false")
-    elif (t is float or t is numpy.float64): file.write("%f_f" % (value))
+    elif (t is float or t is np.float64): file.write("%f_f" % (value))
     elif (t is str): file.write("\"%s\"" % (value))
     elif (t is tuple):
         file.write("{")
@@ -47,7 +52,7 @@ def write_value_of(file, value, indent_level):
             write_value_of(file, v, indent_level+1)
             file.write(",")
         file.write("}")
-    elif (t is list or t is numpy.ndarray):
+    elif (t is list or t is np.ndarray):
         file.write("{{\n")
         for v in value:
             file.write(" " * indent_level * 2)
