@@ -60,6 +60,7 @@ for i in range(number):
     chm = chn
     chn = y
     cheby.append(chm)
+    # cheby.append([s1_15(i) for i in chm])
 
 data['cheby'] = cheby
 
