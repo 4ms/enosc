@@ -92,12 +92,18 @@ public:
     return static_cast<int32_t>(val_);
   }
 
-  constexpr T fractional() const {
-    return T(static_cast<float>(val_ - floor()));
+  T integral() const {
+#ifdef __arm__
+    float res;
+    __ASM volatile ("VRINTZ.F32 %0, %1" : "=t" (res) : "t" (val_));
+    return T(res);
+#else
+    return T(static_cast<float>(floor()));
+#endif
   }
 
-  constexpr T integral() const {
-    return *this - fractional();
+  constexpr T fractional() const {
+    return *this - integral();
   }
 };
 
