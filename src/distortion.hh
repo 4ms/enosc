@@ -42,7 +42,6 @@ namespace Distortion {
   // TODO amount: [0..1[
   template<>
   inline f warp<CHEBY>(s1_15 x, f amount) {
-    // TODO comprendre -2
     amount *= (Data::cheby.size() - 2_u32).to_float();
     index idx = index(amount);
     f frac = amount.fractional();
