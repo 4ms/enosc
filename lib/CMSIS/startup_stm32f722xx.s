@@ -100,6 +100,7 @@ LoopCopyDataInit:
   adds  r2, r0, r1
   cmp  r2, r3
   bcc  CopyDataInit
+  movs  r1, #0
   b LoopCopyItcm
 
 CopyItcmInit:
