@@ -160,7 +160,7 @@ public:
       twist *= twist * 0.7_f;
     } else if (params.twist.mode == PULSAR) {
       twist *= twist;
-      twist = Math::fast_exp2(twist * 6_f);
+      twist = Math::fast_exp2(twist * 7_f);
       // twist: 0..2^6
     } else if (params.twist.mode == DECIMATE) {
       twist *= twist * 0.5_f;
