@@ -4,7 +4,6 @@
 #include "debug.hh"
 #include "ui.hh"
 #include "polyptic_oscillator.hh"
-#include "textile_oscillator.hh"
 
 // #define BYPASS
 
