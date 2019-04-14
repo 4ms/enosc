@@ -43,7 +43,7 @@ namespace Distortion {
     amount *= (Data::cheby.size() - 2_u32).to_float();
     index idx = index(amount);
     f frac = amount.fractional();
-    u0_16 phase = x.to_unsigned_scale();
+    u0_32 phase = u0_32(x.to_unsigned_scale());
     f s1 = Data::cheby[idx].interpolate(phase);
     f s2 = Data::cheby[idx+1_u32].interpolate(phase);
     return Signal::crossfade(s1, s2, frac);
