@@ -130,15 +130,15 @@ public:
     return a + T::narrow((b-a) * frac);
   }
 
-  constexpr f interpolate(u0_16 const phase) const {
+  constexpr T interpolate(u0_16 const phase) const {
     static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
     constexpr int BITS = Log2<SIZE>::val;
     Fixed<UNSIGNED, BITS, 16-BITS> p = phase.movr<BITS>();
     u32 integral = u32(p.integral());
-    f frac = p.fractional().to_float();
-    f a = this->data_[integral];
-    f b = this->data_[integral+1_u32];
-    return a + ((b-a) * frac);
+    auto fractional = p.fractional();
+    T a = this->data_[integral];
+    T b = this->data_[integral+1_u32];
+    return Signal::crossfade(a, b, fractional);
   }
 };
 

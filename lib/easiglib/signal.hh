@@ -7,6 +7,10 @@ struct Signal {
     return x + (y - x) * phase;
   }
 
+  static constexpr f crossfade(f x, f y, u0_16 phase) {
+    return crossfade(x, y, phase.to_float());
+  }
+
   // (p..1 -> 0..1)
   static f crop_down(f p, f x) {
     return ((x-p) / (1_f-p)).max(0_f);
