@@ -1,6 +1,7 @@
 #include <initializer_list>
 
 #include "util.hh"
+#include "signal.hh"
 #include "numtypes.hh"
 
 #pragma once
@@ -115,7 +116,7 @@ public:
     f fractional = phase - integral.to_float();
     f a = this->data_[integral];
     f b = this->data_[integral+1_u32];
-    return a + (b - a) * fractional;
+    return Signal::crossfade(a, b, fractional);
   }
 
   constexpr T interpolate(u0_32 const phase) const {

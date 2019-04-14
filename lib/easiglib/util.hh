@@ -1,3 +1,5 @@
+// C++ utility
+
 #pragma once
 
 #include <algorithm>

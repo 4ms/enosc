@@ -49,7 +49,7 @@ namespace Distortion {
     u0_16 phase = x.to_unsigned_scale();
     f s1 = Data::cheby[idx].interpolate(phase);
     f s2 = Data::cheby[idx+1_u32].interpolate(phase);
-    return Math::crossfade(s1, s2, frac);
+    return Signal::crossfade(s1, s2, frac);
   }
 
   template<>
