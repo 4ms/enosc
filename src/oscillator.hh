@@ -22,14 +22,14 @@ public:
   s1_15 Process(u0_32 phase, u0_16 feedback) {
     s1_31 fb = history_ * feedback.to_signed();
     phase += fb.to_unsigned() + u0_32(feedback);
-    s1_15 sample = Data::short_sine.interpolate(phase).movl<15>();
+    s1_15 sample = Data::sine.interpolate(phase);
     lp_.Process(sample, &history_);
     return sample;
   }
 
   // without Feedback
   s1_15 Process(u0_32 phase) {
-    return Data::short_sine.interpolate(phase).movl<15>();
+    return Data::sine.interpolate(phase);
   }
 };
 

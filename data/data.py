@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
+from data_compiler import *
 
 data = {}
 
@@ -9,9 +10,8 @@ data = {}
 size = 256
 spc = np.arange(0., size+1)/size
 sine = np.sin(spc*2*np.pi)
-data['sine'] = sine
 
-data['short_sine'] = (sine*32767.0).astype(np.int16)
+data['sine'] = [s1_15(i) for i in sine]
 
 # base-2 exponential
 
@@ -63,8 +63,6 @@ for i in range(number):
 
 data['cheby'] = cheby
 
-
 # Generate
 
-import data_compiler
-data_compiler.compile("data", "Data", data);
+compile("data", "Data", data);

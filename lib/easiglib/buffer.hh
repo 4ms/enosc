@@ -127,7 +127,7 @@ public:
     s1_15 frac = u0_16::narrow(p.fractional()).to_signed();
     T a = this->data_[integral];
     T b = this->data_[integral+1_u32];
-    return a + s16::narrow((b-a) * frac);
+    return a + T::narrow((b-a) * frac);
   }
 
   constexpr f interpolate(u0_16 const phase) const {
