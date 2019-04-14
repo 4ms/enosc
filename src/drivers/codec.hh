@@ -183,7 +183,7 @@ struct Codec : Nocopy {
 
   Codec() {
     instance_ = this;
-    register_codec_isr(handler__IN_ITCM_);
+    register_codec_isr(handler);
 
     // Setup PLL clock for codec
     init_SAI_clock();
@@ -223,7 +223,7 @@ private:
 
   static Codec *instance_;
 
-  static void handler__IN_ITCM_() {
+  static void handler() {
     instance_->ISR();
   }
 
