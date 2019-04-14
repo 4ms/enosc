@@ -11,6 +11,10 @@ struct Signal {
     return crossfade(x, y, phase.to_float());
   }
 
+  static constexpr s1_15 crossfade(s1_15 x, s1_15 y, u0_32 phase) {
+    return x + s1_15::narrow((y - x) * u0_16::narrow(phase).to_signed());
+  }
+
   // (p..1 -> 0..1)
   static f crop_down(f p, f x) {
     return ((x-p) / (1_f-p)).max(0_f);

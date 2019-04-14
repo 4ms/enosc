@@ -110,12 +110,12 @@ public:
     return this->data_[i];
   }
 
-  constexpr f interpolate(f phase) const {
+  constexpr T interpolate(f phase) const {
     phase *= (size()-1_u32).to_float();
     index integral = index(phase);
-    f fractional = phase - integral.to_float();
-    f a = this->data_[integral];
-    f b = this->data_[integral+1_u32];
+    f fractional = phase.fractional();
+    T a = this->data_[integral];
+    T b = this->data_[integral+1_u32];
     return Signal::crossfade(a, b, fractional);
   }
 
@@ -124,10 +124,10 @@ public:
     constexpr int BITS = Log2<SIZE>::val;
     Fixed<UNSIGNED, BITS, 32-BITS> p = phase.movr<BITS>();
     u32 integral = p.integral();
-    s1_15 frac = u0_16::narrow(p.fractional()).to_signed();
+    auto fractional = p.fractional();
     T a = this->data_[integral];
     T b = this->data_[integral+1_u32];
-    return a + T::narrow((b-a) * frac);
+    return Signal::crossfade(a, b, fractional);
   }
 
   constexpr T interpolate(u0_16 const phase) const {
