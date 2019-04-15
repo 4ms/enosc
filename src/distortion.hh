@@ -28,14 +28,24 @@ namespace Distortion {
     return phase;
   }
 
-  // TODO optimize
+  // template<>
+  // inline f warp<CRUSH>(s1_15 sample, f amount) {
+  //   f x = sample.to_float();
+  //   union { f a; uint32_t b; } t = {x};
+  //   t.b ^= (uint32_t)(((1 << 23)-1) * amount.repr());
+  //   return t.a;
+  // }
+
   template<>
   inline f warp<CRUSH>(s1_15 sample, f amount) {
     f x = sample.to_float();
-    union { float a; uint32_t b; } t = {x.repr()};
-    t.b ^= (uint32_t)((t.b & ((1 << 23)-1)) * amount.repr());
-    // t.b ^= (int32_t)(((1<<23)-1) * amount.repr());
-    return f(t.a);
+    amount *= 8_f;
+    int bits = amount.floor() + 16;
+    f frac = amount.fractional();
+    int b = (bits + (x.abs()<frac ? 1 : 0));
+    union { f a; uint32_t b; } t = {x};
+    t.b ^= (1 << b) - 1;
+    return t.a;
   }
 
   template<>
