@@ -51,6 +51,14 @@ public:
   constexpr void operator++(int) { val_++; }
   constexpr void operator--(int) { val_--; }
 
+  // Signum function
+  constexpr T sgn() {
+    union { float f; uint32_t i; } f = {val_};
+    f.i &= 1 << 31;
+    f.i |= 0x7F << 23;
+    return T(f.f);
+  }
+
   constexpr T const abs() const { return T(val_ > 0 ? val_ : -val_); }
   T const sqrt() const {
 #ifdef __arm__
