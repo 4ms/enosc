@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import numpy as np
+import matplotlib.pyplot as plt
+
 from data_compiler import *
 
 data = {}
@@ -63,6 +65,20 @@ for i in range(number):
     # cheby.append([s1_15(i) for i in chm])
 
 data['cheby'] = cheby
+
+# Wavefolder
+# https://www.desmos.com/calculator/7usex8budt
+
+size = 1024 + 1
+folds = 6
+x = np.linspace(0, folds, size)
+g = 1. / (1 + abs(x))
+fold = g * (x + np.sin(16 * x * g))
+
+data['fold'] = fold
+
+# plt.plot(fold)
+# plt.show()
 
 # Generate
 

@@ -51,11 +51,8 @@ namespace Distortion {
 
   template<>
   inline f warp<FOLD>(s1_15 x, f amount) {
-    constexpr Buffer<f, 12> fold = {{-1_f, 1_f, -1_f, 1_f, -1_f, 1_f,
-                                    -1_f, 1_f, -1_f, 1_f, -1_f, 1_f, -1_f}};
-    f sample = x.to_float() * 0.5_f + 0.5_f;
-    amount = (amount + 1_f/fold.size().to_float());
-    f phase = sample * amount;
-    return fold.interpolate(phase);
+    f sample = x.to_float();
+    f phase = (sample * amount).abs();
+    return sample.sgn() * Data::fold.interpolate(phase);
   }
 };
