@@ -30,7 +30,7 @@ struct Buttons : Nocopy {
       gpio.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(GPIOC, &gpio);
     }
-    bool get() { return HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9); };
+    bool get() { return ReadPin(GPIOC, GPIO_PIN_9); };
   } learn_;
 
   struct Freeze : Debouncer<Freeze> {
@@ -42,7 +42,7 @@ struct Buttons : Nocopy {
       gpio.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(GPIOA, &gpio);
     }
-    bool get() { return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_11); };
+    bool get() { return ReadPin(GPIOA, GPIO_PIN_11); };
   } freeze_;
 
   void Debounce() {

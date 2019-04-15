@@ -41,8 +41,8 @@ struct Switches : Nocopy {
       gpio.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(GRIDSW_TOP_GPIO_Port, &gpio);
     }
-    bool get1() { return HAL_GPIO_ReadPin(GRIDSW_TOP_GPIO_Port, GRIDSW_TOP_Pin); }
-    bool get2() { return HAL_GPIO_ReadPin(GRIDSW_BOT_GPIO_Port, GRIDSW_BOT_Pin); }
+    bool get1() { return ReadPin(GRIDSW_TOP_GPIO_Port, GRIDSW_TOP_Pin); }
+    bool get2() { return ReadPin(GRIDSW_BOT_GPIO_Port, GRIDSW_BOT_Pin); }
   } grid_;
 
   struct Mod : Combiner<Mod> {
@@ -54,8 +54,8 @@ struct Switches : Nocopy {
       gpio.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(MODSW_TOP_GPIO_Port, &gpio);
     }
-    bool get1() { return HAL_GPIO_ReadPin(MODSW_TOP_GPIO_Port, MODSW_TOP_Pin); }
-    bool get2() { return HAL_GPIO_ReadPin(MODSW_BOT_GPIO_Port, MODSW_BOT_Pin); }
+    bool get1() { return ReadPin(MODSW_TOP_GPIO_Port, MODSW_TOP_Pin); }
+    bool get2() { return ReadPin(MODSW_BOT_GPIO_Port, MODSW_BOT_Pin); }
   } mod_;
 
   struct Twist : Combiner<Twist> {
@@ -67,8 +67,8 @@ struct Switches : Nocopy {
       gpio.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(TWISTSW_TOP_GPIO_Port, &gpio);
     }
-    bool get1() { return HAL_GPIO_ReadPin(TWISTSW_TOP_GPIO_Port, TWISTSW_TOP_Pin); }
-    bool get2() { return HAL_GPIO_ReadPin(TWISTSW_BOT_GPIO_Port, TWISTSW_BOT_Pin); }
+    bool get1() { return ReadPin(TWISTSW_TOP_GPIO_Port, TWISTSW_TOP_Pin); }
+    bool get2() { return ReadPin(TWISTSW_BOT_GPIO_Port, TWISTSW_BOT_Pin); }
   } twist_;
 
   struct Warp : Combiner<Warp> {
@@ -80,7 +80,7 @@ struct Switches : Nocopy {
       gpio.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(WARPSW_TOP_GPIO_Port, &gpio);
     }
-    bool get1() { return HAL_GPIO_ReadPin(WARPSW_TOP_GPIO_Port, WARPSW_TOP_Pin); }
-    bool get2() { return HAL_GPIO_ReadPin(WARPSW_BOT_GPIO_Port, WARPSW_BOT_Pin); }
+    bool get1() { return ReadPin(WARPSW_TOP_GPIO_Port, WARPSW_TOP_Pin); }
+    bool get2() { return ReadPin(WARPSW_BOT_GPIO_Port, WARPSW_BOT_Pin); }
   } warp_;
 };

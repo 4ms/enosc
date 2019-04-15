@@ -1,5 +1,7 @@
 #pragma once
 
+#include "hal.hh"
+
 struct Debug : Nocopy {
   Debug() {
     __HAL_RCC_GPIOD_CLK_ENABLE();
@@ -25,10 +27,10 @@ struct Debug : Nocopy {
   void set(int pin, bool value) {
     GPIO_PinState v = (GPIO_PinState)value;
     switch(pin) {
-    case 0: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, v); break;
-    case 1: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_6, v); break;
-    case 2: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_7, v); break;
-    case 3: HAL_GPIO_WritePin(GPIOD, GPIO_PIN_4, v); break;
+    case 0: WritePin(GPIOD, GPIO_PIN_5, v); break;
+    case 1: WritePin(GPIOD, GPIO_PIN_6, v); break;
+    case 2: WritePin(GPIOD, GPIO_PIN_7, v); break;
+    case 3: WritePin(GPIOD, GPIO_PIN_4, v); break;
     }
   }
 } debug;
