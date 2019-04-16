@@ -169,6 +169,7 @@ public:
 
     f mod = mod_.Process(adc_.mod_pot(), adc_.mod_cv());
     mod = Signal::crop(kPotDeadZone, mod);
+    mod *= 4_f / f(kNumOsc);
     if (params.modulation.mode == ONE) {
       mod *= 0.9_f;
     } else if (params.modulation.mode == TWO) {
