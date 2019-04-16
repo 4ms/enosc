@@ -9,7 +9,7 @@ constexpr struct Frame {
 
 constexpr int kBlockSize = 16;
 constexpr int kSampleRate = 96000;
-constexpr int kNumOsc = 8;
+constexpr int kMaxNumOsc = 8;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
 enum WarpMode { FOLD, CHEBY, CRUSH };
@@ -22,6 +22,7 @@ enum DivisionMode { INTEGER, ODD, POW_OF_TWO };
 enum TranspositionMode { CHROMATIC, THREE_ST, OCTAVE };
 
 struct Parameters {
+  int numOsc = kMaxNumOsc;
   f tilt;                       // -1..1
   f root;
   f pitch;                       // midi note
