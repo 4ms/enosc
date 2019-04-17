@@ -24,6 +24,15 @@ int binary_search(T const x, T const array[], int const size) {
   return low;
 }
 
+
+template<class T>
+int linear_search(T const x, T const array[], int size) {
+  while(size--) {
+    if (x >= array[size]) return size;
+  }
+  return -1;
+}
+
 // precondition: sorted [array] of [size]
 // postcondition: deleted all elements closer than [threshold] to
 // their predecessor
