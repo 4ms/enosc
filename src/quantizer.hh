@@ -25,8 +25,8 @@ public:
   PitchPair Process(f const pitch) const {
     f max = grid_[size_-1];
     // quotient by the max
-    int oct = (pitch / max).floor();
-    f octaves = f(oct) * max;
+    f oct = (pitch / max).integral();
+    f octaves = oct * max;
     f semitones = pitch - octaves;
     // semitones [0..max[
     int index = binary_search(semitones, grid_, size_);
@@ -37,7 +37,7 @@ public:
     p1 += octaves;
     p2 += octaves;
 
-    if ((index + (oct * (size_+1))) & 1) {
+    if ((index + (oct.floor() * (size_+1))) & 1) {
       crossfade = 1_f - crossfade;
       f tmp = p1;
       p1 = p2;
