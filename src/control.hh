@@ -150,10 +150,6 @@ public:
     tilt = Math::fast_exp2(tilt);
     params.tilt = tilt;
 
-    f warp = warp_.Process(adc_.warp_pot(), adc_.warp_cv());
-    warp = Signal::crop(kPotDeadZone, warp);
-    params.warp.value = warp;
-
     f twist = twist_.Process(adc_.twist_pot(), adc_.twist_cv());
     twist = Signal::crop(kPotDeadZone, twist);
     if (params.twist.mode == FEEDBACK) {
@@ -166,6 +162,18 @@ public:
       twist *= twist * 0.5_f;
     }
     params.twist.value = twist;
+
+    f warp = warp_.Process(adc_.warp_pot(), adc_.warp_cv());
+    warp = Signal::crop(kPotDeadZone, warp);
+    if (params.warp.mode == FOLD) {
+      warp *= warp;
+      warp *= 0.9_f;
+      warp += 0.01_f;
+    } else if (params.warp.mode == CHEBY) {
+    } else if (params.warp.mode == CRUSH) {
+      warp *= 2_f - warp;
+    }
+    params.warp.value = warp;
 
     f mod = mod_.Process(adc_.mod_pot(), adc_.mod_cv());
     mod = Signal::crop(kPotDeadZone, mod);
