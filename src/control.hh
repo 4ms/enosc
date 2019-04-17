@@ -203,7 +203,7 @@ public:
     f root = root_pot_lp_.Process(r.to_float_inclusive());
     root *= kRootPotRange;
     root += root_cv_.Process(root_block);
-    params.root = root;
+    params.root = root.max(0_f);
 
     u0_16 p = pitch_pot_.Process(adc_.pitch_pot());
     f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1

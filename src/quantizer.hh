@@ -11,6 +11,7 @@ struct PitchPair {
 };
 
 class Grid : Nocopy {
+  // grid_[0] = 0, contains [size_] sorted elements
   f grid_[kMaxGridSize];
   int size_ = 0;
   friend class PreGrid;
@@ -20,14 +21,16 @@ public:
     std::copy(grid.begin(), grid.end(), grid_);
   }
 
+  // pitch>0
   PitchPair Process(f const pitch) const {
     f max = grid_[size_-1];
     // quotient by the max
     int oct = (pitch / max).floor();
     f octaves = f(oct) * max;
     f semitones = pitch - octaves;
-    // invariant: 0 < semitones < max
+    // semitones [0..max[
     int index = binary_search(semitones, grid_, size_);
+    // index: [0..size_-2]
     f p1 = grid_[index];
     f p2 = grid_[index+1];
     f crossfade = (semitones - p1) / (p2 - p1);

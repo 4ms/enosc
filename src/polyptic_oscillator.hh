@@ -88,6 +88,7 @@ class Oscillators : Nocopy {
       grid(g), root(r), pitch(p), spread(s), detune(d) {}
     FrequencyPair Next() {
 
+      // root > 0
       PitchPair p = grid.Process(root); // 2%
 
       p.p1 += pitch + detune_accum;
