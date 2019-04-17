@@ -99,6 +99,8 @@ public:
     else previous_freq = freq;
 
     f crossfade = freq.crossfade;
+    // shape crossfade so notes are easier to find
+    crossfade = Math::fast_raised_cosine(crossfade);
     f fade1 = 1_f - crossfade;
     f fade2 = crossfade;
 
