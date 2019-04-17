@@ -30,6 +30,15 @@ private:
   u0_16 flash_phase = 0._u0_16;
 };
 
+struct DelayedEvent {
+  void trigger_in(int d, std::function<void()> a) { delay_ = d; action_ = a; }
+  void Process() { if (delay_-- == 0) { action_(); } }
+  DelayedEvent() {}
+private:
+  std::function<void()> action_ = [](){};
+  int delay_ = -1;
+};
+
 template<int size>
 class Ui {
   Parameters params_;
@@ -56,6 +65,8 @@ class Ui {
   enum UiMode {
     NORMAL_MODE,
   } mode = NORMAL_MODE;
+  DelayedEvent new_note_event_;
+
 
   void set_learn(bool b) {
     if (b) {
@@ -95,7 +106,7 @@ class Ui {
   void gate_enabled(Gate g) {
     switch(g) {
     case GATE_LEARN:
-      set_learn(true);
+      new_note_event_.trigger_in(40, [this] { osc_.new_note(control_.pitch_cv()); });
       break;
     case GATE_FREEZE:
       break;
@@ -105,7 +116,6 @@ class Ui {
   void gate_disabled(Gate g) {
     switch(g) {
     case GATE_LEARN:
-      set_learn(false);
       break;
     case GATE_FREEZE:
       break;
@@ -121,6 +131,9 @@ public:
   }
 
   void Process(Block<Frame, size> codec_in) {
+
+    // Delays
+    new_note_event_.Process();
 
     // Controls
     control_.Process(codec_in, params_);

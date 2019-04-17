@@ -65,7 +65,7 @@ public:
   void clear() { size_ = 0; }
 
   // do not call if size==0
-  void copy_to(Grid *g) {
+  bool copy_to(Grid *g) {
     // sort table
     std::sort(grid_, grid_+size_);
     // normalize from smallest element
@@ -76,9 +76,14 @@ public:
     // remove duplicate elements
     uniquify(grid_, size_, kGridUnicityThreshold);
 
-    // copy to real grid
-    std::copy(grid_, grid_+size_, g->grid_);
-    g->size_=size_;
+    if (size_ > 1) {
+      // copy to real grid
+      std::copy(grid_, grid_+size_, g->grid_);
+      g->size_=size_;
+      return true;
+    } else {
+      return false;
+    }
   }
 };
 

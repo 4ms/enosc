@@ -47,13 +47,12 @@ class AudioCVConditioner {
   f slope;
 public:
   AudioCVConditioner(f o, f s) : offset(o), slope(s) {}
+  f last() { return lp_.last().to_float_inclusive(); }
   void calibrate_offset() {
-    u0_16 o = lp_.last();
-    offset = o.to_float_inclusive();
+    offset = last();
   }
   void calibrate_slope() {
-    u0_16 reading = lp_.last();
-    f octave = (reading.to_float_inclusive() - offset) / kCalibration2Voltage;
+    f octave = (last() - offset) / kCalibration2Voltage;
     slope = 12_f / octave;
   }
   f Process(Block<s1_15, size> in) {
@@ -107,10 +106,6 @@ class Control {
   AudioCVConditioner<size> root_cv_  {0.24319829_f, 97.4769897_f};
   QuadraticOnePoleLp<2> root_pot_lp_;
   QuadraticOnePoleLp<2> pitch_pot_lp_;
-
-  // delay is 5 ms
-  ChangeDetector<int(0.05 * kSampleRate / size)>
-  pitch_cv_change_detector_ {0.005_f, 0.01_f};
 
   PolypticOscillator<size> &osc_;
 
@@ -211,21 +206,16 @@ public:
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
 
     f pitch_cv = pitch_cv_.Process(pitch_block);
-    bool pitch_cv_changed = pitch_cv_change_detector_.Process(pitch_cv);
-    if (pitch_cv_changed) {
-      osc_.new_note(pitch_cv);
-    }
 
     pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
     pitch += pitch_cv;
     params.pitch = pitch;
 
-    // params.selected_osc = (r.to_float() * f(kNumOsc-1) + 0.5_f).floor();
-
     // Start next conversion
     adc_.Start();
   }
 
+  f pitch_cv() { return pitch_cv_.last(); }
   void hold_pitch_cv() { pitch_cv_sampler_.hold(); }
   void release_pitch_cv() { pitch_cv_sampler_.release(); }
 

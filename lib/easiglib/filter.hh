@@ -46,7 +46,7 @@ class Average {
   RingBuffer<u16_16, SIZE> state_c[STAGES];
 public:
   u0_16 last() {
-    return state_i[STAGES-1] / gain;
+    return u0_16::wrap(state_i[STAGES-1] / gain);
   }
   u0_16 Process(u0_16 x) {
     u16_16 y = u16_16(x);

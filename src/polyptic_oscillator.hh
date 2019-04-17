@@ -185,12 +185,8 @@ public:
     learn_mode = true;
   }
   void disable_learn() {
-    if (pre_grid_.size() >= 2) {
-      pre_grid_.copy_to(current_grid_);
-      onExitLearn_.notify(true);
-    } else {
-      onExitLearn_.notify(false);
-    }
+    bool b = pre_grid_.copy_to(current_grid_);
+    onExitLearn_.notify(b);
     learn_mode = false;
   }
 
