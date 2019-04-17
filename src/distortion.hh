@@ -39,7 +39,7 @@ namespace Distortion {
   template<>
   inline f warp<CRUSH>(s1_15 sample, f amount) {
     f x = sample.to_float();
-    amount *= 8_f;
+    amount *= 7_f;
     int bits = amount.floor() + 16;
     f frac = amount.fractional();
     int b = (bits + (x.abs()<frac ? 1 : 0));
