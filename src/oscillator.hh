@@ -83,7 +83,7 @@ class OscillatorPair : Nocopy {
   bool frozen = false;
   FrequencyPair previous_freq;
 
-  // simple linear piecewise function: 0->1, 0.5->1, 1->0
+  // simple linear piecewise function: 0->1, 0.25->1, 0.5->0
   static f antialias(f factor) {
     return (2_f - 4_f * factor).clip(0_f,1_f);
   }
