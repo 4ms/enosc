@@ -138,6 +138,7 @@ public:
     }
 
     f atten = 1_f / amplitude.Sum();
+    atten *= Data::normalization_factors[numOsc];
 
     for (auto o : zip(out1, out2)) {
       f& o1 = get<0>(o);

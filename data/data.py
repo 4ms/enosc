@@ -31,7 +31,7 @@ data['exp2_u0_23'] = (exp2*(2**23)).astype(np.uint32)
 
 size = 32
 resolution = 512
-threshold = 0.000001
+threshold = 0.00001
 
 u = np.ones(resolution)
 v = u
@@ -45,6 +45,7 @@ for i in range(size):
     factors.append(1.0 / factor)
     u = np.convolve(u, v) / resolution
 
+factors = factors * np.arange(1., size+1)
 data['normalization_factors'] = factors
 
 # Chebyschev polynomials
