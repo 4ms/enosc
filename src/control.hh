@@ -157,7 +157,7 @@ public:
     } else if (params.twist.mode == PULSAR) {
       twist *= twist;
       twist = Math::fast_exp2(twist * 7_f);
-      // twist: 0..2^6
+      // twist: 0..2^7
     } else if (params.twist.mode == DECIMATE) {
       twist *= twist * 0.5_f;
     }
@@ -177,6 +177,7 @@ public:
 
     f mod = mod_.Process(adc_.mod_pot(), adc_.mod_cv());
     mod = Signal::crop(kPotDeadZone, mod);
+    mod *= 4_f / f(params.numOsc);
     if (params.modulation.mode == ONE) {
       mod *= 0.9_f;
     } else if (params.modulation.mode == TWO) {

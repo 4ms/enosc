@@ -8,19 +8,19 @@
 
 template<int block_size>
 class Oscillators : Nocopy {
-  OscillatorPair oscs_[kNumOsc];
-  u0_16 modulation_blocks_[kNumOsc+1][block_size];
+  OscillatorPair oscs_[kMaxNumOsc];
+  u0_16 modulation_blocks_[kMaxNumOsc+1][block_size];
   u0_16 dummy_block_[block_size];
 
-  static inline bool pick_output(StereoMode mode, int i) {
+  static inline bool pick_output(StereoMode mode, int i, int numOsc) {
     return
       mode == ALTERNATE ? i&1 :
-      mode == SPLIT ? i<=kNumOsc/2 :
+      mode == SPLIT ? i<numOsc/2 :
       i == 0;
   }
 
   inline std::pair<u0_16*, u0_16*>
-  pick_modulation_blocks(ModulationMode mode, int i) {
+  pick_modulation_blocks(ModulationMode mode, int i, int numOsc) {
     if(mode == ONE) {
       if (i==0) {
         return std::make_pair(dummy_block_, modulation_blocks_[i+1]);
@@ -34,7 +34,7 @@ class Oscillators : Nocopy {
         return std::make_pair(modulation_blocks_[0], dummy_block_);
       }
     } else { // mode == THREE
-      if (i==kNumOsc-1) {
+      if (i==numOsc-1) {
         return std::make_pair(dummy_block_, modulation_blocks_[0]);
       } else {
         return std::make_pair(modulation_blocks_[0], dummy_block_);
@@ -117,12 +117,17 @@ public:
     f twist = params.twist.value;
     f warp = params.warp.value;
     f modulation = params.modulation.value;
+    int numOsc = params.numOsc;
+    StereoMode stereo_mode = params.stereo_mode;
+    ModulationMode modulation_mode = params.modulation.mode;
 
-    for (int i=0; i<kNumOsc; ++i) {
+    for (int i=0; i<numOsc; ++i) {
       FrequencyPair p = frequency.Next(); // 3%
       f amp = amplitude.Next();
-      Block<f, block_size> out = pick_output(params.stereo_mode, i) ? out1 : out2;
-      std::pair<u0_16*, u0_16*> mod_blocks = pick_modulation_blocks(params.modulation.mode, i);
+      Block<f, block_size> out =
+        pick_output(stereo_mode, i, numOsc) ? out1 : out2;
+      std::pair<u0_16*, u0_16*> mod_blocks =
+        pick_modulation_blocks(modulation_mode, i, numOsc);
       Block<u0_16, block_size> mod_in(mod_blocks.first);
       Block<u0_16, block_size> mod_out(mod_blocks.second);
       // TODO cleanup: avoid manipulating bare pointers to buffers

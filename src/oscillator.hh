@@ -3,8 +3,6 @@
 #include "dsp.hh"
 #include "distortion.hh"
 
-constexpr const f kMaxModulationIndex = 4_f / f(kNumOsc);
-
 class Phasor {
   u0_32 phase_ = u0_32::of_repr(Random::Word());
 public:
@@ -68,7 +66,7 @@ public:
       f sample = Process<twist_mode, warp_mode>(ph, sh, freq, m_in, twist, warp);
       sample *= fd.next();
       // TODO comprendre +1
-      m_out += u0_16((sample + 1_f) * modulation * kMaxModulationIndex);
+      m_out += u0_16((sample + 1_f) * modulation);
       sum += sample * amplitude;
     }
 
