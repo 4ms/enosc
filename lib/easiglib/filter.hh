@@ -23,9 +23,13 @@ struct OnePoleHp : OnePoleLp {
 
 template<class T, int SHIFT>
 struct IOnePoleLp {
-  void Process(T input, T *output) {
+  T state() { return state_; }
+  void Process(T input) {
     state_ += input.template div2<SHIFT>() - state_.template div2<SHIFT>();
-    *output = state_;
+  }
+  void Process(T input, T &output) {
+    Procss(input);
+    output = state_;
   }
 private:
   T state_ = T(0_f);
