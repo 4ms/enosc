@@ -138,13 +138,15 @@ public:
     }
 
     f atten = 1_f / amplitude.Sum();
-    atten *= Data::normalization_factors[numOsc];
+    f tilt = params.tilt <= 1_f ? params.tilt : 1_f / params.tilt;
+    atten *= 1_f + Data::normalization_factors[numOsc*2] * tilt;
 
     for (auto o : zip(out1, out2)) {
       f& o1 = get<0>(o);
       f& o2 = get<1>(o);
-      o1 *= atten;
-      o2 *= atten;
+      f a = atten;
+      o1 *= a;
+      o2 *= a;
     }
   }
 

@@ -45,7 +45,7 @@ for i in range(size):
     factors.append(1.0 / factor)
     u = np.convolve(u, v) / resolution
 
-factors = factors * np.arange(1., size+1)
+factors = factors * np.arange(1., size+1) - 1
 data['normalization_factors'] = factors
 
 # Chebyschev polynomials
