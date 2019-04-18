@@ -10,8 +10,6 @@
   #include "stm32f7xx.h"
 #endif
 
-inline int libc_abs(int x) { return abs(x); }
-
 /**************
  * 32-bits Floating Point
  **************/
@@ -340,7 +338,8 @@ public:
 
   constexpr T const floor() const { return T::of_repr(repr() & ~((1ULL << FRAC) - 1ULL)); }
   constexpr T const frac() const { return T::of_repr(repr() & ((1ULL << FRAC) - 1ULL)); }
-  constexpr T const abs() const { return T::of_repr(libc_abs(val_)); }
+  constexpr T const sgn() const { return T::of_repr((val_ > 0) - (val_ < 0)); }
+  constexpr T const abs() const { return T::of_repr(val_ >= 0 ? val_ : -val_); }
 
   constexpr Fixed<SIGN, WIDTH, 0> const integral() const {
     return Fixed<SIGN, WIDTH, 0>::narrow(*this);

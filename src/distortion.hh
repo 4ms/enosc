@@ -39,7 +39,7 @@ namespace Distortion {
   template<>
   inline f warp<CRUSH>(s1_15 sample, f amount) {
     f x = sample.to_float();
-    amount *= 8_f;
+    amount *= 7_f;
     int bits = amount.floor() + 16;
     f frac = amount.fractional();
     int b = (bits + (x.abs()<frac ? 1 : 0));
@@ -61,8 +61,9 @@ namespace Distortion {
 
   template<>
   inline f warp<FOLD>(s1_15 x, f amount) {
-    f sample = x.to_float();
-    f phase = (sample * amount).abs();
-    return sample.sgn() * Data::fold.interpolate(phase);
+    u0_16 sample = x.abs().to_unsigned();
+    u0_32 phase = sample * u0_16(amount);
+    f res = Data::fold.interpolate(phase);
+    return x > 0._s1_15 ? res : -res;
   }
 };

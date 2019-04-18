@@ -6,26 +6,30 @@
 #pragma once
 
 struct OnePoleLp {
-  void Process(Float coef, Float input, Float *output) {
+  void Process(Float coef, Float input, Float &output) {
     state_ += (input - state_) * coef;
-    *output = state_;
+    output = state_;
   }
 private:
   Float state_;
 };
 
 struct OnePoleHp : OnePoleLp {
-  Float Process(Float coef, Float input, Float *output) {
+  void Process(Float coef, Float input, Float &output) {
     OnePoleLp::Process(coef, input, output);
-    return input - *output;
+    output = input - output;
   }
 };
 
 template<class T, int SHIFT>
 struct IOnePoleLp {
-  void Process(T input, T *output) {
+  T state() { return state_; }
+  void Process(T input) {
     state_ += input.template div2<SHIFT>() - state_.template div2<SHIFT>();
-    *output = state_;
+  }
+  void Process(T input, T &output) {
+    Procss(input);
+    output = state_;
   }
 private:
   T state_ = T(0_f);
@@ -109,11 +113,11 @@ class CubicOnePoleLp : public NonLinearOnePoleLp<f, FTransferCubic<divisor> > {}
 struct FourPoleLadderLp {
   OnePoleLp lp_[4];
   Float fb = 0_f;
-  void Process(Float in, Float *out, Float cutoff, Float resonance) {
+  void Process(Float in, Float &out, Float cutoff, Float resonance) {
     in -= fb * resonance;
     for (int i=0; i<4; i++)
-      lp_[i].Process(cutoff, in, &in);
-    *out = fb = Math::fast_tanh(in);
+      lp_[i].Process(cutoff, in, in);
+    out = fb = Math::fast_tanh(in);
   }
 };
 
@@ -241,12 +245,12 @@ class SlewLimiter {
 public:
   SlewLimiter(T slew_up, T slew_down) :
     slew_up_(slew_up), slew_down_(-slew_down) {}
-  void Process(T input, T *output) {
+  void Process(T input, T &output) {
     T error = input - state_;
     if (error > slew_up_) error = slew_up_;
     if (error < slew_down_) error = slew_down_;
     state_ += error;
-    *output = state_;
+    output = state_;
   }
 
   void Process(T *input, T *output, int size) {

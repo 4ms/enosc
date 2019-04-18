@@ -47,15 +47,15 @@ class Oscillators : Nocopy {
 
   processor_t pick_processor(TwistMode t, WarpMode m) {
     static processor_t tab[3][3] = {
-      &OscillatorPair::Process<FEEDBACK, CRUSH, block_size>,
-      &OscillatorPair::Process<FEEDBACK, CHEBY, block_size>,
       &OscillatorPair::Process<FEEDBACK, FOLD, block_size>,
-      &OscillatorPair::Process<PULSAR, CRUSH, block_size>,
-      &OscillatorPair::Process<PULSAR, CHEBY, block_size>,
+      &OscillatorPair::Process<FEEDBACK, CHEBY, block_size>,
+      &OscillatorPair::Process<FEEDBACK, CRUSH, block_size>,
       &OscillatorPair::Process<PULSAR, FOLD, block_size>,
-      &OscillatorPair::Process<DECIMATE, CRUSH, block_size>,
-      &OscillatorPair::Process<DECIMATE, CHEBY, block_size>,
+      &OscillatorPair::Process<PULSAR, CHEBY, block_size>,
+      &OscillatorPair::Process<PULSAR, CRUSH, block_size>,
       &OscillatorPair::Process<DECIMATE, FOLD, block_size>,
+      &OscillatorPair::Process<DECIMATE, CHEBY, block_size>,
+      &OscillatorPair::Process<DECIMATE, CRUSH, block_size>,
     };
 
     return tab[t][m];
@@ -138,6 +138,7 @@ public:
     }
 
     f atten = 1_f / amplitude.Sum();
+    atten *= Data::normalization_factors[numOsc];
 
     for (auto o : zip(out1, out2)) {
       f& o1 = get<0>(o);

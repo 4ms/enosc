@@ -13,15 +13,15 @@ public:
 };
 
 class SineShaper {
-  s1_15 history_ = 0._s1_15;
   IOnePoleLp<s1_15, 2> lp_;
 public:
 
+  // TODO merge history and lp_?
   s1_15 Process(u0_32 phase, u0_16 feedback) {
-    s1_31 fb = history_ * feedback.to_signed();
+    s1_31 fb = lp_.state() * feedback.to_signed();
     phase += fb.to_unsigned() + u0_32(feedback);
     s1_15 sample = Data::sine.interpolate(phase);
-    lp_.Process(sample, &history_);
+    lp_.Process(sample);
     return sample;
   }
 
@@ -83,7 +83,7 @@ class OscillatorPair : Nocopy {
   bool frozen = false;
   FrequencyPair previous_freq;
 
-  // simple linear piecewise function: 0->1, 0.5->1, 1->0
+  // simple linear piecewise function: 0->1, 0.25->1, 0.5->0
   static f antialias(f factor) {
     return (2_f - 4_f * factor).clip(0_f,1_f);
   }
