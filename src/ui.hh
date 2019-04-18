@@ -31,7 +31,7 @@ private:
 };
 
 struct DelayedEvent {
-  void trigger_in(int d, std::function<void()> a) { delay_ = d; action_ = a; }
+  void trigger_after(int d, std::function<void()> a) { delay_ = d; action_ = a; }
   void Process() { if (delay_-- == 0) { action_(); } }
   DelayedEvent() {}
 private:
@@ -62,11 +62,13 @@ class Ui {
   LedManager<Leds::Learn> learn_led_;
   LedManager<Leds::Freeze> freeze_led_;
 
-  enum UiMode {
-    NORMAL_MODE,
-  } mode = NORMAL_MODE;
   DelayedEvent new_note_event_;
+  DelayedEvent calibration_event_;
 
+  enum class Mode {
+    NORMAL,
+    CALIBRATION,
+  } mode = Mode::NORMAL;
 
   void set_learn(bool b) {
     if (b) {
@@ -79,25 +81,52 @@ class Ui {
   }
 
   void button_pressed(Button b) {
-    switch(b) {
-    case BUTTON_LEARN: {
+    switch(mode) {
+    case Mode::NORMAL: {
+      switch(b) {
+      case BUTTON_LEARN: {
+      } break;
+      case BUTTON_FREEZE: {
+      } break;
+      }
     } break;
-    case BUTTON_FREEZE: {
+    case Mode::CALIBRATION: {
+      switch(b) {
+      case BUTTON_LEARN: {
+        mode = Mode::NORMAL;
+        calibration_event_.trigger_after(100, [this]() {control_.Calibrate2();});
+      } break;
+      case BUTTON_FREEZE: {
+        mode = Mode::NORMAL;
+      } break;
+      }
     } break;
     }
   }
 
   void button_released(Button b) {
-    switch(b) {
-    case BUTTON_LEARN: {
-      set_learn(!osc_.learn_enabled());
+    switch(mode) {
+    case Mode::NORMAL: {
+      switch(b) {
+      case BUTTON_LEARN: {
+        set_learn(!osc_.learn_enabled());
+      } break;
+      case BUTTON_FREEZE: {
+        osc_.freeze_selected_osc();
+        params_.selected_osc++;
+        if (params_.selected_osc == params_.numOsc+1) {
+          params_.selected_osc = 0;
+          osc_.unfreeze_all();
+        }
+      } break;
+      }
     } break;
-    case BUTTON_FREEZE: {
-      osc_.freeze_selected_osc();
-      params_.selected_osc++;
-      if (params_.selected_osc == params_.numOsc+1) {
-        params_.selected_osc = 0;
-        osc_.unfreeze_all();
+    case Mode::CALIBRATION: {
+      switch(b) {
+      case BUTTON_LEARN: {
+      } break;
+      case BUTTON_FREEZE: {
+      } break;
       }
     } break;
     }
@@ -106,7 +135,7 @@ class Ui {
   void gate_enabled(Gate g) {
     switch(g) {
     case GATE_LEARN:
-      new_note_event_.trigger_in(40, [this] { osc_.new_note(control_.pitch_cv()); });
+      new_note_event_.trigger_after(40, [this] { osc_.new_note(control_.pitch_cv()); });
       break;
     case GATE_FREEZE:
       break;
@@ -126,14 +155,18 @@ public:
   PolypticOscillator<size>& osc() { return osc_; }
 
   Ui() {
-    leds_.learn_.set(Colors::red);
-    leds_.freeze_.set(Colors::red);
+    HAL_Delay(10);
+    if (buttons_.learn_.pressed()) {
+      mode = Mode::CALIBRATION;
+      calibration_event_.trigger_after(100, [this]() {control_.Calibrate1();});
+    };
   }
 
   void Process(Block<Frame, size> codec_in) {
 
     // Delays
     new_note_event_.Process();
+    calibration_event_.Process();
 
     // Controls
     control_.Process(codec_in, params_);
@@ -170,12 +203,16 @@ public:
 
     // LEDs
     switch (mode) {
-    case NORMAL_MODE:
+    case Mode::NORMAL: {
       bool b = osc_.learn_enabled();
       learn_led_.set_background(b ? Colors::dark_red : Colors::black);
       u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(params_.numOsc+1));
       freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
-      break;
+    } break;
+    case Mode::CALIBRATION: {
+      learn_led_.set_background(Colors::red);
+      freeze_led_.set_background(Colors::red);
+    } break;
     }
 
     learn_led_.Update();
