@@ -50,7 +50,7 @@ namespace Distortion {
 
   template<>
   inline f warp<CHEBY>(s1_15 x, f amount) {
-    amount *= (Data::cheby.size() - 2_u32).to_float();
+    amount *= (Data::cheby.size() - 1_u32).to_float();
     index idx = index(amount);
     f frac = amount.fractional();
     u0_32 phase = u0_32(x.to_unsigned_scale());
