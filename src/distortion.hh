@@ -28,24 +28,12 @@ namespace Distortion {
     return phase;
   }
 
-  // template<>
-  // inline f warp<CRUSH>(s1_15 sample, f amount) {
-  //   f x = sample.to_float();
-  //   union { f a; uint32_t b; } t = {x};
-  //   t.b ^= (uint32_t)(((1 << 23)-1) * amount.repr());
-  //   return t.a;
-  // }
-
   template<>
-  inline f warp<CRUSH>(s1_15 sample, f amount) {
-    f x = sample.to_float();
-    amount *= 7_f;
-    int bits = amount.floor() + 16;
-    f frac = amount.fractional();
-    int b = (bits + (x.abs()<frac ? 1 : 0));
-    union { f a; uint32_t b; } t = {x};
-    t.b ^= (1 << b) - 1;
-    return t.a;
+  inline f warp<FOLD>(s1_15 x, f amount) {
+    u0_16 sample = x.abs().to_unsigned();
+    u0_32 phase = sample * u0_16(amount);
+    f res = Data::fold.interpolate(phase);
+    return x > 0._s1_15 ? res : -res;
   }
 
   template<>
@@ -60,10 +48,13 @@ namespace Distortion {
   }
 
   template<>
-  inline f warp<FOLD>(s1_15 x, f amount) {
-    u0_16 sample = x.abs().to_unsigned();
-    u0_32 phase = sample * u0_16(amount);
-    f res = Data::fold.interpolate(phase);
-    return x > 0._s1_15 ? res : -res;
+  inline f warp<CRUSH>(s1_15 x, f amount) {
+    amount *= (Data::triangles.size() - 1_u32).to_float();
+    index idx = index(amount);
+    f frac = amount.fractional();
+    u0_32 phase = u0_32(x.to_unsigned_scale());
+    f s1 = Data::triangles[idx].interpolate(phase);
+    f s2 = Data::triangles[idx+1_u32].interpolate(phase);
+    return Signal::crossfade(s1, s2, frac);
   }
 };

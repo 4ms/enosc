@@ -81,6 +81,23 @@ data['fold'] = fold
 # plt.plot(fold)
 # plt.show()
 
+triangles = [
+    [0., 0.25, 0.5, 0.75, 1.],
+    [0., 0.33333, 0.66666, 1., 1.],
+    [0., 0.5, 1., 1., 1.],
+    [0., 1., 1., 1., 1.],
+    [0., 0.5, 1.0, 0.5, 1.],
+    [0., 1., 0.5, 0.5, 1.],
+    [0., 1.0, 0.5, 0.0, 1.],
+    [0., 1.0, 0.0, 1.0, 0.],
+]
+
+triangles = [[-x for x in i][::-1][:-1] + i for i in triangles]
+
+data['triangles'] = triangles
+
+# Trianges waveshaper
+
 # Generate
 
 compile("data", "Data", data);
