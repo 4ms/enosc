@@ -154,20 +154,23 @@ public:
 template<typename T, unsigned int SIZE>
 class RingBuffer {
   T buffer_[SIZE];
-  static constexpr index S = index::of_repr(SIZE);
+  const index S = index::of_repr(SIZE);
   index cursor_ = S;
 public:
   index size() { return S; }
-  void Write(T x) {
+  void Write(T& x) {
     ++cursor_;
     index idx = cursor_ % S;
     buffer_[(idx).repr()] = x;
   }
-  T Read(index n) {
+  T& Read(index n) {
     // TODO specialized version when S is 2^n
     return buffer_[((cursor_ - n) % S).repr()];
   }
-  T ReadLast() {
+  T& Read(int n) {
+    return buffer_[((cursor_ - index::of_repr(n)) % S).repr()];
+  }
+  T& ReadLast() {
     return buffer_[((cursor_+1_u32) % S).repr()];
   }
 };
