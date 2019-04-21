@@ -59,10 +59,7 @@ public:
     IFloat fd = fader_;
     fd.set(fade, block_size);
 
-    for (auto x : zip(sum_output, mod_in, mod_out)) {
-      f &sum = get<0>(x);
-      u0_16 &m_in = get<1>(x);
-      u0_16 &m_out = get<2>(x);
+    for (auto [sum, m_in, m_out] : zip(sum_output, mod_in, mod_out)) {
       f sample = Process<twist_mode, warp_mode>(ph, sh, freq, m_in, twist, warp);
       sample *= fd.next();
       // TODO comprendre +1

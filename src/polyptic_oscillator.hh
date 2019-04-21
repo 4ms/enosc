@@ -142,12 +142,9 @@ public:
     f tilt = params.tilt <= 1_f ? params.tilt : 1_f / params.tilt;
     atten *= 1_f + Data::normalization_factors[numOsc*2] * tilt;
 
-    for (auto o : zip(out1, out2)) {
-      f& o1 = get<0>(o);
-      f& o2 = get<1>(o);
-      f a = atten;
-      o1 *= a;
-      o2 *= a;
+    for (auto [o1, o2] : zip(out1, out2)) {
+      o1 *= atten;
+      o2 *= atten;
     }
   }
 
@@ -209,10 +206,7 @@ public:
 
     Base::Process(params_, *current_grid_, out1, out2);
 
-    for (auto x : zip(out1, out2, out)) {
-      f &o1 = std::get<0>(x);
-      f &o2 = std::get<1>(x);
-      Frame &o = std::get<2>(x);
+    for (auto [o1, o2, o] : zip(out1, out2, out)) {
       o.l = s1_15(o1);
       o.r = s1_15(o2);
     }

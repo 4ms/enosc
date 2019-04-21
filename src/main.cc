@@ -25,9 +25,7 @@ struct Main :
     ui_.Process(in);
 
 #ifdef BYPASS
-    for(auto x : zip(in, out)) {
-      get<1>(x) = get<0>(x);
-    }
+    for(auto [i, o] : zip(in, out)) o = i;
 #else
     ui_.osc().Process(out);
 #endif
