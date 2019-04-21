@@ -23,21 +23,21 @@ class Oscillators : Nocopy {
   pick_modulation_blocks(ModulationMode mode, int i, int numOsc) {
     if(mode == ONE) {
       if (i==0) {
-        return std::make_pair(dummy_block_, modulation_blocks_[i+1]);
+        return std::pair(dummy_block_, modulation_blocks_[i+1]);
       } else {
-        return std::make_pair(modulation_blocks_[i], modulation_blocks_[i+1]);
+        return std::pair(modulation_blocks_[i], modulation_blocks_[i+1]);
       }
     } else if (mode == TWO) {
       if (i==0) {
-        return std::make_pair(dummy_block_, modulation_blocks_[0]);
+        return std::pair(dummy_block_, modulation_blocks_[0]);
       } else {
-        return std::make_pair(modulation_blocks_[0], dummy_block_);
+        return std::pair(modulation_blocks_[0], dummy_block_);
       }
     } else { // mode == THREE
       if (i==numOsc-1) {
-        return std::make_pair(dummy_block_, modulation_blocks_[0]);
+        return std::pair(dummy_block_, modulation_blocks_[0]);
       } else {
-        return std::make_pair(modulation_blocks_[0], dummy_block_);
+        return std::pair(modulation_blocks_[0], dummy_block_);
       }
     }
   }
@@ -127,10 +127,9 @@ public:
       f amp = amplitude.Next();
       Block<f, block_size> out =
         pick_output(stereo_mode, i, numOsc) ? out1 : out2;
-      std::pair<u0_16*, u0_16*> mod_blocks =
-        pick_modulation_blocks(modulation_mode, i, numOsc);
-      Block<u0_16, block_size> mod_in(mod_blocks.first);
-      Block<u0_16, block_size> mod_out(mod_blocks.second);
+      auto [in_block, out_block] = pick_modulation_blocks(modulation_mode, i, numOsc);
+      Block<u0_16, block_size> mod_in(in_block);
+      Block<u0_16, block_size> mod_out(out_block);
       // TODO cleanup: avoid manipulating bare pointers to buffers
       // need to declare the Blocks globally, ie. with an allocating constructor
       std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
