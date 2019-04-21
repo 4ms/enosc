@@ -23,6 +23,10 @@ struct Signal {
     return x + s1_15::narrow((y - x) * phase.to_signed());
   }
 
+  static constexpr u0_8 crossfade(u0_8 x, u0_8 y, u0_8 phase) {
+    return x + u0_8::narrow((y - x) * phase);
+  }
+
   // (p..1 -> 0..1)
   static f crop_down(f p, f x) {
     return ((x-p) / (1_f-p)).max(0_f);

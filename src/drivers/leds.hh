@@ -20,20 +20,19 @@ struct Color {
   u0_8 green() { return g_; }
   u0_8 blue() { return b_; }
   constexpr const Color operator+(Color const that) const {
-    return Color(this->r_.add_sat(that.r_),
-                 this->g_.add_sat(that.g_),
-                 this->b_.add_sat(that.b_));
+    return Color(r_.add_sat(that.r_),
+                 g_.add_sat(that.g_),
+                 b_.add_sat(that.b_));
   }
   constexpr Color blend(Color const that) const {
-    return Color(this->r_.div2<1>() + that.r_.div2<1>(),
-                 this->g_.div2<1>() + that.g_.div2<1>(),
-                 this->b_.div2<1>() + that.b_.div2<1>());
+    return Color(r_.div2<1>() + that.r_.div2<1>(),
+                 g_.div2<1>() + that.g_.div2<1>(),
+                 b_.div2<1>() + that.b_.div2<1>());
   }
   constexpr const Color blend(Color const that, u0_8 const phase) const {
-    u0_8 r = u0_8::narrow(phase * that.r_ + (u0_8::max_val - phase) * this->r_);
-    u0_8 g = u0_8::narrow(phase * that.g_ + (u0_8::max_val - phase) * this->g_);
-    u0_8 b = u0_8::narrow(phase * that.b_ + (u0_8::max_val - phase) * this->b_);
-    return Color(u0_8(r), u0_8(g), u0_8(b));
+    return Color(Signal::crossfade(r_, that.r_, phase),
+                 Signal::crossfade(g_, that.g_, phase),
+                 Signal::crossfade(b_, that.b_, phase));
   }
 private:
   u0_8 r_, g_, b_;
