@@ -38,13 +38,6 @@
 #define LEARN_LED_PWM_pins 			(LEARN_RED_Pin | LEARN_GREEN_Pin | LEARN_BLUE_Pin)
 #define LEARN_LED_PWM_GPIO 			LEARN_RED_GPIO_Port
 
-constexpr Color Colors::black;
-constexpr Color Colors::white;
-constexpr Color Colors::red;
-constexpr Color Colors::green;
-constexpr Color Colors::blue;
-
-
 Leds::Leds() {
   GPIO_InitTypeDef gpio;
 
