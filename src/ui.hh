@@ -6,6 +6,7 @@
 #include "leds.hh"
 #include "control.hh"
 #include "polyptic_oscillator.hh"
+#include "event_handler.hh"
 
 enum Button {BUTTON_LEARN, BUTTON_FREEZE};
 enum Gate {GATE_LEARN, GATE_FREEZE};

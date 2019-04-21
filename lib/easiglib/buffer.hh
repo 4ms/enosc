@@ -184,6 +184,18 @@ public:
   void ReadLast() { return buffer_; }
 };
 
+template<typename T, int SIZE>
+class BufferReader {
+  int delay_;
+  RingBuffer<T, SIZE>& ring_buffer_;
+public:
+  BufferReader(RingBuffer<T, SIZE>& ring_buffer, int delay) :
+    ring_buffer_(ring_buffer), delay_(delay) {}
+  T& get(int n) {
+    return ring_buffer_.Read(n+delay_);
+  }
+};
+
 // WARNING: untested
 template <class T, int SIZE>
 class Queue {
