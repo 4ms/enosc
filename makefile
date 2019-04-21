@@ -89,11 +89,12 @@ CFLAGS= $(ARCHFLAGS) \
 #       -DTEST \
 
 CXXFLAGS=$(CFLAGS) \
-	-std=c++14 \
+	-std=c++17 \
 	-fno-rtti \
 	-fno-exceptions \
 	-Werror=return-type \
 	-Wdouble-promotion \
+	-Wno-register \
 
 LDFLAGS= $(ARCHFLAGS) -T $(LDSCRIPT) \
 	-Wl,--gc-sections \
