@@ -7,7 +7,7 @@
 #include "util.hh"
 
 #ifdef __arm__
-  #include "stm32f7xx.h"
+  #include "hal.hh"
 #endif
 
 /**************
