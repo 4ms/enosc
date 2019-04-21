@@ -35,13 +35,13 @@ protected:
   ~Nocopy() = default;
 };
 
-template <class T, template<class> class crtpType>
+template <class T, class crtpType>
 struct crtp {
   T& operator*() { return static_cast<T&>(*this); }
   T const& operator*() const { return static_cast<T const&>(*this); }
 private:
   crtp(){}
-  friend crtpType<T>;
+  friend crtpType;
 };
 
 // Observer pattern

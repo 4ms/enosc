@@ -26,7 +26,7 @@ struct Switches : Nocopy {
   enum State { UP, CENTER, DOWN };
 
   template<class T>
-  struct Combiner : crtp<T, Combiner> {
+  struct Combiner : crtp<T, Combiner<T>> {
     State get() {
       return (**this).get1() ? ((**this).get2() ? CENTER : DOWN) : UP;
     }

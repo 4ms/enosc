@@ -60,7 +60,7 @@ struct Leds : Nocopy {
   Leds();
   
   template<class T>
-  struct ILed : crtp<T, ILed> {
+  struct ILed : crtp<T, ILed<T>> {
     void set(u0_8 r, u0_8 g, u0_8 b) { return (**this).set(r, g, b); }
     void set(Color c) { set(c.red(), c.green(), c.blue()); }
   };

@@ -3,7 +3,7 @@
 struct Gates : Nocopy {
 
   template<class T>
-  struct Debouncer : crtp<T, Debouncer> {
+  struct Debouncer : crtp<T, Debouncer<T>> {
     uint8_t state_;
     void Debounce() { state_ = (state_ << 1) | (**this).get(); }
     bool just_disabled() const { return state_ == 0b01111111; }
