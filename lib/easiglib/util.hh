@@ -108,3 +108,7 @@ struct std::tuple_size<Zip<T, Ts...>> {
 // smart instantiation function
 template<typename... Ts>
 Zip<Ts...> zip(Ts... ts) { return Zip<Ts...>(ts...); }
+
+// Overload
+template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
+template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
