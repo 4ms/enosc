@@ -23,17 +23,24 @@
 #define WARPSW_BOT_GPIO_Port GPIOC
 
 struct Switches : Nocopy {
-  enum State { UP=1, DOWN=2, CENTER=3 };
+  enum State { UP=1, DOWN=2, MID=3 };
 
   template<class T>
   struct Combiner : crtp<T, Combiner<T>> {
-    uint32_t state_ = 0;
+    uint8_t state_ = 0;
     void Debounce() {
       state_ = (state_ << 2) | (**this).get2() | ((**this).get1() << 1);
     }
-    bool just_switched() {
-      uint16_t s = state_ ^ (state_ >> 2);
-      return (s & 0b11 == 0) && (s & 0b1100 != 0);
+    bool just_switched_mid() {
+      return
+        state_ == 0b01111111 ||
+        state_ == 0b10111111;
+    }
+    bool just_switched_up() {
+      return state_ == 0b11010101;
+    }
+    bool just_switched_down() {
+      return state_ == 0b11101010;
     }
     State get() { return static_cast<State>(state_ & 0b11); }
   };
@@ -95,5 +102,9 @@ struct Switches : Nocopy {
     mod_.Debounce();
     twist_.Debounce();
     warp_.Debounce();
+  }
+
+  Switches() {
+    for(int i=0; i<8; i++) Debounce();
   }
 };
