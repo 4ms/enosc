@@ -31,27 +31,34 @@ private:
 
 struct ButtonLearnPush {};
 struct ButtonLearnRelease {};
+struct ButtonLearnTimeout {};
 struct ButtonFreezePush {};
 struct ButtonFreezeRelease {};
+struct ButtonFreezeTimeout {};
 struct GateLearnOn {};
 struct GateLearnOff {};
 struct GateFreezeOn {};
 struct GateFreezeOff {};
-struct SwitchSwitched {
-  enum {GRID, MOD, TWIST, WARP} switch_;
-  Switches::State position_;
-};
+struct SwitchGridSwitched {};
+struct SwitchModSwitched {};
+struct SwitchTwistSwitched {};
+struct SwitchWarpSwitched {};
 struct KnobTurned {};
 
 using Event = std::variant<ButtonLearnPush,
                            ButtonLearnRelease,
+                           ButtonLearnTimeout,
                            ButtonFreezePush,
                            ButtonFreezeRelease,
+                           ButtonFreezeTimeout,
                            GateLearnOn,
                            GateLearnOff,
                            GateFreezeOn,
                            GateFreezeOff,
-                           SwitchSwitched>;
+                           SwitchGridSwitched,
+                           SwitchModSwitched,
+                           SwitchTwistSwitched,
+                           SwitchWarpSwitched>;
 
 struct ButtonsEventSource : EventSource<Event>, Buttons {
   void Poll(std::function<void(Event)> put) {
@@ -70,6 +77,16 @@ struct GatesEventSource : EventSource<Event>, Gates {
     else if (Gates::learn_.just_disabled()) put(GateLearnOff());
     if (Gates::freeze_.just_enabled()) put(GateFreezeOn());
     else if (Gates::freeze_.just_disabled()) put(GateFreezeOff());
+  }
+};
+
+struct SwitchesEventSource : EventSource<Event>, Switches {
+  void Poll(std::function<void(Event)> put) {
+    Switches::Debounce();
+    if (Switches::grid_.just_switched()) put(SwitchGridSwitched());
+    if (Switches::mod_.just_switched()) put(SwitchModSwitched());
+    if (Switches::twist_.just_switched()) put(SwitchTwistSwitched());
+    if (Switches::warp_.just_switched()) put(SwitchWarpSwitched());
   }
 };
 
@@ -93,18 +110,24 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   };
   Control<block_size> control_ {osc_};
 
+  static constexpr int kLongPressTime = 0.5f * kSampleRate / block_size;
+
   LedManager<Leds::Learn> learn_led_;
   LedManager<Leds::Freeze> freeze_led_;
 
+  typename Base::DelayedEventSource learn_timeout_;
+  typename Base::DelayedEventSource freeze_timeout_;
   ButtonsEventSource buttons_;
   GatesEventSource gates_;
+
+  EventSource<Event>* sources_[4] = {
+    &buttons_, &gates_, &learn_timeout_, &freeze_timeout_
+  };
 
   enum class Mode {
     NORMAL,
     CALIBRATION,
   } mode = Mode::NORMAL;
-
-  EventSource<Event>* sources_[2] = { &buttons_, &gates_ };
 
   void set_learn(bool b) {
     if (b) {
@@ -116,12 +139,10 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     }
   }
 
-  void onButtonLearnPressed() {
-  }
-  void onButtonFreezePressed() {
+  void onButtonLearnLongPress() {
   }
 
-  void onButtonLearnReleased() {
+  void onButtonLearnPress() {
     if (mode == Mode::CALIBRATION) {
       mode = Mode::NORMAL;
     } else if (mode == Mode::NORMAL) {
@@ -129,7 +150,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     }
   }
 
-  void onButtonFreezeReleased() {
+  void onButtonFreezePress() {
     if (mode == Mode::CALIBRATION) {
       mode = Mode::NORMAL;
     } else if (mode == Mode::NORMAL) {
@@ -142,21 +163,42 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     }
   }
 
-  // TODO why do we need this redeclaration?
-  using EventStack = BufferReader<Event, kEventBufferSize>;
+  void onButtonFreezeLongPress() {
+  }
 
-  void Handle(EventStack stack) {
+  void Handle(typename Base::EventStack stack) {
     std::visit(overloaded {
-        [](ButtonLearnPush e) { },
-        [](ButtonLearnRelease e) { },
-        [](ButtonFreezePush e) { },
-        [](ButtonFreezeRelease e) { },
-        [](GateLearnOn e) { },
-        [](GateLearnOff e) { },
-        [](GateFreezeOn e) { },
-        [](GateFreezeOff e) { },
-        [](SwitchSwitched e) { },
-        [](KnobTurned e) { },
+        [&](ButtonLearnPush e) {
+          learn_timeout_.trigger_after(kLongPressTime, ButtonLearnTimeout());
+        },
+        [&](ButtonLearnRelease e) { std::visit(overloaded {
+              [&](ButtonLearnPush e) { onButtonLearnPress(); },
+              [&](auto arg) { },
+            }, stack.get(1)); },
+        [&](ButtonLearnTimeout e) { std::visit(overloaded {
+              [&](ButtonLearnPush e) { onButtonLearnLongPress(); },
+              [&](auto arg) { },
+            }, stack.get(1)); },
+        [&](ButtonFreezePush e) {
+          freeze_timeout_.trigger_after(kLongPressTime, ButtonFreezeTimeout());
+        },
+        [&](ButtonFreezeRelease e) { std::visit(overloaded {
+              [&](ButtonFreezePush e) { onButtonFreezePress(); },
+              [&](auto arg) { },
+            }, stack.get(1)); },
+        [&](ButtonFreezeTimeout e) { std::visit(overloaded {
+              [&](ButtonFreezePush e) { onButtonFreezeLongPress(); },
+              [&](auto arg) { },
+            }, stack.get(1)); },
+        [&](GateLearnOn e) { },
+        [&](GateLearnOff e) { },
+        [&](GateFreezeOn e) { },
+        [&](GateFreezeOff e) { },
+        [&](SwitchGridSwitched e) { },
+        [&](SwitchModSwitched e) { },
+        [&](SwitchTwistSwitched e) { },
+        [&](SwitchWarpSwitched e) { },
+        [&](KnobTurned e) { },
         // [](auto arg) { },
       }, stack.get(0));
   }
