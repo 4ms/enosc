@@ -175,10 +175,22 @@ public:
     Base::Process();
 
     // Switches
-    params_.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
-    params_.warp.mode = static_cast<WarpMode>(switches_.warp_.get());
-    params_.grid.mode = static_cast<GridMode>(switches_.grid_.get());
-    params_.modulation.mode = static_cast<ModulationMode>(switches_.mod_.get());
+    Switches::State tw = switches_.twist_.get();
+    params_.twist.mode =
+      tw == Switches::UP ? FEEDBACK :
+      tw == Switches::CENTER ? PULSAR : DECIMATE;
+    Switches::State wa = switches_.warp_.get();
+    params_.warp.mode =
+      wa == Switches::UP ? FOLD :
+      wa == Switches::CENTER ? CHEBY : CRUSH;
+    Switches::State gr = switches_.grid_.get();
+    params_.grid.mode =
+      gr == Switches::UP ? CHORD :
+      gr == Switches::CENTER ? HARM : JUST;
+    Switches::State mo = switches_.mod_.get();
+    params_.modulation.mode =
+      mo == Switches::UP ? ONE :
+      mo == Switches::CENTER ? TWO : THREE;
 
     // LEDs
     switch (mode) {
