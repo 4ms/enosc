@@ -23,13 +23,19 @@
 #define WARPSW_BOT_GPIO_Port GPIOC
 
 struct Switches : Nocopy {
-  enum State { UP, CENTER, DOWN };
+  enum State { UP=1, DOWN=2, CENTER=3 };
 
   template<class T>
   struct Combiner : crtp<T, Combiner<T>> {
-    State get() {
-      return (**this).get1() ? ((**this).get2() ? CENTER : DOWN) : UP;
+    uint32_t state_ = 0;
+    void Debounce() {
+      state_ = (state_ << 2) | (**this).get2() | ((**this).get1() << 1);
     }
+    bool just_switched() {
+      uint16_t s = state_ ^ (state_ >> 2);
+      return (s & 0b11 == 0) && (s & 0b1100 != 0);
+    }
+    State get() { return static_cast<State>(state_ & 0b11); }
   };
 
   struct Grid : Combiner<Grid> {
@@ -83,4 +89,11 @@ struct Switches : Nocopy {
     bool get1() { return ReadPin(WARPSW_TOP_GPIO_Port, WARPSW_TOP_Pin); }
     bool get2() { return ReadPin(WARPSW_BOT_GPIO_Port, WARPSW_BOT_Pin); }
   } warp_;
+
+  void Debounce() {
+    grid_.Debounce();
+    mod_.Debounce();
+    twist_.Debounce();
+    warp_.Debounce();
+  }
 };
