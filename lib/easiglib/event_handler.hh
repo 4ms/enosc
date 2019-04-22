@@ -16,14 +16,14 @@ struct EventHandler : crtp<T, EventHandler<T, Event>> {
     for(auto& s : (**this).sources_)
       s->Poll([this](Event e){
                events_.Write(e);
-               pending++;
+               pending_++;
              });
   }
 
   void Process() {
-    while(pending >= 0) {
-      (**this).Handle(EventStack(events_, pending));
-      pending--;
+    while(pending_ >= 0) {
+      (**this).Handle(EventStack(events_, pending_));
+      pending_--;
     }
   }
 
@@ -42,5 +42,5 @@ struct EventHandler : crtp<T, EventHandler<T, Event>> {
 private:
   RingBuffer<Event, kEventBufferSize> events_;
   // number of events remaining to handle - 1
-  int pending = -1;
+  int pending_ = -1;
 };
