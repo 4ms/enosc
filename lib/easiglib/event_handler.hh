@@ -1,5 +1,7 @@
 #include "buffer.hh"
 
+constexpr int kEventBufferSize = 8;
+
 template<class Event>
 struct EventSource : Nocopy {
   virtual void Poll(std::function<void(Event)> put) = 0;
@@ -8,7 +10,7 @@ struct EventSource : Nocopy {
 template<class T, class Event>
 struct EventHandler : crtp<T, EventHandler<T, Event>> {
 
-  using EventStack = BufferReader<Event, 8>;
+  using EventStack = BufferReader<Event, kEventBufferSize>;
 
   void Poll() {
     for(auto& s : (**this).sources_)
@@ -38,7 +40,7 @@ struct EventHandler : crtp<T, EventHandler<T, Event>> {
   };
   
 private:
-  RingBuffer<Event, 8> events_;
+  RingBuffer<Event, kEventBufferSize> events_;
   // number of events remaining to handle - 1
   int pending = -1;
 };

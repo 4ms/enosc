@@ -22,7 +22,8 @@ struct Main :
   template<int block_size>
   void codec_callback(Block<Frame, block_size> in, Block<Frame, block_size> out) {
     debug.set(3, true);
-    ui_.Process(in);
+    ui_.Poll(in);
+    ui_.Process();
 
 #ifdef BYPASS
     for(auto [i, o] : zip(in, out)) o = i;

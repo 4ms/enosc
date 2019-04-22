@@ -1,5 +1,6 @@
 #pragma once
 
+#include <variant>
 #include "buttons.hh"
 #include "gates.hh"
 #include "switches.hh"
@@ -7,9 +8,6 @@
 #include "control.hh"
 #include "polyptic_oscillator.hh"
 #include "event_handler.hh"
-
-enum Button {BUTTON_LEARN, BUTTON_FREEZE};
-enum Gate {GATE_LEARN, GATE_FREEZE};
 
 template<class T>
 struct LedManager : Leds::ILed<T> {
@@ -31,20 +29,55 @@ private:
   u0_16 flash_phase = 0._u0_16;
 };
 
-struct DelayedEvent {
-  void trigger_after(int d, std::function<void()> a) { delay_ = d; action_ = a; }
-  void Process() { if (delay_-- == 0) { action_(); } }
-  DelayedEvent() {}
-private:
-  std::function<void()> action_ = [](){};
-  int delay_ = -1;
+struct ButtonLearnPush {};
+struct ButtonLearnRelease {};
+struct ButtonFreezePush {};
+struct ButtonFreezeRelease {};
+struct GateLearnOn {};
+struct GateLearnOff {};
+struct GateFreezeOn {};
+struct GateFreezeOff {};
+struct SwitchSwitched {
+  enum {GRID, MOD, TWIST, WARP} switch_;
+  Switches::State position_;
+};
+struct KnobTurned {};
+
+using Event = std::variant<ButtonLearnPush,
+                           ButtonLearnRelease,
+                           ButtonFreezePush,
+                           ButtonFreezeRelease,
+                           GateLearnOn,
+                           GateLearnOff,
+                           GateFreezeOn,
+                           GateFreezeOff,
+                           SwitchSwitched>;
+
+struct ButtonsEventSource : EventSource<Event>, Buttons {
+  void Poll(std::function<void(Event)> put) {
+    Buttons::Debounce();
+    if (Buttons::learn_.just_pressed()) put(ButtonLearnPush());
+    else if (Buttons::learn_.just_released()) put(ButtonLearnRelease());
+    if (Buttons::freeze_.just_pressed()) put(ButtonFreezePush());
+    else if (Buttons::freeze_.just_released()) put(ButtonFreezeRelease());
+  }
+};
+
+struct GatesEventSource : EventSource<Event>, Gates {
+  void Poll(std::function<void(Event)> put) {
+    Gates::Debounce();
+    if (Gates::learn_.just_enabled()) put(GateLearnOn());
+    else if (Gates::learn_.just_disabled()) put(GateLearnOff());
+    if (Gates::freeze_.just_enabled()) put(GateFreezeOn());
+    else if (Gates::freeze_.just_disabled()) put(GateFreezeOff());
+  }
 };
 
 template<int size>
-class Ui {
+class Ui : public EventHandler<Ui<size>, Event> {
+  using Base = EventHandler<Ui, Event>;
+  friend Base;
   Parameters params_;
-  Buttons buttons_;
-  Gates gates_;
   Switches switches_;
   Leds leds_;
   PolypticOscillator<size> osc_ {
@@ -63,13 +96,15 @@ class Ui {
   LedManager<Leds::Learn> learn_led_;
   LedManager<Leds::Freeze> freeze_led_;
 
-  DelayedEvent new_note_event_;
-  DelayedEvent calibration_event_;
+  ButtonsEventSource buttons_;
+  GatesEventSource gates_;
 
   enum class Mode {
     NORMAL,
     CALIBRATION,
   } mode = Mode::NORMAL;
+
+  EventSource<Event>* sources_[2] = { &buttons_, &gates_ };
 
   void set_learn(bool b) {
     if (b) {
@@ -81,120 +116,63 @@ class Ui {
     }
   }
 
-  void button_pressed(Button b) {
-    switch(mode) {
-    case Mode::NORMAL: {
-      switch(b) {
-      case BUTTON_LEARN: {
-      } break;
-      case BUTTON_FREEZE: {
-      } break;
-      }
-    } break;
-    case Mode::CALIBRATION: {
-      switch(b) {
-      case BUTTON_LEARN: {
-        mode = Mode::NORMAL;
-        calibration_event_.trigger_after(100, [this]() {control_.Calibrate2();});
-      } break;
-      case BUTTON_FREEZE: {
-        mode = Mode::NORMAL;
-      } break;
-      }
-    } break;
-    }
+  void onButtonLearnPressed() {
+  }
+  void onButtonFreezePressed() {
   }
 
-  void button_released(Button b) {
-    switch(mode) {
-    case Mode::NORMAL: {
-      switch(b) {
-      case BUTTON_LEARN: {
+  void onButtonLearnReleased() {
+    if (mode == Mode::CALIBRATION) {
+      mode = Mode::NORMAL;
+    } else if (mode == Mode::NORMAL) {
         set_learn(!osc_.learn_enabled());
-      } break;
-      case BUTTON_FREEZE: {
-        osc_.freeze_selected_osc();
-        params_.selected_osc++;
-        if (params_.selected_osc == params_.numOsc+1) {
-          params_.selected_osc = 0;
-          osc_.unfreeze_all();
-        }
-      } break;
-      }
-    } break;
-    case Mode::CALIBRATION: {
-      switch(b) {
-      case BUTTON_LEARN: {
-      } break;
-      case BUTTON_FREEZE: {
-      } break;
-      }
-    } break;
     }
   }
 
-  void gate_enabled(Gate g) {
-    switch(g) {
-    case GATE_LEARN:
-      new_note_event_.trigger_after(40, [this] { osc_.new_note(control_.pitch_cv()); });
-      break;
-    case GATE_FREEZE:
-      break;
+  void onButtonFreezeReleased() {
+    if (mode == Mode::CALIBRATION) {
+      mode = Mode::NORMAL;
+    } else if (mode == Mode::NORMAL) {
+      osc_.freeze_selected_osc();
+      params_.selected_osc++;
+      if (params_.selected_osc == params_.numOsc+1) {
+        params_.selected_osc = 0;
+        osc_.unfreeze_all();
+      }
     }
   }
 
-  void gate_disabled(Gate g) {
-    switch(g) {
-    case GATE_LEARN:
-      break;
-    case GATE_FREEZE:
-      break;
-    }
+  // TODO why do we need this redeclaration?
+  using EventStack = BufferReader<Event, kEventBufferSize>;
+
+  void Handle(EventStack stack) {
+    std::visit(overloaded {
+        [](ButtonLearnPush e) { },
+        [](ButtonLearnRelease e) { },
+        [](ButtonFreezePush e) { },
+        [](ButtonFreezeRelease e) { },
+        [](GateLearnOn e) { },
+        [](GateLearnOff e) { },
+        [](GateFreezeOn e) { },
+        [](GateFreezeOff e) { },
+        [](SwitchSwitched e) { },
+        [](KnobTurned e) { },
+        // [](auto arg) { },
+      }, stack.get(0));
   }
 
 public:
+  Ui() {}
+
   PolypticOscillator<size>& osc() { return osc_; }
 
-  Ui() {
-    HAL_Delay(10);
-    if (buttons_.learn_.pressed()) {
-      mode = Mode::CALIBRATION;
-      calibration_event_.trigger_after(100, [this]() {control_.Calibrate1();});
-    };
+  void Poll(Block<Frame, size> codec_in) {
+    Base::Poll();
+    control_.Process(codec_in, params_);
   }
 
-  void Process(Block<Frame, size> codec_in) {
-
-    // Delays
-    new_note_event_.Process();
-    calibration_event_.Process();
-
-    // Controls
-    control_.Process(codec_in, params_);
-
-    // Buttons
-    buttons_.Debounce();
-
-    if (buttons_.learn_.just_pressed())
-      button_pressed(BUTTON_LEARN);
-    else if (buttons_.learn_.just_released())
-      button_released(BUTTON_LEARN);
-    if (buttons_.freeze_.just_pressed())
-      button_pressed(BUTTON_FREEZE);
-    else if (buttons_.freeze_.just_released())
-      button_released(BUTTON_FREEZE);
-
-    // Gate jacks
-    gates_.Debounce();
-
-    if (gates_.learn_.just_enabled())
-      gate_enabled(GATE_LEARN);
-    else if (gates_.learn_.just_disabled())
-      gate_disabled(GATE_LEARN);
-    if (gates_.freeze_.just_enabled())
-      gate_enabled(GATE_FREEZE);
-    else if (gates_.freeze_.just_disabled())
-      gate_disabled(GATE_FREEZE);
+  void Process() {
+    Base::Process();
 
     // Switches
     params_.twist.mode = static_cast<TwistMode>(switches_.twist_.get());
