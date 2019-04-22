@@ -73,14 +73,14 @@ struct GatesEventSource : EventSource<Event>, Gates {
   }
 };
 
-template<int size>
-class Ui : public EventHandler<Ui<size>, Event> {
+template<int block_size>
+class Ui : public EventHandler<Ui<block_size>, Event> {
   using Base = EventHandler<Ui, Event>;
   friend Base;
   Parameters params_;
   Switches switches_;
   Leds leds_;
-  PolypticOscillator<size> osc_ {
+  PolypticOscillator<block_size> osc_ {
     params_,
     [this](bool success) {
       // on new note
@@ -91,7 +91,7 @@ class Ui : public EventHandler<Ui<size>, Event> {
       if(success) learn_led_.flash(Colors::magenta);
     }
   };
-  Control<size> control_ {osc_};
+  Control<block_size> control_ {osc_};
 
   LedManager<Leds::Learn> learn_led_;
   LedManager<Leds::Freeze> freeze_led_;
@@ -164,9 +164,9 @@ class Ui : public EventHandler<Ui<size>, Event> {
 public:
   Ui() {}
 
-  PolypticOscillator<size>& osc() { return osc_; }
+  PolypticOscillator<block_size>& osc() { return osc_; }
 
-  void Poll(Block<Frame, size> codec_in) {
+  void Poll(Block<Frame, block_size> codec_in) {
     Base::Poll();
     control_.Process(codec_in, params_);
   }
