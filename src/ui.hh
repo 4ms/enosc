@@ -40,10 +40,18 @@ enum Event {
   GateLearnOff,
   GateFreezeOn,
   GateFreezeOff,
-  SwitchGridSwitched,
-  SwitchModSwitched,
-  SwitchTwistSwitched,
-  SwitchWarpSwitched,
+  SwitchGridSwitchedUp,
+  SwitchModSwitchedUp,
+  SwitchTwistSwitchedUp,
+  SwitchWarpSwitchedUp,
+  SwitchGridSwitchedMid,
+  SwitchModSwitchedMid,
+  SwitchTwistSwitchedMid,
+  SwitchWarpSwitchedMid,
+  SwitchGridSwitchedDown,
+  SwitchModSwitchedDown,
+  SwitchTwistSwitchedDown,
+  SwitchWarpSwitchedDown,
   KnobTurned,
 };
 
@@ -70,11 +78,28 @@ struct GatesEventSource : EventSource<Event>, Gates {
 struct SwitchesEventSource : EventSource<Event>, Switches {
   void Poll(std::function<void(Event)> put) {
     Switches::Debounce();
-    if (Switches::grid_.just_switched()) put(SwitchGridSwitched);
-    if (Switches::mod_.just_switched()) put(SwitchModSwitched);
-    if (Switches::twist_.just_switched()) put(SwitchTwistSwitched);
-    if (Switches::warp_.just_switched()) put(SwitchWarpSwitched);
+
+    if (Switches::grid_.just_switched_up()) put(SwitchGridSwitchedUp);
+    if (Switches::grid_.just_switched_mid()) put(SwitchGridSwitchedMid);
+    if (Switches::grid_.just_switched_down()) put(SwitchGridSwitchedDown);
+
+    if (Switches::mod_.just_switched_up()) put(SwitchModSwitchedUp);
+    if (Switches::mod_.just_switched_mid()) put(SwitchModSwitchedMid);
+    if (Switches::mod_.just_switched_down()) put(SwitchModSwitchedDown);
+
+    if (Switches::twist_.just_switched_up()) put(SwitchTwistSwitchedUp);
+    if (Switches::twist_.just_switched_mid()) put(SwitchTwistSwitchedMid);
+    if (Switches::twist_.just_switched_down()) put(SwitchTwistSwitchedDown);
+
+    if (Switches::warp_.just_switched_up()) put(SwitchWarpSwitchedUp);
+    if (Switches::warp_.just_switched_mid()) put(SwitchWarpSwitchedMid);
+    if (Switches::warp_.just_switched_down()) put(SwitchWarpSwitchedDown);
   }
+
+  Switches::State get_grid() { return Switches::grid_.get(); }
+  Switches::State get_mod() { return Switches::mod_.get(); }
+  Switches::State get_twist() { return Switches::twist_.get(); }
+  Switches::State get_warp() { return Switches::warp_.get(); }
 };
 
 template<int block_size>
@@ -82,7 +107,6 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   using Base = EventHandler<Ui, Event>;
   friend Base;
   Parameters params_;
-  Switches switches_;
   Leds leds_;
   PolypticOscillator<block_size> osc_ {
     params_,
@@ -106,9 +130,10 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   typename Base::DelayedEventSource freeze_timeout_;
   ButtonsEventSource buttons_;
   GatesEventSource gates_;
+  SwitchesEventSource switches_;
 
-  EventSource<Event>* sources_[4] = {
-    &buttons_, &gates_, &learn_timeout_, &freeze_timeout_
+  EventSource<Event>* sources_[5] = {
+    &buttons_, &gates_, &switches_, &learn_timeout_, &freeze_timeout_
   };
 
   enum class Mode {
@@ -153,6 +178,30 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   void onButtonFreezeLongPress() {
   }
 
+  void onSwitchGridSwitched(Switches::State st) {
+    params_.grid.mode =
+      st == Switches::UP ? CHORD :
+      st == Switches::MID ? HARM : JUST;
+  }
+
+  void onSwitchModSwitched(Switches::State st) {
+    params_.modulation.mode =
+      st == Switches::UP ? ONE :
+      st == Switches::MID ? TWO : THREE;
+  }
+
+  void onSwitchTwistSwitched(Switches::State st) {
+    params_.twist.mode =
+      st == Switches::UP ? FEEDBACK :
+      st == Switches::MID ? PULSAR : DECIMATE;
+  }
+
+  void onSwitchWarpSwitched(Switches::State st) {
+    params_.warp.mode =
+      st == Switches::UP ? FOLD :
+      st == Switches::MID ? CHEBY : CRUSH;
+  }
+
   void Handle(typename Base::EventStack stack) {
     switch(stack.get(0)) {
     case ButtonLearnPush: {
@@ -191,21 +240,31 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     } break;
     case GateFreezeOff: {
     } break;
-    case SwitchGridSwitched: {
-    } break;
-    case SwitchModSwitched: {
-    } break;
-    case SwitchTwistSwitched: {
-    } break;
-    case SwitchWarpSwitched: {
-    } break;
+    case SwitchGridSwitchedUp: onSwitchGridSwitched(Switches::UP); break;
+    case SwitchGridSwitchedMid: onSwitchGridSwitched(Switches::MID); break;
+    case SwitchGridSwitchedDown: onSwitchGridSwitched(Switches::DOWN); break;
+    case SwitchModSwitchedUp: onSwitchModSwitched(Switches::UP); break;
+    case SwitchModSwitchedMid: onSwitchModSwitched(Switches::MID); break;
+    case SwitchModSwitchedDown: onSwitchModSwitched(Switches::DOWN); break;
+    case SwitchTwistSwitchedUp: onSwitchTwistSwitched(Switches::UP); break;
+    case SwitchTwistSwitchedMid: onSwitchTwistSwitched(Switches::MID); break;
+    case SwitchTwistSwitchedDown: onSwitchTwistSwitched(Switches::DOWN); break;
+    case SwitchWarpSwitchedUp: onSwitchWarpSwitched(Switches::UP); break;
+    case SwitchWarpSwitchedMid: onSwitchWarpSwitched(Switches::MID); break;
+    case SwitchWarpSwitchedDown: onSwitchWarpSwitched(Switches::DOWN); break;
     case KnobTurned: {
     } break;
     }
   }
 
 public:
-  Ui() {}
+  Ui() {
+    // Initialize switches to their current positions
+    onSwitchGridSwitched(switches_.get_grid());
+    onSwitchModSwitched(switches_.get_mod());
+    onSwitchTwistSwitched(switches_.get_twist());
+    onSwitchWarpSwitched(switches_.get_warp());
+  }
 
   PolypticOscillator<block_size>& osc() { return osc_; }
 
@@ -216,25 +275,6 @@ public:
 
   void Process() {
     Base::Process();
-
-    // Switches
-    switches_.Debounce();
-    Switches::State tw = switches_.twist_.get();
-    params_.twist.mode =
-      tw == Switches::UP ? FEEDBACK :
-      tw == Switches::CENTER ? PULSAR : DECIMATE;
-    Switches::State wa = switches_.warp_.get();
-    params_.warp.mode =
-      wa == Switches::UP ? FOLD :
-      wa == Switches::CENTER ? CHEBY : CRUSH;
-    Switches::State gr = switches_.grid_.get();
-    params_.grid.mode =
-      gr == Switches::UP ? CHORD :
-      gr == Switches::CENTER ? HARM : JUST;
-    Switches::State mo = switches_.mod_.get();
-    params_.modulation.mode =
-      mo == Switches::UP ? ONE :
-      mo == Switches::CENTER ? TWO : THREE;
 
     // LEDs
     switch (mode) {
