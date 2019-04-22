@@ -29,64 +29,51 @@ private:
   u0_16 flash_phase = 0._u0_16;
 };
 
-struct ButtonLearnPush {};
-struct ButtonLearnRelease {};
-struct ButtonLearnTimeout {};
-struct ButtonFreezePush {};
-struct ButtonFreezeRelease {};
-struct ButtonFreezeTimeout {};
-struct GateLearnOn {};
-struct GateLearnOff {};
-struct GateFreezeOn {};
-struct GateFreezeOff {};
-struct SwitchGridSwitched {};
-struct SwitchModSwitched {};
-struct SwitchTwistSwitched {};
-struct SwitchWarpSwitched {};
-struct KnobTurned {};
-
-using Event = std::variant<ButtonLearnPush,
-                           ButtonLearnRelease,
-                           ButtonLearnTimeout,
-                           ButtonFreezePush,
-                           ButtonFreezeRelease,
-                           ButtonFreezeTimeout,
-                           GateLearnOn,
-                           GateLearnOff,
-                           GateFreezeOn,
-                           GateFreezeOff,
-                           SwitchGridSwitched,
-                           SwitchModSwitched,
-                           SwitchTwistSwitched,
-                           SwitchWarpSwitched>;
+enum Event {
+  ButtonLearnPush,
+  ButtonLearnRelease,
+  ButtonLearnTimeout,
+  ButtonFreezePush,
+  ButtonFreezeRelease,
+  ButtonFreezeTimeout,
+  GateLearnOn,
+  GateLearnOff,
+  GateFreezeOn,
+  GateFreezeOff,
+  SwitchGridSwitched,
+  SwitchModSwitched,
+  SwitchTwistSwitched,
+  SwitchWarpSwitched,
+  KnobTurned,
+};
 
 struct ButtonsEventSource : EventSource<Event>, Buttons {
   void Poll(std::function<void(Event)> put) {
     Buttons::Debounce();
-    if (Buttons::learn_.just_pressed()) put(ButtonLearnPush());
-    else if (Buttons::learn_.just_released()) put(ButtonLearnRelease());
-    if (Buttons::freeze_.just_pressed()) put(ButtonFreezePush());
-    else if (Buttons::freeze_.just_released()) put(ButtonFreezeRelease());
+    if (Buttons::learn_.just_pressed()) put(ButtonLearnPush);
+    else if (Buttons::learn_.just_released()) put(ButtonLearnRelease);
+    if (Buttons::freeze_.just_pressed()) put(ButtonFreezePush);
+    else if (Buttons::freeze_.just_released()) put(ButtonFreezeRelease);
   }
 };
 
 struct GatesEventSource : EventSource<Event>, Gates {
   void Poll(std::function<void(Event)> put) {
     Gates::Debounce();
-    if (Gates::learn_.just_enabled()) put(GateLearnOn());
-    else if (Gates::learn_.just_disabled()) put(GateLearnOff());
-    if (Gates::freeze_.just_enabled()) put(GateFreezeOn());
-    else if (Gates::freeze_.just_disabled()) put(GateFreezeOff());
+    if (Gates::learn_.just_enabled()) put(GateLearnOn);
+    else if (Gates::learn_.just_disabled()) put(GateLearnOff);
+    if (Gates::freeze_.just_enabled()) put(GateFreezeOn);
+    else if (Gates::freeze_.just_disabled()) put(GateFreezeOff);
   }
 };
 
 struct SwitchesEventSource : EventSource<Event>, Switches {
   void Poll(std::function<void(Event)> put) {
     Switches::Debounce();
-    if (Switches::grid_.just_switched()) put(SwitchGridSwitched());
-    if (Switches::mod_.just_switched()) put(SwitchModSwitched());
-    if (Switches::twist_.just_switched()) put(SwitchTwistSwitched());
-    if (Switches::warp_.just_switched()) put(SwitchWarpSwitched());
+    if (Switches::grid_.just_switched()) put(SwitchGridSwitched);
+    if (Switches::mod_.just_switched()) put(SwitchModSwitched);
+    if (Switches::twist_.just_switched()) put(SwitchTwistSwitched);
+    if (Switches::warp_.just_switched()) put(SwitchWarpSwitched);
   }
 };
 
@@ -167,40 +154,54 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   }
 
   void Handle(typename Base::EventStack stack) {
-    std::visit(overloaded {
-        [&](ButtonLearnPush e) {
-          learn_timeout_.trigger_after(kLongPressTime, ButtonLearnTimeout());
-        },
-        [&](ButtonLearnRelease e) { std::visit(overloaded {
-              [&](ButtonLearnPush e) { onButtonLearnPress(); },
-              [&](auto arg) { },
-            }, stack.get(1)); },
-        [&](ButtonLearnTimeout e) { std::visit(overloaded {
-              [&](ButtonLearnPush e) { onButtonLearnLongPress(); },
-              [&](auto arg) { },
-            }, stack.get(1)); },
-        [&](ButtonFreezePush e) {
-          freeze_timeout_.trigger_after(kLongPressTime, ButtonFreezeTimeout());
-        },
-        [&](ButtonFreezeRelease e) { std::visit(overloaded {
-              [&](ButtonFreezePush e) { onButtonFreezePress(); },
-              [&](auto arg) { },
-            }, stack.get(1)); },
-        [&](ButtonFreezeTimeout e) { std::visit(overloaded {
-              [&](ButtonFreezePush e) { onButtonFreezeLongPress(); },
-              [&](auto arg) { },
-            }, stack.get(1)); },
-        [&](GateLearnOn e) { },
-        [&](GateLearnOff e) { },
-        [&](GateFreezeOn e) { },
-        [&](GateFreezeOff e) { },
-        [&](SwitchGridSwitched e) { },
-        [&](SwitchModSwitched e) { },
-        [&](SwitchTwistSwitched e) { },
-        [&](SwitchWarpSwitched e) { },
-        [&](KnobTurned e) { },
-        // [](auto arg) { },
-      }, stack.get(0));
+    switch(stack.get(0)) {
+    case ButtonLearnPush: {
+      learn_timeout_.trigger_after(kLongPressTime, ButtonLearnTimeout);
+    } break;
+    case ButtonLearnRelease: {
+      switch(stack.get(1)) {
+      case ButtonLearnPush: onButtonLearnPress(); break;
+      default: break;
+      }
+    } break;
+    case ButtonLearnTimeout: {
+      switch(stack.get(1)) {
+      case ButtonLearnPush: onButtonLearnLongPress(); break;
+      default: break;
+      }
+    } break;
+    case ButtonFreezePush: {
+      freeze_timeout_.trigger_after(kLongPressTime, ButtonFreezeTimeout);
+    } break;
+    case ButtonFreezeRelease: {
+      switch(stack.get(1)) {
+      case ButtonFreezePush: onButtonFreezePress(); break;
+      default: break;
+      }
+    } break;
+    case ButtonFreezeTimeout: {
+      switch(stack.get(1)) {
+      case ButtonFreezePush: onButtonFreezeLongPress(); break;
+      default: break;
+      }
+    } break;
+    case GateLearnOff: {
+    } break;
+    case GateFreezeOn: {
+    } break;
+    case GateFreezeOff: {
+    } break;
+    case SwitchGridSwitched: {
+    } break;
+    case SwitchModSwitched: {
+    } break;
+    case SwitchTwistSwitched: {
+    } break;
+    case SwitchWarpSwitched: {
+    } break;
+    case KnobTurned: {
+    } break;
+    }
   }
 
 public:
