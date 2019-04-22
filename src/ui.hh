@@ -218,6 +218,7 @@ public:
     Base::Process();
 
     // Switches
+    switches_.Debounce();
     Switches::State tw = switches_.twist_.get();
     params_.twist.mode =
       tw == Switches::UP ? FEEDBACK :
