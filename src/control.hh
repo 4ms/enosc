@@ -11,7 +11,6 @@ const f kPitchPotRange = 6_f * 12_f;
 const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
-const f kChangeThreshold = 0.03_f;
 
 enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
 
