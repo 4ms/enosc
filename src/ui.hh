@@ -120,7 +120,6 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
       if(success) learn_led_.flash(Colors::magenta);
     }
   };
-  Control<block_size> control_ {osc_};
 
   static constexpr int kLongPressTime = 0.5f * kSampleRate / block_size;
 
@@ -132,9 +131,12 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   ButtonsEventSource buttons_;
   GatesEventSource gates_;
   SwitchesEventSource switches_;
+  Control<block_size, Event> control_ {osc_};
 
-  EventSource<Event>* sources_[5] = {
-    &buttons_, &gates_, &switches_, &learn_timeout_, &freeze_timeout_
+  EventSource<Event>* sources_[6] = {
+    &buttons_, &gates_, &switches_,
+    &learn_timeout_, &freeze_timeout_,
+    &control_
   };
 
   enum class Mode {

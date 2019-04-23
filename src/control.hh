@@ -3,6 +3,7 @@
 #include "adc.hh"
 #include "dsp.hh"
 #include "polyptic_oscillator.hh"
+#include "event_handler.hh"
 
 const int kPotFiltering = 1;     // 0..16
 const f kPotDeadZone = 0.01_f;
@@ -87,8 +88,8 @@ struct PotCVCombiner {
   }
 };
 
-template<int block_size>
-class Control {
+template<int block_size, class Event>
+class Control : public EventSource<Event> {
 
   Adc adc_;
 
@@ -114,6 +115,9 @@ class Control {
 public:
 
   Control(PolypticOscillator<block_size> &osc) : osc_(osc) {}
+
+  void Poll(std::function<void(Event)> put) {
+  }
 
   void Process(Block<Frame, block_size> codec_in, Parameters &params) {
 
@@ -203,7 +207,6 @@ public:
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
 
     f pitch_cv = pitch_cv_.Process(pitch_block);
-
     pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
     pitch += pitch_cv;
     params.pitch = pitch;
