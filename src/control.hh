@@ -44,28 +44,30 @@ template<int block_size>
 class AudioCVConditioner {
   Average<8, 1> lp_;
   CicDecimator<1, block_size> cic_;
-  f offset;
-  f slope;
+  f offset_;
+  f slope_;
+  f last_;
+  f last_raw_reading() { return lp_.last().to_float_inclusive(); }
 public:
-  AudioCVConditioner(f o, f s) : offset(o), slope(s) {}
-  f last() { return lp_.last().to_float_inclusive(); }
+  AudioCVConditioner(f o, f s) : offset_(o), slope_(s) {}
   void calibrate_offset() {
-    offset = last();
+    offset_ = last();
   }
   void calibrate_slope() {
-    f octave = (last() - offset) / kCalibration2Voltage;
-    slope = 12_f / octave;
+    f octave = (last() - offset_) / kCalibration2Voltage;
+    slope_ = 12_f / octave;
   }
-  f Process(Block<s1_15, block_size> in) {
+  void Process(Block<s1_15, block_size> in) {
     s1_15 x = in[0];
     cic_.Process(in.data(), &x, 1); // -1..1
     u0_16 y = x.to_unsigned_scale(); // 0..1
     y = lp_.Process(y);
-    f z = y.to_float_inclusive(); // 0..1
-    z -= offset;
-    z *= slope;                // -24..72
-    return z;
+    last_ = y.to_float_inclusive(); // 0..1
+    last_ -= offset_;
+    last_ *= slope_;                // -24..72
   }
+
+  f last() { return last_; }
 };
 
 struct None { s1_15 Process(u0_16) { return 0._s1_15; } };
@@ -86,9 +88,10 @@ struct PotCVCombiner {
     f x = pot_.Process(pot).to_float_inclusive();
     return lp_.Process(x);
   }
+  f last() { return lp_.last(); }
 };
 
-template<int block_size, class Event>
+template<int block_size>
 class Control : public EventSource<Event> {
 
   Adc adc_;
@@ -109,17 +112,16 @@ class Control : public EventSource<Event> {
   QuadraticOnePoleLp<2> pitch_pot_lp_;
 
   PolypticOscillator<block_size> &osc_;
+  Parameters& params_;
 
   Sampler<f> pitch_cv_sampler_;
 
 public:
 
-  Control(PolypticOscillator<block_size> &osc) : osc_(osc) {}
+  Control(PolypticOscillator<block_size> &osc, Parameters& params) :
+    osc_(osc), params_(params) {}
 
-  void Poll(std::function<void(Event)> put) {
-  }
-
-  void Process(Block<Frame, block_size> codec_in, Parameters &params) {
+  void ProcessCodecInput(Block<Frame, block_size> codec_in) {
 
     // Process codec input
     s1_15 in1[block_size], in2[block_size];
@@ -131,12 +133,18 @@ public:
       ro = in.r;
     }
 
+    pitch_cv_.Process(pitch_block);
+    root_cv_.Process(root_block);
+  }
+
+  void Poll(std::function<void(Event)> put) {
+
     // Process potentiometer & CV
 
     f detune = detune_.Process(adc_.detune_pot());
     detune = Signal::crop_down(kPotDeadZone, detune);
     detune = (detune * detune) * (detune * detune);
-    params.detune = detune;
+    params_.detune = detune;
 
     f tilt = tilt_.Process(adc_.tilt_pot(), adc_.tilt_cv());
     tilt = Signal::crop(kPotDeadZone, tilt);
@@ -144,72 +152,72 @@ public:
     tilt *= tilt * tilt;
     tilt *= 4_f;
     tilt = Math::fast_exp2(tilt);
-    params.tilt = tilt;
+    params_.tilt = tilt;
 
     f twist = twist_.Process(adc_.twist_pot(), adc_.twist_cv());
     twist = Signal::crop(kPotDeadZone, twist);
-    if (params.twist.mode == FEEDBACK) {
+    if (params_.twist.mode == FEEDBACK) {
       twist *= twist * 0.7_f;
-    } else if (params.twist.mode == PULSAR) {
+    } else if (params_.twist.mode == PULSAR) {
       twist *= twist;
       twist = Math::fast_exp2(twist * 7_f);
       // twist: 0..2^7
-    } else if (params.twist.mode == DECIMATE) {
+    } else if (params_.twist.mode == DECIMATE) {
       twist *= twist * 0.5_f;
     }
-    params.twist.value = twist;
+    params_.twist.value = twist;
 
     f warp = warp_.Process(adc_.warp_pot(), adc_.warp_cv());
     warp = Signal::crop(kPotDeadZone, warp);
-    if (params.warp.mode == FOLD) {
+    if (params_.warp.mode == FOLD) {
       warp *= warp;
       warp *= 0.9_f;
       warp += 0.01_f;
-    } else if (params.warp.mode == CHEBY) {
-    } else if (params.warp.mode == CRUSH) {
+    } else if (params_.warp.mode == CHEBY) {
+    } else if (params_.warp.mode == CRUSH) {
       warp *= 2_f - warp;
     }
-    params.warp.value = warp;
+    params_.warp.value = warp;
 
     f mod = mod_.Process(adc_.mod_pot(), adc_.mod_cv());
     mod = Signal::crop(kPotDeadZone, mod);
-    mod *= 4_f / f(params.numOsc);
-    if (params.modulation.mode == ONE) {
+    mod *= 4_f / f(params_.numOsc);
+    if (params_.modulation.mode == ONE) {
       mod *= 0.9_f;
-    } else if (params.modulation.mode == TWO) {
+    } else if (params_.modulation.mode == TWO) {
       mod *= 6.0_f;
-    } else if (params.modulation.mode == THREE) {
+    } else if (params_.modulation.mode == THREE) {
       mod *= 4.0_f;
     }
-    params.modulation.value = mod;
+    params_.modulation.value = mod;
 
     f spread = spread_.Process(adc_.spread_pot(), adc_.spread_cv());
     spread = Signal::crop(kPotDeadZone, spread);
     spread *= spread;
-    params.spread = spread * kSpreadRange;
+    params_.spread = spread * kSpreadRange;
 
     f grid = grid_.Process(adc_.grid_pot(), adc_.grid_cv());
     grid = Signal::crop(kPotDeadZone, grid); // [0..1]
     grid *= 9_f;                           // [0..9]
     grid += 0.5_f;                         // [0.5..9.5]
-    params.grid.value = grid.floor(); // [0..9]
+    params_.grid.value = grid.floor(); // [0..9]
 
     // Root & Pitch
     u0_16 r = root_pot_.Process(adc_.root_pot());
     f root = root_pot_lp_.Process(r.to_float_inclusive());
     root *= kRootPotRange;
-    root += root_cv_.Process(root_block);
-    params.root = root.max(0_f);
+    root += root_cv_.last();
+    params_.root = root.max(0_f);
 
     u0_16 p = pitch_pot_.Process(adc_.pitch_pot());
     f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1
     pitch *= kPitchPotRange;                               // 0..range
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
 
-    f pitch_cv = pitch_cv_.Process(pitch_block);
+    f pitch_cv = pitch_cv_.last();
     pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
     pitch += pitch_cv;
-    params.pitch = pitch;
+    params_.pitch = pitch;
 
     // Start next conversion
     adc_.Start();

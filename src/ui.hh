@@ -29,32 +29,6 @@ private:
   u0_16 flash_phase = 0._u0_16;
 };
 
-enum Event {
-  ButtonLearnPush,
-  ButtonLearnRelease,
-  ButtonLearnTimeout,
-  ButtonFreezePush,
-  ButtonFreezeRelease,
-  ButtonFreezeTimeout,
-  GateLearnOn,
-  GateLearnOff,
-  GateFreezeOn,
-  GateFreezeOff,
-  SwitchGridSwitchedUp,
-  SwitchModSwitchedUp,
-  SwitchTwistSwitchedUp,
-  SwitchWarpSwitchedUp,
-  SwitchGridSwitchedMid,
-  SwitchModSwitchedMid,
-  SwitchTwistSwitchedMid,
-  SwitchWarpSwitchedMid,
-  SwitchGridSwitchedDown,
-  SwitchModSwitchedDown,
-  SwitchTwistSwitchedDown,
-  SwitchWarpSwitchedDown,
-  KnobTurned,
-};
-
 struct ButtonsEventSource : EventSource<Event>, Buttons {
   void Poll(std::function<void(Event)> put) {
     Buttons::Debounce();
@@ -131,7 +105,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   ButtonsEventSource buttons_;
   GatesEventSource gates_;
   SwitchesEventSource switches_;
-  Control<block_size, Event> control_ {osc_};
+  Control<block_size> control_ {osc_, params_};
 
   EventSource<Event>* sources_[6] = {
     &buttons_, &gates_, &switches_,
@@ -272,8 +246,8 @@ public:
   PolypticOscillator<block_size>& osc() { return osc_; }
 
   void Poll(Block<Frame, block_size> codec_in) {
+    control_.ProcessCodecInput(codec_in);
     Base::Poll();
-    control_.Process(codec_in, params_);
   }
 
   void Process() {

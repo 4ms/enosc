@@ -52,25 +52,30 @@ struct Parameters {
   StereoMode stereo_mode = ALTERNATE;
 
   int selected_osc = 0;             // 0..kNumOsc
+};
 
-  // textile oscillator:
-  f pitch_offset = 0.2_f;
-  f timbre = 0.1_f;
-  f delay = 0_f;
-  f drunk_delay = 0_f;
-  f polyphony = 1_f;
-  f ornament_proba = 0_f;
-  f proba_window_scale = 0_f;
-  f division = 0_f;
-  int division_window = 16;
-
-  f transposition = 0_f;
-
-  f attack = 0.0002_f;
-  f decay = 0.00002_f;
-
-  DivisionMode division_mode;
-  TranspositionMode transposition_mode;
-
-  bool quantize;
+enum Event {
+  ButtonLearnPush,
+  ButtonLearnRelease,
+  ButtonLearnTimeout,
+  ButtonFreezePush,
+  ButtonFreezeRelease,
+  ButtonFreezeTimeout,
+  GateLearnOn,
+  GateLearnOff,
+  GateFreezeOn,
+  GateFreezeOff,
+  SwitchGridSwitchedUp,
+  SwitchModSwitchedUp,
+  SwitchTwistSwitchedUp,
+  SwitchWarpSwitchedUp,
+  SwitchGridSwitchedMid,
+  SwitchModSwitchedMid,
+  SwitchTwistSwitchedMid,
+  SwitchWarpSwitchedMid,
+  SwitchGridSwitchedDown,
+  SwitchModSwitchedDown,
+  SwitchTwistSwitchedDown,
+  SwitchWarpSwitchedDown,
+  KnobTurned,
 };
