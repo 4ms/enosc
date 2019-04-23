@@ -39,10 +39,10 @@ struct CVConditioner {
   }
 };
 
-template<int size>
+template<int block_size>
 class AudioCVConditioner {
   Average<8, 1> lp_;
-  CicDecimator<1, size> cic_;
+  CicDecimator<1, block_size> cic_;
   f offset;
   f slope;
 public:
@@ -55,7 +55,7 @@ public:
     f octave = (last() - offset) / kCalibration2Voltage;
     slope = 12_f / octave;
   }
-  f Process(Block<s1_15, size> in) {
+  f Process(Block<s1_15, block_size> in) {
     s1_15 x = in[0];
     cic_.Process(in.data(), &x, 1); // -1..1
     u0_16 y = x.to_unsigned_scale(); // 0..1
@@ -87,7 +87,7 @@ struct PotCVCombiner {
   }
 };
 
-template<int size>
+template<int block_size>
 class Control {
 
   Adc adc_;
@@ -102,25 +102,25 @@ class Control {
 
   PotConditioner<LINEAR> pitch_pot_;
   PotConditioner<LINEAR> root_pot_;
-  AudioCVConditioner<size> pitch_cv_ {0.240466923_f, 96.8885345_f};
-  AudioCVConditioner<size> root_cv_  {0.24319829_f, 97.4769897_f};
+  AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
+  AudioCVConditioner<block_size> root_cv_  {0.24319829_f, 97.4769897_f};
   QuadraticOnePoleLp<2> root_pot_lp_;
   QuadraticOnePoleLp<2> pitch_pot_lp_;
 
-  PolypticOscillator<size> &osc_;
+  PolypticOscillator<block_size> &osc_;
 
   Sampler<f> pitch_cv_sampler_;
 
 public:
 
-  Control(PolypticOscillator<size> &osc) : osc_(osc) {}
+  Control(PolypticOscillator<block_size> &osc) : osc_(osc) {}
 
-  void Process(Block<Frame, size> codec_in, Parameters &params) {
+  void Process(Block<Frame, block_size> codec_in, Parameters &params) {
 
     // Process codec input
-    s1_15 in1[size], in2[size];
-    Block<s1_15, size> pitch_block {in1};
-    Block<s1_15, size> root_block {in2};
+    s1_15 in1[block_size], in2[block_size];
+    Block<s1_15, block_size> pitch_block {in1};
+    Block<s1_15, block_size> root_block {in2};
 
     for (auto [in, pi, ro] : zip(codec_in, pitch_block, root_block)) {
       pi = in.l;

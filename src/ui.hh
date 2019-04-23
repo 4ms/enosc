@@ -106,6 +106,7 @@ template<int block_size>
 class Ui : public EventHandler<Ui<block_size>, Event> {
   using Base = EventHandler<Ui, Event>;
   friend Base;
+
   Parameters params_;
   Leds leds_;
   PolypticOscillator<block_size> osc_ {
