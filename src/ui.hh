@@ -55,7 +55,7 @@ enum Event {
   KnobTurned,
 };
 
-struct ButtonsEventSource : EventSource<Event>, Buttons {
+struct ButtonsEventSource : EventSource<Event>, private Buttons {
   void Poll(std::function<void(Event)> put) {
     Buttons::Debounce();
     if (Buttons::learn_.just_pressed()) put(ButtonLearnPush);
@@ -65,7 +65,7 @@ struct ButtonsEventSource : EventSource<Event>, Buttons {
   }
 };
 
-struct GatesEventSource : EventSource<Event>, Gates {
+struct GatesEventSource : EventSource<Event>, private Gates {
   void Poll(std::function<void(Event)> put) {
     Gates::Debounce();
     if (Gates::learn_.just_enabled()) put(GateLearnOn);
@@ -75,7 +75,7 @@ struct GatesEventSource : EventSource<Event>, Gates {
   }
 };
 
-struct SwitchesEventSource : EventSource<Event>, Switches {
+struct SwitchesEventSource : EventSource<Event>, private Switches {
   void Poll(std::function<void(Event)> put) {
     Switches::Debounce();
 
