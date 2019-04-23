@@ -121,7 +121,4 @@ extern "C" {
   void __cxa_pure_virtual() { while(1); }
   __weak void _init() {}
   __weak void main() {}
-  __weak void _exit() {}
-  __weak void _getpid() {}
-  __weak void _kill() {}
 }
