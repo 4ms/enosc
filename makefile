@@ -78,6 +78,7 @@ CPPFLAGS= $(INC)
 CFLAGS= $(ARCHFLAGS) \
 	-g \
 	-O$(OPTIM) \
+	-flto \
 	-ffast-math \
 	-fdata-sections \
 	-ffunction-sections \
@@ -96,7 +97,7 @@ CXXFLAGS=$(CFLAGS) \
 	-Wdouble-promotion \
 	-Wno-register \
 
-LDFLAGS= $(ARCHFLAGS) -T $(LDSCRIPT) \
+LDFLAGS= $(CXXFLAGS) -T $(LDSCRIPT) \
 	-Wl,--gc-sections \
 
 STARTUP = $(CMSIS_DIR)startup_stm32f722xx
