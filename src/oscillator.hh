@@ -17,7 +17,6 @@ class SineShaper {
   IOnePoleLp<s1_15, 2> lp_;
 public:
 
-  // TODO merge history and lp_?
   s1_15 Process(u0_32 phase, u0_16 feedback) {
     s1_31 fb = lp_.state() * feedback.to_signed();
     phase += fb.to_unsigned() + u0_32(feedback);
