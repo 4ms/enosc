@@ -147,20 +147,20 @@ public:
 
 // Magic circle algorithm
 class MagicSine {
-  Float sinz = 0_f;
-  Float cosz = 1_f;
-  Float f = 2_f * Math::pi * 0.001_f;
+  f sinz_ = 0_f;
+  f cosz_ = 1_f;
+  f freq_ = 2_f * Math::pi * 0.001_f;
 public:
-  MagicSine(Float freq) : f(2_f * Math::pi * freq) { }
+  MagicSine(f freq) : freq_(2_f * Math::pi * freq) { }
 
-  void Process(Float *out) {
-    sinz += f * cosz;
-    cosz -= f * sinz;
-    *out = sinz;
+  f Process() {
+    sinz_ += freq_ * cosz_;
+    cosz_ -= freq_ * sinz_;
+    return sinz_;
   }
 
-  void set_frequency(Float freq) {  // freq = f_n / f_s
-    f = 2.0_f * Math::pi * freq;
+  void set_frequency(f freq) {  // freq = f_n / f_s
+    freq_ = 2.0_f * Math::pi * freq;
   // this is an approximation, ok for small frequencies. The actual
   // value is f = 2sin(pi f_n T) (T sampling period, f_n freq)
   }
