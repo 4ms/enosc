@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dsp.hh"
+#include "dynamic_data.hh"
 
 namespace Distortion {
 
@@ -42,8 +43,8 @@ namespace Distortion {
     int idx = amount.floor();
     f frac = amount.fractional();
     u0_32 phase = u0_32(x.to_unsigned_scale());
-    f s1 = Data::cheby[idx].interpolate(phase);
-    f s2 = Data::cheby[idx+1].interpolate(phase);
+    f s1 = DynamicData::cheby[idx].interpolate(phase);
+    f s2 = DynamicData::cheby[idx+1].interpolate(phase);
     return Signal::crossfade(s1, s2, frac);
   }
 
