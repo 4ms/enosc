@@ -341,8 +341,8 @@ public:
   constexpr T const sgn() const { return T::of_repr((val_ > 0) - (val_ < 0)); }
   constexpr T const abs() const { return T::of_repr(val_ >= 0 ? val_ : -val_); }
 
-  constexpr Fixed<SIGN, WIDTH, 0> const integral() const {
-    return Fixed<SIGN, WIDTH, 0>::narrow(*this);
+  constexpr Base const integral() const {
+    return Fixed<SIGN, WIDTH, 0>::narrow(*this).repr();
   }
 
   constexpr Fixed<SIGN, 0, WIDTH> const fractional() const {

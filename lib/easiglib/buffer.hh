@@ -6,8 +6,6 @@
 
 #pragma once
 
-using index = u32;
-
 template<class T>
 int binary_search(T const x, T const array[], int const size) {
   int low = 0;
@@ -50,7 +48,6 @@ struct Table {
   constexpr Table(std::initializer_list<T> data) :
     data_(data.begin()) {};
   constexpr Table(T* data) : data_(data) {}
-  constexpr T operator[](index idx) const { return this->data_[idx.repr()]; }
   constexpr T operator[](size_t idx) const { return this->data_[idx]; }
 
 protected:
@@ -70,11 +67,8 @@ struct Block {
   };
 
   constexpr Block(T* data) : data_(data) {}
-  T& operator [] (unsigned int index) {
-    return data_[index];
-  }
-  T const& operator [] (unsigned int index) const {
-    return data_[index];
+  T const& operator [] (unsigned int i) const {
+    return data_[i];
   }
 
   void fill(T x) { std::fill(data_, data_+SIZE, x); }
@@ -93,7 +87,7 @@ struct std::tuple_size<Block<T, SIZE>> { static constexpr int value = SIZE; };
 
 
 // TODO: size not linked to data
-template<class T, unsigned int SIZE>
+template<class T, int SIZE>
 struct Buffer {
 private:
   Table<T> data_;
@@ -102,31 +96,29 @@ public:
   constexpr Buffer(std::initializer_list<T> data) : data_(data) {};
   constexpr Buffer(T* data) : data_(data) {}
 
-  constexpr index size() const {return index::of_long_long(SIZE);}
-  constexpr T operator[](index idx) const { return this->data_[idx]; }
+  constexpr int size() const {return SIZE;}
   constexpr T operator[](size_t idx) const { return this->data_[idx]; }
 
   // zero-order hold
   constexpr T operator[](f phase) const {
     phase *= (size()-1_u32).to_float();
-    index integral = index(phase);
-    return this->data_[integral];;
+    return this->data_[phase.floor()];;
   }
 
   // zero-order hold
   constexpr T operator[](u0_32 const phase) const {
     static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
     constexpr int BITS = Log2<SIZE>::val;
-    index i = phase.movr<BITS>().integral();
+    int i = phase.movr<BITS>().integral();
     return this->data_[i];
   }
 
   constexpr T interpolate(f phase) const {
     phase *= (size()-1_u32).to_float();
-    index integral = index(phase);
+    int integral = phase.floor();
     f fractional = phase.fractional();
     T a = this->data_[integral];
-    T b = this->data_[integral+1_u32];
+    T b = this->data_[integral+1];
     return Signal::crossfade(a, b, fractional);
   }
 
@@ -134,10 +126,10 @@ public:
     static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
     constexpr int BITS = Log2<SIZE>::val;
     Fixed<UNSIGNED, BITS, 32-BITS> p = phase.movr<BITS>();
-    u32 integral = p.integral();
+    int integral = p.integral();
     auto fractional = p.fractional();
     T a = this->data_[integral];
-    T b = this->data_[integral+1_u32];
+    T b = this->data_[integral+1];
     return Signal::crossfade(a, b, fractional);
   }
 
@@ -145,7 +137,7 @@ public:
     static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
     constexpr int BITS = Log2<SIZE>::val;
     Fixed<UNSIGNED, BITS, 32-BITS> p = phase.movr<BITS>();
-    u32 integral = p.integral();
+    int integral = p.integral();
     u0_32 fractional = p.fractional();
     T a = this->data_[integral];
     T d = diff.data_[integral];
@@ -156,35 +148,31 @@ public:
     static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
     constexpr int BITS = Log2<SIZE>::val;
     Fixed<UNSIGNED, BITS, 16-BITS> p = phase.movr<BITS>();
-    u32 integral = u32(p.integral());
+    int integral = p.integral();
     auto fractional = p.fractional();
     T a = this->data_[integral];
-    T b = this->data_[integral+1_u32];
+    T b = this->data_[integral+1];
     return Signal::crossfade(a, b, fractional);
   }
 };
 
-template<typename T, unsigned int SIZE>
+template<typename T, int SIZE>
 class RingBuffer {
   T buffer_[SIZE];
-  const index S = index::of_repr(SIZE);
-  index cursor_ = S;
+  const int S = SIZE;
+  int cursor_ = S;
 public:
-  index size() { return S; }
+  int size() { return S; }
   void Write(T& x) {
     ++cursor_;
-    index idx = cursor_ % S;
-    buffer_[(idx).repr()] = x;
-  }
-  T& Read(index n) {
-    // TODO specialized version when S is 2^n
-    return buffer_[((cursor_ - n) % S).repr()];
+    buffer_[cursor_ % S] = x;
   }
   T& Read(int n) {
-    return buffer_[((cursor_ - index::of_repr(n)) % S).repr()];
+    // TODO specialized version when S is 2^n
+    return buffer_[(cursor_ - n) % S];
   }
   T& ReadLast() {
-    return buffer_[((cursor_+1_u32) % S).repr()];
+    return buffer_[(cursor_+1) % S];
   }
 };
 
@@ -193,7 +181,7 @@ class RingBuffer<T, 1> {
   T buffer_;
 public:
   void Write(T x) { buffer_ = x; }
-  void Read(index n) { return buffer_; }
+  void Read(int n) { return buffer_; }
   void ReadLast() { return buffer_; }
 };
 

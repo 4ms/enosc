@@ -40,8 +40,8 @@ struct Math {
   }
 
   static constexpr f fast_exp2(f x) {
-    static_assert(is_power_of_2(Data::exp2_u0_23.size().repr()), "");
-    constexpr int BITS = Log2<Data::exp2_u0_23.size().repr()>::val;
+    static_assert(is_power_of_2(Data::exp2_u0_23.size()), "");
+    constexpr int BITS = Log2<Data::exp2_u0_23.size()>::val;
 
     typedef union {
       f f_repr;
@@ -56,7 +56,7 @@ struct Math {
     u32 i = u32(((x + 127_f) * f(1 << 23)));
     float_cast u = {.i_repr = i};
 
-    u.parts.mantisa = Data::exp2_u0_23[index::of_repr(u.parts.mantisa >> (23-BITS))].repr();
+    u.parts.mantisa = Data::exp2_u0_23[u.parts.mantisa >> (23-BITS)].repr();
     return u.f_repr;
   }
 

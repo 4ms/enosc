@@ -38,23 +38,23 @@ namespace Distortion {
 
   template<>
   inline f warp<CHEBY>(s1_15 x, f amount) {
-    amount *= (Data::cheby.size() - 2_u32).to_float();
-    index idx = index(amount);
+    amount *= f(Data::cheby.size() - 2);
+    int idx = amount.floor();
     f frac = amount.fractional();
     u0_32 phase = u0_32(x.to_unsigned_scale());
     f s1 = Data::cheby[idx].interpolate(phase);
-    f s2 = Data::cheby[idx+1_u32].interpolate(phase);
+    f s2 = Data::cheby[idx+1].interpolate(phase);
     return Signal::crossfade(s1, s2, frac);
   }
 
   template<>
   inline f warp<CRUSH>(s1_15 x, f amount) {
-    amount *= (Data::triangles.size() - 1_u32).to_float();
-    index idx = index(amount);
+    amount *= f(Data::triangles.size() - 1);
+    int idx = amount.floor();
     f frac = amount.fractional();
     u0_32 phase = u0_32(x.to_unsigned_scale());
     f s1 = Data::triangles[idx].interpolate(phase);
-    f s2 = Data::triangles[idx+1_u32].interpolate(phase);
+    f s2 = Data::triangles[idx+1].interpolate(phase);
     return Signal::crossfade(s1, s2, frac);
   }
 };

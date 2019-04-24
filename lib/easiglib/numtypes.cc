@@ -48,7 +48,7 @@ static_assert(1024.0_u10_22 == 0.0_u10_22, "");
 static_assert(742.625_u10_22 == 742.625_u10_22, "");
 static_assert((-0.625_s1_15).floor() == -1._s1_15, "");
 static_assert((742.625_u10_22).floor() == 742.0_u10_22, "");
-static_assert((742.625_u10_22).integral() == 742_u32, "");
+static_assert((742.625_u10_22).integral() == 742, "");
 static_assert((742.625_u10_22).frac() == 0.625_u10_22, "");
 static_assert((742.625_u10_22).floor() + (742.625_u10_22).frac() == 742.625_u10_22, "");
 static_assert((-0.25_s1_15).floor() + (-0.25_s1_15).frac() == -0.25_s1_15, "");
