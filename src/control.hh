@@ -174,7 +174,6 @@ public:
       warp += 0.01_f;
     } else if (params_.warp.mode == CHEBY) {
     } else if (params_.warp.mode == CRUSH) {
-      warp *= 2_f - warp;
     }
     params_.warp.value = warp;
 
