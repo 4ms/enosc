@@ -49,6 +49,7 @@ template<class T>
 struct Table {
   constexpr Table(std::initializer_list<T> data) :
     data_(data.begin()) {};
+  constexpr Table(T* data) : data_(data) {}
   constexpr T operator[](index idx) const { return this->data_[idx.repr()]; }
   constexpr T operator[](size_t idx) const { return this->data_[idx]; }
 
@@ -99,6 +100,7 @@ private:
 public:
 
   constexpr Buffer(std::initializer_list<T> data) : data_(data) {};
+  constexpr Buffer(T* data) : data_(data) {}
 
   constexpr index size() const {return index::of_long_long(SIZE);}
   constexpr T operator[](index idx) const { return this->data_[idx]; }
