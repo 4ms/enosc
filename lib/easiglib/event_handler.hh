@@ -1,3 +1,5 @@
+#pragma once
+
 #include "buffer.hh"
 
 constexpr int kEventBufferSize = 8;

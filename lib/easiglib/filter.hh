@@ -72,6 +72,8 @@ public:
     state_ += transfer::Process(input-state_);
     return state_;
   }
+
+  T last() { return state_; }
 };
 
 template<int divisor>

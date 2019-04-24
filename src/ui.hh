@@ -29,32 +29,6 @@ private:
   u0_16 flash_phase = 0._u0_16;
 };
 
-enum Event {
-  ButtonLearnPush,
-  ButtonLearnRelease,
-  ButtonLearnTimeout,
-  ButtonFreezePush,
-  ButtonFreezeRelease,
-  ButtonFreezeTimeout,
-  GateLearnOn,
-  GateLearnOff,
-  GateFreezeOn,
-  GateFreezeOff,
-  SwitchGridSwitchedUp,
-  SwitchModSwitchedUp,
-  SwitchTwistSwitchedUp,
-  SwitchWarpSwitchedUp,
-  SwitchGridSwitchedMid,
-  SwitchModSwitchedMid,
-  SwitchTwistSwitchedMid,
-  SwitchWarpSwitchedMid,
-  SwitchGridSwitchedDown,
-  SwitchModSwitchedDown,
-  SwitchTwistSwitchedDown,
-  SwitchWarpSwitchedDown,
-  KnobTurned,
-};
-
 struct ButtonsEventSource : EventSource<Event>, private Buttons {
   void Poll(std::function<void(Event)> put) {
     Buttons::Debounce();
@@ -106,6 +80,7 @@ template<int block_size>
 class Ui : public EventHandler<Ui<block_size>, Event> {
   using Base = EventHandler<Ui, Event>;
   friend Base;
+
   Parameters params_;
   Leds leds_;
   PolypticOscillator<block_size> osc_ {
@@ -119,7 +94,6 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
       if(success) learn_led_.flash(Colors::magenta);
     }
   };
-  Control<block_size> control_ {osc_};
 
   static constexpr int kLongPressTime = 0.5f * kSampleRate / block_size;
 
@@ -131,9 +105,12 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   ButtonsEventSource buttons_;
   GatesEventSource gates_;
   SwitchesEventSource switches_;
+  Control<block_size> control_ {osc_, params_};
 
-  EventSource<Event>* sources_[5] = {
-    &buttons_, &gates_, &switches_, &learn_timeout_, &freeze_timeout_
+  EventSource<Event>* sources_[6] = {
+    &buttons_, &gates_, &switches_,
+    &learn_timeout_, &freeze_timeout_,
+    &control_
   };
 
   enum class Mode {
@@ -269,8 +246,8 @@ public:
   PolypticOscillator<block_size>& osc() { return osc_; }
 
   void Poll(Block<Frame, block_size> codec_in) {
+    control_.ProcessCodecInput(codec_in);
     Base::Poll();
-    control_.Process(codec_in, params_);
   }
 
   void Process() {
