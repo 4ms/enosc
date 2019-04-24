@@ -8,6 +8,11 @@ namespace Distortion {
   template<TwistMode> inline u0_32 twist(u0_32, f);
 
   template<>
+  inline u0_32 twist<FEEDBACK>(u0_32 phase, f amount) {
+    return phase;
+  }
+
+  template<>
   inline u0_32 twist<PULSAR>(u0_32 phase, f amount) {
     // amount: 0..255
     u8_8 p = u8_8(amount);
@@ -24,11 +29,6 @@ namespace Distortion {
   }
 
   template<>
-  inline u0_32 twist<FEEDBACK>(u0_32 phase, f amount) {
-    return phase;
-  }
-
-  template<>
   inline f warp<FOLD>(s1_15 x, f amount) {
     u0_16 sample = x.abs().to_unsigned();
     u0_32 phase = sample * u0_16(amount);
@@ -38,7 +38,7 @@ namespace Distortion {
 
   template<>
   inline f warp<CHEBY>(s1_15 x, f amount) {
-    amount *= (Data::cheby.size() - 1_u32).to_float();
+    amount *= (Data::cheby.size() - 2_u32).to_float();
     index idx = index(amount);
     f frac = amount.fractional();
     u0_32 phase = u0_32(x.to_unsigned_scale());
