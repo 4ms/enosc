@@ -10,7 +10,7 @@ def type_of(value):
         int: lambda: "s32",
         np.int32: lambda: "s32",
         np.int16: lambda: "s16",
-        np.uint32: lambda: "u32",
+        np.uint32: lambda: "uint32_t",
         np.uint16: lambda: "u16",
         bool: lambda: "bool",
         float: lambda: "f",
@@ -41,7 +41,7 @@ def write_value_of(file, value, indent_level):
     if (t is int or t is np.int32): file.write("%d_s32" % (value))
     elif (t is np.int16): file.write("%d_s16" % (value))
     elif (t is np.uint16): file.write("%d_u16" % (value))
-    elif (t is np.uint32): file.write("%d_u32" % (value))
+    elif (t is np.uint32): file.write("%d" % (value))
     elif (t is s1_15): file.write("s1_15::inclusive(f(%f))" % (value))
     elif (t is bool): file.write("true" if value else "false")
     elif (t is float or t is np.float64): file.write("%f_f" % (value))

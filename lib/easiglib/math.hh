@@ -56,7 +56,7 @@ struct Math {
     u32 i = u32(((x + 127_f) * f(1 << 23)));
     float_cast u = {.i_repr = i};
 
-    u.parts.mantisa = Data::exp2_u0_23[u.parts.mantisa >> (23-BITS)].repr();
+    u.parts.mantisa = Data::exp2_u0_23[u.parts.mantisa >> (23-BITS)];
     return u.f_repr;
   }
 
