@@ -141,6 +141,17 @@ public:
     return Signal::crossfade(a, b, fractional);
   }
 
+  constexpr T interpolate(u0_32 const phase, Buffer<T, SIZE> const diff) const {
+    static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
+    constexpr int BITS = Log2<SIZE>::val;
+    Fixed<UNSIGNED, BITS, 32-BITS> p = phase.movr<BITS>();
+    u32 integral = p.integral();
+    u0_32 fractional = p.fractional();
+    T a = this->data_[integral];
+    T d = diff.data_[integral];
+    return Signal::crossfade_with_diff(a, d, fractional);
+  }
+
   constexpr T interpolate(u0_16 const phase) const {
     static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
     constexpr int BITS = Log2<SIZE>::val;
