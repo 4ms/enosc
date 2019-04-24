@@ -43,17 +43,6 @@ void uniquify(T array[], int &size, T threshold) {
   size = j;
 }
 
-template<class T>
-struct Table {
-  constexpr Table(std::initializer_list<T> data) :
-    data_(data.begin()) {};
-  constexpr Table(T* data) : data_(data) {}
-  constexpr T operator[](size_t idx) const { return this->data_[idx]; }
-
-protected:
-  const T *data_;
-};
-
 template<class T, int SIZE>
 struct Block {
   using value_type = T;
@@ -86,39 +75,17 @@ template<int SIZE, class T>
 struct std::tuple_size<Block<T, SIZE>> { static constexpr int value = SIZE; };
 
 
-// TODO: size not linked to data
 template<class T, int SIZE>
-struct Buffer {
-private:
-  Table<T> data_;
-public:
-
-  constexpr Buffer(std::initializer_list<T> data) : data_(data) {};
-  constexpr Buffer(T* data) : data_(data) {}
+struct Buffer : std::array<T, SIZE> {
 
   constexpr int size() const {return SIZE;}
-  constexpr T operator[](size_t idx) const { return this->data_[idx]; }
 
-  // zero-order hold
-  constexpr T operator[](f phase) const {
-    phase *= (size()-1_u32).to_float();
-    return this->data_[phase.floor()];;
-  }
-
-  // zero-order hold
-  constexpr T operator[](u0_32 const phase) const {
-    static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
-    constexpr int BITS = Log2<SIZE>::val;
-    int i = phase.movr<BITS>().integral();
-    return this->data_[i];
-  }
-
-  constexpr T interpolate(f phase) const {
-    phase *= (size()-1_u32).to_float();
+  constexpr T& interpolate(f phase) const {
+    phase *= f(size()-1);
     int integral = phase.floor();
     f fractional = phase.fractional();
-    T a = this->data_[integral];
-    T b = this->data_[integral+1];
+    T a = (*this)[integral];
+    T b = (*this)[integral+1];
     return Signal::crossfade(a, b, fractional);
   }
 
@@ -128,8 +95,8 @@ public:
     Fixed<UNSIGNED, BITS, 32-BITS> p = phase.movr<BITS>();
     int integral = p.integral();
     auto fractional = p.fractional();
-    T a = this->data_[integral];
-    T b = this->data_[integral+1];
+    T a = (*this)[integral];
+    T b = (*this)[integral+1];
     return Signal::crossfade(a, b, fractional);
   }
 
@@ -139,8 +106,8 @@ public:
     Fixed<UNSIGNED, BITS, 32-BITS> p = phase.movr<BITS>();
     int integral = p.integral();
     u0_32 fractional = p.fractional();
-    T a = this->data_[integral];
-    T d = diff.data_[integral];
+    T a = (*this)[integral];
+    T d = diff[integral];
     return Signal::crossfade_with_diff(a, d, fractional);
   }
 
@@ -150,8 +117,8 @@ public:
     Fixed<UNSIGNED, BITS, 16-BITS> p = phase.movr<BITS>();
     int integral = p.integral();
     auto fractional = p.fractional();
-    T a = this->data_[integral];
-    T b = this->data_[integral+1];
+    T a = (*this)[integral];
+    T b = (*this)[integral+1];
     return Signal::crossfade(a, b, fractional);
   }
 };

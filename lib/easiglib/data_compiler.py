@@ -53,13 +53,13 @@ def write_value_of(file, value, indent_level):
             file.write(",")
         file.write("}")
     elif (t is list or t is np.ndarray):
-        file.write("{{\n")
+        file.write("{{{\n")
         for v in value:
             file.write(" " * indent_level * 2)
             write_value_of(file, v, indent_level+1)
             file.write(",\n")
         file.write(" " * (indent_level-1) * 2)
-        file.write("}}")
+        file.write("}}}")
     else: raise Exception("unknown type " + str(t))
 
 def write_definition(file, name, value):

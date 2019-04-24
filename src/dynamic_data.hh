@@ -5,22 +5,21 @@
 constexpr int sine_size = 1025;
 
 struct DynamicData {
-  static s1_15 sine_table[sine_size];
-  static constexpr Buffer<s1_15, sine_size> sine {sine_table};
-  static s1_15 sine_table_diff[sine_size];
-  static constexpr Buffer<s1_15, sine_size> sine_diff {sine_table_diff};
+  static Buffer<s1_15, sine_size> sine;
+  static Buffer<s1_15, sine_size> sine_diff;
 
   DynamicData() {
+    // TODO 1.001 -> size_size + 1
     MagicSine magic(1.001_f / f(sine_size));
-    for (auto& i : sine_table) {
+    for (auto& i : sine) {
       i = s1_15::inclusive(magic.Process());
     }
 
     for (int i=0; i<sine_size-1; i++) {
-      sine_table_diff[i] = sine_table[i+1] - sine_table[i];
+      sine_diff[i] = sine[i+1] - sine[i];
     }
   }
 };
 
-s1_15 DynamicData::sine_table[sine_size];
-s1_15 DynamicData::sine_table_diff[sine_size];
+Buffer<s1_15, sine_size> DynamicData::sine;
+Buffer<s1_15, sine_size> DynamicData::sine_diff;
