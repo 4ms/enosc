@@ -2,6 +2,7 @@
 
 #include "dsp.hh"
 #include "distortion.hh"
+#include "dynamic_data.hh"
 
 class Phasor {
   u0_32 phase_ = u0_32::of_repr(Random::Word());
@@ -20,14 +21,14 @@ public:
   s1_15 Process(u0_32 phase, u0_16 feedback) {
     s1_31 fb = lp_.state() * feedback.to_signed();
     phase += fb.to_unsigned() + u0_32(feedback);
-    s1_15 sample = Data::sine.interpolate(phase);
+    s1_15 sample = DynamicData::sine.interpolate(phase, DynamicData::sine_diff);
     lp_.Process(sample);
     return sample;
   }
 
   // without Feedback
   s1_15 Process(u0_32 phase) {
-    return Data::sine.interpolate(phase);
+    return DynamicData::sine.interpolate(phase, DynamicData::sine_diff);
   }
 };
 
