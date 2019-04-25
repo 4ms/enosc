@@ -12,6 +12,7 @@ SRCS = \
 	src/drivers/adc.cc \
 	src/drivers/codec.cc \
 	src/drivers/leds.cc \
+	src/dynamic_data.cc \
 	src/main.cc \
 
 OBJS_1 = $(SRCS:.cc=.o)
