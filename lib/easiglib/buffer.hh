@@ -108,7 +108,6 @@ struct Buffer : std::array<T, SIZE> {
     int integral = p.integral();
     u0_32 fractional = p.fractional();
     auto [a, d] = (*this)[integral];
-    return a;
     return Signal::crossfade_with_diff(a, d, fractional);
   }
 
