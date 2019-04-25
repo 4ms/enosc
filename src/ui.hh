@@ -217,7 +217,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
       }
     } break;
     case GateLearnOn: {
-      new_note_delay_.trigger_after(100, NewNote);
+      new_note_delay_.trigger_after(50, NewNote);
     } break;
     case GateLearnOff: {
     } break;
