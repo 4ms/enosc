@@ -102,15 +102,16 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
 
   typename Base::DelayedEventSource learn_timeout_;
   typename Base::DelayedEventSource freeze_timeout_;
+  typename Base::DelayedEventSource new_note_delay_;
   ButtonsEventSource buttons_;
   GatesEventSource gates_;
   SwitchesEventSource switches_;
   Control<block_size> control_ {osc_, params_};
 
-  EventSource<Event>* sources_[6] = {
+  EventSource<Event>* sources_[7] = {
     &buttons_, &gates_, &switches_,
     &learn_timeout_, &freeze_timeout_,
-    &control_
+    &control_, &new_note_delay_
   };
 
   enum class Mode {
@@ -179,6 +180,10 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
       st == Switches::MID ? CHEBY : CRUSH;
   }
 
+  void onNewNote() {
+    osc_.new_note(control_.pitch_cv());
+  }
+
   void Handle(typename Base::EventStack stack) {
     switch(stack.get(0)) {
     case ButtonLearnPush: {
@@ -211,6 +216,9 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
       default: break;
       }
     } break;
+    case GateLearnOn: {
+      new_note_delay_.trigger_after(100, NewNote);
+    } break;
     case GateLearnOff: {
     } break;
     case GateFreezeOn: {
@@ -230,6 +238,9 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     case SwitchWarpSwitchedMid: onSwitchWarpSwitched(Switches::MID); break;
     case SwitchWarpSwitchedDown: onSwitchWarpSwitched(Switches::DOWN); break;
     case KnobTurned: {
+    } break;
+    case NewNote: {
+      onNewNote();
     } break;
     }
   }

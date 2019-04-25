@@ -78,4 +78,5 @@ enum Event {
   SwitchTwistSwitchedDown,
   SwitchWarpSwitchedDown,
   KnobTurned,
+  NewNote,
 };
