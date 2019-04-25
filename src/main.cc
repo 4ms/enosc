@@ -18,14 +18,18 @@ struct Main :
   Main() {
     //Start audio processing
     Codec<kSampleRate, kBlockSize, Main>::Start();
-    while(1) { }
+    while(1) {
+      ui_.Process();
+      // TODO understand why this is crucial
+      // just a "nop" is enough
+      __WFI();
+    }
   }
 
   template<int block_size>
   void codec_callback(Block<Frame, block_size> in, Block<Frame, block_size> out) {
     debug.set(3, true);
     ui_.Poll(in);
-    ui_.Process();
 
 #ifdef BYPASS
     for(auto [i, o] : zip(in, out)) o = i;
