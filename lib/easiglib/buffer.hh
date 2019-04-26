@@ -126,21 +126,23 @@ struct Buffer : std::array<T, SIZE> {
 template<typename T, int SIZE>
 class RingBuffer {
   T buffer_[SIZE];
-  const int S = SIZE;
-  int cursor_ = S;
+  int cursor_ = SIZE;
 public:
-  int size() { return S; }
+  int size() { return SIZE; }
   void Write(T& x) {
     ++cursor_;
-    buffer_[cursor_ % S] = x;
+    buffer_[cursor_ % SIZE] = x;
   }
   T& Read(int n) {
-    // TODO specialized version when S is 2^n
-    return buffer_[(cursor_ - n) % S];
+    // TODO specialized version when SIZE is 2^n
+    return buffer_[(cursor_ - n) % SIZE];
   }
   T& ReadLast() {
-    return buffer_[(cursor_+1) % S];
+    return buffer_[(cursor_+1) % SIZE];
   }
+
+  // drops top element
+  void Drop() { cursor_ = (cursor_ + (SIZE-1)) % SIZE; }
 };
 
 template<typename T>
@@ -162,6 +164,7 @@ public:
   T& get(int n) {
     return ring_buffer_.Read(n+delay_);
   }
+  void Drop() { ring_buffer_.Drop(); }
 };
 
 // WARNING: untested
