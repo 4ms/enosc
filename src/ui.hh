@@ -29,7 +29,7 @@ private:
   u0_16 flash_phase = 0._u0_16;
 };
 
-struct ButtonsEventSource : EventSource<Event>, private Buttons {
+struct ButtonsEventSource : EventSource<Event>, Buttons {
   void Poll(std::function<void(Event)> put) {
     Buttons::Debounce();
     if (Buttons::learn_.just_pushed()) put({ButtonPush, BUTTON_LEARN});
@@ -116,8 +116,31 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   enum class Mode {
     NORMAL,
     SHIFT,
-    CALIBRATION,
+    CALIBRATION_OFFSET,
+    CALIBRATION_SLOPE,
   } mode_ = Mode::NORMAL;
+
+
+  void set_mode(Mode mode) {
+    switch(mode) {
+    case Mode::NORMAL: {
+      learn_led_.set_background(Colors::black);
+      freeze_led_.set_background(Colors::black);
+    } break;
+    case Mode::SHIFT: {
+      freeze_led_.set_background(Colors::grey);
+    } break;
+    case Mode::CALIBRATION_OFFSET: {
+      learn_led_.set_background(Colors::red);
+      freeze_led_.set_background(Colors::red);
+    } break;
+    case Mode::CALIBRATION_SLOPE: {
+      learn_led_.set_background(Colors::magenta);
+      freeze_led_.set_background(Colors::magenta);
+    } break;
+    }
+    mode_ = mode;
+  }
 
   void set_learn(bool b) {
     if (b) {
@@ -137,26 +160,31 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   void onButtonPress(Button b) {
     switch(b) {
     case BUTTON_LEARN: {
-        if (mode_ == Mode::CALIBRATION) {
-          mode_ = Mode::NORMAL;
-        } else if (mode_ == Mode::NORMAL) {
-          set_learn(!osc_.learn_enabled());
-        }
-      } break;
+      if (mode_ == Mode::CALIBRATION_OFFSET) {
+        control_.CalibrateOffset();
+        set_mode(Mode::CALIBRATION_SLOPE);
+      } else if (mode_ == Mode::CALIBRATION_SLOPE) {
+        control_.CalibrateSlope();
+        set_mode(Mode::NORMAL);
+      } else if (mode_ == Mode::NORMAL) {
+        set_learn(!osc_.learn_enabled());
+      }
+    } break;
     case BUTTON_FREEZE: {
-        if (mode_ == Mode::CALIBRATION) {
-          mode_ = Mode::NORMAL;
-        } else if (mode_ == Mode::NORMAL) {
-          u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(params_.numOsc+1));
-          freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
-          osc_.freeze_selected_osc();
-          params_.selected_osc++;
-          if (params_.selected_osc == params_.numOsc+1) {
-            params_.selected_osc = 0;
-            osc_.unfreeze_all();
-          }
+      if (mode_ == Mode::CALIBRATION_OFFSET ||
+          mode_ == Mode::CALIBRATION_SLOPE) {
+        set_mode(Mode::NORMAL);
+      } else if (mode_ == Mode::NORMAL) {
+        u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(params_.numOsc+1));
+        freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
+        osc_.freeze_selected_osc();
+        params_.selected_osc++;
+        if (params_.selected_osc == params_.numOsc+1) {
+          params_.selected_osc = 0;
+          osc_.unfreeze_all();
         }
-      } break;
+      }
+    } break;
     }
   }
 
@@ -191,19 +219,9 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
       st == Switches::MID ? CHEBY : CRUSH;
   }
 
-  void onNewNote() {
-    osc_.new_note(control_.pitch_cv());
-  }
-
-  void onShiftEnter() {
-    mode_ = Mode::SHIFT;
-    freeze_led_.set_background(Colors::grey);
-  }
-
-  void onShiftExit() {
-    freeze_led_.set_background(Colors::black);
-    mode_ = Mode::NORMAL;
-  }
+  void onNewNote() { osc_.new_note(control_.pitch_cv()); }
+  void onShiftEnter() { set_mode(Mode::SHIFT); }
+  void onShiftExit() { set_mode(Mode::NORMAL); }
 
   void Handle(typename Base::EventStack stack) {
     Event& e1 = stack.get(0);
@@ -262,6 +280,11 @@ public:
     onSwitchModSwitched(switches_.get_mod());
     onSwitchTwistSwitched(switches_.get_twist());
     onSwitchWarpSwitched(switches_.get_warp());
+
+    // Enter calibration if Learn is pushed
+    if (buttons_.learn_.pushed()) {
+      set_mode(Mode::CALIBRATION_OFFSET);
+    }
   }
 
   PolypticOscillator<block_size>& osc() { return osc_; }

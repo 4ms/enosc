@@ -225,11 +225,11 @@ public:
   void hold_pitch_cv() { pitch_cv_sampler_.hold(); }
   void release_pitch_cv() { pitch_cv_sampler_.release(); }
 
-  void Calibrate1() {
+  void CalibrateOffset() {
     pitch_cv_.calibrate_offset();
     root_cv_.calibrate_offset();
   }
-  void Calibrate2() {
+  void CalibrateSlope() {
     pitch_cv_.calibrate_slope();
     root_cv_.calibrate_slope();
   }
