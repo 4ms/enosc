@@ -21,7 +21,7 @@ struct Main :
     while(1) {
       ui_.Process();
       // TODO understand why this is crucial
-      // just a "nop" is enough
+      // just a "nop" is enough 
       __WFI();
     }
   }
