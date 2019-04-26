@@ -39,6 +39,7 @@ struct EventHandler : crtp<T, EventHandler<T, Event>> {
       event_ = e;
       count_ = delay;
     }
+    void Stop() { count_ = -1; }
   };
   
 private:
