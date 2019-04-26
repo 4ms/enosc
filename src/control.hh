@@ -12,7 +12,7 @@ const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
-const u0_16 kPotMoveThreshold = 0.05_u0_16;
+const u0_16 kPotMoveThreshold = 0.02_u0_16;
 
 template<int block_size>
 class AudioCVConditioner {
@@ -66,7 +66,7 @@ class PotConditioner {
   Adc& adc_;
 public:
   PotConditioner(Adc& adc) : adc_(adc) {}
-  u0_16 Process() {
+  u0_16 Process(std::function<void(Event)> put) {
     u0_16 x = adc_.get(input);
     switch(LAW) {
     case LINEAR: break;
@@ -78,8 +78,11 @@ public:
       break;
     }
     u0_16 diff = x - previous_value_;
-    bool moved = diff < kPotMoveThreshold || diff > 1._u0_16 - kPotMoveThreshold;
-    previous_value_ = x;
+    if (diff > 0.5_u0_16) diff = 1._u0_16 - diff;
+    if (diff > kPotMoveThreshold) {
+      put({PotMoved, input});
+      previous_value_ = x;
+    }
     return x;
   }
 };
@@ -114,8 +117,8 @@ class PotCVCombiner {
 public:
   PotCVCombiner(Adc& adc) : adc_(adc) {}
 
-  f Process() {
-    s17_15 x = s17_15(pot_.Process().to_signed());
+  f Process(std::function<void(Event)> put) {
+    s17_15 x = s17_15(pot_.Process(put).to_signed());
     // TODO use saturating add
     x -= s17_15(cv_.Process());
     f y = x.to_float_inclusive().clip(0_f, 1.0_f);
@@ -147,10 +150,10 @@ class Control : public EventSource<Event> {
 
   PotConditioner<PITCH_POT, LINEAR> pitch_pot_ {adc_};
   PotConditioner<ROOT_POT, LINEAR> root_pot_ {adc_};
+  QuadraticOnePoleLp<2> pitch_pot_lp_;
+  QuadraticOnePoleLp<2> root_pot_lp_;
   AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
   AudioCVConditioner<block_size> root_cv_  {0.24319829_f, 97.4769897_f};
-  QuadraticOnePoleLp<2> root_pot_lp_;
-  QuadraticOnePoleLp<2> pitch_pot_lp_;
 
   PolypticOscillator<block_size> &osc_;
   Parameters& params_;
@@ -182,12 +185,12 @@ public:
 
     // Process potentiometer & CV
 
-    f detune = detune_.Process();
+    f detune = detune_.Process(put);
     detune = Signal::crop_down(kPotDeadZone, detune);
     detune = (detune * detune) * (detune * detune);
     params_.detune = detune;
 
-    f tilt = tilt_.Process();
+    f tilt = tilt_.Process(put);
     tilt = Signal::crop(kPotDeadZone, tilt);
     tilt = tilt * 2_f - 1_f;
     tilt *= tilt * tilt;
@@ -195,7 +198,7 @@ public:
     tilt = Math::fast_exp2(tilt);
     params_.tilt = tilt;
 
-    f twist = twist_.Process();
+    f twist = twist_.Process(put);
     twist = Signal::crop(kPotDeadZone, twist);
     if (params_.twist.mode == FEEDBACK) {
       twist *= twist * 0.7_f;
@@ -208,7 +211,7 @@ public:
     }
     params_.twist.value = twist;
 
-    f warp = warp_.Process();
+    f warp = warp_.Process(put);
     warp = Signal::crop(kPotDeadZone, warp);
     if (params_.warp.mode == FOLD) {
       warp *= warp;
@@ -219,7 +222,7 @@ public:
     }
     params_.warp.value = warp;
 
-    f mod = mod_.Process();
+    f mod = mod_.Process(put);
     mod = Signal::crop(kPotDeadZone, mod);
     mod *= 4_f / f(params_.numOsc);
     if (params_.modulation.mode == ONE) {
@@ -231,12 +234,12 @@ public:
     }
     params_.modulation.value = mod;
 
-    f spread = spread_.Process();
+    f spread = spread_.Process(put);
     spread = Signal::crop(kPotDeadZone, spread);
     spread *= spread;
     params_.spread = spread * kSpreadRange;
 
-    f grid = grid_.Process();
+    f grid = grid_.Process(put);
     grid = Signal::crop(kPotDeadZone, grid); // [0..1]
     grid *= 9_f;                           // [0..9]
     grid += 0.5_f;                         // [0.5..9.5]
@@ -245,13 +248,13 @@ public:
     params_.grid.value = g; // [0..9]
 
     // Root & Pitch
-    u0_16 r = root_pot_.Process();
+    u0_16 r = root_pot_.Process(put);
     f root = root_pot_lp_.Process(r.to_float_inclusive());
     root *= kRootPotRange;
     root += root_cv_.last();
     params_.root = root.max(0_f);
 
-    u0_16 p = pitch_pot_.Process();
+    u0_16 p = pitch_pot_.Process(put);
     f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1
     pitch *= kPitchPotRange;                               // 0..range
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2

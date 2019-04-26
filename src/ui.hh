@@ -244,6 +244,10 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
       st == Switches::MID ? CHEBY : CRUSH;
   }
 
+  void onPotMoved(AdcInput input) {
+    freeze_led_.flash(Colors::green);
+  }
+
   void onNewNote() { osc_.new_note(control_.pitch_cv()); }
   void onShiftEnter() { set_mode(Mode::SHIFT); }
   void onShiftExit() { set_mode(Mode::NORMAL); }
@@ -291,8 +295,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     case SwitchModSwitched: onSwitchModSwitched(static_cast<Switches::State>(e1.data)); break;
     case SwitchTwistSwitched: onSwitchTwistSwitched(static_cast<Switches::State>(e1.data)); break;
     case SwitchWarpSwitched: onSwitchWarpSwitched(static_cast<Switches::State>(e1.data)); break;
-    case PotTurned: {
-    } break;
+    case PotMoved: onPotMoved(static_cast<AdcInput>(e1.data)); break;
     case NewNote: onNewNote(); break;
     case GridChanged: onGridChanged(); break;
     }
