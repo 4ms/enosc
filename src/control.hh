@@ -12,11 +12,13 @@ const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
+const u0_16 kPotMoveThreshold = 0.05_u0_16;
 
 enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
 
 template<Law LAW>  // Lp = 0..16
 class PotConditioner {
+  u0_16 previous_value_;
 public:
   u0_16 Process(u0_16 x) {
     switch(LAW) {
@@ -28,6 +30,9 @@ public:
       x = u0_16::narrow(x * x);
       break;
     }
+    u0_16 diff = x - previous_value_;
+    bool moved = diff < kPotMoveThreshold || diff > 1._u0_16 - kPotMoveThreshold;
+    previous_value_ = x;
     return x;
   }
 };
@@ -86,9 +91,9 @@ public:
 
 struct None { s1_15 Process(u0_16) { return 0._s1_15; } };
 
-template<class PotConditioner, class CVConditioner, int LP>
+template<Law law, class CVConditioner, int LP>
 struct PotCVCombiner {
-  PotConditioner pot_;
+  PotConditioner<law> pot_;
   CVConditioner cv_;
   QuadraticOnePoleLp<LP> lp_;
   f Process(u0_16 pot, u0_16 cv) {
@@ -110,13 +115,13 @@ class Control : public EventSource<Event> {
 
   Adc adc_;
 
-  PotCVCombiner<PotConditioner<LINEAR>, None, kPotFiltering> detune_;
-  PotCVCombiner<PotConditioner<LINEAR>, CVConditioner, kPotFiltering> warp_;
-  PotCVCombiner<PotConditioner<LINEAR>, CVConditioner, kPotFiltering> tilt_;
-  PotCVCombiner<PotConditioner<LINEAR>, CVConditioner, kPotFiltering> twist_;
-  PotCVCombiner<PotConditioner<LINEAR>, CVConditioner, kPotFiltering> grid_;
-  PotCVCombiner<PotConditioner<LINEAR>, CVConditioner, kPotFiltering> mod_;
-  PotCVCombiner<PotConditioner<LINEAR>, CVConditioner, kPotFiltering> spread_;
+  PotCVCombiner<LINEAR, None, kPotFiltering> detune_;
+  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> warp_;
+  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> tilt_;
+  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> twist_;
+  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> grid_;
+  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> mod_;
+  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> spread_;
 
   PotConditioner<LINEAR> pitch_pot_;
   PotConditioner<LINEAR> root_pot_;

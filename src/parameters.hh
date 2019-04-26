@@ -65,7 +65,7 @@ enum EventType {
   SwitchModSwitched,
   SwitchTwistSwitched,
   SwitchWarpSwitched,
-  KnobTurned,
+  PotTurned,
   NewNote,
   GridChanged,
 };

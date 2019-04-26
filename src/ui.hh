@@ -291,7 +291,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     case SwitchModSwitched: onSwitchModSwitched(static_cast<Switches::State>(e1.data)); break;
     case SwitchTwistSwitched: onSwitchTwistSwitched(static_cast<Switches::State>(e1.data)); break;
     case SwitchWarpSwitched: onSwitchWarpSwitched(static_cast<Switches::State>(e1.data)); break;
-    case KnobTurned: {
+    case PotTurned: {
     } break;
     case NewNote: onNewNote(); break;
     case GridChanged: onGridChanged(); break;
