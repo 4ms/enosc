@@ -226,3 +226,22 @@ public:
   void hold() { hold_ = true; }
   void release() { hold_ = false; }
 };
+
+struct TriangleOscillator {
+  TriangleOscillator(u0_32 freq) : freq_(freq) {}
+  TriangleOscillator() : freq_(0._u0_32) {}
+  u0_32 Process() {
+    phase_ += freq_;
+    u0_32 sample = phase_ * 2;
+    if (phase_ > 0.5_u0_32)
+      sample = 1._u0_32-sample;
+    return sample;
+  }
+
+  void set_frequency(u0_32 freq) { freq_ = freq; }
+  void Reset() { phase_ = 0._u0_32; }
+
+private:
+  u0_32 phase_ = 0._u0_32;
+  u0_32 freq_;
+};
