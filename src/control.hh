@@ -50,10 +50,10 @@ class AudioCVConditioner {
 public:
   AudioCVConditioner(f o, f s) : offset_(o), slope_(s) {}
   void calibrate_offset() {
-    offset_ = last();
+    offset_ = last_raw_reading();
   }
   void calibrate_slope() {
-    f octave = (last() - offset_) / kCalibration2Voltage;
+    f octave = (last_raw_reading() - offset_) / kCalibration2Voltage;
     slope_ = 12_f / octave;
   }
   void Process(Block<s1_15, block_size> in) {
