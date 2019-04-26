@@ -54,29 +54,21 @@ struct Parameters {
   int selected_osc = 0;             // 0..kNumOsc
 };
 
-enum Event {
-  ButtonLearnPush,
-  ButtonLearnRelease,
-  ButtonLearnTimeout,
-  ButtonFreezePush,
-  ButtonFreezeRelease,
-  ButtonFreezeTimeout,
-  GateLearnOn,
-  GateLearnOff,
-  GateFreezeOn,
-  GateFreezeOff,
-  SwitchGridSwitchedUp,
-  SwitchModSwitchedUp,
-  SwitchTwistSwitchedUp,
-  SwitchWarpSwitchedUp,
-  SwitchGridSwitchedMid,
-  SwitchModSwitchedMid,
-  SwitchTwistSwitchedMid,
-  SwitchWarpSwitchedMid,
-  SwitchGridSwitchedDown,
-  SwitchModSwitchedDown,
-  SwitchTwistSwitchedDown,
-  SwitchWarpSwitchedDown,
+enum EventType {
+  ButtonPush,
+  ButtonRelease,
+  ButtonTimeout,
+  GateOn,
+  GateOff,
+  SwitchGridSwitched,
+  SwitchModSwitched,
+  SwitchTwistSwitched,
+  SwitchWarpSwitched,
   KnobTurned,
   NewNote,
+};
+
+struct Event {
+  EventType type;
+  int data;
 };

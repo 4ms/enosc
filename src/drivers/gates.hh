@@ -1,5 +1,10 @@
 #pragma once
 
+enum Gate {
+  GATE_LEARN,
+  GATE_FREEZE,
+};
+
 struct Gates : Nocopy {
 
   template<class T>

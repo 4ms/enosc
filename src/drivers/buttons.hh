@@ -2,6 +2,11 @@
 
 #include <cstdint>
 
+enum Button {
+  BUTTON_LEARN,
+  BUTTON_FREEZE,
+};
+
 struct Buttons : Nocopy {
 
   template<class T>
@@ -13,10 +18,10 @@ struct Buttons : Nocopy {
     bool just_released() const {
       return state_ == 0b01111111;
     }
-    bool just_pressed() const {
+    bool just_pushed() const {
       return state_ == 0b10000000;
     }
-    bool pressed() const {
+    bool pushed() const {
       return state_ == 0b00000000;
     }
   };

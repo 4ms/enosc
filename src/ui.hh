@@ -32,20 +32,20 @@ private:
 struct ButtonsEventSource : EventSource<Event>, private Buttons {
   void Poll(std::function<void(Event)> put) {
     Buttons::Debounce();
-    if (Buttons::learn_.just_pressed()) put(ButtonLearnPush);
-    else if (Buttons::learn_.just_released()) put(ButtonLearnRelease);
-    if (Buttons::freeze_.just_pressed()) put(ButtonFreezePush);
-    else if (Buttons::freeze_.just_released()) put(ButtonFreezeRelease);
+    if (Buttons::learn_.just_pushed()) put({ButtonPush, BUTTON_LEARN});
+    else if (Buttons::learn_.just_released()) put({ButtonRelease, BUTTON_LEARN});
+    if (Buttons::freeze_.just_pushed()) put({ButtonPush, BUTTON_FREEZE});
+    else if (Buttons::freeze_.just_released()) put({ButtonRelease, BUTTON_FREEZE});
   }
 };
 
 struct GatesEventSource : EventSource<Event>, private Gates {
   void Poll(std::function<void(Event)> put) {
     Gates::Debounce();
-    if (Gates::learn_.just_enabled()) put(GateLearnOn);
-    else if (Gates::learn_.just_disabled()) put(GateLearnOff);
-    if (Gates::freeze_.just_enabled()) put(GateFreezeOn);
-    else if (Gates::freeze_.just_disabled()) put(GateFreezeOff);
+    if (Gates::learn_.just_enabled()) put({GateOn, GATE_LEARN});
+    else if (Gates::learn_.just_disabled()) put({GateOff, GATE_LEARN});
+    if (Gates::freeze_.just_enabled()) put({GateOn, GATE_FREEZE});
+    else if (Gates::freeze_.just_disabled()) put({GateOff, GATE_FREEZE});
   }
 };
 
@@ -53,21 +53,21 @@ struct SwitchesEventSource : EventSource<Event>, private Switches {
   void Poll(std::function<void(Event)> put) {
     Switches::Debounce();
 
-    if (Switches::grid_.just_switched_up()) put(SwitchGridSwitchedUp);
-    if (Switches::grid_.just_switched_mid()) put(SwitchGridSwitchedMid);
-    if (Switches::grid_.just_switched_down()) put(SwitchGridSwitchedDown);
+    if (Switches::grid_.just_switched_up()) put({SwitchGridSwitched, UP});
+    if (Switches::grid_.just_switched_mid()) put({SwitchGridSwitched, MID});
+    if (Switches::grid_.just_switched_down()) put({SwitchGridSwitched, DOWN});
 
-    if (Switches::mod_.just_switched_up()) put(SwitchModSwitchedUp);
-    if (Switches::mod_.just_switched_mid()) put(SwitchModSwitchedMid);
-    if (Switches::mod_.just_switched_down()) put(SwitchModSwitchedDown);
+    if (Switches::mod_.just_switched_up()) put({SwitchModSwitched, UP});
+    if (Switches::mod_.just_switched_mid()) put({SwitchModSwitched, MID});
+    if (Switches::mod_.just_switched_down()) put({SwitchModSwitched, DOWN});
 
-    if (Switches::twist_.just_switched_up()) put(SwitchTwistSwitchedUp);
-    if (Switches::twist_.just_switched_mid()) put(SwitchTwistSwitchedMid);
-    if (Switches::twist_.just_switched_down()) put(SwitchTwistSwitchedDown);
+    if (Switches::twist_.just_switched_up()) put({SwitchTwistSwitched, UP});
+    if (Switches::twist_.just_switched_mid()) put({SwitchTwistSwitched, MID});
+    if (Switches::twist_.just_switched_down()) put({SwitchTwistSwitched, DOWN});
 
-    if (Switches::warp_.just_switched_up()) put(SwitchWarpSwitchedUp);
-    if (Switches::warp_.just_switched_mid()) put(SwitchWarpSwitchedMid);
-    if (Switches::warp_.just_switched_down()) put(SwitchWarpSwitchedDown);
+    if (Switches::warp_.just_switched_up()) put({SwitchWarpSwitched, UP});
+    if (Switches::warp_.just_switched_mid()) put({SwitchWarpSwitched, MID});
+    if (Switches::warp_.just_switched_down()) put({SwitchWarpSwitched, DOWN});
   }
 
   Switches::State get_grid() { return Switches::grid_.get(); }
@@ -100,8 +100,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   LedManager<Leds::Learn> learn_led_;
   LedManager<Leds::Freeze> freeze_led_;
 
-  typename Base::DelayedEventSource learn_timeout_;
-  typename Base::DelayedEventSource freeze_timeout_;
+  typename Base::DelayedEventSource button_timeouts_[2];
   typename Base::DelayedEventSource new_note_delay_;
   ButtonsEventSource buttons_;
   GatesEventSource gates_;
@@ -110,7 +109,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
 
   EventSource<Event>* sources_[7] = {
     &buttons_, &gates_, &switches_,
-    &learn_timeout_, &freeze_timeout_,
+    &button_timeouts_[0], &button_timeouts_[1],
     &control_, &new_note_delay_
   };
 
@@ -129,31 +128,31 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     }
   }
 
-  void onButtonLearnLongPress() {
+  void onButtonLongPress(Button b) {
   }
 
-  void onButtonLearnPress() {
-    if (mode == Mode::CALIBRATION) {
-      mode = Mode::NORMAL;
-    } else if (mode == Mode::NORMAL) {
-        set_learn(!osc_.learn_enabled());
+  void onButtonPress(Button b) {
+    switch(b) {
+    case BUTTON_LEARN: {
+        if (mode == Mode::CALIBRATION) {
+          mode = Mode::NORMAL;
+        } else if (mode == Mode::NORMAL) {
+          set_learn(!osc_.learn_enabled());
+        }
+      } break;
+    case BUTTON_FREEZE: {
+        if (mode == Mode::CALIBRATION) {
+          mode = Mode::NORMAL;
+        } else if (mode == Mode::NORMAL) {
+          osc_.freeze_selected_osc();
+          params_.selected_osc++;
+          if (params_.selected_osc == params_.numOsc+1) {
+            params_.selected_osc = 0;
+            osc_.unfreeze_all();
+          }
+        }
+      } break;
     }
-  }
-
-  void onButtonFreezePress() {
-    if (mode == Mode::CALIBRATION) {
-      mode = Mode::NORMAL;
-    } else if (mode == Mode::NORMAL) {
-      osc_.freeze_selected_osc();
-      params_.selected_osc++;
-      if (params_.selected_osc == params_.numOsc+1) {
-        params_.selected_osc = 0;
-        osc_.unfreeze_all();
-      }
-    }
-  }
-
-  void onButtonFreezeLongPress() {
   }
 
   void onSwitchGridSwitched(Switches::State st) {
@@ -185,58 +184,33 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   }
 
   void Handle(typename Base::EventStack stack) {
-    switch(stack.get(0)) {
-    case ButtonLearnPush: {
-      learn_timeout_.trigger_after(kLongPressTime, ButtonLearnTimeout);
+    Event& e = stack.get(0);
+    switch(e.type) {
+    case ButtonPush: {
+      button_timeouts_[e.data].trigger_after(kLongPressTime, {ButtonTimeout, e.data});
     } break;
-    case ButtonLearnRelease: {
-      switch(stack.get(1)) {
-      case ButtonLearnPush: onButtonLearnPress(); break;
-      default: break;
+    case ButtonRelease: {
+      Event& e2 = stack.get(1);
+      if (e2.type == ButtonPush && e.data == e2.data) {
+        onButtonPress(static_cast<Button>(e.data));
       }
     } break;
-    case ButtonLearnTimeout: {
-      switch(stack.get(1)) {
-      case ButtonLearnPush: onButtonLearnLongPress(); break;
-      default: break;
+    case ButtonTimeout: {
+      Event e2 = stack.get(1);
+      if (e2.type == ButtonPush && e.data == e2.data) {
+        onButtonLongPress(static_cast<Button>(e.data));
       }
     } break;
-    case ButtonFreezePush: {
-      freeze_timeout_.trigger_after(kLongPressTime, ButtonFreezeTimeout);
+    case GateOn: {
+      if (e.data == GATE_LEARN)
+        new_note_delay_.trigger_after(50, {NewNote, 0});
     } break;
-    case ButtonFreezeRelease: {
-      switch(stack.get(1)) {
-      case ButtonFreezePush: onButtonFreezePress(); break;
-      default: break;
-      }
+    case GateOff: {
     } break;
-    case ButtonFreezeTimeout: {
-      switch(stack.get(1)) {
-      case ButtonFreezePush: onButtonFreezeLongPress(); break;
-      default: break;
-      }
-    } break;
-    case GateLearnOn: {
-      new_note_delay_.trigger_after(50, NewNote);
-    } break;
-    case GateLearnOff: {
-    } break;
-    case GateFreezeOn: {
-    } break;
-    case GateFreezeOff: {
-    } break;
-    case SwitchGridSwitchedUp: onSwitchGridSwitched(Switches::UP); break;
-    case SwitchGridSwitchedMid: onSwitchGridSwitched(Switches::MID); break;
-    case SwitchGridSwitchedDown: onSwitchGridSwitched(Switches::DOWN); break;
-    case SwitchModSwitchedUp: onSwitchModSwitched(Switches::UP); break;
-    case SwitchModSwitchedMid: onSwitchModSwitched(Switches::MID); break;
-    case SwitchModSwitchedDown: onSwitchModSwitched(Switches::DOWN); break;
-    case SwitchTwistSwitchedUp: onSwitchTwistSwitched(Switches::UP); break;
-    case SwitchTwistSwitchedMid: onSwitchTwistSwitched(Switches::MID); break;
-    case SwitchTwistSwitchedDown: onSwitchTwistSwitched(Switches::DOWN); break;
-    case SwitchWarpSwitchedUp: onSwitchWarpSwitched(Switches::UP); break;
-    case SwitchWarpSwitchedMid: onSwitchWarpSwitched(Switches::MID); break;
-    case SwitchWarpSwitchedDown: onSwitchWarpSwitched(Switches::DOWN); break;
+    case SwitchGridSwitched: onSwitchGridSwitched(static_cast<Switches::State>(e.data)); break;
+    case SwitchModSwitched: onSwitchModSwitched(static_cast<Switches::State>(e.data)); break;
+    case SwitchTwistSwitched: onSwitchTwistSwitched(static_cast<Switches::State>(e.data)); break;
+    case SwitchWarpSwitched: onSwitchWarpSwitched(static_cast<Switches::State>(e.data)); break;
     case KnobTurned: {
     } break;
     case NewNote: {
