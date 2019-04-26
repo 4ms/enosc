@@ -115,8 +115,9 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
 
   enum class Mode {
     NORMAL,
+    SHIFT,
     CALIBRATION,
-  } mode = Mode::NORMAL;
+  } mode_ = Mode::NORMAL;
 
   void set_learn(bool b) {
     if (b) {
@@ -136,16 +137,16 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   void onButtonPress(Button b) {
     switch(b) {
     case BUTTON_LEARN: {
-        if (mode == Mode::CALIBRATION) {
-          mode = Mode::NORMAL;
-        } else if (mode == Mode::NORMAL) {
+        if (mode_ == Mode::CALIBRATION) {
+          mode_ = Mode::NORMAL;
+        } else if (mode_ == Mode::NORMAL) {
           set_learn(!osc_.learn_enabled());
         }
       } break;
     case BUTTON_FREEZE: {
-        if (mode == Mode::CALIBRATION) {
-          mode = Mode::NORMAL;
-        } else if (mode == Mode::NORMAL) {
+        if (mode_ == Mode::CALIBRATION) {
+          mode_ = Mode::NORMAL;
+        } else if (mode_ == Mode::NORMAL) {
           u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(params_.numOsc+1));
           freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
           osc_.freeze_selected_osc();
@@ -172,9 +173,16 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   }
 
   void onSwitchTwistSwitched(Switches::State st) {
-    params_.twist.mode =
-      st == Switches::UP ? FEEDBACK :
-      st == Switches::MID ? PULSAR : DECIMATE;
+    if (mode_ == Mode::SHIFT) {
+      freeze_led_.flash(Colors::white);
+      params_.stereo_mode =
+        st == Switches::UP ? ALTERNATE :
+        st == Switches::MID ? SPLIT : LOWER_REST;
+    } else {
+      params_.twist.mode =
+        st == Switches::UP ? FEEDBACK :
+        st == Switches::MID ? PULSAR : DECIMATE;
+    }
   }
 
   void onSwitchWarpSwitched(Switches::State st) {
@@ -187,34 +195,58 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     osc_.new_note(control_.pitch_cv());
   }
 
+  void onShiftEnter() {
+    mode_ = Mode::SHIFT;
+    freeze_led_.set_background(Colors::grey);
+  }
+
+  void onShiftExit() {
+    freeze_led_.set_background(Colors::black);
+    mode_ = Mode::NORMAL;
+  }
+
   void Handle(typename Base::EventStack stack) {
-    Event& e = stack.get(0);
-    switch(e.type) {
+    Event& e1 = stack.get(0);
+    Event& e2 = stack.get(1);
+
+    if (mode_ == Mode::SHIFT &&
+        e1.type == ButtonRelease &&
+        e1.data == BUTTON_FREEZE) {
+      onShiftExit();
+      return;
+    }
+
+    if (e2.type == ButtonPush &&
+        e2.data == BUTTON_FREEZE &&
+        e1.type != ButtonRelease &&
+        e1.type != ButtonTimeout) {
+      onShiftEnter();
+    }
+
+    switch(e1.type) {
     case ButtonPush: {
-      button_timeouts_[e.data].trigger_after(kLongPressTime, {ButtonTimeout, e.data});
+      button_timeouts_[e1.data].trigger_after(kLongPressTime, {ButtonTimeout, e1.data});
     } break;
     case ButtonRelease: {
-      Event& e2 = stack.get(1);
-      if (e2.type == ButtonPush && e.data == e2.data) {
-        onButtonPress(static_cast<Button>(e.data));
+      if (e2.type == ButtonPush && e1.data == e2.data) {
+        onButtonPress(static_cast<Button>(e1.data));
       }
     } break;
     case ButtonTimeout: {
-      Event e2 = stack.get(1);
-      if (e2.type == ButtonPush && e.data == e2.data) {
-        onButtonLongPress(static_cast<Button>(e.data));
+      if (e2.type == ButtonPush && e1.data == e2.data) {
+        onButtonLongPress(static_cast<Button>(e1.data));
       }
     } break;
     case GateOn: {
-      if (e.data == GATE_LEARN)
+      if (e1.data == GATE_LEARN)
         new_note_delay_.trigger_after(50, {NewNote, 0});
     } break;
     case GateOff: {
     } break;
-    case SwitchGridSwitched: onSwitchGridSwitched(static_cast<Switches::State>(e.data)); break;
-    case SwitchModSwitched: onSwitchModSwitched(static_cast<Switches::State>(e.data)); break;
-    case SwitchTwistSwitched: onSwitchTwistSwitched(static_cast<Switches::State>(e.data)); break;
-    case SwitchWarpSwitched: onSwitchWarpSwitched(static_cast<Switches::State>(e.data)); break;
+    case SwitchGridSwitched: onSwitchGridSwitched(static_cast<Switches::State>(e1.data)); break;
+    case SwitchModSwitched: onSwitchModSwitched(static_cast<Switches::State>(e1.data)); break;
+    case SwitchTwistSwitched: onSwitchTwistSwitched(static_cast<Switches::State>(e1.data)); break;
+    case SwitchWarpSwitched: onSwitchWarpSwitched(static_cast<Switches::State>(e1.data)); break;
     case KnobTurned: {
     } break;
     case NewNote: {
