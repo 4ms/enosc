@@ -11,22 +11,40 @@
 
 template<class T>
 struct LedManager : Leds::ILed<T> {
-  using L = Leds::ILed<T>;
-  void flash(Color c) {
-    flash_color = c;
-    flash_phase = u0_16::max_val;
+
+  void flash(Color c, u0_16 flash_freq = 0.0014_u0_16) {
+    flash_color_ = c;
+    flash_phase_ = u0_16::max_val;
+    flash_freq_ = flash_freq;
   }
-  void set_background(Color b) { background = b; }
+
+  void set_background(Color c) { background_color_ = c; }
+
+  void set_glow(Color c, u0_32 freq) {
+    glow_color_ = c;
+    osc_.set_frequency(freq);
+  }
+
+  void reset_glow() {
+    osc_.set_frequency(0._u0_32);
+    osc_.Reset();
+  }
+
   void Update() {
-    Color c = background.blend(flash_color, u0_8::narrow(flash_phase));
-    L::set(c);
-    if (flash_phase > flash_time) flash_phase -= flash_time;
+    Color c = background_color_;
+    c = c.blend(glow_color_, u0_8::narrow(osc_.Process()));
+    c = c.blend(flash_color_, u0_8::narrow(flash_phase_));
+    Leds::ILed<T>::set(c);
+    if (flash_phase_ > flash_freq_) flash_phase_ -= flash_freq_;
   }
+
 private:
-  Color background = Colors::black;
-  Color flash_color = Colors::white;
-  u0_16 flash_time = 0.0014_u0_16;
-  u0_16 flash_phase = 0._u0_16;
+  TriangleOscillator osc_;
+  Color background_color_ = Colors::black;
+  Color flash_color_ = Colors::white;
+  Color glow_color_ = Colors::red;
+  u0_16 flash_freq_ = 0.0014_u0_16;
+  u0_16 flash_phase_ = 0._u0_16;
 };
 
 struct ButtonsEventSource : EventSource<Event>, Buttons {
