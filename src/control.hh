@@ -155,12 +155,12 @@ public:
 
     // Process potentiometer & CV
 
-    f detune = detune_.Process(adc_.detune_pot());
+    f detune = detune_.Process(adc_.get(DETUNE_POT));
     detune = Signal::crop_down(kPotDeadZone, detune);
     detune = (detune * detune) * (detune * detune);
     params_.detune = detune;
 
-    f tilt = tilt_.Process(adc_.tilt_pot(), adc_.tilt_cv());
+    f tilt = tilt_.Process(adc_.get(TILT_POT), adc_.get(TILT_CV));
     tilt = Signal::crop(kPotDeadZone, tilt);
     tilt = tilt * 2_f - 1_f;
     tilt *= tilt * tilt;
@@ -168,7 +168,7 @@ public:
     tilt = Math::fast_exp2(tilt);
     params_.tilt = tilt;
 
-    f twist = twist_.Process(adc_.twist_pot(), adc_.twist_cv());
+    f twist = twist_.Process(adc_.get(TWIST_POT), adc_.get(TWIST_CV));
     twist = Signal::crop(kPotDeadZone, twist);
     if (params_.twist.mode == FEEDBACK) {
       twist *= twist * 0.7_f;
@@ -181,7 +181,7 @@ public:
     }
     params_.twist.value = twist;
 
-    f warp = warp_.Process(adc_.warp_pot(), adc_.warp_cv());
+    f warp = warp_.Process(adc_.get(WARP_POT), adc_.get(WARP_CV));
     warp = Signal::crop(kPotDeadZone, warp);
     if (params_.warp.mode == FOLD) {
       warp *= warp;
@@ -192,7 +192,7 @@ public:
     }
     params_.warp.value = warp;
 
-    f mod = mod_.Process(adc_.mod_pot(), adc_.mod_cv());
+    f mod = mod_.Process(adc_.get(MOD_POT), adc_.get(MOD_CV));
     mod = Signal::crop(kPotDeadZone, mod);
     mod *= 4_f / f(params_.numOsc);
     if (params_.modulation.mode == ONE) {
@@ -204,12 +204,12 @@ public:
     }
     params_.modulation.value = mod;
 
-    f spread = spread_.Process(adc_.spread_pot(), adc_.spread_cv());
+    f spread = spread_.Process(adc_.get(SPREAD_POT), adc_.get(SPREAD_CV));
     spread = Signal::crop(kPotDeadZone, spread);
     spread *= spread;
     params_.spread = spread * kSpreadRange;
 
-    f grid = grid_.Process(adc_.grid_pot(), adc_.grid_cv());
+    f grid = grid_.Process(adc_.get(GRID_POT), adc_.get(GRID_CV));
     grid = Signal::crop(kPotDeadZone, grid); // [0..1]
     grid *= 9_f;                           // [0..9]
     grid += 0.5_f;                         // [0.5..9.5]
@@ -218,13 +218,13 @@ public:
     params_.grid.value = g; // [0..9]
 
     // Root & Pitch
-    u0_16 r = root_pot_.Process(adc_.root_pot());
+    u0_16 r = root_pot_.Process(adc_.get(ROOT_POT));
     f root = root_pot_lp_.Process(r.to_float_inclusive());
     root *= kRootPotRange;
     root += root_cv_.last();
     params_.root = root.max(0_f);
 
-    u0_16 p = pitch_pot_.Process(adc_.pitch_pot());
+    u0_16 p = pitch_pot_.Process(adc_.get(PITCH_POT));
     f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1
     pitch *= kPitchPotRange;                               // 0..range
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
