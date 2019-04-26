@@ -120,9 +120,11 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
 
   void set_learn(bool b) {
     if (b) {
+      learn_led_.set_background(Colors::dark_red);
       osc_.enable_learn();
       control_.hold_pitch_cv();
     } else {
+      learn_led_.set_background(Colors::black);
       osc_.disable_learn();
       control_.release_pitch_cv();
     }
@@ -144,6 +146,8 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
         if (mode == Mode::CALIBRATION) {
           mode = Mode::NORMAL;
         } else if (mode == Mode::NORMAL) {
+          u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(params_.numOsc+1));
+          freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
           osc_.freeze_selected_osc();
           params_.selected_osc++;
           if (params_.selected_osc == params_.numOsc+1) {
@@ -237,20 +241,6 @@ public:
 
   void Process() {
     Base::Process();
-
-    // LEDs
-    switch (mode) {
-    case Mode::NORMAL: {
-      bool b = osc_.learn_enabled();
-      learn_led_.set_background(b ? Colors::dark_red : Colors::black);
-      u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(params_.numOsc+1));
-      freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
-    } break;
-    case Mode::CALIBRATION: {
-      learn_led_.set_background(Colors::red);
-      freeze_led_.set_background(Colors::red);
-    } break;
-    }
 
     learn_led_.Update();
     freeze_led_.Update();
