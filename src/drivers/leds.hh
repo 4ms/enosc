@@ -40,6 +40,7 @@ private:
 
 struct Colors {
   static constexpr Color black = Color(0._u0_8, 0._u0_8, 0._u0_8);
+  static constexpr Color grey = Color(0.3_u0_8, 0.3_u0_8, 0.3_u0_8);
   static constexpr Color white = Color(u0_8::max_val, u0_8::max_val, u0_8::max_val);
   static constexpr Color red = Color(u0_8::max_val, 0._u0_8, 0._u0_8);
   static constexpr Color green = Color(0._u0_8, u0_8::max_val, 0._u0_8);
