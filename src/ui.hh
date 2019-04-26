@@ -142,19 +142,21 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   void set_mode(Mode mode) {
     switch(mode) {
     case Mode::NORMAL: {
+      learn_led_.reset_glow();
       learn_led_.set_background(Colors::black);
+      freeze_led_.reset_glow();
       freeze_led_.set_background(Colors::black);
     } break;
     case Mode::SHIFT: {
       freeze_led_.set_background(Colors::grey);
     } break;
     case Mode::CALIBRATION_OFFSET: {
-      learn_led_.set_background(Colors::red);
-      freeze_led_.set_background(Colors::red);
+      learn_led_.set_glow(Colors::red, 0.0004_u0_32);
+      freeze_led_.set_glow(Colors::red, 0.0004_u0_32);
     } break;
     case Mode::CALIBRATION_SLOPE: {
-      learn_led_.set_background(Colors::dark_magenta);
-      freeze_led_.set_background(Colors::dark_magenta);
+      learn_led_.set_glow(Colors::dark_magenta, 0.0008_u0_32);
+      freeze_led_.set_glow(Colors::dark_magenta, 0.0008_u0_32);
     } break;
     }
     mode_ = mode;
