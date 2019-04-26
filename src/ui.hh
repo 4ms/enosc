@@ -309,6 +309,8 @@ public:
     // Enter calibration if Learn is pushed
     if (buttons_.learn_.pushed()) {
       set_mode(Mode::CALIBRATION_OFFSET);
+    } else {
+      set_mode(Mode::NORMAL);
     }
   }
 
