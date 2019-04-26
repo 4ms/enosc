@@ -25,9 +25,9 @@ struct LedManager : Leds::ILed<T> {
     osc_.set_frequency(freq);
   }
 
-  void reset_glow() {
+  void reset_glow(u0_32 phase = 0._u0_32) {
     osc_.set_frequency(0._u0_32);
-    osc_.Reset();
+    osc_.set_phase(phase);
   }
 
   void Update() {

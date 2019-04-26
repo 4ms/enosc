@@ -239,7 +239,7 @@ struct TriangleOscillator {
   }
 
   void set_frequency(u0_32 freq) { freq_ = freq; }
-  void Reset() { phase_ = 0._u0_32; }
+  void set_phase(u0_32 phase) { phase_ = phase; }
 
 private:
   u0_32 phase_ = 0._u0_32;
