@@ -213,7 +213,9 @@ public:
     grid = Signal::crop(kPotDeadZone, grid); // [0..1]
     grid *= 9_f;                           // [0..9]
     grid += 0.5_f;                         // [0.5..9.5]
-    params_.grid.value = grid.floor(); // [0..9]
+    int g = grid.floor();
+    if (g != params_.grid.value) put({GridChanged, 0});
+    params_.grid.value = g; // [0..9]
 
     // Root & Pitch
     u0_16 r = root_pot_.Process(adc_.root_pot());

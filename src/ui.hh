@@ -247,6 +247,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   void onNewNote() { osc_.new_note(control_.pitch_cv()); }
   void onShiftEnter() { set_mode(Mode::SHIFT); }
   void onShiftExit() { set_mode(Mode::NORMAL); }
+  void onGridChanged() { learn_led_.flash(Colors::grey); }
 
   void Handle(typename Base::EventStack stack) {
     Event& e1 = stack.get(0);
@@ -292,9 +293,8 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     case SwitchWarpSwitched: onSwitchWarpSwitched(static_cast<Switches::State>(e1.data)); break;
     case KnobTurned: {
     } break;
-    case NewNote: {
-      onNewNote();
-    } break;
+    case NewNote: onNewNote(); break;
+    case GridChanged: onGridChanged(); break;
     }
   }
 

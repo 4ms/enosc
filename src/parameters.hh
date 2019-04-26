@@ -67,6 +67,7 @@ enum EventType {
   SwitchWarpSwitched,
   KnobTurned,
   NewNote,
+  GridChanged,
 };
 
 struct Event {
