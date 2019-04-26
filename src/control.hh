@@ -60,11 +60,14 @@ public:
 
 enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
 
-template<Law LAW>  // Lp = 0..16
+template<AdcInput input, Law LAW>  // Lp = 0..16
 class PotConditioner {
   u0_16 previous_value_;
+  Adc& adc_;
 public:
-  u0_16 Process(u0_16 x) {
+  PotConditioner(Adc& adc) : adc_(adc) {}
+  u0_16 Process() {
+    u0_16 x = adc_.get(input);
     switch(LAW) {
     case LINEAR: break;
     case QUADRATIC: x = u0_16::narrow(x * x); break;
@@ -81,32 +84,44 @@ public:
   }
 };
 
-struct CVConditioner {
-  s1_15 Process(u0_16 in) {
+template<AdcInput input>
+class CVConditioner {
+  Adc& adc_;
+
+public:
+  CVConditioner(Adc& adc) : adc_(adc) {}
+
+  s1_15 Process() {
+    u0_16 in = adc_.get(input);
     // TODO calibration
     s1_15 x = in.to_signed_scale();
     return x;                 // -1..1
   }
 };
 
-struct None { s1_15 Process(u0_16) { return 0._s1_15; } };
+struct NoCVInput {
+  NoCVInput(Adc& adc) {}
+  s1_15 Process() { return 0._s1_15; }
+};
 
-template<Law law, class CVConditioner, int LP>
-struct PotCVCombiner {
-  PotConditioner<law> pot_;
-  CVConditioner cv_;
+template<class PotConditioner, class CVConditioner, int LP>
+class PotCVCombiner {
+  Adc& adc_;
+  PotConditioner pot_ {adc_};
+  CVConditioner cv_ {adc_};
   QuadraticOnePoleLp<LP> lp_;
-  f Process(u0_16 pot, u0_16 cv) {
-    s17_15 x = s17_15(pot_.Process(pot).to_signed());
+
+public:
+  PotCVCombiner(Adc& adc) : adc_(adc) {}
+
+  f Process() {
+    s17_15 x = s17_15(pot_.Process().to_signed());
     // TODO use saturating add
-    x -= s17_15(cv_.Process(cv));
+    x -= s17_15(cv_.Process());
     f y = x.to_float_inclusive().clip(0_f, 1.0_f);
     return lp_.Process(y);
   }
-  f Process(u0_16 pot) {
-    f x = pot_.Process(pot).to_float_inclusive();
-    return lp_.Process(x);
-  }
+
   f last() { return lp_.last(); }
 };
 
@@ -115,16 +130,23 @@ class Control : public EventSource<Event> {
 
   Adc adc_;
 
-  PotCVCombiner<LINEAR, None, kPotFiltering> detune_;
-  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> warp_;
-  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> tilt_;
-  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> twist_;
-  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> grid_;
-  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> mod_;
-  PotCVCombiner<LINEAR, CVConditioner, kPotFiltering> spread_;
+  PotCVCombiner<PotConditioner<DETUNE_POT, LINEAR>,
+                NoCVInput, kPotFiltering> detune_ {adc_};
+  PotCVCombiner<PotConditioner<WARP_POT, LINEAR>,
+                CVConditioner<WARP_CV>, kPotFiltering> warp_ {adc_};
+  PotCVCombiner<PotConditioner<TILT_POT, LINEAR>,
+                CVConditioner<TILT_CV>, kPotFiltering> tilt_ {adc_};
+  PotCVCombiner<PotConditioner<TWIST_POT, LINEAR>,
+                CVConditioner<TWIST_CV>, kPotFiltering> twist_ {adc_};
+  PotCVCombiner<PotConditioner<GRID_POT, LINEAR>,
+                CVConditioner<GRID_CV>, kPotFiltering> grid_ {adc_};
+  PotCVCombiner<PotConditioner<MOD_POT, LINEAR>,
+                CVConditioner<MOD_CV>, kPotFiltering> mod_ {adc_};
+  PotCVCombiner<PotConditioner<SPREAD_POT, LINEAR>,
+                CVConditioner<SPREAD_CV>, kPotFiltering> spread_ {adc_};
 
-  PotConditioner<LINEAR> pitch_pot_;
-  PotConditioner<LINEAR> root_pot_;
+  PotConditioner<PITCH_POT, LINEAR> pitch_pot_ {adc_};
+  PotConditioner<ROOT_POT, LINEAR> root_pot_ {adc_};
   AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
   AudioCVConditioner<block_size> root_cv_  {0.24319829_f, 97.4769897_f};
   QuadraticOnePoleLp<2> root_pot_lp_;
@@ -160,12 +182,12 @@ public:
 
     // Process potentiometer & CV
 
-    f detune = detune_.Process(adc_.get(DETUNE_POT));
+    f detune = detune_.Process();
     detune = Signal::crop_down(kPotDeadZone, detune);
     detune = (detune * detune) * (detune * detune);
     params_.detune = detune;
 
-    f tilt = tilt_.Process(adc_.get(TILT_POT), adc_.get(TILT_CV));
+    f tilt = tilt_.Process();
     tilt = Signal::crop(kPotDeadZone, tilt);
     tilt = tilt * 2_f - 1_f;
     tilt *= tilt * tilt;
@@ -173,7 +195,7 @@ public:
     tilt = Math::fast_exp2(tilt);
     params_.tilt = tilt;
 
-    f twist = twist_.Process(adc_.get(TWIST_POT), adc_.get(TWIST_CV));
+    f twist = twist_.Process();
     twist = Signal::crop(kPotDeadZone, twist);
     if (params_.twist.mode == FEEDBACK) {
       twist *= twist * 0.7_f;
@@ -186,7 +208,7 @@ public:
     }
     params_.twist.value = twist;
 
-    f warp = warp_.Process(adc_.get(WARP_POT), adc_.get(WARP_CV));
+    f warp = warp_.Process();
     warp = Signal::crop(kPotDeadZone, warp);
     if (params_.warp.mode == FOLD) {
       warp *= warp;
@@ -197,7 +219,7 @@ public:
     }
     params_.warp.value = warp;
 
-    f mod = mod_.Process(adc_.get(MOD_POT), adc_.get(MOD_CV));
+    f mod = mod_.Process();
     mod = Signal::crop(kPotDeadZone, mod);
     mod *= 4_f / f(params_.numOsc);
     if (params_.modulation.mode == ONE) {
@@ -209,12 +231,12 @@ public:
     }
     params_.modulation.value = mod;
 
-    f spread = spread_.Process(adc_.get(SPREAD_POT), adc_.get(SPREAD_CV));
+    f spread = spread_.Process();
     spread = Signal::crop(kPotDeadZone, spread);
     spread *= spread;
     params_.spread = spread * kSpreadRange;
 
-    f grid = grid_.Process(adc_.get(GRID_POT), adc_.get(GRID_CV));
+    f grid = grid_.Process();
     grid = Signal::crop(kPotDeadZone, grid); // [0..1]
     grid *= 9_f;                           // [0..9]
     grid += 0.5_f;                         // [0.5..9.5]
@@ -223,13 +245,13 @@ public:
     params_.grid.value = g; // [0..9]
 
     // Root & Pitch
-    u0_16 r = root_pot_.Process(adc_.get(ROOT_POT));
+    u0_16 r = root_pot_.Process();
     f root = root_pot_lp_.Process(r.to_float_inclusive());
     root *= kRootPotRange;
     root += root_cv_.last();
     params_.root = root.max(0_f);
 
-    u0_16 p = pitch_pot_.Process(adc_.get(PITCH_POT));
+    u0_16 p = pitch_pot_.Process();
     f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1
     pitch *= kPitchPotRange;                               // 0..range
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
