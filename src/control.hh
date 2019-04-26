@@ -14,37 +14,6 @@ const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
 const u0_16 kPotMoveThreshold = 0.05_u0_16;
 
-enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
-
-template<Law LAW>  // Lp = 0..16
-class PotConditioner {
-  u0_16 previous_value_;
-public:
-  u0_16 Process(u0_16 x) {
-    switch(LAW) {
-    case LINEAR: break;
-    case QUADRATIC: x = u0_16::narrow(x * x); break;
-    case CUBIC: x = u0_16::narrow(u0_16::narrow(x * x) * x); break;
-    case QUARTIC:
-      x = u0_16::narrow(x * x);
-      x = u0_16::narrow(x * x);
-      break;
-    }
-    u0_16 diff = x - previous_value_;
-    bool moved = diff < kPotMoveThreshold || diff > 1._u0_16 - kPotMoveThreshold;
-    previous_value_ = x;
-    return x;
-  }
-};
-
-struct CVConditioner {
-  s1_15 Process(u0_16 in) {
-    // TODO calibration
-    s1_15 x = in.to_signed_scale();
-    return x;                 // -1..1
-  }
-};
-
 template<int block_size>
 class AudioCVConditioner {
   Average<8, 1> lp_;
@@ -87,6 +56,37 @@ public:
   }
 
   f last() { return last_; }
+};
+
+enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
+
+template<Law LAW>  // Lp = 0..16
+class PotConditioner {
+  u0_16 previous_value_;
+public:
+  u0_16 Process(u0_16 x) {
+    switch(LAW) {
+    case LINEAR: break;
+    case QUADRATIC: x = u0_16::narrow(x * x); break;
+    case CUBIC: x = u0_16::narrow(u0_16::narrow(x * x) * x); break;
+    case QUARTIC:
+      x = u0_16::narrow(x * x);
+      x = u0_16::narrow(x * x);
+      break;
+    }
+    u0_16 diff = x - previous_value_;
+    bool moved = diff < kPotMoveThreshold || diff > 1._u0_16 - kPotMoveThreshold;
+    previous_value_ = x;
+    return x;
+  }
+};
+
+struct CVConditioner {
+  s1_15 Process(u0_16 in) {
+    // TODO calibration
+    s1_15 x = in.to_signed_scale();
+    return x;                 // -1..1
+  }
 };
 
 struct None { s1_15 Process(u0_16) { return 0._s1_15; } };
