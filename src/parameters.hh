@@ -13,9 +13,10 @@ constexpr int kMaxNumOsc = 10;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
 enum WarpMode { FOLD, CHEBY, CRUSH };
-enum StereoMode { ALTERNATE, SPLIT, LOWER_REST };
 enum GridMode { CHORD, HARM, JUST };
 enum ModulationMode { ONE, TWO, THREE };
+
+enum StereoMode { ALTERNATE, SPLIT, LOWER_REST };
 
 // textile oscillator:
 enum DivisionMode { INTEGER, ODD, POW_OF_TWO };
