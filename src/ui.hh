@@ -135,8 +135,8 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
       freeze_led_.set_background(Colors::red);
     } break;
     case Mode::CALIBRATION_SLOPE: {
-      learn_led_.set_background(Colors::magenta);
-      freeze_led_.set_background(Colors::magenta);
+      learn_led_.set_background(Colors::dark_magenta);
+      freeze_led_.set_background(Colors::dark_magenta);
     } break;
     }
     mode_ = mode;
@@ -161,10 +161,15 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     switch(b) {
     case BUTTON_LEARN: {
       if (mode_ == Mode::CALIBRATION_OFFSET) {
-        control_.CalibrateOffset();
-        set_mode(Mode::CALIBRATION_SLOPE);
+        if (control_.CalibrateOffset())
+          set_mode(Mode::CALIBRATION_SLOPE);
+        else // calibration failure
+          set_mode(Mode::NORMAL);
       } else if (mode_ == Mode::CALIBRATION_SLOPE) {
-        control_.CalibrateSlope();
+        if (control_.CalibrateSlope()) {
+          learn_led_.flash(Colors::white);
+          freeze_led_.flash(Colors::white);
+        }
         set_mode(Mode::NORMAL);
       } else if (mode_ == Mode::NORMAL) {
         set_learn(!osc_.learn_enabled());

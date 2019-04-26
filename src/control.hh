@@ -11,6 +11,7 @@ const f kPitchPotRange = 6_f * 12_f;
 const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
+const f kCalibrationSuccessTolerance = 0.2_f;
 
 enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
 
@@ -43,19 +44,33 @@ template<int block_size>
 class AudioCVConditioner {
   Average<8, 1> lp_;
   CicDecimator<1, block_size> cic_;
-  f offset_;
-  f slope_;
+  f offset_, nominal_offset_;
+  f slope_, nominal_slope_;
   f last_;
   f last_raw_reading() { return lp_.last().to_float_inclusive(); }
 public:
-  AudioCVConditioner(f o, f s) : offset_(o), slope_(s) {}
-  void calibrate_offset() {
-    offset_ = last_raw_reading();
+  AudioCVConditioner(f o, f s) :
+    offset_(o), nominal_offset_(o),
+    slope_(s), nominal_slope_(s) {}
+
+  bool calibrate_offset() {
+    f offset = last_raw_reading();
+    if ((offset / nominal_offset_ - 1_f).abs() < kCalibrationSuccessTolerance) {
+      offset_ = offset;
+      return true;
+    } else return false;
   }
-  void calibrate_slope() {
+
+  bool calibrate_slope() {
     f octave = (last_raw_reading() - offset_) / kCalibration2Voltage;
-    slope_ = 12_f / octave;
+    f slope = 12_f / octave;
+
+    if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance) {
+      slope_ = slope;
+      return true;
+    } else return false;
   }
+
   void Process(Block<s1_15, block_size> in) {
     s1_15 x = in[0];
     cic_.Process(in.data(), &x, 1); // -1..1
@@ -225,12 +240,12 @@ public:
   void hold_pitch_cv() { pitch_cv_sampler_.hold(); }
   void release_pitch_cv() { pitch_cv_sampler_.release(); }
 
-  void CalibrateOffset() {
-    pitch_cv_.calibrate_offset();
-    root_cv_.calibrate_offset();
+  bool CalibrateOffset() {
+    return pitch_cv_.calibrate_offset()
+      && root_cv_.calibrate_offset();
   }
-  void CalibrateSlope() {
-    pitch_cv_.calibrate_slope();
-    root_cv_.calibrate_slope();
+  bool CalibrateSlope() {
+    return pitch_cv_.calibrate_slope()
+      && root_cv_.calibrate_slope();
   }
 };
