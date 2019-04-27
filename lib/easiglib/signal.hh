@@ -24,7 +24,7 @@ struct Signal {
   }
 
   static constexpr u0_8 crossfade(u0_8 x, u0_8 y, u0_8 phase) {
-    return x + u0_8::narrow((y - x) * phase);
+    return x + u0_8::narrow(((y.to_signed() - x.to_signed()) * phase.to_signed()).to_unsigned());
   }
 
   static constexpr s1_15 crossfade_with_diff(s1_15 a, s1_15 d, u0_32 fractional) {
