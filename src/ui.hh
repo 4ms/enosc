@@ -257,7 +257,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     control_.all_main_function();
     set_mode(Mode::NORMAL);
   }
-  void onGridChanged() { learn_led_.flash(Colors::grey); }
+  void onGridChanged() { learn_led_.flash(Colors::white); }
   void onNumOscChanged() { freeze_led_.flash(Colors::white); }
 
   void Handle(typename Base::EventStack stack) {
