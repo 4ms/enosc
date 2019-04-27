@@ -100,30 +100,41 @@ enum DualPotState { MAIN_VAL, ALT_VAL };
 
 template<AdcInput INPUT, Law LAW, class FILTER, Takeover TO>
 class DualFunctionPotConditioner : PotConditioner<INPUT, LAW, FILTER> {
-  enum State { MAIN, ALT, TAKEOVER } state_ = MAIN;
+  enum State { MAIN, ALT, ARMING, CATCHUP } state_ = MAIN;
   f main_value_;
   f alt_value_;
+  bool sgn_;
 public:
 
   DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW, FILTER>(adc) {}
 
   void alt() { state_ = ALT; }
-  void main() { state_ = TAKEOVER; }
+  void main() { if (state_ == ALT) state_ = ARMING; }
 
   std::pair<DualPotState, f> Process(std::function<void(Event)> const& put) {
     f input = PotConditioner<INPUT, LAW, FILTER>::Process(put);
     switch(state_) {
     case MAIN: main_value_ = input; return std::pair(MAIN_VAL, input);
     case ALT: alt_value_ = input; return std::pair(ALT_VAL, input);
-    case TAKEOVER: {
+    case ARMING: {
+      sgn_ = input - main_value_ > 0_f;
+      state_ = CATCHUP;
+      put({StartCatchup, INPUT});
+      return std::pair(ALT_VAL, input);
+    } break;
+    case CATCHUP: {
       switch (TO) {
       case HARD_TAKEOVER: {
-        if ((input - alt_value_).abs() > kPotMoveThreshold)
+        if ((input - alt_value_).abs() > kPotMoveThreshold) {
           state_ = MAIN;
+          put({EndOfCatchup, INPUT});
+        }
       } break;
       case SOFT_TAKEOVER: {
-        if ((input - main_value_).abs() < kPotMoveThreshold)
+        if ((input - main_value_ > 0_f) != sgn_) {
           state_ = MAIN;
+          put({EndOfCatchup, INPUT});
+        }
       } break;
       }
     } break;

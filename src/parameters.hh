@@ -67,6 +67,8 @@ enum EventType {
   NewNote,
   GridChanged,
   NumOscChanged,
+  StartCatchup,
+  EndOfCatchup,
 };
 
 struct Event {

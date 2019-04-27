@@ -138,7 +138,8 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     CALIBRATION_SLOPE,
   } mode_ = Mode::NORMAL;
 
-  int selected_osc_ = 0;
+  uint8_t selected_osc_ = 0;
+  uint8_t active_catchups_ = 0;
 
   void set_mode(Mode mode) {
     switch(mode) {
@@ -261,6 +262,16 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   void onGridChanged() { learn_led_.flash(Colors::white); }
   void onNumOscChanged() { freeze_led_.flash(Colors::white); }
 
+  void onStartCatchup() {
+    active_catchups_++;
+    freeze_led_.set_glow(Colors::grey, 0.0003_u0_32 * active_catchups_);
+  }
+  void onEndOfCatchup() {
+    active_catchups_--;
+    if (active_catchups_ == 0)
+      freeze_led_.reset_glow();
+  }
+
   void Handle(typename Base::EventStack stack) {
     Event& e1 = stack.get(0);
     Event& e2 = stack.get(1);
@@ -307,6 +318,8 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     case NewNote: onNewNote(); break;
     case GridChanged: onGridChanged(); break;
     case NumOscChanged: onNumOscChanged(); break;
+    case StartCatchup: onStartCatchup(); break;
+    case EndOfCatchup: onEndOfCatchup(); break;
     }
   }
 
