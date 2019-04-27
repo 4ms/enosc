@@ -308,6 +308,15 @@ public:
     pitch += pitch_cv;
     params_.pitch = pitch;
 
+    // Number of oscillators
+    f numOsc = numosc_pot.to_float();
+    grid = Signal::crop(kPotDeadZone, numOsc); // [0..1]
+    numOsc *= f(kMaxNumOsc);                   // [0..10]
+    numOsc += 0.5_f;                           // [0.5..10.5]
+    int n = numOsc.floor();                    // [0..10]
+    if (n != params_.numOsc) put({NumOscChanged, n});
+    params_.numOsc = n;
+
     // Start next conversion
     adc_.Start();
   }

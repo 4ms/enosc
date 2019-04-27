@@ -246,10 +246,8 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
 
   void onPotMoved(AdcInput input) {
     if (mode_ == Mode::SHIFT) {
-      freeze_led_.flash(Colors::white);
       if (input == ROOT_POT)
         control_.root_pot_alternate_function();
-    } else {
     }
   }
 
@@ -260,6 +258,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     set_mode(Mode::NORMAL);
   }
   void onGridChanged() { learn_led_.flash(Colors::grey); }
+  void onNumOscChanged() { freeze_led_.flash(Colors::white); }
 
   void Handle(typename Base::EventStack stack) {
     Event& e1 = stack.get(0);
@@ -306,6 +305,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     case PotMoved: onPotMoved(static_cast<AdcInput>(e1.data)); break;
     case NewNote: onNewNote(); break;
     case GridChanged: onGridChanged(); break;
+    case NumOscChanged: onNumOscChanged(); break;
     }
   }
 

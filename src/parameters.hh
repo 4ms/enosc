@@ -68,6 +68,7 @@ enum EventType {
   PotMoved,
   NewNote,
   GridChanged,
+  NumOscChanged,
 };
 
 struct Event {
