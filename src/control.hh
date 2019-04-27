@@ -12,7 +12,7 @@ const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
-const s1_15 kPotMoveThreshold = 0.01_s1_15;
+const f kPotMoveThreshold = 0.01_f;
 
 template<int block_size>
 class AudioCVConditioner {
@@ -61,11 +61,11 @@ public:
 enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
 
 class MovementDetector {
-  u0_16 previous_value_;
+  f previous_value_;
 public:
-  bool Process(u0_16 x) {
-    s1_15 diff = x.to_signed() - previous_value_.to_signed();
-    if (diff.abs() > kPotMoveThreshold) {
+  bool Process(f x) {
+    f diff = (x - previous_value_).abs();
+    if (diff > kPotMoveThreshold) {
       previous_value_ = x;
       return true;
     } else return false;
@@ -78,16 +78,13 @@ class PotConditioner : MovementDetector {
 public:
   PotConditioner(Adc& adc) : adc_(adc) {}
 
-  u0_16 Process(std::function<void(Event)> const& put) {
-    u0_16 x = adc_.get(INPUT);
+  f Process(std::function<void(Event)> const& put) {
+    f x = adc_.get(INPUT).to_float_inclusive();
     switch(LAW) {
     case LINEAR: break;
-    case QUADRATIC: x = u0_16::narrow(x * x); break;
-    case CUBIC: x = u0_16::narrow(u0_16::narrow(x * x) * x); break;
-    case QUARTIC:
-      x = u0_16::narrow(x * x);
-      x = u0_16::narrow(x * x);
-      break;
+    case QUADRATIC: x = x * x; break;
+    case CUBIC: x = x * x * x; break;
+    case QUARTIC: x = x * x; x = x * x; break;
     }
     if (MovementDetector::Process(x))
       put({PotMoved, INPUT});
@@ -102,8 +99,8 @@ enum DualPotState { MAIN_VAL, ALT_VAL };
 template<AdcInput INPUT, Law LAW, Takeover TO>  // Lp = 0..16
 class DualFunctionPotConditioner : PotConditioner<INPUT, LAW> {
   enum State { MAIN, ALT, TAKEOVER } state_ = MAIN;
-  u0_16 main_value_;
-  u0_16 alt_value_;
+  f main_value_;
+  f alt_value_;
 public:
 
   DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW>(adc) {}
@@ -111,19 +108,19 @@ public:
   void alt() { state_ = ALT; }
   void main() { state_ = TAKEOVER; }
 
-  std::pair<DualPotState, u0_16> Process(std::function<void(Event)> const& put) {
-    u0_16 input = PotConditioner<INPUT, LAW>::Process(put);
+  std::pair<DualPotState, f> Process(std::function<void(Event)> const& put) {
+    f input = PotConditioner<INPUT, LAW>::Process(put);
     switch(state_) {
     case MAIN: main_value_ = input; return std::pair(MAIN_VAL, input);
     case ALT: alt_value_ = input; return std::pair(ALT_VAL, input);
     case TAKEOVER: {
       switch (TO) {
       case HARD_TAKEOVER: {
-        if ((input.to_signed() - alt_value_.to_signed()).abs() > kPotMoveThreshold)
+        if ((input - alt_value_).abs() > kPotMoveThreshold)
           state_ = MAIN;
       } break;
       case SOFT_TAKEOVER: {
-        if ((input.to_signed() - main_value_.to_signed()).abs() < kPotMoveThreshold)
+        if ((input - main_value_).abs() < kPotMoveThreshold)
           state_ = MAIN;
       } break;
       }
@@ -140,17 +137,17 @@ class CVConditioner {
 public:
   CVConditioner(Adc& adc) : adc_(adc) {}
 
-  s1_15 Process() {
+  f Process() {
     u0_16 in = adc_.get(INPUT);
     // TODO calibration
     s1_15 x = in.to_signed_scale();
-    return x;                 // -1..1
+    return x.to_float_inclusive();
   }
 };
 
 struct NoCVInput {
   NoCVInput(Adc& adc) {}
-  s1_15 Process() { return 0._s1_15; }
+  f Process() { return 0._f; }
 };
 
 template<class PotConditioner, class CVConditioner, int LP>
@@ -164,11 +161,10 @@ public:
   PotCVCombiner(Adc& adc) : adc_(adc) {}
 
   f Process(std::function<void(Event)> const& put) {
-    s17_15 x = s17_15(pot_.Process(put).to_signed());
-    // TODO use saturating add
-    x -= s17_15(cv_.Process());
-    f y = x.to_float_inclusive().clip(0_f, 1.0_f);
-    return lp_.Process(y);
+    f x = pot_.Process(put);
+    x -= cv_.Process();
+    x = x.clip(0_f, 1_f);
+    return lp_.Process(x);
   }
 
   f last() { return lp_.last(); }
@@ -298,13 +294,13 @@ public:
 
     if (pot_value == MAIN_VAL) {
       // Root pot -> Root
-      f root = root_pot_lp_.Process(root_pot.to_float_inclusive());
+      f root = root_pot_lp_.Process(root_pot);
       root *= kRootPotRange;
       root += root_cv_.last();
       params_.root = root.max(0_f);
     } else {
       // Root pot -> NumOsc
-      f numOsc = root_pot.to_float_inclusive();
+      f numOsc = root_pot;
       grid = Signal::crop(kPotDeadZone, numOsc); // [0..1]
       numOsc *= f(kMaxNumOsc-1);                   // [0..9]
       numOsc += 1.5_f;                           // [1.5..10.5]
@@ -313,8 +309,8 @@ public:
       params_.numOsc = n;
     }
 
-    u0_16 p = pitch_pot_.Process(put);
-    f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1
+    f pitch = pitch_pot_.Process(put);
+    pitch = pitch_pot_lp_.Process(pitch);
     pitch *= kPitchPotRange;                               // 0..range
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
 
