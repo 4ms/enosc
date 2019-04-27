@@ -48,9 +48,9 @@ private:
 template<typename ... DATA>
 struct Subject {
   void notify(DATA ... args) { observer_(args ...); }
-  Subject(std::function<void(DATA ...)> observer) : observer_(observer) {}
+  Subject(std::function<void(DATA ...)> const& observer) : observer_(observer) {}
 private:
-  std::function<void(DATA ...)> observer_;
+  std::function<void(DATA ...)> const& observer_;
 };
 
 

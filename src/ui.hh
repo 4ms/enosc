@@ -48,7 +48,7 @@ private:
 };
 
 struct ButtonsEventSource : EventSource<Event>, Buttons {
-  void Poll(std::function<void(Event)> put) {
+  void Poll(std::function<void(Event)> const& put) {
     Buttons::Debounce();
     if (Buttons::learn_.just_pushed()) put({ButtonPush, BUTTON_LEARN});
     else if (Buttons::learn_.just_released()) put({ButtonRelease, BUTTON_LEARN});
@@ -58,7 +58,7 @@ struct ButtonsEventSource : EventSource<Event>, Buttons {
 };
 
 struct GatesEventSource : EventSource<Event>, private Gates {
-  void Poll(std::function<void(Event)> put) {
+  void Poll(std::function<void(Event)> const& put) {
     Gates::Debounce();
     if (Gates::learn_.just_enabled()) put({GateOn, GATE_LEARN});
     else if (Gates::learn_.just_disabled()) put({GateOff, GATE_LEARN});
@@ -68,7 +68,7 @@ struct GatesEventSource : EventSource<Event>, private Gates {
 };
 
 struct SwitchesEventSource : EventSource<Event>, private Switches {
-  void Poll(std::function<void(Event)> put) {
+  void Poll(std::function<void(Event)> const& put) {
     Switches::Debounce();
 
     if (Switches::grid_.just_switched_up()) put({SwitchGridSwitched, UP});

@@ -168,8 +168,8 @@ class PolypticOscillator : Oscillators<block_size> {
 public:
   PolypticOscillator(
     Parameters& params,
-    std::function<void(bool)> onNewNote,
-    std::function<void(bool)> onExitLearn)
+    std::function<void(bool)> const& onNewNote,
+    std::function<void(bool)> const& onExitLearn)
     : params_(params), onNewNote_(onNewNote), onExitLearn_(onExitLearn) {}
 
   Subject<bool> onNewNote_;

@@ -66,7 +66,7 @@ class PotConditioner {
   Adc& adc_;
 public:
   PotConditioner(Adc& adc) : adc_(adc) {}
-  u0_16 Process(std::function<void(Event)> put) {
+  u0_16 Process(std::function<void(Event)> const& put) {
     u0_16 x = adc_.get(input);
     switch(LAW) {
     case LINEAR: break;
@@ -117,7 +117,7 @@ class PotCVCombiner {
 public:
   PotCVCombiner(Adc& adc) : adc_(adc) {}
 
-  f Process(std::function<void(Event)> put) {
+  f Process(std::function<void(Event)> const& put) {
     s17_15 x = s17_15(pot_.Process(put).to_signed());
     // TODO use saturating add
     x -= s17_15(cv_.Process());
@@ -181,7 +181,7 @@ public:
     root_cv_.Process(root_block);
   }
 
-  void Poll(std::function<void(Event)> put) {
+  void Poll(std::function<void(Event)> const& put) {
 
     // Process potentiometer & CV
 
