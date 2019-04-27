@@ -254,8 +254,8 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
 
   void onPotMoved(AdcInput input) {
     if (mode_ == Mode::SHIFT) {
-      if (input == ROOT_POT)
-        control_.root_pot_alternate_function();
+      if (input == GRID_POT)
+        control_.grid_pot_alternate_function();
     }
   }
 
