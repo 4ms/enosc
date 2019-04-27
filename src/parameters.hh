@@ -51,8 +51,6 @@ struct Parameters {
   } warp;
 
   StereoMode stereo_mode = ALTERNATE;
-
-  int selected_osc = 0;             // 0..kNumOsc
 };
 
 enum EventType {

@@ -138,6 +138,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     CALIBRATION_SLOPE,
   } mode_ = Mode::NORMAL;
 
+  int selected_osc_ = 0;
 
   void set_mode(Mode mode) {
     switch(mode) {
@@ -200,12 +201,12 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
           mode_ == Mode::CALIBRATION_SLOPE) {
         set_mode(Mode::NORMAL);
       } else if (mode_ == Mode::NORMAL) {
-        u0_8 freeze_level = u0_8(f(params_.selected_osc) / f(params_.numOsc+1));
+        u0_8 freeze_level = u0_8(f(selected_osc_) / f(params_.numOsc));
         freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
-        osc_.freeze_selected_osc();
-        params_.selected_osc++;
-        if (params_.selected_osc == params_.numOsc+1) {
-          params_.selected_osc = 0;
+        osc_.freeze(selected_osc_);
+        selected_osc_++;
+        if (selected_osc_ > params_.numOsc) {
+          selected_osc_ = 0;
           osc_.unfreeze_all();
         }
       }

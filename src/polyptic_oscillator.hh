@@ -193,7 +193,7 @@ public:
     }
   }
 
-  void freeze_selected_osc() { Base::set_freeze(params_.selected_osc); }
+  void freeze(int osc) { Base::set_freeze(osc); }
   void unfreeze_all() { Base::unfreeze_all(); }
 
   void Process(Block<Frame, block_size> out) {
