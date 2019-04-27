@@ -12,7 +12,7 @@ const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
-const s1_15 kPotMoveThreshold = 0.02_s1_15;
+const s1_15 kPotMoveThreshold = 0.01_s1_15;
 
 template<int block_size>
 class AudioCVConditioner {
@@ -73,8 +73,7 @@ public:
 };
 
 template<AdcInput INPUT, Law LAW>  // Lp = 0..16
-class PotConditioner {
-  MovementDetector movement_detector_;
+class PotConditioner : MovementDetector {
   Adc& adc_;
 public:
   PotConditioner(Adc& adc) : adc_(adc) {}
@@ -90,7 +89,7 @@ public:
       x = u0_16::narrow(x * x);
       break;
     }
-    if (movement_detector_.Process(x))
+    if (MovementDetector::Process(x))
       put({PotMoved, INPUT});
     return x;
   }
