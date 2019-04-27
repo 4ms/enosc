@@ -288,7 +288,7 @@ public:
     grid *= 9_f;                           // [0..9]
     grid += 0.5_f;                         // [0.5..9.5]
     int g = grid.floor();
-    if (g != params_.grid.value) put({GridChanged, 0});
+    if (g != params_.grid.value) put({GridChanged, g});
     params_.grid.value = g; // [0..9]
 
     // Root & Pitch
