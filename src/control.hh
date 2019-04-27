@@ -72,9 +72,10 @@ public:
   }
 };
 
-template<AdcInput INPUT, Law LAW>  // Lp = 0..16
+template<AdcInput INPUT, Law LAW, class FILTER>
 class PotConditioner : MovementDetector {
   Adc& adc_;
+  FILTER filter_;
 public:
   PotConditioner(Adc& adc) : adc_(adc) {}
 
@@ -86,6 +87,7 @@ public:
     case CUBIC: x = x * x * x; break;
     case QUARTIC: x = x * x; x = x * x; break;
     }
+    x = filter_.Process(x);
     if (MovementDetector::Process(x))
       put({PotMoved, INPUT});
     return x;
@@ -96,20 +98,20 @@ enum Takeover { HARD_TAKEOVER, SOFT_TAKEOVER };
 
 enum DualPotState { MAIN_VAL, ALT_VAL };
 
-template<AdcInput INPUT, Law LAW, Takeover TO>  // Lp = 0..16
-class DualFunctionPotConditioner : PotConditioner<INPUT, LAW> {
+template<AdcInput INPUT, Law LAW, class FILTER, Takeover TO>
+class DualFunctionPotConditioner : PotConditioner<INPUT, LAW, FILTER> {
   enum State { MAIN, ALT, TAKEOVER } state_ = MAIN;
   f main_value_;
   f alt_value_;
 public:
 
-  DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW>(adc) {}
+  DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW, FILTER>(adc) {}
 
   void alt() { state_ = ALT; }
   void main() { state_ = TAKEOVER; }
 
   std::pair<DualPotState, f> Process(std::function<void(Event)> const& put) {
-    f input = PotConditioner<INPUT, LAW>::Process(put);
+    f input = PotConditioner<INPUT, LAW, FILTER>::Process(put);
     switch(state_) {
     case MAIN: main_value_ = input; return std::pair(MAIN_VAL, input);
     case ALT: alt_value_ = input; return std::pair(ALT_VAL, input);
@@ -150,12 +152,12 @@ struct NoCVInput {
   f Process() { return 0._f; }
 };
 
-template<class PotConditioner, class CVConditioner, int LP>
+template<class PotConditioner, class CVConditioner, class FILTER>
 class PotCVCombiner {
   Adc& adc_;
   PotConditioner pot_ {adc_};
   CVConditioner cv_ {adc_};
-  QuadraticOnePoleLp<LP> lp_;
+  FILTER filter_;
 
 public:
   PotCVCombiner(Adc& adc) : adc_(adc) {}
@@ -164,10 +166,14 @@ public:
     f x = pot_.Process(put);
     x -= cv_.Process();
     x = x.clip(0_f, 1_f);
-    return lp_.Process(x);
+    return filter_.Process(x);
   }
 
-  f last() { return lp_.last(); }
+  f last() { return filter_.last(); }
+};
+
+struct NoFilter {
+  f Process(f x) { return x; }
 };
 
 template<int block_size>
@@ -175,25 +181,25 @@ class Control : public EventSource<Event> {
 
   Adc adc_;
 
-  PotCVCombiner<PotConditioner<DETUNE_POT, LINEAR>,
-                NoCVInput, kPotFiltering> detune_ {adc_};
-  PotCVCombiner<PotConditioner<WARP_POT, LINEAR>,
-                CVConditioner<WARP_CV>, kPotFiltering> warp_ {adc_};
-  PotCVCombiner<PotConditioner<TILT_POT, LINEAR>,
-                CVConditioner<TILT_CV>, kPotFiltering> tilt_ {adc_};
-  PotCVCombiner<PotConditioner<TWIST_POT, LINEAR>,
-                CVConditioner<TWIST_CV>, kPotFiltering> twist_ {adc_};
-  PotCVCombiner<PotConditioner<GRID_POT, LINEAR>,
-                CVConditioner<GRID_CV>, kPotFiltering> grid_ {adc_};
-  PotCVCombiner<PotConditioner<MOD_POT, LINEAR>,
-                CVConditioner<MOD_CV>, kPotFiltering> mod_ {adc_};
-  PotCVCombiner<PotConditioner<SPREAD_POT, LINEAR>,
-                CVConditioner<SPREAD_CV>, kPotFiltering> spread_ {adc_};
+  PotCVCombiner<PotConditioner<DETUNE_POT, LINEAR, NoFilter>,
+                NoCVInput, QuadraticOnePoleLp<kPotFiltering>> detune_ {adc_};
+  PotCVCombiner<PotConditioner<WARP_POT, LINEAR, NoFilter>,
+                CVConditioner<WARP_CV>, QuadraticOnePoleLp<kPotFiltering>> warp_ {adc_};
+  PotCVCombiner<PotConditioner<TILT_POT, LINEAR, NoFilter>,
+                CVConditioner<TILT_CV>, QuadraticOnePoleLp<kPotFiltering>> tilt_ {adc_};
+  PotCVCombiner<PotConditioner<TWIST_POT, LINEAR, NoFilter>,
+                CVConditioner<TWIST_CV>, QuadraticOnePoleLp<kPotFiltering>> twist_ {adc_};
+  PotCVCombiner<PotConditioner<GRID_POT, LINEAR, NoFilter>,
+                CVConditioner<GRID_CV>, QuadraticOnePoleLp<kPotFiltering>> grid_ {adc_};
+  PotCVCombiner<PotConditioner<MOD_POT, LINEAR, NoFilter>,
+                CVConditioner<MOD_CV>, QuadraticOnePoleLp<kPotFiltering>> mod_ {adc_};
+  PotCVCombiner<PotConditioner<SPREAD_POT, LINEAR, NoFilter>,
+                CVConditioner<SPREAD_CV>, QuadraticOnePoleLp<kPotFiltering>> spread_ {adc_};
 
-  PotConditioner<PITCH_POT, LINEAR> pitch_pot_ {adc_};
-  DualFunctionPotConditioner<ROOT_POT, LINEAR, SOFT_TAKEOVER> root_pot_ {adc_};
-  QuadraticOnePoleLp<2> pitch_pot_lp_;
-  QuadraticOnePoleLp<2> root_pot_lp_;
+  PotConditioner<PITCH_POT, LINEAR,
+                 QuadraticOnePoleLp<2>> pitch_pot_ {adc_};
+  DualFunctionPotConditioner<ROOT_POT, LINEAR,
+                             QuadraticOnePoleLp<2>, SOFT_TAKEOVER> root_pot_ {adc_};
   AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
   AudioCVConditioner<block_size> root_cv_  {0.24319829_f, 97.4769897_f};
 
@@ -290,17 +296,16 @@ public:
     params_.grid.value = g; // [0..9]
 
     // Root & Pitch
-    auto [pot_value, root_pot] = root_pot_.Process(put);
+    auto [pot_value, root] = root_pot_.Process(put);
 
     if (pot_value == MAIN_VAL) {
       // Root pot -> Root
-      f root = root_pot_lp_.Process(root_pot);
       root *= kRootPotRange;
       root += root_cv_.last();
       params_.root = root.max(0_f);
     } else {
       // Root pot -> NumOsc
-      f numOsc = root_pot;
+      f numOsc = root;
       grid = Signal::crop(kPotDeadZone, numOsc); // [0..1]
       numOsc *= f(kMaxNumOsc-1);                   // [0..9]
       numOsc += 1.5_f;                           // [1.5..10.5]
@@ -310,7 +315,6 @@ public:
     }
 
     f pitch = pitch_pot_.Process(put);
-    pitch = pitch_pot_lp_.Process(pitch);
     pitch *= kPitchPotRange;                               // 0..range
     pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
 
