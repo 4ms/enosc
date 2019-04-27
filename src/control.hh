@@ -97,6 +97,8 @@ public:
 
 enum Takeover { HARD_TAKEOVER, SOFT_TAKEOVER };
 
+enum DualPotState { MAIN_VAL, ALT_VAL };
+
 template<AdcInput INPUT, Law LAW, Takeover TO>  // Lp = 0..16
 class DualFunctionPotConditioner : PotConditioner<INPUT, LAW> {
   enum State { MAIN, ALT, TAKEOVER } state_ = MAIN;
@@ -109,11 +111,11 @@ public:
   void alt() { state_ = ALT; }
   void main() { state_ = TAKEOVER; }
 
-  std::pair<u0_16, u0_16> Process(std::function<void(Event)> const& put) {
+  std::pair<DualPotState, u0_16> Process(std::function<void(Event)> const& put) {
     u0_16 input = PotConditioner<INPUT, LAW>::Process(put);
     switch(state_) {
-    case MAIN: main_value_ = input; break;
-    case ALT: alt_value_ = input; break;
+    case MAIN: main_value_ = input; return std::pair(MAIN_VAL, input);
+    case ALT: alt_value_ = input; return std::pair(ALT_VAL, input);
     case TAKEOVER: {
       switch (TO) {
       case HARD_TAKEOVER: {
@@ -127,7 +129,7 @@ public:
       }
     } break;
     }
-    return std::pair(main_value_, alt_value_);
+    return std::pair(MAIN_VAL, main_value_);
   }
 };
 
@@ -292,11 +294,24 @@ public:
     params_.grid.value = g; // [0..9]
 
     // Root & Pitch
-    auto [root_pot, numosc_pot] = root_pot_.Process(put);
-    f root = root_pot_lp_.Process(root_pot.to_float_inclusive());
-    root *= kRootPotRange;
-    root += root_cv_.last();
-    params_.root = root.max(0_f);
+    auto [pot_value, root_pot] = root_pot_.Process(put);
+
+    if (pot_value == MAIN_VAL) {
+      // Root pot -> Root
+      f root = root_pot_lp_.Process(root_pot.to_float_inclusive());
+      root *= kRootPotRange;
+      root += root_cv_.last();
+      params_.root = root.max(0_f);
+    } else {
+      // Root pot -> NumOsc
+      f numOsc = root_pot.to_float_inclusive();
+      grid = Signal::crop(kPotDeadZone, numOsc); // [0..1]
+      numOsc *= f(kMaxNumOsc-1);                   // [0..9]
+      numOsc += 1.5_f;                           // [1.5..10.5]
+      int n = numOsc.floor();                    // [1..10]
+      if (n != params_.numOsc) put({NumOscChanged, n});
+      params_.numOsc = n;
+    }
 
     u0_16 p = pitch_pot_.Process(put);
     f pitch = pitch_pot_lp_.Process(p.to_float_inclusive()); // 0..1
@@ -308,14 +323,6 @@ public:
     pitch += pitch_cv;
     params_.pitch = pitch;
 
-    // Number of oscillators
-    f numOsc = numosc_pot.to_float();
-    grid = Signal::crop(kPotDeadZone, numOsc); // [0..1]
-    numOsc *= f(kMaxNumOsc);                   // [0..10]
-    numOsc += 0.5_f;                           // [0.5..10.5]
-    int n = numOsc.floor();                    // [0..10]
-    if (n != params_.numOsc) put({NumOscChanged, n});
-    params_.numOsc = n;
 
     // Start next conversion
     adc_.Start();
