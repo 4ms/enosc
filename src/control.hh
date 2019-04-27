@@ -284,7 +284,6 @@ public:
 
     f spread = spread_.Process(put);
     spread = Signal::crop(kPotDeadZone, spread);
-    spread *= spread;
     params_.spread = spread * kSpreadRange;
 
     f grid = grid_.Process(put);
