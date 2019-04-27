@@ -206,8 +206,8 @@ public:
     Base::Process(params_, *current_grid_, out1, out2);
 
     for (auto [o1, o2, o] : zip(out1, out2, out)) {
-      o.l = s1_15(o1);
-      o.r = s1_15(o2);
+      o.l = s1_15::inclusive(o1);
+      o.r = s1_15::inclusive(o2);
     }
   }
 };
