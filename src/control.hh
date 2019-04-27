@@ -12,7 +12,7 @@ const f kRootPotRange = 10_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
-const u0_16 kPotMoveThreshold = 0.02_u0_16;
+const s1_15 kPotMoveThreshold = 0.02_s1_15;
 
 template<int block_size>
 class AudioCVConditioner {
@@ -60,12 +60,25 @@ public:
 
 enum Law { LINEAR, QUADRATIC, CUBIC, QUARTIC };
 
+class MovementDetector {
+  u0_16 previous_value_;
+public:
+  bool Process(u0_16 x) {
+    s1_15 diff = x.to_signed() - previous_value_.to_signed();
+    if (diff.abs() > kPotMoveThreshold) {
+      previous_value_ = x;
+      return true;
+    } else return false;
+  }
+};
+
 template<AdcInput input, Law LAW>  // Lp = 0..16
 class PotConditioner {
-  u0_16 previous_value_;
+  MovementDetector movement_detector_;
   Adc& adc_;
 public:
   PotConditioner(Adc& adc) : adc_(adc) {}
+
   u0_16 Process(std::function<void(Event)> const& put) {
     u0_16 x = adc_.get(input);
     switch(LAW) {
@@ -77,12 +90,8 @@ public:
       x = u0_16::narrow(x * x);
       break;
     }
-    u0_16 diff = x - previous_value_;
-    if (diff > 0.5_u0_16) diff = 1._u0_16 - diff;
-    if (diff > kPotMoveThreshold) {
+    if (movement_detector_.Process(x))
       put({PotMoved, input});
-      previous_value_ = x;
-    }
     return x;
   }
 };
