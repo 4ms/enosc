@@ -113,7 +113,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
     }
   };
 
-  static constexpr int kLongPressTime = 0.5f * kSampleRate / block_size;
+  static constexpr int kLongPressTime = 1.0f * kSampleRate / block_size;
 
   LedManager<Leds::Learn> learn_led_;
   LedManager<Leds::Freeze> freeze_led_;
