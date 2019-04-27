@@ -72,7 +72,7 @@ public:
   }
 };
 
-template<AdcInput input, Law LAW>  // Lp = 0..16
+template<AdcInput INPUT, Law LAW>  // Lp = 0..16
 class PotConditioner {
   MovementDetector movement_detector_;
   Adc& adc_;
@@ -80,7 +80,7 @@ public:
   PotConditioner(Adc& adc) : adc_(adc) {}
 
   u0_16 Process(std::function<void(Event)> const& put) {
-    u0_16 x = adc_.get(input);
+    u0_16 x = adc_.get(INPUT);
     switch(LAW) {
     case LINEAR: break;
     case QUADRATIC: x = u0_16::narrow(x * x); break;
@@ -91,12 +91,12 @@ public:
       break;
     }
     if (movement_detector_.Process(x))
-      put({PotMoved, input});
+      put({PotMoved, INPUT});
     return x;
   }
 };
 
-template<AdcInput input>
+template<AdcInput INPUT>
 class CVConditioner {
   Adc& adc_;
 
@@ -104,7 +104,7 @@ public:
   CVConditioner(Adc& adc) : adc_(adc) {}
 
   s1_15 Process() {
-    u0_16 in = adc_.get(input);
+    u0_16 in = adc_.get(INPUT);
     // TODO calibration
     s1_15 x = in.to_signed_scale();
     return x;                 // -1..1
