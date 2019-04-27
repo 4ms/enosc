@@ -88,7 +88,7 @@ public:
   void set_freeze(bool b) { frozen = b; }
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(FrequencyPair freq,
+  void Process(FrequencyPair freq, f crossfade_factor,
                f const twist, f const warp, f const amplitude, f const modulation,
                Block<u0_16, block_size> mod_in, Block<u0_16, block_size> mod_out,
                Block<f, block_size> sum_output) {
@@ -96,8 +96,11 @@ public:
     else previous_freq = freq;
 
     f crossfade = freq.crossfade;
+
     // shape crossfade so notes are easier to find
     crossfade = Math::fast_raised_cosine(crossfade);
+    crossfade = Signal::crop(crossfade_factor, crossfade);
+
     f fade1 = 1_f - crossfade;
     f fade2 = crossfade;
 

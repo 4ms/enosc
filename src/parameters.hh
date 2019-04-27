@@ -18,9 +18,11 @@ enum ModulationMode { ONE, TWO, THREE };
 
 enum StereoMode { ALTERNATE, SPLIT, LOWER_REST };
 
-// textile oscillator:
-enum DivisionMode { INTEGER, ODD, POW_OF_TWO };
-enum TranspositionMode { CHROMATIC, THREE_ST, OCTAVE };
+struct Crossfade {
+  static constexpr f linear = 0._f;
+  static constexpr f mid = 0.2_f;
+  static constexpr f steep = 0.4_f;
+};
 
 struct Parameters {
   int numOsc = kMaxNumOsc;
@@ -51,6 +53,7 @@ struct Parameters {
   } warp;
 
   StereoMode stereo_mode = ALTERNATE;
+  f crossfade_factor = Crossfade::mid;
 };
 
 enum EventType {

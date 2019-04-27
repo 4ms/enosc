@@ -42,7 +42,7 @@ class Oscillators : Nocopy {
     }
   }
 
-  using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f,
+  using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f, f,
                                                Block<u0_16, block_size>, Block<u0_16, block_size>, Block<f, block_size>);
 
   processor_t pick_processor(TwistMode t, WarpMode m) {
@@ -118,6 +118,7 @@ public:
     f twist = params.twist.value;
     f warp = params.warp.value;
     f modulation = params.modulation.value;
+    f crossfade_factor = params.crossfade_factor;
     int numOsc = params.numOsc;
     StereoMode stereo_mode = params.stereo_mode;
     ModulationMode modulation_mode = params.modulation.mode;
@@ -133,7 +134,7 @@ public:
       // TODO cleanup: avoid manipulating bare pointers to buffers
       // need to declare the Blocks globally, ie. with an allocating constructor
       std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
-      (oscs_[i].*process)(p, twist, warp, amp, modulation,
+      (oscs_[i].*process)(p, crossfade_factor, twist, warp, amp, modulation,
                          mod_in, mod_out, out);
     }
 

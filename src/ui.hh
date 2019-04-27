@@ -241,9 +241,15 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   }
 
   void onSwitchWarpSwitched(Switches::State st) {
-    params_.warp.mode =
-      st == Switches::UP ? FOLD :
-      st == Switches::MID ? CHEBY : CRUSH;
+    if (mode_ == Mode::SHIFT) {
+      params_.crossfade_factor =
+        st == Switches::UP ? Crossfade::linear :
+        st == Switches::MID ? Crossfade::mid : Crossfade::steep;
+    } else {
+      params_.warp.mode =
+        st == Switches::UP ? FOLD :
+        st == Switches::MID ? CHEBY : CRUSH;
+    }
   }
 
   void onPotMoved(AdcInput input) {
