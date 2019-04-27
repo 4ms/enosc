@@ -31,7 +31,7 @@ data['exp2_u0_23'] = (exp2*(2**23)).astype(np.uint32)
 
 size = 32
 resolution = 512
-threshold = 0.00001
+threshold = 0.0001
 
 u = np.ones(resolution)
 v = u

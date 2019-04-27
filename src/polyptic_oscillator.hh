@@ -139,11 +139,13 @@ public:
 
     f atten = 1_f / amplitude.Sum();
     f tilt = params.tilt <= 1_f ? params.tilt : 1_f / params.tilt;
-    atten *= 1_f + Data::normalization_factors[numOsc*2] * tilt;
+    atten *= 0.5_f + (0.5_f + Data::normalization_factors[numOsc]) * tilt;
+
+    f atten2 = stereo_mode == LOWER_REST ? atten * 0.5_f : atten;
 
     for (auto [o1, o2] : zip(out1, out2)) {
       o1 *= atten;
-      o2 *= atten;
+      o2 *= atten2;
     }
   }
 
