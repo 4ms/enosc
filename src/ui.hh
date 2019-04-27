@@ -245,12 +245,20 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
   }
 
   void onPotMoved(AdcInput input) {
-    freeze_led_.flash(Colors::green);
+    if (mode_ == Mode::SHIFT) {
+      freeze_led_.flash(Colors::white);
+      if (input == ROOT_POT)
+        control_.root_pot_alternate_function();
+    } else {
+    }
   }
 
   void onNewNote() { osc_.new_note(control_.pitch_cv()); }
   void onShiftEnter() { set_mode(Mode::SHIFT); }
-  void onShiftExit() { set_mode(Mode::NORMAL); }
+  void onShiftExit() {
+    control_.all_main_function();
+    set_mode(Mode::NORMAL);
+  }
   void onGridChanged() { learn_led_.flash(Colors::grey); }
 
   void Handle(typename Base::EventStack stack) {

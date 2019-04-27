@@ -95,6 +95,42 @@ public:
   }
 };
 
+enum Takeover { HARD_TAKEOVER, SOFT_TAKEOVER };
+
+template<AdcInput INPUT, Law LAW, Takeover TO>  // Lp = 0..16
+class DualFunctionPotConditioner : PotConditioner<INPUT, LAW> {
+  enum State { MAIN, ALT, TAKEOVER } state_ = MAIN;
+  u0_16 main_value_;
+  u0_16 alt_value_;
+public:
+
+  DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW>(adc) {}
+
+  void alt() { state_ = ALT; }
+  void main() { state_ = TAKEOVER; }
+
+  std::pair<u0_16, u0_16> Process(std::function<void(Event)> const& put) {
+    u0_16 input = PotConditioner<INPUT, LAW>::Process(put);
+    switch(state_) {
+    case MAIN: main_value_ = input; break;
+    case ALT: alt_value_ = input; break;
+    case TAKEOVER: {
+      switch (TO) {
+      case HARD_TAKEOVER: {
+        if ((input.to_signed() - alt_value_.to_signed()).abs() > kPotMoveThreshold)
+          state_ = MAIN;
+      } break;
+      case SOFT_TAKEOVER: {
+        if ((input.to_signed() - main_value_.to_signed()).abs() < kPotMoveThreshold)
+          state_ = MAIN;
+      } break;
+      }
+    } break;
+    }
+    return std::pair(main_value_, alt_value_);
+  }
+};
+
 template<AdcInput INPUT>
 class CVConditioner {
   Adc& adc_;
@@ -157,7 +193,7 @@ class Control : public EventSource<Event> {
                 CVConditioner<SPREAD_CV>, kPotFiltering> spread_ {adc_};
 
   PotConditioner<PITCH_POT, LINEAR> pitch_pot_ {adc_};
-  PotConditioner<ROOT_POT, LINEAR> root_pot_ {adc_};
+  DualFunctionPotConditioner<ROOT_POT, LINEAR, SOFT_TAKEOVER> root_pot_ {adc_};
   QuadraticOnePoleLp<2> pitch_pot_lp_;
   QuadraticOnePoleLp<2> root_pot_lp_;
   AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
@@ -256,8 +292,8 @@ public:
     params_.grid.value = g; // [0..9]
 
     // Root & Pitch
-    u0_16 r = root_pot_.Process(put);
-    f root = root_pot_lp_.Process(r.to_float_inclusive());
+    auto [root_pot, numosc_pot] = root_pot_.Process(put);
+    f root = root_pot_lp_.Process(root_pot.to_float_inclusive());
     root *= kRootPotRange;
     root += root_cv_.last();
     params_.root = root.max(0_f);
@@ -279,6 +315,13 @@ public:
   f pitch_cv() { return pitch_cv_.last(); }
   void hold_pitch_cv() { pitch_cv_sampler_.hold(); }
   void release_pitch_cv() { pitch_cv_sampler_.release(); }
+
+  void root_pot_alternate_function() { root_pot_.alt(); }
+  void root_pot_main_function() { root_pot_.main(); }
+
+  void all_main_function() {
+    root_pot_main_function();
+  }
 
   bool CalibrateOffset() {
     return pitch_cv_.calibrate_offset()
