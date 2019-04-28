@@ -186,8 +186,9 @@ public:
     if (fct == PotFct::MAIN) {
       x -= cv_.Process();
       x = x.clip(0_f, 1_f);
+      x = filter_.Process(x);
     }
-    return std::pair(fct, filter_.Process(x));
+    return std::pair(fct, x);
   }
 
   f last() { return filter_.last(); }
@@ -210,7 +211,9 @@ class Control : public EventSource<Event> {
                 CVConditioner<TILT_CV>, QuadraticOnePoleLp<1>> tilt_ {adc_};
   PotCVCombiner<PotConditioner<TWIST_POT, Law::LINEAR, NoFilter>,
                 CVConditioner<TWIST_CV>, QuadraticOnePoleLp<1>> twist_ {adc_};
-  PotCVCombiner<DualFunctionPotConditioner<GRID_POT, Law::LINEAR, NoFilter, Takeover::SOFT>,
+  PotCVCombiner<
+    DualFunctionPotConditioner<GRID_POT, Law::LINEAR,
+                               QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<GRID_CV>, QuadraticOnePoleLp<1>> grid_ {adc_};
   PotCVCombiner<PotConditioner<MOD_POT, Law::LINEAR, NoFilter>,
                 CVConditioner<MOD_CV>, QuadraticOnePoleLp<1>> mod_ {adc_};
