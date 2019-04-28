@@ -9,7 +9,7 @@
 // #define BYPASS
 
 struct Main :
-  System<Main>,
+  System<kUiUpdateRate, Main>,
   DynamicData,
   Codec<kSampleRate, kBlockSize, Main>,
   Ui<kBlockSize> {

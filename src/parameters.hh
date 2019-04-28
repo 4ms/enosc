@@ -7,8 +7,10 @@ constexpr struct Frame {
   s1_15 r = 0._s1_15;
 } zero;
 
+constexpr int kUiUpdateRate = 100; // Hz
+constexpr int kSampleRate = 96000; // Hz
 constexpr int kBlockSize = 16;
-constexpr int kSampleRate = 96000;
+constexpr int kProcessRate = kSampleRate / kBlockSize; // Hz
 constexpr int kMaxNumOsc = 10;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };

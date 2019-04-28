@@ -6,8 +6,8 @@ extern "C" {
   void RegisterSysTickISR(void f()) { SysTick_ISR = f; }
 }
 
-template<class T>
-struct System : crtp<T, System<T>>, Nocopy {
+template<int SYSTICK_FREQ, class T>
+struct System : crtp<T, System<SYSTICK_FREQ, T>>, Nocopy {
   System() {
     instance_ = this;
     SetVectorTable(0x08000000);
@@ -79,9 +79,9 @@ private:
     //Enables the Clock Security System 
     HAL_RCC_EnableCSS();
 
-    // Configure the Systick interrupt time for 10ms
+    // Configure the Systick interrupt time
     RegisterSysTickISR(&System::SysTickISR);
-    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/100);
+    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/SYSTICK_FREQ);
     HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
     // Some IRQs interrupt configuration
