@@ -79,9 +79,9 @@ private:
     //Enables the Clock Security System 
     HAL_RCC_EnableCSS();
 
-    // Configure the Systick interrupt time for 1ms
-    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+    // Configure the Systick interrupt time for 10ms
     RegisterSysTickISR(&System::SysTickISR);
+    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/100);
     HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
     // Some IRQs interrupt configuration
