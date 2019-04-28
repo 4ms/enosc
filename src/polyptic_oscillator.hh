@@ -42,19 +42,20 @@ class Oscillators : Nocopy {
     }
   }
 
-  using waveform_computer_t = void(*)(f, f);
+  using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f, f,
+                                               Block<u0_16, block_size>, Block<u0_16, block_size>, Block<f, block_size>);
 
-  waveform_computer_t pick_waveform_computer(TwistMode t, WarpMode m) {
-    static waveform_computer_t tab[3][3] = {
-      &Oscillator::ComputeWaveform<FEEDBACK, FOLD>,
-      &Oscillator::ComputeWaveform<FEEDBACK, CHEBY>,
-      &Oscillator::ComputeWaveform<FEEDBACK, CRUSH>,
-      &Oscillator::ComputeWaveform<PULSAR, FOLD>,
-      &Oscillator::ComputeWaveform<PULSAR, CHEBY>,
-      &Oscillator::ComputeWaveform<PULSAR, CRUSH>,
-      &Oscillator::ComputeWaveform<DECIMATE, FOLD>,
-      &Oscillator::ComputeWaveform<DECIMATE, CHEBY>,
-      &Oscillator::ComputeWaveform<DECIMATE, CRUSH>,
+  processor_t pick_processor(TwistMode t, WarpMode m) {
+    static processor_t tab[3][3] = {
+      &OscillatorPair::Process<FEEDBACK, FOLD, block_size>,
+      &OscillatorPair::Process<FEEDBACK, CHEBY, block_size>,
+      &OscillatorPair::Process<FEEDBACK, CRUSH, block_size>,
+      &OscillatorPair::Process<PULSAR, FOLD, block_size>,
+      &OscillatorPair::Process<PULSAR, CHEBY, block_size>,
+      &OscillatorPair::Process<PULSAR, CRUSH, block_size>,
+      &OscillatorPair::Process<DECIMATE, FOLD, block_size>,
+      &OscillatorPair::Process<DECIMATE, CHEBY, block_size>,
+      &OscillatorPair::Process<DECIMATE, CRUSH, block_size>,
     };
 
     return tab[t][m];
@@ -113,14 +114,14 @@ public:
     FrequencyAccumulator frequency {grid, params.root, params.pitch,
                                     params.spread, params.detune};
 
+    processor_t process = pick_processor(params.twist.mode, params.warp.mode);
+    f twist = params.twist.value;
+    f warp = params.warp.value;
     f modulation = params.modulation.value;
     f crossfade_factor = params.crossfade_factor;
     int numOsc = params.numOsc;
     StereoMode stereo_mode = params.stereo_mode;
     ModulationMode modulation_mode = params.modulation.mode;
-
-    pick_waveform_computer(params.twist.mode, params.warp.mode)
-      (params.twist.value, params.warp.value);
 
     for (int i=0; i<numOsc; ++i) {
       FrequencyPair p = frequency.Next(); // 3%
@@ -133,7 +134,8 @@ public:
       // TODO cleanup: avoid manipulating bare pointers to buffers
       // need to declare the Blocks globally, ie. with an allocating constructor
       std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
-      oscs_[i].Process(p, crossfade_factor, amp, modulation, mod_in, mod_out, out);
+      (oscs_[i].*process)(p, crossfade_factor, twist, warp, amp, modulation,
+                         mod_in, mod_out, out);
     }
 
     f atten = 1_f / amplitude.Sum();
