@@ -139,6 +139,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     NORMAL,
     SHIFT,
     LEARN,
+    MANUAL_LEARN,
     CALIBRATION_OFFSET,
     CALIBRATION_SLOPE,
   } mode_ = Mode::NORMAL;
@@ -153,6 +154,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     case Mode::LEARN: {
       osc_.disable_learn();
       control_.release_pitch_cv();
+    } break;
+    case Mode::MANUAL_LEARN: {
+      learn_led_.reset_glow();
     } break;
     }
 
@@ -171,6 +175,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       learn_led_.set_background(Colors::dark_red);
       osc_.enable_learn();
       control_.hold_pitch_cv();
+    } break;
+    case Mode::MANUAL_LEARN: {
+      learn_led_.set_glow(Colors::red, 3_f);
+      osc_.enable_pre_listen();
     } break;
     case Mode::CALIBRATION_OFFSET: {
       learn_led_.set_glow(Colors::red, 2_f);
@@ -266,6 +274,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     if (mode_ == Mode::SHIFT) {
       if (input == GRID_POT)
         control_.grid_pot_alternate_function();
+    } else if (mode_ == Mode::LEARN &&
+               input == ROOT_POT) {
+      // TODO No: onPotMovedWithButtonPress
+      set_mode(Mode::MANUAL_LEARN);
     }
   }
 
@@ -292,11 +304,22 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     Event& e1 = stack.get(0);
     Event& e2 = stack.get(1);
 
+    // exit shift
+    // TODO integrate into switch
     if (mode_ == Mode::SHIFT &&
         e1.type == ButtonRelease &&
         e1.data == BUTTON_FREEZE) {
       onShiftExit();
       return;
+    }
+
+    // exit manual learn
+    // TODO integrate into switch
+    if (mode_ == Mode::MANUAL_LEARN &&
+        e1.type == ButtonRelease &&
+        e1.data == BUTTON_LEARN) {
+      // TODO Problem: resets the pre-scale
+      set_mode(Mode::LEARN);
     }
 
     if (e2.type == ButtonPush &&
