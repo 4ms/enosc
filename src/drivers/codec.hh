@@ -187,23 +187,17 @@ struct Codec : Nocopy {
 
     // Setup PLL clock for codec
     init_SAI_clock();
-    HAL_Delay(50);
 
     //De-init the codec to force it to reset
     i2c_.DeInit();
-    HAL_Delay(50);
 
     //Start Codec I2C
     gpio_.Init();
-    HAL_Delay(50);
     i2c_.Init();
-    HAL_Delay(50);
 
     //Start Codec SAI
     SAI_init();
-    HAL_Delay(50);
     init_audio_DMA();
-    HAL_Delay(50);
   }
 
   void Start() {
@@ -250,7 +244,7 @@ private:
 
     Block<Frame, block_size> in {src};
     Block<Frame, block_size> out {dst};
-    static_cast<T&>(*this).template codec_callback<block_size>(in, out);
+    static_cast<T&>(*this).template CodecCallback<block_size>(in, out);
   }
 
   struct GPIO {
@@ -382,11 +376,9 @@ private:
     //Take everything down...
     i2c_.PowerDown();
     i2c_.DeInit();
-    HAL_Delay(10);
 
     DeInit_I2S_Clock();
     DeInit_SAIDMA();
-    HAL_Delay(10);
 
     //...and bring it all back up
     this.init_SAI_clock(sample_rate);
