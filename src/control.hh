@@ -186,9 +186,8 @@ public:
     if (fct == PotFct::MAIN) {
       x -= cv_.Process();
       x = x.clip(0_f, 1_f);
-      x = filter_.Process(x);
     }
-    return std::pair(fct, x);
+    return std::pair(fct, filter_.Process(x));
   }
 
   f last() { return filter_.last(); }
