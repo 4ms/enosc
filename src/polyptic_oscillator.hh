@@ -167,7 +167,6 @@ class PolypticOscillator : Oscillators<block_size> {
   PreGrid pre_grid_;
   Grid *current_grid_ = quantizer_.get_grid(0);
 
-  bool learn_mode = false;
 public:
   PolypticOscillator(
     Parameters& params,
@@ -178,22 +177,17 @@ public:
   Subject<bool> onNewNote_;
   Subject<bool> onExitLearn_;
 
-  bool learn_enabled() { return learn_mode; }
   void enable_learn() {
     pre_grid_.clear();
-    learn_mode = true;
   }
   void disable_learn() {
     bool b = pre_grid_.copy_to(current_grid_);
     onExitLearn_.notify(b);
-    learn_mode = false;
   }
 
   void new_note(f x) {
-    if (learn_mode) {
-      bool success = pre_grid_.add(x);
-      onNewNote_.notify(success);
-    }
+    bool success = pre_grid_.add(x);
+    onNewNote_.notify(success);
   }
 
   void freeze(int osc) { Base::set_freeze(osc); }

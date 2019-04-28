@@ -138,6 +138,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   enum class Mode {
     NORMAL,
     SHIFT,
+    LEARN,
     CALIBRATION_OFFSET,
     CALIBRATION_SLOPE,
   } mode_ = Mode::NORMAL;
@@ -146,6 +147,16 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   uint8_t active_catchups_ = 0;
 
   void set_mode(Mode mode) {
+
+    // leaving mode
+    switch(mode_) {
+    case Mode::LEARN: {
+      osc_.disable_learn();
+      control_.release_pitch_cv();
+    } break;
+    }
+
+    // entering mode
     switch(mode) {
     case Mode::NORMAL: {
       learn_led_.reset_glow();
@@ -155,6 +166,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     } break;
     case Mode::SHIFT: {
       freeze_led_.set_background(Colors::grey);
+    } break;
+    case Mode::LEARN: {
+      learn_led_.set_background(Colors::dark_red);
+      osc_.enable_learn();
+      control_.hold_pitch_cv();
     } break;
     case Mode::CALIBRATION_OFFSET: {
       learn_led_.set_glow(Colors::red, 2_f);
@@ -166,18 +182,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     } break;
     }
     mode_ = mode;
-  }
-
-  void set_learn(bool b) {
-    if (b) {
-      learn_led_.set_background(Colors::dark_red);
-      osc_.enable_learn();
-      control_.hold_pitch_cv();
-    } else {
-      learn_led_.set_background(Colors::black);
-      osc_.disable_learn();
-      control_.release_pitch_cv();
-    }
   }
 
   void onButtonLongPress(Button b) {
@@ -198,7 +202,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         }
         set_mode(Mode::NORMAL);
       } else if (mode_ == Mode::NORMAL) {
-        set_learn(!osc_.learn_enabled());
+        set_mode(Mode::LEARN);
+      } else if (mode_ == Mode::LEARN) {
+        set_mode(Mode::NORMAL);
       }
     } break;
     case BUTTON_FREEZE: {
