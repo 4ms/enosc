@@ -61,8 +61,9 @@ public:
     }
   }
 
-  int size() { return size_; }
+  int size() const { return size_; }
   void clear() { size_ = 0; }
+  f get(int i) const { return grid_[i]; }
 
   // do not call if size==0
   bool copy_to(Grid *g) {

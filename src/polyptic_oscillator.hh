@@ -150,6 +150,42 @@ public:
     }
   }
 
+  void ProcessPreListen(Parameters const &params, PreGrid const &grid,
+               Block<f, block_size> out1, Block<f, block_size> out2) {
+    out1.fill(0_f);
+    out2.fill(0_f);
+
+    processor_t process = pick_processor(params.twist.mode, params.warp.mode);
+    f twist = params.twist.value;
+    f warp = params.warp.value;
+    f modulation = params.modulation.value;
+    StereoMode stereo_mode = params.stereo_mode;
+    ModulationMode modulation_mode = params.modulation.mode;
+
+    for (int i=0; i<grid.size(); ++i) {
+      f freq = Freq::of_pitch(grid.get(i)).repr();
+      FrequencyPair p = {freq, freq, 0_f};
+      Block<f, block_size> out = pick_output(stereo_mode, i, grid.size()) ? out1 : out2;
+      auto [in_block, out_block] = pick_modulation_blocks(modulation_mode, i, grid.size());
+      Block<u0_16, block_size> mod_in(in_block);
+      Block<u0_16, block_size> mod_out(out_block);
+      // TODO cleanup: avoid manipulating bare pointers to buffers
+      // need to declare the Blocks globally, ie. with an allocating constructor
+      std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
+      (oscs_[i].*process)(p, 0_f, twist, warp, 1_f, modulation, mod_in, mod_out, out);
+    }
+
+    f atten = 1_f / f(grid.size());
+    atten *= 0.5_f + (0.5_f + Data::normalization_factors[grid.size()]);
+    f atten2 = stereo_mode == LOWER_REST ? atten * 0.5_f : atten;
+
+    for (auto [o1, o2] : zip(out1, out2)) {
+      o1 *= atten;
+      o2 *= atten2;
+    }
+  }
+
+
   void set_freeze(int voiceNr) {
     oscs_[voiceNr].set_freeze(true);
   }
@@ -167,6 +203,8 @@ class PolypticOscillator : Oscillators<block_size> {
   PreGrid pre_grid_;
   Grid *current_grid_ = quantizer_.get_grid(0);
 
+  bool pre_listen_ = false;
+
 public:
   PolypticOscillator(
     Parameters& params,
@@ -177,12 +215,13 @@ public:
   Subject<bool> onNewNote_;
   Subject<bool> onExitLearn_;
 
-  void enable_learn() {
-    pre_grid_.clear();
-  }
+  void enable_learn() { pre_grid_.clear(); }
+  void enable_pre_listen() { pre_listen_ = true; }
+
   void disable_learn() {
     bool b = pre_grid_.copy_to(current_grid_);
     onExitLearn_.notify(b);
+    pre_listen_ = false;
   }
 
   void new_note(f x) {
@@ -198,9 +237,12 @@ public:
     Block<f, block_size> out1 {buffer[0]};
     Block<f, block_size> out2 {buffer[1]};
 
-    current_grid_ = quantizer_.get_grid(params_.grid);
-
-    Base::Process(params_, *current_grid_, out1, out2);
+    if (pre_listen_) {
+      Base::ProcessPreListen(params_, pre_grid_, out1, out2);
+    } else {
+      current_grid_ = quantizer_.get_grid(params_.grid);
+      Base::Process(params_, *current_grid_, out1, out2);
+    }
 
     for (auto [o1, o2, o] : zip(out1, out2, out)) {
       o.l = s1_15::inclusive(o1);
