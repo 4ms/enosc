@@ -9,7 +9,7 @@
 // #define BYPASS
 
 struct Main :
-  System,
+  System<Main>,
   DynamicData,
   Codec<kSampleRate, kBlockSize, Main>,
   Ui<kBlockSize> {
@@ -23,6 +23,9 @@ struct Main :
       // just a "nop" is enough 
       __WFI();
     }
+  }
+
+  void SysTickCallback() {
   }
 
   template<int block_size>

@@ -1,7 +1,15 @@
 #include "hal.hh"
 
-struct System : Nocopy {
+extern "C" {
+  extern uint32_t uwTick;
+  void (*SysTick_ISR)();
+  void RegisterSysTickISR(void f()) { SysTick_ISR = f; }
+}
+
+template<class T>
+struct System : crtp<T, System<T>>, Nocopy {
   System() {
+    instance_ = this;
     SetVectorTable(0x08000000);
 
     HAL_Init();
@@ -17,6 +25,14 @@ struct System : Nocopy {
   }
 
 private:
+
+  inline static System* instance_;
+
+  static void SysTickISR() {
+    uwTick++;
+    (**instance_).SysTickCallback();
+  }
+
   void SetVectorTable(uint32_t reset_address) {
     SCB->VTOR = reset_address & (uint32_t)0x1FFFFF80;
   }
@@ -65,6 +81,7 @@ private:
 
     // Configure the Systick interrupt time for 1ms
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+    RegisterSysTickISR(&System::SysTickISR);
     HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
     // Some IRQs interrupt configuration
@@ -89,8 +106,9 @@ namespace std {
 
 extern "C" {
   void SysTick_Handler(void) {
-    HAL_IncTick();
+    SysTick_ISR();
   }
+
   void HardFault_Handler() {
     volatile uint32_t hfsr,dfsr,afsr,bfar,mmfar,cfsr;
     mmfar=SCB->MMFAR;
