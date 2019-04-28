@@ -115,7 +115,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     }
   };
 
-  static constexpr int kLongPressTime = 1.0f * kSampleRate / block_size;
+  static constexpr int kProcessRate = kSampleRate / block_size;
+  static constexpr int kLongPressTime = 1.0f * kProcessRate; // sec
+  static constexpr int kNewNoteDelayTime = 0.01f * kProcessRate; // sec
 
   LedManager<update_rate, Leds::Learn> learn_led_;
   LedManager<update_rate, Leds::Freeze> freeze_led_;
@@ -272,7 +274,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
   void onStartCatchup() {
     active_catchups_++;
-    freeze_led_.set_glow(Colors::grey, 1_f * f(active_catchups_));
+    freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
   }
   void onEndOfCatchup() {
     active_catchups_--;
@@ -314,7 +316,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     } break;
     case GateOn: {
       if (e1.data == GATE_LEARN)
-        new_note_delay_.trigger_after(50, {NewNote, 0});
+        new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
     } break;
     case GateOff: {
     } break;
