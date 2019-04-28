@@ -4,13 +4,11 @@
 #include "distortion.hh"
 #include "dynamic_data.hh"
 
-constexpr int kWaveformBufferSize = 256;
+constexpr int kWaveformBufferSize = 512;
 
 class Phasor {
   u0_32 phase_ = u0_32::of_repr(Random::Word());
 public:
-  Phasor() {}
-  Phasor(u0_32 phase) : phase_(phase) {}
   u0_32 Process(u0_32 freq) {
     phase_ += freq;
     return phase_;
@@ -40,13 +38,13 @@ class Oscillator {
   IFloat fader_ {0_f};
 
   static Buffer<f, kWaveformBufferSize+1> waveform;
-  static SineShaper sh;
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   static void ComputeWaveform(f twist_amount, f warp_amount) {
+    Phasor ph;
+    SineShaper sh;
     constexpr u0_32 freq = u0_32::max_val / kWaveformBufferSize;
-    Phasor ph {0._u0_32};
 
     for (f& sample : waveform) {
       u0_32 phase = ph.Process(freq);
@@ -84,7 +82,6 @@ public:
 };
 
 inline Buffer<f, kWaveformBufferSize+1> Oscillator::waveform;
-inline SineShaper Oscillator::sh;
 
 struct FrequencyPair { f freq1, freq2, crossfade; };
 
