@@ -9,20 +9,22 @@
 #include "polyptic_oscillator.hh"
 #include "event_handler.hh"
 
-template<class T>
+template<int update_rate, class T>
 struct LedManager : Leds::ILed<T> {
 
-  void flash(Color c, u0_16 flash_freq = 0.0014_u0_16) {
+  // flash_freq in Hz; max = update_rate
+  void flash(Color c, f flash_freq = 10_f) {
     flash_color_ = c;
     flash_phase_ = u0_16::max_val;
-    flash_freq_ = flash_freq;
+    flash_freq_ = u0_16(flash_freq / f(update_rate));
   }
 
   void set_background(Color c) { background_color_ = c; }
 
-  void set_glow(Color c, u0_32 freq) {
+  // freq in secs
+  void set_glow(Color c, f freq = 1_f) {
     glow_color_ = c;
-    osc_.set_frequency(freq);
+    osc_.set_frequency(u0_32(freq / f(update_rate)));
   }
 
   void reset_glow(u0_32 phase = 0._u0_32) {
@@ -94,8 +96,8 @@ struct SwitchesEventSource : EventSource<Event>, private Switches {
   Switches::State get_warp() { return Switches::warp_.get(); }
 };
 
-template<int block_size>
-class Ui : public EventHandler<Ui<block_size>, Event> {
+template<int update_rate, int block_size>
+class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   using Base = EventHandler<Ui, Event>;
   friend Base;
 
@@ -115,8 +117,8 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
 
   static constexpr int kLongPressTime = 1.0f * kSampleRate / block_size;
 
-  LedManager<Leds::Learn> learn_led_;
-  LedManager<Leds::Freeze> freeze_led_;
+  LedManager<update_rate, Leds::Learn> learn_led_;
+  LedManager<update_rate, Leds::Freeze> freeze_led_;
 
   typename Base::DelayedEventSource button_timeouts_[2];
   typename Base::DelayedEventSource new_note_delay_;
@@ -153,12 +155,12 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
       freeze_led_.set_background(Colors::grey);
     } break;
     case Mode::CALIBRATION_OFFSET: {
-      learn_led_.set_glow(Colors::red, 0.0004_u0_32);
-      freeze_led_.set_glow(Colors::red, 0.0004_u0_32);
+      learn_led_.set_glow(Colors::red, 2_f);
+      freeze_led_.set_glow(Colors::red, 2_f);
     } break;
     case Mode::CALIBRATION_SLOPE: {
-      learn_led_.set_glow(Colors::dark_magenta, 0.0008_u0_32);
-      freeze_led_.set_glow(Colors::dark_magenta, 0.0008_u0_32);
+      learn_led_.set_glow(Colors::dark_magenta, 1_f);
+      freeze_led_.set_glow(Colors::dark_magenta, 1_f);
     } break;
     }
     mode_ = mode;
@@ -270,7 +272,7 @@ class Ui : public EventHandler<Ui<block_size>, Event> {
 
   void onStartCatchup() {
     active_catchups_++;
-    freeze_led_.set_glow(Colors::grey, 0.0003_u0_32 * active_catchups_);
+    freeze_led_.set_glow(Colors::grey, 1_f * f(active_catchups_));
   }
   void onEndOfCatchup() {
     active_catchups_--;
@@ -352,10 +354,12 @@ public:
     Base::Poll();
   }
 
-  void Process() {
-    Base::Process();
-
+  void Update() {
     learn_led_.Update();
     freeze_led_.Update();
+  }
+
+  void Process() {
+    Base::Process();
   }
 };

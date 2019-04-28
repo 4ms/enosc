@@ -12,7 +12,7 @@ struct Main :
   System<kUiUpdateRate, Main>,
   DynamicData,
   Codec<kSampleRate, kBlockSize, Main>,
-  Ui<kBlockSize> {
+  Ui<kUiUpdateRate, kBlockSize> {
 
   Main() {
     //Start audio processing
@@ -26,6 +26,7 @@ struct Main :
   }
 
   void SysTickCallback() {
+    Ui::Update();
   }
 
   template<int block_size>
