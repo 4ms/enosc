@@ -307,14 +307,16 @@ public:
 
     auto [fct, grid] = grid_.ProcessDualFunction(put);
     grid = Signal::crop(kPotDeadZone, grid); // [0..1]
-    grid *= 9_f;                           // [0..9]
-    grid += 0.5_f;                         // [0.5..9.5]
-    int g = grid.floor();
     if (fct == PotFct::MAIN) {
+      grid *= 9_f;                           // [0..9]
+      grid += 0.5_f;                         // [0.5..9.5]
+      int g = grid.floor();
       if (g != params_.grid.value) put({GridChanged, g});
       params_.grid.value = g; // [0..9]
     } else {
-      int n = g + 1; // [1..10]
+      grid *= f(kMaxNumOsc-1); // [0..max+1]
+      grid += 1.5_f;           // [1.5..max+0.5]
+      int n = grid.floor();    // [1..max]
       if (n != params_.numOsc) put({NumOscChanged, n});
       params_.numOsc = n;
     }
