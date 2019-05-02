@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include "util.hh"
+#include "hal.hh"
 
 enum Button {
   BUTTON_LEARN,
