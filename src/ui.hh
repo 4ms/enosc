@@ -236,7 +236,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           mode_ = NORMAL;
           osc_.disable_learn();
           control_.release_pitch_cv();
-          freeze_led_.set_background(Colors::black);
+          learn_led_.set_background(Colors::black);
         }
       } break;
       }
