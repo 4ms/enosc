@@ -14,12 +14,14 @@ struct EventHandler : crtp<T, EventHandler<T, Event>> {
 
   using EventStack = BufferReader<Event, kEventBufferSize>;
 
+  void put(Event e) {
+    events_.Write(e);
+    pending_++;
+  }
+
   void Poll() {
     for(auto& s : (**this).sources_)
-      s->Poll([this](Event e){
-               events_.Write(e);
-               pending_++;
-             });
+      s->Poll([this](Event e){ put(e); });
   }
 
   void Process() {

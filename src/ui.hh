@@ -147,234 +147,205 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   uint8_t selected_osc_ = 0;
   uint8_t active_catchups_ = 0;
 
-  void set_mode(Mode mode) {
-
-    // leaving mode
-    switch(mode_) {
-    case LEARN: {
-      osc_.disable_learn();
-      control_.release_pitch_cv();
-    } break;
-    case MANUAL_LEARN: {
-      learn_led_.reset_glow();
-    } break;
-    }
-
-    // entering mode
-    switch(mode) {
-    case NORMAL: {
-      learn_led_.reset_glow();
-      learn_led_.set_background(Colors::black);
-      freeze_led_.reset_glow();
-      freeze_led_.set_background(Colors::black);
-    } break;
-    case SHIFT: {
-      freeze_led_.set_background(Colors::grey);
-    } break;
-      learn_led_.set_background(Colors::dark_red);
-      osc_.enable_learn();
-      control_.hold_pitch_cv();
-    case LEARN: {
-    } break;
-    case MANUAL_LEARN: {
-      learn_led_.set_glow(Colors::red, 3_f);
-      osc_.enable_pre_listen();
-    } break;
-    case CALIBRATION_OFFSET: {
-      learn_led_.set_glow(Colors::red, 2_f);
-      freeze_led_.set_glow(Colors::red, 2_f);
-    } break;
-    case CALIBRATION_SLOPE: {
-      learn_led_.set_glow(Colors::dark_magenta, 1_f);
-      freeze_led_.set_glow(Colors::dark_magenta, 1_f);
-    } break;
-    }
-    mode_ = mode;
-  }
-
-  void onButtonLongPress(Button b) {
-  }
-
-  void onButtonPress(Button b) {
-    switch(b) {
-    case BUTTON_LEARN: {
-      if (mode_ == CALIBRATION_OFFSET) {
-        if (control_.CalibrateOffset())
-          set_mode(CALIBRATION_SLOPE);
-        else // calibration failure
-          set_mode(NORMAL);
-      } else if (mode_ == CALIBRATION_SLOPE) {
-        if (control_.CalibrateSlope()) {
-          learn_led_.flash(Colors::white);
-          freeze_led_.flash(Colors::white);
-        }
-        set_mode(NORMAL);
-      } else if (mode_ == NORMAL) {
-        set_mode(LEARN);
-      } else if (mode_ == LEARN) {
-        set_mode(NORMAL);
-      }
-    } break;
-    case BUTTON_FREEZE: {
-      if (mode_ == CALIBRATION_OFFSET ||
-          mode_ == CALIBRATION_SLOPE) {
-        set_mode(NORMAL);
-      } else if (mode_ == NORMAL) {
-        u0_8 freeze_level = u0_8(f(selected_osc_) / f(params_.numOsc));
-        freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
-        osc_.freeze(selected_osc_);
-        selected_osc_++;
-        if (selected_osc_ > params_.numOsc) {
-          selected_osc_ = 0;
-          osc_.unfreeze_all();
-        }
-      }
-    } break;
-    }
-  }
-
-  void onSwitchGridSwitched(Switches::State st) {
-    params_.grid.mode =
-      st == Switches::UP ? CHORD :
-      st == Switches::MID ? HARM : JUST;
-  }
-
-  void onSwitchModSwitched(Switches::State st) {
-    params_.modulation.mode =
-      st == Switches::UP ? ONE :
-      st == Switches::MID ? TWO : THREE;
-  }
-
-  void onSwitchTwistSwitched(Switches::State st) {
-    if (mode_ == SHIFT) {
-      freeze_led_.flash(Colors::white);
-      params_.stereo_mode =
-        st == Switches::UP ? ALTERNATE :
-        st == Switches::MID ? SPLIT : LOWER_REST;
-    } else {
-      params_.twist.mode =
-        st == Switches::UP ? FEEDBACK :
-        st == Switches::MID ? PULSAR : DECIMATE;
-    }
-  }
-
-  void onSwitchWarpSwitched(Switches::State st) {
-    if (mode_ == SHIFT) {
-      params_.crossfade_factor =
-        st == Switches::UP ? Crossfade::linear :
-        st == Switches::MID ? Crossfade::mid : Crossfade::steep;
-    } else {
-      params_.warp.mode =
-        st == Switches::UP ? FOLD :
-        st == Switches::MID ? CHEBY : CRUSH;
-    }
-  }
-
-  void onPotMoved(AdcInput input) {
-    if (mode_ == SHIFT) {
-      if (input == GRID_POT)
-        control_.grid_pot_alternate_function();
-    } else if (mode_ == LEARN &&
-               input == ROOT_POT) {
-      // TODO No: onPotMovedWithButtonPress
-      set_mode(MANUAL_LEARN);
-    }
-  }
-
-  void onNewNote() { osc_.new_note(control_.pitch_cv()); }
-  void onShiftEnter() { set_mode(SHIFT); }
-  void onShiftExit() {
-    control_.all_main_function();
-    set_mode(NORMAL);
-  }
-  void onGridChanged() { learn_led_.flash(Colors::white); }
-  void onNumOscChanged() { freeze_led_.flash(Colors::white); }
-
-  void onStartCatchup() {
-    active_catchups_++;
-    freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
-  }
-  void onEndOfCatchup() {
-    active_catchups_--;
-    if (active_catchups_ == 0)
-      freeze_led_.reset_glow();
-  }
-
   void Handle(typename Base::EventStack stack) {
     Event& e1 = stack.get(0);
     Event& e2 = stack.get(1);
 
-    // exit shift
-    // TODO integrate into switch
-    if (mode_ == SHIFT &&
-        e1.type == ButtonRelease &&
-        e1.data == BUTTON_FREEZE) {
-      onShiftExit();
-      return;
-    }
+    switch(mode_) {
 
-    // exit manual learn
-    // TODO integrate into switch
-    if (mode_ == MANUAL_LEARN &&
-        e1.type == ButtonRelease &&
-        e1.data == BUTTON_LEARN) {
-      // TODO Problem: resets the pre-scale
-      set_mode(LEARN);
-    }
+    case NORMAL: {
 
-    if (e2.type == ButtonPush &&
-        e2.data == BUTTON_FREEZE &&
-        e1.type != ButtonRelease &&
-        e1.type != ButtonTimeout) {
-      onShiftEnter();
-    }
-
-    switch(e1.type) {
-    case ButtonPush: {
-      button_timeouts_[e1.data].trigger_after(kLongPressTime, {ButtonTimeout, e1.data});
-    } break;
-    case ButtonRelease: {
-      if (e2.type == ButtonPush && e1.data == e2.data) {
-        onButtonPress(static_cast<Button>(e1.data));
+      switch(e1.type) {
+      case ButtonRelease: {
+        if (e2.type == ButtonPush &&
+            e1.data == e2.data) {
+          // Button press
+          if (e1.data == BUTTON_LEARN) {
+            mode_ = LEARN;
+            learn_led_.set_background(Colors::dark_red);
+            osc_.enable_learn();
+            control_.hold_pitch_cv();
+          } else {
+            // press freeze
+          }
+        }
+      } break;
+      case ButtonPush: {
+        button_timeouts_[e1.data].trigger_after(kLongPressTime, {ButtonTimeout, e1.data});
+        if (e1.data == BUTTON_FREEZE) {
+          mode_ = SHIFT;
+        }
+      } break;
+      case SwitchGridSwitched: {
+        params_.grid.mode =
+          e1.data == Switches::UP ? CHORD :
+          e1.data == Switches::MID ? HARM : JUST;
+      } break;
+      case SwitchModSwitched: {
+        params_.modulation.mode =
+          e1.data == Switches::UP ? ONE :
+          e1.data == Switches::MID ? TWO : THREE;
+      } break;
+      case SwitchTwistSwitched: {
+        params_.twist.mode =
+          e1.data == Switches::UP ? FEEDBACK :
+          e1.data == Switches::MID ? PULSAR : DECIMATE;
+      } break;
+      case SwitchWarpSwitched: {
+        params_.warp.mode =
+          e1.data == Switches::UP ? FOLD :
+          e1.data == Switches::MID ? CHEBY : CRUSH;
+      } break;
+      case StartCatchup: {
+        active_catchups_++;
+        freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
+      } break;
+      case EndOfCatchup: {
+        active_catchups_--;
+        freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
+      } break;
+      case GridChanged: {
+        learn_led_.flash(Colors::white);
+      } break;
       }
     } break;
-    case ButtonTimeout: {
-      if (e2.type == ButtonPush && e1.data == e2.data) {
-        onButtonLongPress(static_cast<Button>(e1.data));
+
+    case LEARN: {
+      switch(e1.type) {
+      case GateOn: {
+        if (e1.data == GATE_LEARN) {
+          new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
+        }
+      } break;
+      case NewNote: {
+        osc_.new_note(control_.pitch_cv());
+      } break;
+      case PotMoved: {
+        if (e1.data == ROOT_POT &&
+            e2.type == ButtonPush &&
+            e2.data == BUTTON_LEARN) {
+          mode_ = MANUAL_LEARN;
+          learn_led_.set_glow(Colors::red, 3_f);
+          osc_.enable_pre_listen();
+        }
+      } break;
+      case ButtonRelease: {
+        if (e1.data == BUTTON_LEARN &&
+            e2.type == ButtonPush &&
+            e2.data == BUTTON_LEARN) {
+          mode_ = NORMAL;
+          osc_.disable_learn();
+          control_.release_pitch_cv();
+          freeze_led_.set_background(Colors::black);
+        }
+      } break;
       }
     } break;
-    case GateOn: {
-      if (e1.data == GATE_LEARN)
-        new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
+
+    case SHIFT: {
+      switch(e1.type) {
+      case SwitchWarpSwitched: {
+        freeze_led_.flash(Colors::white);
+        freeze_led_.set_background(Colors::grey);
+        params_.crossfade_factor =
+          e1.data == Switches::UP ? Crossfade::linear :
+          e1.data == Switches::MID ? Crossfade::mid : Crossfade::steep;
+      } break;
+      case SwitchTwistSwitched: {
+        freeze_led_.flash(Colors::white);
+        freeze_led_.set_background(Colors::grey);
+        params_.stereo_mode =
+          e1.data == Switches::UP ? ALTERNATE :
+          e1.data == Switches::MID ? SPLIT : LOWER_REST;
+      } break;
+      case PotMoved: {
+        if (e1.data == GRID_POT) {
+          freeze_led_.set_background(Colors::grey);
+          control_.grid_pot_alternate_function();
+        }
+      }
+      case ButtonRelease: {
+        if (e1.data == BUTTON_FREEZE) {
+          if (e2.type == ButtonPush &&
+              e2.data == BUTTON_FREEZE) {
+            // Freeze press
+            u0_8 freeze_level = u0_8(f(selected_osc_) / f(params_.numOsc));
+            freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
+            osc_.freeze(selected_osc_);
+            selected_osc_++;
+            if (selected_osc_ > params_.numOsc) {
+              selected_osc_ = 0;
+              osc_.unfreeze_all();
+            }
+          } else {
+            mode_ = NORMAL;
+            control_.all_main_function();
+            freeze_led_.set_background(Colors::black);
+          }
+        }
+      } break;
+      case NumOscChanged: {
+        freeze_led_.flash(Colors::white);
+      } break;
+      }
     } break;
-    case GateOff: {
+
+    case MANUAL_LEARN: {
+
+      if (e1.type == ButtonRelease && e1.data == BUTTON_LEARN) {
+        learn_led_.reset_glow();
+        osc_.new_note(control_.pitch_cv());
+      }
+
     } break;
-    case SwitchGridSwitched: onSwitchGridSwitched(static_cast<Switches::State>(e1.data)); break;
-    case SwitchModSwitched: onSwitchModSwitched(static_cast<Switches::State>(e1.data)); break;
-    case SwitchTwistSwitched: onSwitchTwistSwitched(static_cast<Switches::State>(e1.data)); break;
-    case SwitchWarpSwitched: onSwitchWarpSwitched(static_cast<Switches::State>(e1.data)); break;
-    case PotMoved: onPotMoved(static_cast<AdcInput>(e1.data)); break;
-    case NewNote: onNewNote(); break;
-    case GridChanged: onGridChanged(); break;
-    case NumOscChanged: onNumOscChanged(); break;
-    case StartCatchup: onStartCatchup(); break;
-    case EndOfCatchup: onEndOfCatchup(); break;
+
+    case CALIBRATION_OFFSET: {
+      if (e1.type == ButtonRelease &&
+          e1.data == BUTTON_LEARN &&
+          e2.type == ButtonPush &&
+          e2.data == BUTTON_LEARN) {
+        if (control_.CalibrateOffset()) {
+          mode_ = CALIBRATION_SLOPE;
+          learn_led_.set_glow(Colors::dark_magenta, 1_f);
+          freeze_led_.set_glow(Colors::dark_magenta, 1_f);
+        } else {
+          learn_led_.reset_glow();
+          freeze_led_.reset_glow();
+          mode_ = NORMAL;       // calibration failure
+        }
+      } else if (e1.type == ButtonPush &&
+                 e1.data == BUTTON_FREEZE) {
+        learn_led_.reset_glow();
+        freeze_led_.reset_glow();
+        mode_ = NORMAL;         // calibration abort
+      }
+    } break;
+
+    case CALIBRATION_SLOPE: {
+      if (control_.CalibrateSlope()) {
+        learn_led_.flash(Colors::white);
+        freeze_led_.flash(Colors::white);
+      }
+      learn_led_.reset_glow();
+      freeze_led_.reset_glow();
+      mode_ = NORMAL;
+    } break;
     }
   }
 
 public:
   Ui() {
     // Initialize switches to their current positions
-    onSwitchGridSwitched(switches_.get_grid());
-    onSwitchModSwitched(switches_.get_mod());
-    onSwitchTwistSwitched(switches_.get_twist());
-    onSwitchWarpSwitched(switches_.get_warp());
+    Base::put({SwitchGridSwitched, switches_.get_grid()});
+    Base::put({SwitchModSwitched, switches_.get_mod()});
+    Base::put({SwitchTwistSwitched, switches_.get_twist()});
+    Base::put({SwitchWarpSwitched, switches_.get_warp()});
 
     // Enter calibration if Learn is pushed
     if (buttons_.learn_.pushed()) {
-      set_mode(CALIBRATION_OFFSET);
-    } else {
-      set_mode(NORMAL);
+      mode_ = CALIBRATION_OFFSET;
+      learn_led_.set_glow(Colors::red, 2_f);
+      freeze_led_.set_glow(Colors::red, 2_f);
     }
   }
 
@@ -388,9 +359,5 @@ public:
   void Update() {
     learn_led_.Update();
     freeze_led_.Update();
-  }
-
-  void Process() {
-    Base::Process();
   }
 };
