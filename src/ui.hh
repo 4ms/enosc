@@ -135,14 +135,14 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     &control_, &new_note_delay_
   };
 
-  enum class Mode {
+  enum Mode {
     NORMAL,
     SHIFT,
     LEARN,
     MANUAL_LEARN,
     CALIBRATION_OFFSET,
     CALIBRATION_SLOPE,
-  } mode_ = Mode::NORMAL;
+  } mode_ = NORMAL;
 
   uint8_t selected_osc_ = 0;
   uint8_t active_catchups_ = 0;
@@ -151,40 +151,40 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
     // leaving mode
     switch(mode_) {
-    case Mode::LEARN: {
+    case LEARN: {
       osc_.disable_learn();
       control_.release_pitch_cv();
     } break;
-    case Mode::MANUAL_LEARN: {
+    case MANUAL_LEARN: {
       learn_led_.reset_glow();
     } break;
     }
 
     // entering mode
     switch(mode) {
-    case Mode::NORMAL: {
+    case NORMAL: {
       learn_led_.reset_glow();
       learn_led_.set_background(Colors::black);
       freeze_led_.reset_glow();
       freeze_led_.set_background(Colors::black);
     } break;
-    case Mode::SHIFT: {
+    case SHIFT: {
       freeze_led_.set_background(Colors::grey);
     } break;
-    case Mode::LEARN: {
       learn_led_.set_background(Colors::dark_red);
       osc_.enable_learn();
       control_.hold_pitch_cv();
+    case LEARN: {
     } break;
-    case Mode::MANUAL_LEARN: {
+    case MANUAL_LEARN: {
       learn_led_.set_glow(Colors::red, 3_f);
       osc_.enable_pre_listen();
     } break;
-    case Mode::CALIBRATION_OFFSET: {
+    case CALIBRATION_OFFSET: {
       learn_led_.set_glow(Colors::red, 2_f);
       freeze_led_.set_glow(Colors::red, 2_f);
     } break;
-    case Mode::CALIBRATION_SLOPE: {
+    case CALIBRATION_SLOPE: {
       learn_led_.set_glow(Colors::dark_magenta, 1_f);
       freeze_led_.set_glow(Colors::dark_magenta, 1_f);
     } break;
@@ -198,28 +198,28 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   void onButtonPress(Button b) {
     switch(b) {
     case BUTTON_LEARN: {
-      if (mode_ == Mode::CALIBRATION_OFFSET) {
+      if (mode_ == CALIBRATION_OFFSET) {
         if (control_.CalibrateOffset())
-          set_mode(Mode::CALIBRATION_SLOPE);
+          set_mode(CALIBRATION_SLOPE);
         else // calibration failure
-          set_mode(Mode::NORMAL);
-      } else if (mode_ == Mode::CALIBRATION_SLOPE) {
+          set_mode(NORMAL);
+      } else if (mode_ == CALIBRATION_SLOPE) {
         if (control_.CalibrateSlope()) {
           learn_led_.flash(Colors::white);
           freeze_led_.flash(Colors::white);
         }
-        set_mode(Mode::NORMAL);
-      } else if (mode_ == Mode::NORMAL) {
-        set_mode(Mode::LEARN);
-      } else if (mode_ == Mode::LEARN) {
-        set_mode(Mode::NORMAL);
+        set_mode(NORMAL);
+      } else if (mode_ == NORMAL) {
+        set_mode(LEARN);
+      } else if (mode_ == LEARN) {
+        set_mode(NORMAL);
       }
     } break;
     case BUTTON_FREEZE: {
-      if (mode_ == Mode::CALIBRATION_OFFSET ||
-          mode_ == Mode::CALIBRATION_SLOPE) {
-        set_mode(Mode::NORMAL);
-      } else if (mode_ == Mode::NORMAL) {
+      if (mode_ == CALIBRATION_OFFSET ||
+          mode_ == CALIBRATION_SLOPE) {
+        set_mode(NORMAL);
+      } else if (mode_ == NORMAL) {
         u0_8 freeze_level = u0_8(f(selected_osc_) / f(params_.numOsc));
         freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
         osc_.freeze(selected_osc_);
@@ -246,7 +246,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   }
 
   void onSwitchTwistSwitched(Switches::State st) {
-    if (mode_ == Mode::SHIFT) {
+    if (mode_ == SHIFT) {
       freeze_led_.flash(Colors::white);
       params_.stereo_mode =
         st == Switches::UP ? ALTERNATE :
@@ -259,7 +259,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   }
 
   void onSwitchWarpSwitched(Switches::State st) {
-    if (mode_ == Mode::SHIFT) {
+    if (mode_ == SHIFT) {
       params_.crossfade_factor =
         st == Switches::UP ? Crossfade::linear :
         st == Switches::MID ? Crossfade::mid : Crossfade::steep;
@@ -271,21 +271,21 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   }
 
   void onPotMoved(AdcInput input) {
-    if (mode_ == Mode::SHIFT) {
+    if (mode_ == SHIFT) {
       if (input == GRID_POT)
         control_.grid_pot_alternate_function();
-    } else if (mode_ == Mode::LEARN &&
+    } else if (mode_ == LEARN &&
                input == ROOT_POT) {
       // TODO No: onPotMovedWithButtonPress
-      set_mode(Mode::MANUAL_LEARN);
+      set_mode(MANUAL_LEARN);
     }
   }
 
   void onNewNote() { osc_.new_note(control_.pitch_cv()); }
-  void onShiftEnter() { set_mode(Mode::SHIFT); }
+  void onShiftEnter() { set_mode(SHIFT); }
   void onShiftExit() {
     control_.all_main_function();
-    set_mode(Mode::NORMAL);
+    set_mode(NORMAL);
   }
   void onGridChanged() { learn_led_.flash(Colors::white); }
   void onNumOscChanged() { freeze_led_.flash(Colors::white); }
@@ -306,7 +306,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
     // exit shift
     // TODO integrate into switch
-    if (mode_ == Mode::SHIFT &&
+    if (mode_ == SHIFT &&
         e1.type == ButtonRelease &&
         e1.data == BUTTON_FREEZE) {
       onShiftExit();
@@ -315,11 +315,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
     // exit manual learn
     // TODO integrate into switch
-    if (mode_ == Mode::MANUAL_LEARN &&
+    if (mode_ == MANUAL_LEARN &&
         e1.type == ButtonRelease &&
         e1.data == BUTTON_LEARN) {
       // TODO Problem: resets the pre-scale
-      set_mode(Mode::LEARN);
+      set_mode(LEARN);
     }
 
     if (e2.type == ButtonPush &&
@@ -372,9 +372,9 @@ public:
 
     // Enter calibration if Learn is pushed
     if (buttons_.learn_.pushed()) {
-      set_mode(Mode::CALIBRATION_OFFSET);
+      set_mode(CALIBRATION_OFFSET);
     } else {
-      set_mode(Mode::NORMAL);
+      set_mode(NORMAL);
     }
   }
 
