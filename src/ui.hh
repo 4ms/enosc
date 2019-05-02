@@ -202,6 +202,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       } break;
       case EndOfCatchup: {
         active_catchups_--;
+        freeze_led_.reset_glow();
         freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
       } break;
       case GridChanged: {
