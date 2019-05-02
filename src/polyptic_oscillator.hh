@@ -98,7 +98,7 @@ class Oscillators : Nocopy {
       f freq2 = Freq::of_pitch(p.p2).repr();
 
       root += spread;
-      detune *= 0.9_f;
+      detune *= -1.2_f;
       detune_accum += detune;
 
       return {freq1, freq2, p.crossfade};
