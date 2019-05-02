@@ -1,4 +1,3 @@
-#include "hal.hh"
 #include "codec.hh"
 #include "system.hh"
 #include "debug.hh"

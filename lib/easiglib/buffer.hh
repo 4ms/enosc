@@ -1,10 +1,8 @@
-#include <initializer_list>
+#pragma once
 
 #include "util.hh"
 #include "signal.hh"
 #include "numtypes.hh"
-
-#pragma once
 
 template<class T>
 int binary_search(T const x, T const array[], int const size) {

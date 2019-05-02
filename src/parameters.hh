@@ -1,6 +1,6 @@
-#include "numtypes.hh"
-
 #pragma once
+
+#include "numtypes.hh"
 
 constexpr struct Frame {
   s1_15 l = 0._s1_15;
