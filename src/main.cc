@@ -7,6 +7,8 @@
 
 // #define BYPASS
 
+Debug debug;
+
 struct Main :
   System<kUiUpdateRate, Main>,
   DynamicData,

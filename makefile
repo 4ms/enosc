@@ -13,6 +13,7 @@ SRCS = \
 	src/drivers/codec.cc \
 	src/drivers/leds.cc \
 	src/drivers/buttons.cc \
+	src/drivers/debug.cc \
 	src/dynamic_data.cc \
 	src/main.cc \
 
