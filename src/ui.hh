@@ -296,6 +296,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       if (e1.type == ButtonRelease && e1.data == BUTTON_LEARN) {
         learn_led_.reset_glow();
         osc_.new_note(control_.pitch_cv());
+        mode_ = LEARN;
       }
 
     } break;
