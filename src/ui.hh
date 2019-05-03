@@ -103,13 +103,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
   Parameters params_;
   Leds leds_;
-  PolypticOscillator<block_size> osc_ {
-    params_,
-    [this](bool success) {
-      // on exit of Learn
-      if(success) learn_led_.flash(Colors::magenta);
-    }
-  };
+  PolypticOscillator<block_size> osc_ {params_};
 
   static constexpr int kProcessRate = kSampleRate / block_size;
   static constexpr int kLongPressTime = 1.0f * kProcessRate; // sec
@@ -282,7 +276,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e2.type == ButtonPush &&
             e2.data == BUTTON_LEARN) {
           mode_ = NORMAL;
-          osc_.disable_learn();
+          bool success = osc_.disable_learn();
+          if(success) learn_led_.flash(Colors::magenta);
           control_.release_pitch_cv();
           learn_led_.set_background(Colors::black);
         }
