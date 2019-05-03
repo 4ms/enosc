@@ -54,6 +54,8 @@ struct Parameters {
   } warp;
 
   SplitMode stereo_mode = ALTERNATE;
+  SplitMode freeze_mode = ALTERNATE;
+
   f crossfade_factor = Crossfade::mid;
 };
 

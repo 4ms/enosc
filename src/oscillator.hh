@@ -77,7 +77,6 @@ struct FrequencyPair { f freq1, freq2, crossfade; };
 
 class OscillatorPair : Nocopy {
   Oscillator osc_[2];
-  bool frozen = false;
   FrequencyPair previous_freq;
 
   // simple linear piecewise function: 0->1, 0.25->1, 0.5->0
@@ -85,10 +84,9 @@ class OscillatorPair : Nocopy {
     return (2_f - 4_f * factor).clip(0_f,1_f);
   }
 public:
-  void set_freeze(bool b) { frozen = b; }
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(FrequencyPair freq, f crossfade_factor,
+  void Process(FrequencyPair freq, bool frozen, f crossfade_factor,
                f const twist, f const warp, f const amplitude, f const modulation,
                Block<u0_16, block_size> mod_in, Block<u0_16, block_size> mod_out,
                Block<f, block_size> sum_output) {

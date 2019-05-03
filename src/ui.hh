@@ -144,7 +144,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     CALIBRATION_SLOPE,
   } mode_ = NORMAL;
 
-  uint8_t selected_osc_ = 0;
   uint8_t active_catchups_ = 0;
 
   void Handle(typename Base::EventStack stack) {
@@ -159,14 +158,12 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       case ButtonRelease: {
         if (e2.type == ButtonPush &&
             e1.data == e2.data) {
-          // Button press
+          // Learn pressed
           if (e1.data == BUTTON_LEARN) {
             mode_ = LEARN;
             learn_led_.set_background(Colors::dark_red);
             osc_.enable_learn();
             control_.hold_pitch_cv();
-          } else {
-            // press freeze
           }
         }
       } break;
@@ -245,7 +242,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
     case SHIFT: {
       switch(e1.type) {
-      case SwitchWarp: {
+      case SwitchGrid: {
         freeze_led_.flash(Colors::white);
         freeze_led_.set_background(Colors::grey);
         params_.crossfade_factor =
@@ -259,6 +256,13 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e1.data == Switches::UP ? ALTERNATE :
           e1.data == Switches::MID ? LOW_HIGH : LOWEST_REST;
       } break;
+      case SwitchWarp: {
+        freeze_led_.flash(Colors::white);
+        freeze_led_.set_background(Colors::grey);
+        params_.freeze_mode =
+          e1.data == Switches::UP ? ALTERNATE :
+          e1.data == Switches::MID ? LOW_HIGH : LOWEST_REST;
+      } break;
       case PotMove: {
         if (e1.data == POT_GRID) {
           freeze_led_.set_background(Colors::grey);
@@ -269,19 +273,14 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         if (e1.data == BUTTON_FREEZE) {
           if (e2.type == ButtonPush &&
               e2.data == BUTTON_FREEZE) {
-            // Freeze press
-            u0_8 freeze_level = u0_8(f(selected_osc_) / f(params_.numOsc));
-            freeze_led_.set_background(Colors::black.blend(Colors::blue, freeze_level));
-            osc_.freeze(selected_osc_);
-            selected_osc_++;
-            if (selected_osc_ > params_.numOsc) {
-              selected_osc_ = 0;
-              osc_.unfreeze_all();
-            }
+            // Freeze pressed
+            osc_.set_freeze(!osc_.frozen());
+            freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+            mode_ = NORMAL;
           } else {
             mode_ = NORMAL;
             control_.all_main_function();
-            freeze_led_.set_background(Colors::black);
+            freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
           }
         }
       } break;

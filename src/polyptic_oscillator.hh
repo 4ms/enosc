@@ -11,8 +11,9 @@ class Oscillators : Nocopy {
   OscillatorPair oscs_[kMaxNumOsc];
   u0_16 modulation_blocks_[kMaxNumOsc+1][block_size];
   u0_16 dummy_block_[block_size];
+  bool frozen_ = false;
 
-  static inline bool pick_output(SplitMode mode, int i, int numOsc) {
+  static inline bool pick_split(SplitMode mode, int i, int numOsc) {
     return
       mode == ALTERNATE ? i&1 :
       mode == LOW_HIGH ? i<numOsc/2 :
@@ -42,8 +43,10 @@ class Oscillators : Nocopy {
     }
   }
 
-  using processor_t = void (OscillatorPair::*)(FrequencyPair, f, f, f, f, f,
-                                               Block<u0_16, block_size>, Block<u0_16, block_size>, Block<f, block_size>);
+  using processor_t = void (OscillatorPair::*)(FrequencyPair, bool, f, f, f, f, f,
+                                               Block<u0_16, block_size>,
+                                               Block<u0_16, block_size>,
+                                               Block<f, block_size>);
 
   processor_t pick_processor(TwistMode t, WarpMode m) {
     static processor_t tab[3][3] = {
@@ -122,20 +125,21 @@ public:
     f crossfade_factor = params.crossfade_factor;
     int numOsc = params.numOsc;
     SplitMode stereo_mode = params.stereo_mode;
+    SplitMode freeze_mode = params.freeze_mode;
     ModulationMode modulation_mode = params.modulation.mode;
 
     for (int i=0; i<numOsc; ++i) {
       FrequencyPair p = frequency.Next(); // 3%
       f amp = amplitude.Next();
-      Block<f, block_size> out =
-        pick_output(stereo_mode, i, numOsc) ? out1 : out2;
+      Block<f, block_size> out = pick_split(stereo_mode, i, numOsc) ? out1 : out2;
       auto [in_block, out_block] = pick_modulation_blocks(modulation_mode, i, numOsc);
       Block<u0_16, block_size> mod_in(in_block);
       Block<u0_16, block_size> mod_out(out_block);
       // TODO cleanup: avoid manipulating bare pointers to buffers
       // need to declare the Blocks globally, ie. with an allocating constructor
       std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
-      (oscs_[i].*process)(p, crossfade_factor, twist, warp, amp, modulation,
+      bool frozen = pick_split(freeze_mode, i, numOsc) && frozen_;
+      (oscs_[i].*process)(p, frozen, crossfade_factor, twist, warp, amp, modulation,
                          mod_in, mod_out, out);
     }
 
@@ -173,7 +177,7 @@ public:
       // TODO cleanup: avoid manipulating bare pointers to buffers
       // need to declare the Blocks globally, ie. with an allocating constructor
       std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
-      (oscs_[i].*process)(p, 0_f, twist, warp, 1_f, modulation, mod_in, mod_out, out);
+      (oscs_[i].*process)(p, false, 0_f, twist, warp, 1_f, modulation, mod_in, mod_out, out);
     }
 
     f atten = 1_f / f(grid.size());
@@ -186,18 +190,12 @@ public:
     }
   }
 
-
-  void set_freeze(int voiceNr) {
-    oscs_[voiceNr].set_freeze(true);
-  }
-
-  void unfreeze_all() {
-    for (auto& o : oscs_) o.set_freeze(false);
-  }
+  void set_freeze (bool frozen) { frozen_ = frozen; }
+  bool frozen() { return frozen_; }
 };
 
 template<int block_size>
-class PolypticOscillator : Oscillators<block_size> {
+class PolypticOscillator : public Oscillators<block_size> {
   using Base = Oscillators<block_size>;
   Parameters& params_;
   Quantizer quantizer_;
@@ -229,9 +227,6 @@ public:
     bool success = pre_grid_.add(x);
     onNewNote_.notify(success);
   }
-
-  void freeze(int osc) { Base::set_freeze(osc); }
-  void unfreeze_all() { Base::unfreeze_all(); }
 
   void Process(Block<Frame, block_size> out) {
     f buffer[2][block_size];
