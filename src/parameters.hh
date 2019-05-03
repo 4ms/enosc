@@ -17,7 +17,7 @@ enum WarpMode { FOLD, CHEBY, CRUSH };
 enum GridMode { CHORD, HARM, JUST };
 enum ModulationMode { ONE, TWO, THREE };
 
-enum StereoMode { ALTERNATE, SPLIT, LOWER_REST };
+enum SplitMode { ALTERNATE, LOW_HIGH, LOWEST_REST };
 
 struct Crossfade {
   static constexpr f linear = 0._f;
@@ -53,7 +53,7 @@ struct Parameters {
     f value;                    // 0..1
   } warp;
 
-  StereoMode stereo_mode = ALTERNATE;
+  SplitMode stereo_mode = ALTERNATE;
   f crossfade_factor = Crossfade::mid;
 };
 

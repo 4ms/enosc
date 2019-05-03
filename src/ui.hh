@@ -257,7 +257,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         freeze_led_.set_background(Colors::grey);
         params_.stereo_mode =
           e1.data == Switches::UP ? ALTERNATE :
-          e1.data == Switches::MID ? SPLIT : LOWER_REST;
+          e1.data == Switches::MID ? LOW_HIGH : LOWEST_REST;
       } break;
       case PotMove: {
         if (e1.data == POT_GRID) {
