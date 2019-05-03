@@ -208,38 +208,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       }
     } break;
 
-    case LEARN: {
-      switch(e1.type) {
-      case GateOn: {
-        if (e1.data == GATE_LEARN) {
-          new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
-        }
-      } break;
-      case NewNote: {
-        osc_.new_note(control_.pitch_cv());
-      } break;
-      case PotMove: {
-        if (e1.data == POT_ROOT &&
-            e2.type == ButtonPush &&
-            e2.data == BUTTON_LEARN) {
-          mode_ = MANUAL_LEARN;
-          learn_led_.set_glow(Colors::red, 3_f);
-          osc_.enable_pre_listen();
-        }
-      } break;
-      case ButtonRelease: {
-        if (e1.data == BUTTON_LEARN &&
-            e2.type == ButtonPush &&
-            e2.data == BUTTON_LEARN) {
-          mode_ = NORMAL;
-          osc_.disable_learn();
-          control_.release_pitch_cv();
-          learn_led_.set_background(Colors::black);
-        }
-      } break;
-      }
-    } break;
-
     case SHIFT: {
       switch(e1.type) {
       case SwitchGrid: {
@@ -286,6 +254,38 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       } break;
       case NumOscChange: {
         freeze_led_.flash(Colors::white);
+      } break;
+      }
+    } break;
+
+    case LEARN: {
+      switch(e1.type) {
+      case GateOn: {
+        if (e1.data == GATE_LEARN) {
+          new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
+        }
+      } break;
+      case NewNote: {
+        osc_.new_note(control_.pitch_cv());
+      } break;
+      case PotMove: {
+        if (e1.data == POT_ROOT &&
+            e2.type == ButtonPush &&
+            e2.data == BUTTON_LEARN) {
+          mode_ = MANUAL_LEARN;
+          learn_led_.set_glow(Colors::red, 3_f);
+          osc_.enable_pre_listen();
+        }
+      } break;
+      case ButtonRelease: {
+        if (e1.data == BUTTON_LEARN &&
+            e2.type == ButtonPush &&
+            e2.data == BUTTON_LEARN) {
+          mode_ = NORMAL;
+          osc_.disable_learn();
+          control_.release_pitch_cv();
+          learn_led_.set_background(Colors::black);
+        }
       } break;
       }
     } break;
