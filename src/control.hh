@@ -88,7 +88,7 @@ public:
     }
     x = filter_.Process(x);
     if (MovementDetector::Process(x))
-      put({PotMoved, INPUT});
+      put({PotMove, INPUT});
     return x;
   }
 };
@@ -203,25 +203,25 @@ class Control : public EventSource<Event> {
 
   Adc adc_;
 
-  PotCVCombiner<PotConditioner<DETUNE_POT, Law::LINEAR, NoFilter>,
+  PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>> detune_ {adc_};
-  PotCVCombiner<PotConditioner<WARP_POT, Law::LINEAR, NoFilter>,
-                CVConditioner<WARP_CV>, QuadraticOnePoleLp<1>> warp_ {adc_};
-  PotCVCombiner<PotConditioner<TILT_POT, Law::LINEAR, NoFilter>,
-                CVConditioner<TILT_CV>, QuadraticOnePoleLp<1>> tilt_ {adc_};
-  PotCVCombiner<PotConditioner<TWIST_POT, Law::LINEAR, NoFilter>,
-                CVConditioner<TWIST_CV>, QuadraticOnePoleLp<1>> twist_ {adc_};
+  PotCVCombiner<PotConditioner<POT_WARP, Law::LINEAR, NoFilter>,
+                CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>> warp_ {adc_};
+  PotCVCombiner<PotConditioner<POT_TILT, Law::LINEAR, NoFilter>,
+                CVConditioner<CV_TILT>, QuadraticOnePoleLp<1>> tilt_ {adc_};
+  PotCVCombiner<PotConditioner<POT_TWIST, Law::LINEAR, NoFilter>,
+                CVConditioner<CV_TWIST>, QuadraticOnePoleLp<1>> twist_ {adc_};
   PotCVCombiner<
-    DualFunctionPotConditioner<GRID_POT, Law::LINEAR,
+    DualFunctionPotConditioner<POT_GRID, Law::LINEAR,
                                QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<GRID_CV>, QuadraticOnePoleLp<1>> grid_ {adc_};
-  PotCVCombiner<PotConditioner<MOD_POT, Law::LINEAR, NoFilter>,
-                CVConditioner<MOD_CV>, QuadraticOnePoleLp<1>> mod_ {adc_};
-  PotCVCombiner<PotConditioner<SPREAD_POT, Law::LINEAR, NoFilter>,
-                CVConditioner<SPREAD_CV>, QuadraticOnePoleLp<1>> spread_ {adc_};
+                CVConditioner<CV_GRID>, QuadraticOnePoleLp<1>> grid_ {adc_};
+  PotCVCombiner<PotConditioner<POT_MOD, Law::LINEAR, NoFilter>,
+                CVConditioner<CV_MOD>, QuadraticOnePoleLp<1>> mod_ {adc_};
+  PotCVCombiner<PotConditioner<POT_SPREAD, Law::LINEAR, NoFilter>,
+                CVConditioner<CV_SPREAD>, QuadraticOnePoleLp<1>> spread_ {adc_};
 
-  PotConditioner<PITCH_POT, Law::LINEAR, QuadraticOnePoleLp<2>> pitch_pot_ {adc_};
-  PotConditioner<ROOT_POT, Law::LINEAR, QuadraticOnePoleLp<2>> root_pot_ {adc_};
+  PotConditioner<POT_PITCH, Law::LINEAR, QuadraticOnePoleLp<2>> pitch_pot_ {adc_};
+  PotConditioner<POT_ROOT, Law::LINEAR, QuadraticOnePoleLp<2>> root_pot_ {adc_};
   AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
   AudioCVConditioner<block_size> root_cv_  {0.24319829_f, 97.4769897_f};
 
@@ -314,13 +314,13 @@ public:
       grid *= 9_f;                           // [0..9]
       grid += 0.5_f;                         // [0.5..9.5]
       int g = grid.floor();
-      if (g != params_.grid.value) put({GridChanged, g});
+      if (g != params_.grid.value) put({GridChange, g});
       params_.grid.value = g; // [0..9]
     } else {
       grid *= f(kMaxNumOsc-1); // [0..max+1]
       grid += 1.5_f;           // [1.5..max+0.5]
       int n = grid.floor();    // [1..max]
-      if (n != params_.numOsc) put({NumOscChanged, n});
+      if (n != params_.numOsc) put({NumOscChange, n});
       params_.numOsc = n;
     }
 

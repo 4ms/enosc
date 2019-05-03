@@ -73,21 +73,21 @@ struct SwitchesEventSource : EventSource<Event>, private Switches {
   void Poll(std::function<void(Event)> const& put) {
     Switches::Debounce();
 
-    if (Switches::grid_.just_switched_up()) put({SwitchGridSwitched, UP});
-    if (Switches::grid_.just_switched_mid()) put({SwitchGridSwitched, MID});
-    if (Switches::grid_.just_switched_down()) put({SwitchGridSwitched, DOWN});
+    if (Switches::grid_.just_switched_up()) put({SwitchGrid, UP});
+    if (Switches::grid_.just_switched_mid()) put({SwitchGrid, MID});
+    if (Switches::grid_.just_switched_down()) put({SwitchGrid, DOWN});
 
-    if (Switches::mod_.just_switched_up()) put({SwitchModSwitched, UP});
-    if (Switches::mod_.just_switched_mid()) put({SwitchModSwitched, MID});
-    if (Switches::mod_.just_switched_down()) put({SwitchModSwitched, DOWN});
+    if (Switches::mod_.just_switched_up()) put({SwitchMod, UP});
+    if (Switches::mod_.just_switched_mid()) put({SwitchMod, MID});
+    if (Switches::mod_.just_switched_down()) put({SwitchMod, DOWN});
 
-    if (Switches::twist_.just_switched_up()) put({SwitchTwistSwitched, UP});
-    if (Switches::twist_.just_switched_mid()) put({SwitchTwistSwitched, MID});
-    if (Switches::twist_.just_switched_down()) put({SwitchTwistSwitched, DOWN});
+    if (Switches::twist_.just_switched_up()) put({SwitchTwist, UP});
+    if (Switches::twist_.just_switched_mid()) put({SwitchTwist, MID});
+    if (Switches::twist_.just_switched_down()) put({SwitchTwist, DOWN});
 
-    if (Switches::warp_.just_switched_up()) put({SwitchWarpSwitched, UP});
-    if (Switches::warp_.just_switched_mid()) put({SwitchWarpSwitched, MID});
-    if (Switches::warp_.just_switched_down()) put({SwitchWarpSwitched, DOWN});
+    if (Switches::warp_.just_switched_up()) put({SwitchWarp, UP});
+    if (Switches::warp_.just_switched_mid()) put({SwitchWarp, MID});
+    if (Switches::warp_.just_switched_down()) put({SwitchWarp, DOWN});
   }
 
   Switches::State get_grid() { return Switches::grid_.get(); }
@@ -176,22 +176,22 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           mode_ = SHIFT;
         }
       } break;
-      case SwitchGridSwitched: {
+      case SwitchGrid: {
         params_.grid.mode =
           e1.data == Switches::UP ? CHORD :
           e1.data == Switches::MID ? HARM : JUST;
       } break;
-      case SwitchModSwitched: {
+      case SwitchMod: {
         params_.modulation.mode =
           e1.data == Switches::UP ? ONE :
           e1.data == Switches::MID ? TWO : THREE;
       } break;
-      case SwitchTwistSwitched: {
+      case SwitchTwist: {
         params_.twist.mode =
           e1.data == Switches::UP ? FEEDBACK :
           e1.data == Switches::MID ? PULSAR : DECIMATE;
       } break;
-      case SwitchWarpSwitched: {
+      case SwitchWarp: {
         params_.warp.mode =
           e1.data == Switches::UP ? FOLD :
           e1.data == Switches::MID ? CHEBY : CRUSH;
@@ -205,7 +205,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         freeze_led_.reset_glow();
         freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
       } break;
-      case GridChanged: {
+      case GridChange: {
         learn_led_.flash(Colors::white);
       } break;
       }
@@ -221,8 +221,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       case NewNote: {
         osc_.new_note(control_.pitch_cv());
       } break;
-      case PotMoved: {
-        if (e1.data == ROOT_POT &&
+      case PotMove: {
+        if (e1.data == POT_ROOT &&
             e2.type == ButtonPush &&
             e2.data == BUTTON_LEARN) {
           mode_ = MANUAL_LEARN;
@@ -245,22 +245,22 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
     case SHIFT: {
       switch(e1.type) {
-      case SwitchWarpSwitched: {
+      case SwitchWarp: {
         freeze_led_.flash(Colors::white);
         freeze_led_.set_background(Colors::grey);
         params_.crossfade_factor =
           e1.data == Switches::UP ? Crossfade::linear :
           e1.data == Switches::MID ? Crossfade::mid : Crossfade::steep;
       } break;
-      case SwitchTwistSwitched: {
+      case SwitchTwist: {
         freeze_led_.flash(Colors::white);
         freeze_led_.set_background(Colors::grey);
         params_.stereo_mode =
           e1.data == Switches::UP ? ALTERNATE :
           e1.data == Switches::MID ? SPLIT : LOWER_REST;
       } break;
-      case PotMoved: {
-        if (e1.data == GRID_POT) {
+      case PotMove: {
+        if (e1.data == POT_GRID) {
           freeze_led_.set_background(Colors::grey);
           control_.grid_pot_alternate_function();
         }
@@ -285,7 +285,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           }
         }
       } break;
-      case NumOscChanged: {
+      case NumOscChange: {
         freeze_led_.flash(Colors::white);
       } break;
       }
@@ -343,10 +343,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 public:
   Ui() {
     // Initialize switches to their current positions
-    Base::put({SwitchGridSwitched, switches_.get_grid()});
-    Base::put({SwitchModSwitched, switches_.get_mod()});
-    Base::put({SwitchTwistSwitched, switches_.get_twist()});
-    Base::put({SwitchWarpSwitched, switches_.get_warp()});
+    Base::put({SwitchGrid, switches_.get_grid()});
+    Base::put({SwitchMod, switches_.get_mod()});
+    Base::put({SwitchTwist, switches_.get_twist()});
+    Base::put({SwitchWarp, switches_.get_warp()});
 
     // Enter calibration if Learn is pushed
     if (buttons_.learn_.pushed()) {

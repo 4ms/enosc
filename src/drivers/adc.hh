@@ -4,11 +4,11 @@
 #include "dsp.hh"
 
 enum AdcInput {
-  WARP_POT, DETUNE_POT, MOD_POT,
-  ROOT_POT, GRID_POT, PITCH_POT,
-  SPREAD_POT, TILT_POT, TWIST_POT,
-  SPREAD_CV, WARP_CV, TWIST_CV,
-  TILT_CV, GRID_CV, MOD_CV,
+  POT_WARP, POT_DETUNE, POT_MOD,
+  POT_ROOT, POT_GRID, POT_PITCH,
+  POT_SPREAD, POT_TILT, POT_TWIST,
+  CV_SPREAD, CV_WARP, CV_TWIST,
+  CV_TILT, CV_GRID, CV_MOD,
 };
 
 class Adc : Nocopy {
@@ -32,23 +32,23 @@ public:
 
   u0_16 get(AdcInput i) {
     switch(i) {
-    case WARP_POT: return values[R_WARP_POT];
-    case DETUNE_POT: return values[R_DETUNE_POT];
-    case MOD_POT: return values[R_MOD_POT];
-    case ROOT_POT: return values[R_ROOT_POT];
-    case GRID_POT: return values[R_GRID_POT];
-    case PITCH_POT: return values[R_PITCH_POT];
-    case SPREAD_POT: return values[R_SPREAD_POT];
-    case TILT_POT: return values[R_TILT_POT];
-    case TWIST_POT: return values[R_TWIST_POT];
-    case SPREAD_CV: return
+    case POT_WARP: return values[R_WARP_POT];
+    case POT_DETUNE: return values[R_DETUNE_POT];
+    case POT_MOD: return values[R_MOD_POT];
+    case POT_ROOT: return values[R_ROOT_POT];
+    case POT_GRID: return values[R_GRID_POT];
+    case POT_PITCH: return values[R_PITCH_POT];
+    case POT_SPREAD: return values[R_SPREAD_POT];
+    case POT_TILT: return values[R_TILT_POT];
+    case POT_TWIST: return values[R_TWIST_POT];
+    case CV_SPREAD: return
           u0_16::wrap((u16_16(values[R_SPREAD_CV_1]) +
                        u16_16(values[R_SPREAD_CV_2])).div2<1>());
-    case WARP_CV: return values[R_WARP_CV];
-    case TWIST_CV: return values[R_TWIST_CV];
-    case TILT_CV: return values[R_TILT_CV];
-    case GRID_CV: return values[R_GRID_CV];
-    case MOD_CV: return values[R_MOD_CV];
+    case CV_WARP: return values[R_WARP_CV];
+    case CV_TWIST: return values[R_TWIST_CV];
+    case CV_TILT: return values[R_TILT_CV];
+    case CV_GRID: return values[R_GRID_CV];
+    case CV_MOD: return values[R_MOD_CV];
     default: return 0._u0_16;
     }
   }
