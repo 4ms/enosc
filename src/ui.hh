@@ -145,6 +145,16 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     case NORMAL: {
 
       switch(e1.type) {
+      case GateOn: {
+        if (e1.data == GATE_FREEZE)
+          osc_.set_freeze(!osc_.frozen());
+          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+      } break;
+      case GateOff: {
+        if (e1.data == GATE_FREEZE)
+          osc_.set_freeze(!osc_.frozen());
+          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+      } break;
       case ButtonRelease: {
         if (e2.type == ButtonPush &&
             e1.data == e2.data) {
@@ -200,6 +210,16 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
     case SHIFT: {
       switch(e1.type) {
+      case GateOn: {
+        if (e1.data == GATE_FREEZE)
+          osc_.set_freeze(!osc_.frozen());
+          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+      } break;
+      case GateOff: {
+        if (e1.data == GATE_FREEZE)
+          osc_.set_freeze(!osc_.frozen());
+          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+      } break;
       case SwitchGrid: {
         freeze_led_.flash(Colors::white);
         freeze_led_.set_background(Colors::grey);
@@ -253,6 +273,15 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       case GateOn: {
         if (e1.data == GATE_LEARN) {
           new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
+        } else if (e1.data == GATE_FREEZE) {
+          osc_.set_freeze(!osc_.frozen());
+          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+        }
+      } break;
+      case GateOff: {
+        if (e1.data == GATE_FREEZE) {
+          osc_.set_freeze(!osc_.frozen());
+          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
         }
       } break;
       case NewNote: {
