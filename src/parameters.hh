@@ -57,6 +57,8 @@ struct Parameters {
   SplitMode freeze_mode = ALTERNATE;
 
   f crossfade_factor = Crossfade::mid;
+
+  f new_note;
 };
 
 enum EventType {

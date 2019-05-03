@@ -229,6 +229,8 @@ class Control : public EventSource<Event> {
 
   Sampler<f> pitch_cv_sampler_;
 
+  bool new_note_tracking;
+
 public:
 
   Control(Parameters& params) :
@@ -329,6 +331,9 @@ public:
     root += root_cv_.last();
     params_.root = root.max(0_f);
 
+    if (new_note_tracking) {
+      params_.new_note = params_.root;
+    }
 
     f pitch = pitch_pot_.Process(put);
     pitch *= kPitchPotRange;                               // 0..range
@@ -354,6 +359,8 @@ public:
   void all_main_function() {
     grid_pot_main_function();
   }
+
+  void set_new_note_tracking(bool b) { new_note_tracking = b; }
 
   bool CalibrateOffset() {
     return pitch_cv_.calibrate_offset()

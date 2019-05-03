@@ -155,7 +155,7 @@ public:
     }
   }
 
-  void ProcessPreListen(Parameters const &params, PreGrid const &grid,
+  void ProcessPreListen(Parameters const &params, PreGrid &grid,
                Block<f, block_size> out1, Block<f, block_size> out2) {
     out1.fill(0_f);
     out2.fill(0_f);
@@ -165,6 +165,8 @@ public:
     f warp = params.warp.value;
     f modulation = params.modulation.value;
     ModulationMode modulation_mode = params.modulation.mode;
+
+    grid.set_last(params.new_note);
 
     for (int i=0; i<grid.size(); ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();

@@ -64,6 +64,7 @@ public:
   int size() const { return size_; }
   void clear() { size_ = 0; }
   f get(int i) const { return grid_[i]; }
+  void set_last(f const x) { grid_[size_-1] = x; }
 
   // do not call if size==0
   bool copy_to(Grid *g) {

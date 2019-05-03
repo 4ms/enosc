@@ -274,7 +274,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e2.data == BUTTON_LEARN) {
           mode_ = MANUAL_LEARN;
           learn_led_.set_glow(Colors::red, 3_f);
+          osc_.new_note(0_f);
           osc_.enable_pre_listen();
+          control_.set_new_note_tracking(true);
         }
       } break;
       case ButtonRelease: {
@@ -294,7 +296,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
       if (e1.type == ButtonRelease && e1.data == BUTTON_LEARN) {
         learn_led_.reset_glow();
-        osc_.new_note(control_.pitch_cv());
+        control_.set_new_note_tracking(false);
         mode_ = LEARN;
       }
 
