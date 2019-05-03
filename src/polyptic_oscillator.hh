@@ -164,7 +164,6 @@ public:
     f twist = params.twist.value;
     f warp = params.warp.value;
     f modulation = params.modulation.value;
-    SplitMode stereo_mode = params.stereo_mode;
     ModulationMode modulation_mode = params.modulation.mode;
 
     for (int i=0; i<grid.size(); ++i) {
@@ -181,12 +180,11 @@ public:
     }
 
     f atten = 1_f / f(grid.size());
-    atten *= 0.5_f + (0.5_f + Data::normalization_factors[grid.size()]);
-    f atten2 = stereo_mode == LOWEST_REST ? atten * 0.5_f : atten;
+    atten *= 1_f + Data::normalization_factors[grid.size()];
 
     for (auto [o1, o2] : zip(out1, out2)) {
       o1 *= atten;
-      o2 *= atten2;
+      o2 *= atten;
     }
   }
 
