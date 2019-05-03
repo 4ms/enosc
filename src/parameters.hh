@@ -22,7 +22,7 @@ enum SplitMode { ALTERNATE, LOW_HIGH, LOWEST_REST };
 struct Crossfade {
   static constexpr f linear = 0._f;
   static constexpr f mid = 0.2_f;
-  static constexpr f steep = 0.4_f;
+  static constexpr f steep = 0.45_f;
 };
 
 struct Parameters {
