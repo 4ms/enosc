@@ -170,7 +170,7 @@ public:
     for (int i=0; i<grid.size(); ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
       FrequencyPair p = {freq, freq, 0_f};
-      Block<f, block_size> out = pick_output(stereo_mode, i, grid.size()) ? out1 : out2;
+      Block<f, block_size> out = i&1 ? out1 : out2; // alternate
       auto [in_block, out_block] = pick_modulation_blocks(modulation_mode, i, grid.size());
       Block<u0_16, block_size> mod_in(in_block);
       Block<u0_16, block_size> mod_out(out_block);
