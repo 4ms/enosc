@@ -324,13 +324,18 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     } break;
 
     case CALIBRATION_SLOPE: {
-      if (control_.CalibrateSlope()) {
-        learn_led_.flash(Colors::white);
-        freeze_led_.flash(Colors::white);
+      if (e1.type == ButtonRelease &&
+          e1.data == BUTTON_LEARN &&
+          e2.type == ButtonPush &&
+          e2.data == BUTTON_LEARN) {
+        if (control_.CalibrateSlope()) {
+          learn_led_.flash(Colors::white);
+          freeze_led_.flash(Colors::white);
+        }
+        learn_led_.reset_glow();
+        freeze_led_.reset_glow();
+        mode_ = NORMAL;
       }
-      learn_led_.reset_glow();
-      freeze_led_.reset_glow();
-      mode_ = NORMAL;
     } break;
     }
   }
