@@ -3,7 +3,7 @@
 #include "buffer.hh"
 
 constexpr const int kGridNr = 10;
-constexpr const int kMaxGridSize = 32;
+constexpr const int kMaxGridSize = 2 * kMaxNumOsc;
 constexpr const f kGridUnicityThreshold = 0.1_f;
 
 struct PitchPair {
