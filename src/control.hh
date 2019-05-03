@@ -225,15 +225,14 @@ class Control : public EventSource<Event> {
   AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
   AudioCVConditioner<block_size> root_cv_  {0.24319829_f, 97.4769897_f};
 
-  PolypticOscillator<block_size> &osc_;
   Parameters& params_;
 
   Sampler<f> pitch_cv_sampler_;
 
 public:
 
-  Control(PolypticOscillator<block_size> &osc, Parameters& params) :
-    osc_(osc), params_(params) {}
+  Control(Parameters& params) :
+    params_(params) {}
 
   void ProcessCodecInput(Block<Frame, block_size> codec_in) {
 

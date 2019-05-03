@@ -127,7 +127,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   ButtonsEventSource buttons_;
   GatesEventSource gates_;
   SwitchesEventSource switches_;
-  Control<block_size> control_ {osc_, params_};
+  Control<block_size> control_ {params_};
 
   EventSource<Event>* sources_[7] = {
     &buttons_, &gates_, &switches_,
