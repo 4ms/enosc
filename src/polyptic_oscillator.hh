@@ -210,11 +210,9 @@ class PolypticOscillator : public Oscillators<block_size> {
 public:
   PolypticOscillator(
     Parameters& params,
-    std::function<void(bool)> const& onNewNote,
     std::function<void(bool)> const& onExitLearn)
-    : params_(params), onNewNote_(onNewNote), onExitLearn_(onExitLearn) {}
+    : params_(params), onExitLearn_(onExitLearn) {}
 
-  Subject<bool> onNewNote_;
   Subject<bool> onExitLearn_;
 
   void enable_learn() { pre_grid_.clear(); }
@@ -226,9 +224,8 @@ public:
     pre_listen_ = false;
   }
 
-  void new_note(f x) {
-    bool success = pre_grid_.add(x);
-    onNewNote_.notify(success);
+  bool new_note(f x) {
+    return pre_grid_.add(x);
   }
 
   void Process(Block<Frame, block_size> out) {

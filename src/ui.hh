@@ -106,10 +106,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   PolypticOscillator<block_size> osc_ {
     params_,
     [this](bool success) {
-      // on new note
-      learn_led_.flash(success ? Colors::white : Colors::black);
-    },
-    [this](bool success) {
       // on exit of Learn
       if(success) learn_led_.flash(Colors::magenta);
     }
@@ -266,17 +262,19 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         }
       } break;
       case NewNote: {
-        osc_.new_note(control_.pitch_cv());
+        bool success = osc_.new_note(control_.pitch_cv());
+        learn_led_.flash(success ? Colors::white : Colors::black);
       } break;
       case PotMove: {
         if (e1.data == POT_ROOT &&
             e2.type == ButtonPush &&
             e2.data == BUTTON_LEARN) {
-          mode_ = MANUAL_LEARN;
-          learn_led_.set_glow(Colors::red, 3_f);
-          osc_.new_note(0_f);
-          osc_.enable_pre_listen();
-          control_.set_new_note_tracking(true);
+          if (osc_.new_note(0_f)) {
+            mode_ = MANUAL_LEARN;
+            learn_led_.set_glow(Colors::red, 3_f);
+            osc_.enable_pre_listen();
+            control_.set_new_note_tracking(true);
+          }
         }
       } break;
       case ButtonRelease: {
