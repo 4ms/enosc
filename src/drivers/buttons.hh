@@ -10,6 +10,10 @@ enum Button {
 
 struct Buttons : Nocopy {
 
+  Buttons() {
+    for (int i=16; i--;) Debounce();
+  }
+
   template<class T>
   struct Debouncer : crtp<T, Debouncer<T>> {
     uint8_t state_ = 0xFF;
