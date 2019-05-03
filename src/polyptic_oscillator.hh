@@ -8,6 +8,7 @@
 
 template<int block_size>
 class Oscillators : Nocopy {
+  Oscillator prelisten_oscs_[kMaxGridSize];
   OscillatorPair oscs_[kMaxNumOsc];
   u0_16 modulation_blocks_[kMaxNumOsc+1][block_size];
   u0_16 dummy_block_[block_size];
@@ -170,7 +171,6 @@ public:
 
     for (int i=0; i<grid.size(); ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
-      FrequencyPair p = {freq, freq, 0_f};
       Block<f, block_size> out = i&1 ? out1 : out2; // alternate
       auto [in_block, out_block] = pick_modulation_blocks(modulation_mode, i, grid.size());
       Block<u0_16, block_size> mod_in(in_block);
@@ -178,7 +178,10 @@ public:
       // TODO cleanup: avoid manipulating bare pointers to buffers
       // need to declare the Blocks globally, ie. with an allocating constructor
       std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
-      (oscs_[i].*process)(p, false, 0_f, twist, warp, 1_f, modulation, mod_in, mod_out, out);
+      mod_out.fill(0._u0_16);
+      prelisten_oscs_[i].Process<FEEDBACK, CRUSH>(u0_32(freq), twist, warp,
+                                             1_f, 1_f, modulation,
+                                             mod_in, mod_out, out);
     }
 
     f atten = 1_f / f(grid.size());

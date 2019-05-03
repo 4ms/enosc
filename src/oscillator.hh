@@ -102,7 +102,7 @@ public:
     f fade1 = 1_f - crossfade;
     f fade2 = crossfade;
 
-    f aliasing_factor1 = freq.freq1; // TODO
+    f aliasing_factor1 = freq.freq1; // TODO in Oscillator
     fade1 *= antialias(aliasing_factor1);
     f aliasing_factor2 = freq.freq2; // TODO
     fade2 *= antialias(aliasing_factor2);
