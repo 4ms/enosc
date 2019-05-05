@@ -67,7 +67,7 @@ struct Zip: public Zip<Ts...> {
   using value_type = decltype(std::tuple_cat(std::declval<head_value_type>(),
                                              std::declval<tail_value_type>()));
 
-  Zip(T t, Ts... ts): Zip<Ts...>(ts...), t_(t) {}
+  Zip(T& t, Ts&... ts): Zip<Ts...>(ts...), t_(t) {}
 
   struct iterator : Zip<Ts...>::iterator {
     using head_iterator = typename T::iterator;
@@ -89,14 +89,19 @@ struct Zip: public Zip<Ts...> {
 
   iterator begin() { return iterator(t_.begin(), Zip<Ts...>::begin()); }
   iterator end() { return iterator(t_.end(), Zip<Ts...>::end()); }
-  T t_;
+  T& t_;
 };
 
 // base case
 template<typename T>
-struct Zip<T> : public T {
+struct Zip<T> {
   using value_type = std::tuple<typename T::value_type&>;
-  Zip<T>(T t) : T(t) {};
+  using iterator = typename T::iterator;
+  Zip(T& t) : t_(t) {};
+  iterator begin() { return t_.begin(); }
+  iterator end() { return t_.end(); }
+private:
+  T& t_;
 };
 
 // must implement tuple_size to check size equality
@@ -107,7 +112,7 @@ struct std::tuple_size<Zip<T, Ts...>> {
 
 // smart instantiation function
 template<typename... Ts>
-Zip<Ts...> zip(Ts... ts) { return Zip<Ts...>(ts...); }
+Zip<Ts...> zip(Ts&... ts) { return Zip<Ts...>(ts...); }
 
 // Overload
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
