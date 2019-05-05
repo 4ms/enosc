@@ -21,25 +21,25 @@ class Oscillators : Nocopy {
       i == 0;
   }
 
-  inline std::pair<Buffer<u0_16, block_size>, Buffer<u0_16, block_size>>
+  inline std::tuple<Buffer<u0_16, block_size>&, Buffer<u0_16, block_size>&>
   pick_modulation_blocks(ModulationMode mode, int i, int numOsc) {
     if(mode == ONE) {
       if (i==0) {
-        return std::pair(dummy_block_, modulation_blocks_[i+1]);
+        return std::forward_as_tuple(dummy_block_, modulation_blocks_[i+1]);
       } else {
-        return std::pair(modulation_blocks_[i], modulation_blocks_[i+1]);
+        return std::forward_as_tuple(modulation_blocks_[i], modulation_blocks_[i+1]);
       }
     } else if (mode == TWO) {
       if (i==0) {
-        return std::pair(dummy_block_, modulation_blocks_[0]);
+        return std::forward_as_tuple(dummy_block_, modulation_blocks_[0]);
       } else {
-        return std::pair(modulation_blocks_[0], dummy_block_);
+        return std::forward_as_tuple(modulation_blocks_[0], dummy_block_);
       }
     } else { // mode == THREE
       if (i==numOsc-1) {
-        return std::pair(dummy_block_, modulation_blocks_[0]);
+        return std::forward_as_tuple(dummy_block_, modulation_blocks_[0]);
       } else {
-        return std::pair(modulation_blocks_[0], dummy_block_);
+        return std::forward_as_tuple(modulation_blocks_[0], dummy_block_);
       }
     }
   }
