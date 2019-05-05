@@ -44,7 +44,7 @@ public:
     } else return false;
   }
 
-  void Process(Block<s1_15, block_size> in) {
+  void Process(Buffer<s1_15, block_size>& in) {
     s1_15 x = in[0];
     cic_.Process(in.data(), &x, 1); // -1..1
     u0_16 y = x.to_unsigned_scale(); // 0..1
@@ -236,12 +236,11 @@ public:
   Control(Parameters& params) :
     params_(params) {}
 
-  void ProcessCodecInput(Block<Frame, block_size> codec_in) {
+  void ProcessCodecInput(Buffer<Frame, block_size>& codec_in) {
 
     // Process codec input
-    s1_15 in1[block_size], in2[block_size];
-    Block<s1_15, block_size> pitch_block {in1};
-    Block<s1_15, block_size> root_block {in2};
+    Buffer<s1_15, block_size> pitch_block;
+    Buffer<s1_15, block_size> root_block;
 
     for (auto [in, pi, ro] : zip(codec_in, pitch_block, root_block)) {
       pi = in.l;

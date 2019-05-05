@@ -31,7 +31,7 @@ struct Main :
   }
 
   template<int block_size>
-  void CodecCallback(Block<Frame, block_size> in, Block<Frame, block_size> out) {
+  void CodecCallback(Buffer<Frame, block_size>& in, Buffer<Frame, block_size>& out) {
     debug.set(3, true);
     Ui::Poll(in);
 

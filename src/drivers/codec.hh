@@ -212,8 +212,8 @@ private:
   SAI_HandleTypeDef hsai_rx;
   SAI_HandleTypeDef hsai_tx;
 
-  volatile int16_t tx_buffer[block_size * 2 * 2];
-  volatile int16_t rx_buffer[block_size * 2 * 2];
+  Buffer<Frame, block_size> tx_buffer[2];
+  Buffer<Frame, block_size> rx_buffer[2];
 
   static Codec *instance_;
 
@@ -224,27 +224,23 @@ private:
   void ISR() {
     //Read the interrupt status register (ISR)
     uint32_t tmpisr = CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_ISR;
-    Frame *src, *dst;
 
     if ((tmpisr & __HAL_DMA_GET_TC_FLAG_INDEX(&instance_->hdma_rx))
         && __HAL_DMA_GET_IT_SOURCE(&instance_->hdma_rx, DMA_IT_TC)) {
       // Transfer Complete (TC) -> Point to 2nd half of buffers
-      src = (Frame *)(&instance_->rx_buffer[block_size*2]);
-      dst = (Frame *)(&instance_->tx_buffer[block_size*2]);
       __HAL_DMA_CLEAR_FLAG(&instance_->hdma_rx,
                            __HAL_DMA_GET_TC_FLAG_INDEX(&instance_->hdma_rx));
+      static_cast<T&>(*this).template CodecCallback<block_size>(instance_->rx_buffer[1],
+                                                                instance_->tx_buffer[1]);
+
     } else if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&instance_->hdma_rx))
                && __HAL_DMA_GET_IT_SOURCE(&instance_->hdma_rx, DMA_IT_HT)) {
       // Half Transfer complete (HT) -> Point to 1st half of buffers
-      src = (Frame *)(&instance_->rx_buffer);
-      dst = (Frame *)(&instance_->tx_buffer);
       __HAL_DMA_CLEAR_FLAG(&instance_->hdma_rx,
                            __HAL_DMA_GET_HT_FLAG_INDEX(&instance_->hdma_rx));
+      static_cast<T&>(*this).template CodecCallback<block_size>(instance_->rx_buffer[0],
+                                                                instance_->tx_buffer[0]);
     }
-
-    Block<Frame, block_size> in {src};
-    Block<Frame, block_size> out {dst};
-    static_cast<T&>(*this).template CodecCallback<block_size>(in, out);
   }
 
   struct GPIO {

@@ -10,8 +10,8 @@ template<int block_size>
 class Oscillators : Nocopy {
   Oscillator prelisten_oscs_[kMaxGridSize];
   OscillatorPair oscs_[kMaxNumOsc];
-  u0_16 modulation_blocks_[kMaxNumOsc+1][block_size];
-  u0_16 dummy_block_[block_size];
+  Buffer<u0_16, block_size> modulation_blocks_[kMaxNumOsc+1];
+  Buffer<u0_16, block_size> dummy_block_;
   bool frozen_ = false;
 
   static inline bool pick_split(SplitMode mode, int i, int numOsc) {
@@ -21,7 +21,7 @@ class Oscillators : Nocopy {
       i == 0;
   }
 
-  inline std::pair<u0_16*, u0_16*>
+  inline std::pair<Buffer<u0_16, block_size>, Buffer<u0_16, block_size>>
   pick_modulation_blocks(ModulationMode mode, int i, int numOsc) {
     if(mode == ONE) {
       if (i==0) {
@@ -45,9 +45,9 @@ class Oscillators : Nocopy {
   }
 
   using processor_t = void (OscillatorPair::*)(FrequencyPair, bool, f, f, f, f, f,
-                                               Block<u0_16, block_size>,
-                                               Block<u0_16, block_size>,
-                                               Block<f, block_size>);
+                                               Buffer<u0_16, block_size>&,
+                                               Buffer<u0_16, block_size>&,
+                                               Buffer<f, block_size>&);
 
   processor_t pick_processor(TwistMode t, WarpMode m) {
     static processor_t tab[3][3] = {
@@ -111,7 +111,7 @@ class Oscillators : Nocopy {
 
 public:
   void Process(Parameters const &params, Grid const &grid,
-               Block<f, block_size> out1, Block<f, block_size> out2) {
+               Buffer<f, block_size>& out1, Buffer<f, block_size>& out2) {
     out1.fill(0_f);
     out2.fill(0_f);
 
@@ -132,13 +132,9 @@ public:
     for (int i=0; i<numOsc; ++i) {
       FrequencyPair p = frequency.Next(); // 3%
       f amp = amplitude.Next();
-      Block<f, block_size> out = pick_split(stereo_mode, i, numOsc) ? out1 : out2;
-      auto [in_block, out_block] = pick_modulation_blocks(modulation_mode, i, numOsc);
-      Block<u0_16, block_size> mod_in(in_block);
-      Block<u0_16, block_size> mod_out(out_block);
-      // TODO cleanup: avoid manipulating bare pointers to buffers
-      // need to declare the Blocks globally, ie. with an allocating constructor
-      std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
+      Buffer<f, block_size>& out = pick_split(stereo_mode, i, numOsc) ? out1 : out2;
+      auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, numOsc);
+      dummy_block_.fill(0._u0_16);
       bool frozen = pick_split(freeze_mode, i, numOsc) && frozen_;
       (oscs_[i].*process)(p, frozen, crossfade_factor, twist, warp, amp, modulation,
                          mod_in, mod_out, out);
@@ -157,7 +153,7 @@ public:
   }
 
   void ProcessPreListen(Parameters const &params, PreGrid &grid,
-               Block<f, block_size> out1, Block<f, block_size> out2) {
+               Buffer<f, block_size>& out1, Buffer<f, block_size>& out2) {
     out1.fill(0_f);
     out2.fill(0_f);
 
@@ -171,14 +167,10 @@ public:
 
     for (int i=0; i<grid.size(); ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
-      Block<f, block_size> out = i&1 ? out1 : out2; // alternate
-      auto [in_block, out_block] = pick_modulation_blocks(modulation_mode, i, grid.size());
-      Block<u0_16, block_size> mod_in(in_block);
-      Block<u0_16, block_size> mod_out(out_block);
-      // TODO cleanup: avoid manipulating bare pointers to buffers
-      // need to declare the Blocks globally, ie. with an allocating constructor
-      std::fill(dummy_block_, dummy_block_+block_size, 0._u0_16);
-      mod_out.fill(0._u0_16);
+      Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
+      auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, grid.size());
+      dummy_block_.fill(0._u0_16);
+      mod_out->fill(0._u0_16);
       prelisten_oscs_[i].Process<FEEDBACK, CRUSH>(u0_32(freq), twist, warp,
                                              1_f, 1_f, modulation,
                                              mod_in, mod_out, out);
@@ -222,10 +214,9 @@ public:
     return pre_grid_.add(x);
   }
 
-  void Process(Block<Frame, block_size> out) {
-    f buffer[2][block_size];
-    Block<f, block_size> out1 {buffer[0]};
-    Block<f, block_size> out2 {buffer[1]};
+  void Process(Buffer<Frame, block_size>& out) {
+    Buffer<f, block_size> out1;
+    Buffer<f, block_size> out2;
 
     if (pre_listen_) {
       Base::ProcessPreListen(params_, pre_grid_, out1, out2);

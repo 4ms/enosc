@@ -42,7 +42,8 @@ void uniquify(T array[], int &size, T threshold) {
 }
 
 template<class T, int SIZE>
-struct Block {
+struct Buffer : std::array<T, SIZE> {
+
   using value_type = T;
   struct iterator {
     iterator(T* x) : x_(x) {}
@@ -53,30 +54,7 @@ struct Block {
     T *x_;
   };
 
-  constexpr Block(T* data) : data_(data) {}
-  T const& operator [] (unsigned int i) const {
-    return data_[i];
-  }
-
-  void fill(T x) { std::fill(data_, data_+SIZE, x); }
-  iterator const begin() const { return data_; }
-  iterator const end() const { return data_ + SIZE; }
-
-  T* data() { return data_; }
-  int size() { return SIZE; }
-private:
-  T *data_;
-};
-
-// must have a tuple_size implementation
-template<int SIZE, class T>
-struct std::tuple_size<Block<T, SIZE>> { static constexpr int value = SIZE; };
-
-
-template<class T, int SIZE>
-struct Buffer : std::array<T, SIZE> {
-
-  constexpr int size() const {return SIZE;}
+  constexpr int size() const { return SIZE; }
 
   constexpr T& interpolate(f phase) const {
     phase *= f(size()-1);
@@ -120,6 +98,9 @@ struct Buffer : std::array<T, SIZE> {
     return Signal::crossfade(a, b, fractional);
   }
 };
+
+template<int SIZE, class T>
+struct std::tuple_size<Buffer<T, SIZE>> { static constexpr int value = SIZE; };
 
 template<typename T, int SIZE>
 class RingBuffer {
