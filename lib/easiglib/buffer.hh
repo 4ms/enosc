@@ -43,16 +43,19 @@ void uniquify(T array[], int &size, T threshold) {
 
 template<class T, int SIZE>
 struct Buffer : std::array<T, SIZE> {
-
+  using Base = std::array<T, SIZE>;
   using value_type = T;
   struct iterator {
-    iterator(T* x) : x_(x) {}
+    explicit iterator(T* x) : x_(x) {}
     void operator++() { x_++; }
     bool operator!=(iterator &that) { return this->x_ != that.x_; }
     value_type& operator*() { return *x_; }
   private:
     T *x_;
   };
+
+  iterator const begin() { return iterator(Base::begin()); }
+  iterator const end() { return iterator(Base::end()); }
 
   constexpr int size() const { return SIZE; }
 
