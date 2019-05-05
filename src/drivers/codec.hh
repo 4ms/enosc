@@ -212,8 +212,13 @@ private:
   SAI_HandleTypeDef hsai_rx;
   SAI_HandleTypeDef hsai_tx;
 
-  Buffer<Frame, block_size> tx_buffer[2];
-  Buffer<Frame, block_size> rx_buffer[2];
+  union {
+    struct {
+      Buffer<Frame, block_size> tx[2];
+      Buffer<Frame, block_size> rx[2];
+    } buffers;
+    uint8_t arrays[block_size * 2 * 2 * 2];
+  };
 
   static Codec *instance_;
 
@@ -230,16 +235,16 @@ private:
       // Transfer Complete (TC) -> Point to 2nd half of buffers
       __HAL_DMA_CLEAR_FLAG(&instance_->hdma_rx,
                            __HAL_DMA_GET_TC_FLAG_INDEX(&instance_->hdma_rx));
-      static_cast<T&>(*this).template CodecCallback<block_size>(instance_->rx_buffer[1],
-                                                                instance_->tx_buffer[1]);
+      static_cast<T&>(*this).template CodecCallback<block_size>(instance_->buffers.rx[1],
+                                                                instance_->buffers.tx[1]);
 
     } else if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&instance_->hdma_rx))
                && __HAL_DMA_GET_IT_SOURCE(&instance_->hdma_rx, DMA_IT_HT)) {
       // Half Transfer complete (HT) -> Point to 1st half of buffers
       __HAL_DMA_CLEAR_FLAG(&instance_->hdma_rx,
                            __HAL_DMA_GET_HT_FLAG_INDEX(&instance_->hdma_rx));
-      static_cast<T&>(*this).template CodecCallback<block_size>(instance_->rx_buffer[0],
-                                                                instance_->tx_buffer[0]);
+      static_cast<T&>(*this).template CodecCallback<block_size>(instance_->buffers.rx[0],
+                                                                instance_->buffers.tx[0]);
     }
   }
 
@@ -550,11 +555,11 @@ private:
     //
 
     HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
-    HAL_SAI_Transmit_DMA(&hsai_tx, (uint8_t *)tx_buffer, block_size * 2 * 2);
+    HAL_SAI_Transmit_DMA(&hsai_tx, arrays, block_size * 2 * 2);
 
     HAL_NVIC_SetPriority(CODEC_SAI_RX_DMA_IRQn, 0, 0);
     HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
-    HAL_SAI_Receive_DMA(&hsai_rx, (uint8_t *)rx_buffer, block_size * 2 * 2);
+    HAL_SAI_Receive_DMA(&hsai_rx, arrays, block_size * 2 * 2);
   }
 
 };
