@@ -170,7 +170,7 @@ public:
       Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
       auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, grid.size());
       dummy_block_.fill(0._u0_16);
-      mod_out->fill(0._u0_16);
+      mod_out.fill(0._u0_16);
       prelisten_oscs_[i].Process<FEEDBACK, CRUSH>(u0_32(freq), twist, warp,
                                              1_f, 1_f, modulation,
                                              mod_in, mod_out, out);
