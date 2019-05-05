@@ -217,7 +217,10 @@ private:
       Buffer<Frame, block_size> tx[2];
       Buffer<Frame, block_size> rx[2];
     } buffers;
-    uint8_t arrays[block_size * 2 * 2 * 2];
+    struct {
+      uint8_t tx[block_size * sizeof(Frame)][2];
+      uint8_t rx[block_size * sizeof(Frame)][2];
+    } arrays;
   };
 
   static Codec *instance_;
@@ -555,11 +558,11 @@ private:
     //
 
     HAL_NVIC_DisableIRQ(CODEC_SAI_TX_DMA_IRQn); 
-    HAL_SAI_Transmit_DMA(&hsai_tx, arrays, block_size * 2 * 2);
+    HAL_SAI_Transmit_DMA(&hsai_tx, arrays.tx[0], block_size * 2 * 2);
 
     HAL_NVIC_SetPriority(CODEC_SAI_RX_DMA_IRQn, 0, 0);
     HAL_NVIC_DisableIRQ(CODEC_SAI_RX_DMA_IRQn); 
-    HAL_SAI_Receive_DMA(&hsai_rx, arrays, block_size * 2 * 2);
+    HAL_SAI_Receive_DMA(&hsai_rx, arrays.rx[0], block_size * 2 * 2);
   }
 
 };
