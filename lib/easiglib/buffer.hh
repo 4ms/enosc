@@ -54,6 +54,11 @@ struct Buffer : std::array<T, SIZE> {
     T *x_;
   };
 
+  // No copy allowed
+  constexpr Buffer() = default;
+  Buffer(const Buffer&) = delete;
+  Buffer& operator=(const Buffer&) = delete;
+
   iterator const begin() { return iterator(Base::begin()); }
   iterator const end() { return iterator(Base::end()); }
 
