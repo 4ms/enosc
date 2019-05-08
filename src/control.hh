@@ -221,15 +221,14 @@ class Control : public EventSource<Event> {
                 CVConditioner<CV_SPREAD>, QuadraticOnePoleLp<1>> spread_ {adc_};
 
   PotConditioner<POT_PITCH, Law::LINEAR, QuadraticOnePoleLp<2>> pitch_pot_ {adc_};
-  PotConditioner<POT_ROOT, Law::LINEAR, QuadraticOnePoleLp<2>> root_pot_ {adc_};
+  DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
+                             QuadraticOnePoleLp<2>, Takeover::SOFT> root_pot_ {adc_};
   AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
   AudioCVConditioner<block_size> root_cv_  {0.24319829_f, 97.4769897_f};
 
   Parameters& params_;
 
   Sampler<f> pitch_cv_sampler_;
-
-  bool new_note_tracking;
 
 public:
 
@@ -325,13 +324,13 @@ public:
     }
 
     // Root & Pitch
-    f root = root_pot_.Process(put);
-    root *= kRootPotRange;
-    root += root_cv_.last();
-    params_.root = root.max(0_f);
-
-    if (new_note_tracking) {
-      params_.new_note = params_.root;
+    auto [fc, root] = root_pot_.Process(put);
+    if (fc == PotFct::MAIN) {
+      root *= kRootPotRange;
+      root += root_cv_.last();
+      params_.root = root.max(0_f);
+    } else {
+      params_.new_note = root * kRootPotRange;
     }
 
     f pitch = pitch_pot_.Process(put);
@@ -355,11 +354,13 @@ public:
   void grid_pot_alternate_function() { grid_.pot_.alt(); }
   void grid_pot_main_function() { grid_.pot_.main(); }
 
+  void root_pot_alternate_function() { root_pot_.alt(); }
+  void root_pot_main_function() { root_pot_.main(); }
+
   void all_main_function() {
     grid_pot_main_function();
+    root_pot_main_function();
   }
-
-  void set_new_note_tracking(bool b) { new_note_tracking = b; }
 
   bool CalibrateOffset() {
     return pitch_cv_.calibrate_offset()

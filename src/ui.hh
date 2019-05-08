@@ -296,7 +296,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             mode_ = MANUAL_LEARN;
             learn_led_.set_glow(Colors::red, 3_f);
             osc_.enable_pre_listen();
-            control_.set_new_note_tracking(true);
+            control_.root_pot_alternate_function();
           }
         }
       } break;
@@ -308,6 +308,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           bool success = osc_.disable_learn();
           if(success) learn_led_.flash(Colors::magenta);
           control_.release_pitch_cv();
+          learn_led_.reset_glow();
           learn_led_.set_background(Colors::black);
         }
       } break;
@@ -317,8 +318,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     case MANUAL_LEARN: {
 
       if (e1.type == ButtonRelease && e1.data == BUTTON_LEARN) {
-        learn_led_.reset_glow();
-        control_.set_new_note_tracking(false);
+        control_.root_pot_main_function();
         mode_ = LEARN;
       }
 
