@@ -140,21 +140,33 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     Event& e1 = stack.get(0);
     Event& e2 = stack.get(1);
 
+    switch(e1.type) {
+    case GateOn: {
+      if (e1.data == GATE_FREEZE)
+        osc_.set_freeze(!osc_.frozen());
+      freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+    } break;
+    case GateOff: {
+      if (e1.data == GATE_FREEZE)
+        osc_.set_freeze(!osc_.frozen());
+      freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+    } break;
+    case StartCatchup: {
+      active_catchups_++;
+      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
+    } break;
+    case EndOfCatchup: {
+      active_catchups_--;
+      freeze_led_.reset_glow();
+      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
+    } break;
+    }
+    
     switch(mode_) {
 
     case NORMAL: {
 
       switch(e1.type) {
-      case GateOn: {
-        if (e1.data == GATE_FREEZE)
-          osc_.set_freeze(!osc_.frozen());
-          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
-      } break;
-      case GateOff: {
-        if (e1.data == GATE_FREEZE)
-          osc_.set_freeze(!osc_.frozen());
-          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
-      } break;
       case ButtonRelease: {
         if (e2.type == ButtonPush &&
             e1.data == e2.data) {
@@ -192,15 +204,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         params_.warp.mode =
           e1.data == Switches::UP ? FOLD :
           e1.data == Switches::MID ? CHEBY : CRUSH;
-      } break;
-      case StartCatchup: {
-        active_catchups_++;
-        freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
-      } break;
-      case EndOfCatchup: {
-        active_catchups_--;
-        freeze_led_.reset_glow();
-        freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
       } break;
       case GridChange: {
         learn_led_.flash(Colors::white);
