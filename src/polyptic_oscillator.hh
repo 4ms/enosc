@@ -213,6 +213,10 @@ public:
     return pre_grid_.add(x);
   }
 
+  bool remove_last_note() {
+    return pre_grid_.remove_last();
+  }
+
   void Process(Buffer<Frame, block_size>& out) {
     Buffer<f, block_size> out1;
     Buffer<f, block_size> out2;
