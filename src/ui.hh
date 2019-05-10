@@ -297,7 +297,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           // Learn pressed
           mode_ = NORMAL;
           bool success = osc_.disable_learn();
-          if (success) learn_led_.flash(Colors::magenta);
+          if (success) learn_led_.flash(Colors::green);
           control_.release_pitch_cv();
           learn_led_.reset_glow();
           learn_led_.set_background(Colors::black);
