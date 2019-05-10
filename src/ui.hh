@@ -301,6 +301,12 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           control_.release_pitch_cv();
           learn_led_.reset_glow();
           learn_led_.set_background(Colors::black);
+        } else if (e1.data == BUTTON_FREEZE &&
+            e2.type == ButtonPush &&
+            e2.data == BUTTON_FREEZE) {
+          // Freeze pressed
+          bool success = osc_.remove_last_note();
+          if (success) freeze_led_.flash(Colors::magenta);
         }
       } break;
       }
