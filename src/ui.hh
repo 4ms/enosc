@@ -8,6 +8,8 @@
 #include "control.hh"
 #include "polyptic_oscillator.hh"
 #include "event_handler.hh"
+#include "bitfield.hh"
+
 
 template<int update_rate, class T>
 struct LedManager : Leds::ILed<T> {
@@ -134,7 +136,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     CALIBRATION_SLOPE,
   } mode_ = NORMAL;
 
-  uint8_t active_catchups_ = 0;
+  Bitfield<32> active_catchups_ {0};
 
   void Handle(typename Base::EventStack stack) {
     Event& e1 = stack.get(0);
@@ -152,13 +154,13 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
     } break;
     case StartCatchup: {
-      active_catchups_++;
-      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
+      active_catchups_ = active_catchups_.set(e1.data);
+      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
     } break;
     case EndOfCatchup: {
-      active_catchups_--;
+      active_catchups_ = active_catchups_.reset(e1.data);
       freeze_led_.reset_glow();
-      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
+      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
     } break;
     case GridChange: {
       learn_led_.flash(Colors::white);
