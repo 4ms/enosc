@@ -65,6 +65,12 @@ public:
   void clear() { size_ = 0; }
   f get(int i) const { return grid_[i]; }
   void set_last(f const x) { grid_[size_-1] = x; }
+  bool remove_last() {
+    if (size_ > 0) {
+      size_--;
+      return true;
+    } else return false;
+  }
 
   // do not call if size==0
   bool copy_to(Grid *g) {

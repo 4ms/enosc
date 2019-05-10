@@ -8,6 +8,8 @@
 #include "control.hh"
 #include "polyptic_oscillator.hh"
 #include "event_handler.hh"
+#include "bitfield.hh"
+
 
 template<int update_rate, class T>
 struct LedManager : Leds::ILed<T> {
@@ -134,7 +136,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     CALIBRATION_SLOPE,
   } mode_ = NORMAL;
 
-  uint8_t active_catchups_ = 0;
+  Bitfield<32> active_catchups_ {0};
 
   void Handle(typename Base::EventStack stack) {
     Event& e1 = stack.get(0);
@@ -152,13 +154,19 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
     } break;
     case StartCatchup: {
-      active_catchups_++;
-      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
+      active_catchups_ = active_catchups_.set(e1.data);
+      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
     } break;
     case EndOfCatchup: {
-      active_catchups_--;
+      active_catchups_ = active_catchups_.reset(e1.data);
       freeze_led_.reset_glow();
-      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_));
+      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
+    } break;
+    case GridChange: {
+      learn_led_.flash(Colors::white);
+    } break;
+    case ButtonPush: {
+      button_timeouts_[e1.data].trigger_after(kLongPressTime, {ButtonTimeout, e1.data});
     } break;
     }
     
@@ -180,7 +188,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         }
       } break;
       case ButtonPush: {
-        button_timeouts_[e1.data].trigger_after(kLongPressTime, {ButtonTimeout, e1.data});
         if (e1.data == BUTTON_FREEZE) {
           mode_ = SHIFT;
         }
@@ -205,24 +212,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e1.data == Switches::UP ? FOLD :
           e1.data == Switches::MID ? CHEBY : CRUSH;
       } break;
-      case GridChange: {
-        learn_led_.flash(Colors::white);
-      } break;
       }
     } break;
 
     case SHIFT: {
       switch(e1.type) {
-      case GateOn: {
-        if (e1.data == GATE_FREEZE)
-          osc_.set_freeze(!osc_.frozen());
-          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
-      } break;
-      case GateOff: {
-        if (e1.data == GATE_FREEZE)
-          osc_.set_freeze(!osc_.frozen());
-          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
-      } break;
       case SwitchGrid: {
         freeze_led_.flash(Colors::white);
         freeze_led_.set_background(Colors::grey);
@@ -259,6 +253,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
             mode_ = NORMAL;
           } else {
+            // Released after a change
             mode_ = NORMAL;
             control_.all_main_function();
             freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
@@ -276,15 +271,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       case GateOn: {
         if (e1.data == GATE_LEARN) {
           new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
-        } else if (e1.data == GATE_FREEZE) {
-          osc_.set_freeze(!osc_.frozen());
-          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
-        }
-      } break;
-      case GateOff: {
-        if (e1.data == GATE_FREEZE) {
-          osc_.set_freeze(!osc_.frozen());
-          freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
         }
       } break;
       case NewNote: {
@@ -296,10 +282,13 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e2.type == ButtonPush &&
             e2.data == BUTTON_LEARN) {
           if (osc_.new_note(0_f)) {
+            learn_led_.flash(Colors::white);
             mode_ = MANUAL_LEARN;
             learn_led_.set_glow(Colors::red, 3_f);
             osc_.enable_pre_listen();
             control_.root_pot_alternate_function();
+          } else {
+            learn_led_.flash(Colors::black);
           }
         }
       } break;
@@ -307,12 +296,19 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         if (e1.data == BUTTON_LEARN &&
             e2.type == ButtonPush &&
             e2.data == BUTTON_LEARN) {
+          // Learn pressed
           mode_ = NORMAL;
           bool success = osc_.disable_learn();
-          if(success) learn_led_.flash(Colors::magenta);
+          if (success) learn_led_.flash(Colors::green);
           control_.release_pitch_cv();
           learn_led_.reset_glow();
           learn_led_.set_background(Colors::black);
+        } else if (e1.data == BUTTON_FREEZE &&
+            e2.type == ButtonPush &&
+            e2.data == BUTTON_FREEZE) {
+          // Freeze pressed
+          bool success = osc_.remove_last_note();
+          if (success) freeze_led_.flash(Colors::magenta);
         }
       } break;
       }
