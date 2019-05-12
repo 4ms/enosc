@@ -54,7 +54,7 @@ class PreGrid : Nocopy {
   int size_ = 0;
 public:
   bool add(f x) {
-    if (size_ < kMaxGridSize-1) {
+    if (size_ < kMaxGridSize-2) { // -2: if Octave wrap, will add one
       grid_[size_++] = x;
       return true;
     } else {
@@ -74,7 +74,7 @@ public:
   }
 
   // do not call if size==0
-  bool copy_to(Grid *g) {
+  bool copy_to(Grid *g, bool wrap_octave) {
     // sort table
     std::sort(grid_, grid_+size_);
     // normalize from smallest element
@@ -82,6 +82,12 @@ public:
     for (f& x : grid_) {
       x -= base;
     }
+
+    if (wrap_octave) {
+      f max = grid_[size_-1];
+      grid_[size_++] = ((max / 12_f).integral() + 1_f) * 12_f;
+    }
+
     // remove duplicate elements
     uniquify(grid_, size_, kGridUnicityThreshold);
 

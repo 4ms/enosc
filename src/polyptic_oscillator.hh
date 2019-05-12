@@ -211,7 +211,8 @@ public:
 
   bool disable_learn() {
     disable_pre_listen();
-    return pre_grid_.copy_to(current_grid_);
+    bool wrap_octave = params_.grid.mode == OCTAVE;
+    return pre_grid_.copy_to(current_grid_, wrap_octave);
   }
 
   bool new_note(f x) {
