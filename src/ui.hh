@@ -69,31 +69,29 @@ struct GatesEventSource : EventSource<Event>, private Gates {
   }
 };
 
-struct SwitchesEventSource : EventSource<Event>, private Switches {
+template<class Switch, EventType event>
+struct SwitchEventSource : EventSource<Event>, Switch {
   void Poll(std::function<void(Event)> const& put) {
-    Switches::Debounce();
-
-    if (Switches::grid_.just_switched_up()) put({SwitchGrid, UP});
-    if (Switches::grid_.just_switched_mid()) put({SwitchGrid, MID});
-    if (Switches::grid_.just_switched_down()) put({SwitchGrid, DOWN});
-
-    if (Switches::mod_.just_switched_up()) put({SwitchMod, UP});
-    if (Switches::mod_.just_switched_mid()) put({SwitchMod, MID});
-    if (Switches::mod_.just_switched_down()) put({SwitchMod, DOWN});
-
-    if (Switches::twist_.just_switched_up()) put({SwitchTwist, UP});
-    if (Switches::twist_.just_switched_mid()) put({SwitchTwist, MID});
-    if (Switches::twist_.just_switched_down()) put({SwitchTwist, DOWN});
-
-    if (Switches::warp_.just_switched_up()) put({SwitchWarp, UP});
-    if (Switches::warp_.just_switched_mid()) put({SwitchWarp, MID});
-    if (Switches::warp_.just_switched_down()) put({SwitchWarp, DOWN});
+    Switch::Debounce();
+    if (Switch::just_switched_up()) put({event, Switches::UP});
+    else if (Switch::just_switched_mid()) put({event, Switches::MID});
+    else if (Switch::just_switched_down()) put({event, Switches::DOWN});
   }
+};
 
-  Switches::State get_grid() { return Switches::grid_.get(); }
-  Switches::State get_mod() { return Switches::mod_.get(); }
-  Switches::State get_twist() { return Switches::twist_.get(); }
-  Switches::State get_warp() { return Switches::warp_.get(); }
+struct SwitchesEventSource : EventSource<Event>, Switches {
+
+  SwitchEventSource<Grid, SwitchGrid> grid_event_;
+  SwitchEventSource<Mod, SwitchMod> mod_event_;
+  SwitchEventSource<Twist, SwitchTwist> twist_event_;
+  SwitchEventSource<Warp, SwitchWarp> warp_event_;
+
+  void Poll(std::function<void(Event)> const& put) {
+    grid_event_.Poll(put);
+    mod_event_.Poll(put);
+    twist_event_.Poll(put);
+    warp_event_.Poll(put);
+  }
 };
 
 template<int update_rate, int block_size>
@@ -366,10 +364,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 public:
   Ui() {
     // Initialize switches to their current positions
-    Base::put({SwitchGrid, switches_.get_grid()});
-    Base::put({SwitchMod, switches_.get_mod()});
-    Base::put({SwitchTwist, switches_.get_twist()});
-    Base::put({SwitchWarp, switches_.get_warp()});
+    Base::put({SwitchGrid, switches_.grid_.get()});
+    Base::put({SwitchMod, switches_.mod_.get()});
+    Base::put({SwitchTwist, switches_.twist_.get()});
+    Base::put({SwitchWarp, switches_.warp_.get()});
 
     // Enter calibration if Learn is pushed
     if (buttons_.learn_.pushed()) {
