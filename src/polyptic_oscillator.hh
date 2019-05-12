@@ -192,7 +192,7 @@ class PolypticOscillator : public Oscillators<block_size>, PreListenOscillators<
   Parameters& params_;
   Quantizer quantizer_;
   PreGrid pre_grid_;
-  Grid *current_grid_ = quantizer_.get_grid(0);
+  Grid *current_grid_;
 
   bool pre_listen_ = false;
   bool follow_new_note_ = false;

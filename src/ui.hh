@@ -192,8 +192,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       } break;
       case SwitchGrid: {
         params_.grid.mode =
-          e1.data == Switches::UP ? CHORD :
-          e1.data == Switches::MID ? HARM : JUST;
+          e1.data == Switches::UP ? TWELVE :
+          e1.data == Switches::MID ? OCTAVE : FREE;
         Base::put({EndOfCatchup, ADC_INPUT_MAX + Switches::GRID});
       } break;
       case SwitchMod: {

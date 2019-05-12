@@ -14,7 +14,7 @@ constexpr int kMaxNumOsc = 10;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
 enum WarpMode { FOLD, CHEBY, CRUSH };
-enum GridMode { CHORD, HARM, JUST };
+enum GridMode { TWELVE, OCTAVE, FREE };
 enum ModulationMode { ONE, TWO, THREE };
 
 enum SplitMode { ALTERNATE, LOW_HIGH, LOWEST_REST };

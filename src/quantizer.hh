@@ -3,6 +3,7 @@
 #include "buffer.hh"
 
 constexpr const int kGridNr = 10;
+constexpr const int kBankNr = 3;
 constexpr const int kMaxGridSize = 2 * kMaxNumOsc;
 constexpr const f kGridUnicityThreshold = 0.1_f;
 
@@ -96,24 +97,30 @@ public:
 };
 
 class Quantizer {
-  Grid grids_[kGridNr] = {
-    {0_f, 12_f},
-    {0_f, 7_f, 12_f},
-    {0_f, 5_f, 12_f},
-    {0_f, 3_f, 8_f, 12_f},
-    {0_f, 4_f, 7_f, 9_f, 12_f},
-    {0_f, 3_f, 5_f, 10_f, 12_f},
-    {0_f, 1_f, 5_f, 8_f, 12_f},
-    {0_f, 2_f, 4_f, 8_f, 9_f, 12_f},
-    {0_f, 2_f, 3_f, 5_f, 7_f, 9_f, 11_f, 12_f},
-    {0_f, 1_f, 2_f, 3_f, 4_f, 5_f, 6_f, 7_f, 8_f, 9_f, 10_f, 11_f, 12_f},
-  };
+  Grid grids_[kBankNr][kGridNr] = {{
+      {0_f, 12_f},
+      {0_f, 7_f, 12_f},
+      {0_f, 5_f, 12_f},
+      {0_f, 3_f, 8_f, 12_f},
+      {0_f, 4_f, 7_f, 9_f, 12_f},
+      {0_f, 3_f, 5_f, 10_f, 12_f},
+      {0_f, 1_f, 5_f, 8_f, 12_f},
+      {0_f, 2_f, 4_f, 8_f, 9_f, 12_f},
+      {0_f, 2_f, 3_f, 5_f, 7_f, 9_f, 11_f, 12_f},
+      {0_f, 1_f, 2_f, 3_f, 4_f, 5_f, 6_f, 7_f, 8_f, 9_f, 10_f, 11_f, 12_f},
+    }, {
+      {0_f, 1_f, 2_f, 3_f, 4_f, 5_f, 6_f, 7_f, 8_f, 9_f, 10_f, 11_f, 12_f},
+      {0_f, 2_f, 3_f, 5_f, 7_f, 9_f, 11_f, 12_f},
+      {0_f, 2_f, 4_f, 8_f, 9_f, 12_f},
+      {0_f, 1_f, 5_f, 8_f, 12_f},
+    }, {
+      {0_f, 1_f, 2_f, 3_f, 4_f, 5_f, 6_f, 7_f, 8_f, 9_f, 10_f, 11_f, 12_f},
+      {0_f, 2_f, 3_f, 5_f, 7_f, 9_f, 11_f, 12_f},
+      {0_f, 2_f, 4_f, 8_f, 9_f, 12_f},
+      {0_f, 1_f, 5_f, 8_f, 12_f},
+    }};
 public:
   Grid *get_grid(Parameters::Grid grid) {
-    return &grids_[grid.value];
-  }
-  // TODO temp
-  Grid *get_grid(int i) {
-    return &grids_[i];
+    return &grids_[grid.mode][grid.value];
   }
 };
