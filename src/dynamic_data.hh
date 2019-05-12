@@ -4,7 +4,7 @@
 
 constexpr int sine_size = 512 + 1;
 
-static constexpr int cheby_tables = 12;
+static constexpr int cheby_tables = 20;
 static constexpr int cheby_size = 512 + 1;
 
 struct DynamicData {
