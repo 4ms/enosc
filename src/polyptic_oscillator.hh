@@ -20,8 +20,6 @@ public:
     f twist = params.twist.value;
     f warp = params.warp.value;
 
-    grid.set_last(params.new_note);
-
     for (int i=0; i<grid.size(); ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
       Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
@@ -197,15 +195,22 @@ class PolypticOscillator : public Oscillators<block_size>, PreListenOscillators<
   Grid *current_grid_ = quantizer_.get_grid(0);
 
   bool pre_listen_ = false;
+  bool follow_new_note_ = false;
 
 public:
   PolypticOscillator(Parameters& params) : params_(params) {}
 
-  void enable_learn() { pre_grid_.clear(); }
   void enable_pre_listen() { pre_listen_ = true; }
+  void disable_pre_listen() { pre_listen_ = false; }
+  void enable_follow_new_note() { follow_new_note_ = true; }
+  void disable_follow_new_note() { follow_new_note_ = false; }
+
+  void enable_learn() {
+    pre_grid_.clear();
+  }
 
   bool disable_learn() {
-    pre_listen_ = false;
+    disable_pre_listen();
     return pre_grid_.copy_to(current_grid_);
   }
 
@@ -222,6 +227,8 @@ public:
     Buffer<f, block_size> out2;
 
     if (pre_listen_) {
+      if (follow_new_note_)
+        pre_grid_.set_last(params_.new_note);
       PreListenOscillators<block_size>::Process(params_, pre_grid_, out1, out2);
     } else {
       current_grid_ = quantizer_.get_grid(params_.grid);

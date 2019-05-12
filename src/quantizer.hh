@@ -66,7 +66,7 @@ public:
   f get(int i) const { return grid_[i]; }
   void set_last(f const x) { grid_[size_-1] = x; }
   bool remove_last() {
-    if (size_ > 0) {
+    if (size_ > 1) {
       size_--;
       return true;
     } else return false;
