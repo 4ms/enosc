@@ -194,21 +194,25 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         params_.grid.mode =
           e1.data == Switches::UP ? CHORD :
           e1.data == Switches::MID ? HARM : JUST;
+        Base::put({EndOfCatchup, ADC_INPUT_MAX + Switches::GRID});
       } break;
       case SwitchMod: {
         params_.modulation.mode =
           e1.data == Switches::UP ? ONE :
           e1.data == Switches::MID ? TWO : THREE;
+        Base::put({EndOfCatchup, ADC_INPUT_MAX + Switches::MOD});
       } break;
       case SwitchTwist: {
         params_.twist.mode =
           e1.data == Switches::UP ? FEEDBACK :
           e1.data == Switches::MID ? PULSAR : DECIMATE;
+        Base::put({EndOfCatchup, ADC_INPUT_MAX + Switches::TWIST});
       } break;
       case SwitchWarp: {
         params_.warp.mode =
           e1.data == Switches::UP ? FOLD :
           e1.data == Switches::MID ? CHEBY : CRUSH;
+        Base::put({EndOfCatchup, ADC_INPUT_MAX + Switches::WARP});
       } break;
       }
     } break;
@@ -221,6 +225,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         params_.crossfade_factor =
           e1.data == Switches::UP ? Crossfade::linear :
           e1.data == Switches::MID ? Crossfade::mid : Crossfade::steep;
+        Base::put({StartCatchup, ADC_INPUT_MAX+Switches::GRID});
       } break;
       case SwitchTwist: {
         freeze_led_.flash(Colors::white);
@@ -228,6 +233,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         params_.stereo_mode =
           e1.data == Switches::UP ? ALTERNATE :
           e1.data == Switches::MID ? LOW_HIGH : LOWEST_REST;
+        Base::put({StartCatchup, ADC_INPUT_MAX+Switches::TWIST});
       } break;
       case SwitchWarp: {
         freeze_led_.flash(Colors::white);
@@ -235,6 +241,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         params_.freeze_mode =
           e1.data == Switches::UP ? ALTERNATE :
           e1.data == Switches::MID ? LOW_HIGH : LOWEST_REST;
+        Base::put({StartCatchup, ADC_INPUT_MAX+Switches::WARP});
       } break;
       case PotMove: {
         if (e1.data == POT_GRID) {
