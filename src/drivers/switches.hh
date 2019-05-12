@@ -33,7 +33,7 @@ struct Switches : Nocopy {
 
   template<class T>
   struct Combiner : crtp<T, Combiner<T>> {
-    uint8_t state_ = 0;
+    uint8_t state_ = 0xFF;
     void Debounce() {
       state_ = (state_ << 2) | (**this).get2() | ((**this).get1() << 1);
     }
