@@ -8,6 +8,7 @@
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
 const f kRootPotRange = 10_f * 12_f;
+const f kNewNoteRange = 6_f * 12_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
@@ -330,7 +331,7 @@ public:
       root += root_cv_.last();
       params_.root = root.max(0_f);
     } else {
-      params_.new_note = root * kRootPotRange;
+      params_.new_note = root * kNewNoteRange + kNewNoteRange * 0.5_f;
     }
 
     f pitch = pitch_pot_.Process(put);
