@@ -23,6 +23,11 @@
 #define WARPSW_BOT_GPIO_Port GPIOC
 
 struct Switches : Nocopy {
+
+  Switches() {
+    for(int i=0; i<16; i++) Debounce();
+  }
+
   enum State { UP=1, DOWN=2, MID=3 };
 
   template<class T>
@@ -102,9 +107,5 @@ struct Switches : Nocopy {
     mod_.Debounce();
     twist_.Debounce();
     warp_.Debounce();
-  }
-
-  Switches() {
-    for(int i=0; i<8; i++) Debounce();
   }
 };

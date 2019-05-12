@@ -7,8 +7,41 @@
 #include "quantizer.hh"
 
 template<int block_size>
+class PreListenOscillators : Nocopy {
+  Oscillator oscs_[kMaxGridSize];
+  Buffer<u0_16, block_size> dummy_block_;
+
+public:
+  void Process(Parameters const &params, PreGrid &grid,
+               Buffer<f, block_size>& out1, Buffer<f, block_size>& out2) {
+    out1.fill(0_f);
+    out2.fill(0_f);
+
+    f twist = params.twist.value;
+    f warp = params.warp.value;
+
+    grid.set_last(params.new_note);
+
+    for (int i=0; i<grid.size(); ++i) {
+      f freq = Freq::of_pitch(grid.get(i)).repr();
+      Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
+      oscs_[i].Process<FEEDBACK, CRUSH>(u0_32(freq), twist, warp,
+                                        1_f, 1_f, 0_f,
+                                        dummy_block_, dummy_block_, out);
+    }
+
+    f atten = 1_f / f(grid.size());
+    atten *= 1_f + Data::normalization_factors[grid.size()];
+
+    for (auto [o1, o2] : zip(out1, out2)) {
+      o1 *= atten;
+      o2 *= atten;
+    }
+  }
+};
+
+template<int block_size>
 class Oscillators : Nocopy {
-  Oscillator prelisten_oscs_[kMaxGridSize];
   OscillatorPair oscs_[kMaxNumOsc];
   Buffer<u0_16, block_size> modulation_blocks_[kMaxNumOsc+1];
   Buffer<u0_16, block_size> dummy_block_;
@@ -152,46 +185,12 @@ public:
     }
   }
 
-  void ProcessPreListen(Parameters const &params, PreGrid &grid,
-               Buffer<f, block_size>& out1, Buffer<f, block_size>& out2) {
-    out1.fill(0_f);
-    out2.fill(0_f);
-
-    processor_t process = pick_processor(params.twist.mode, params.warp.mode);
-    f twist = params.twist.value;
-    f warp = params.warp.value;
-    f modulation = params.modulation.value;
-    ModulationMode modulation_mode = params.modulation.mode;
-
-    grid.set_last(params.new_note);
-
-    for (int i=0; i<grid.size(); ++i) {
-      f freq = Freq::of_pitch(grid.get(i)).repr();
-      Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
-      auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, grid.size());
-      dummy_block_.fill(0._u0_16);
-      mod_out.fill(0._u0_16);
-      prelisten_oscs_[i].Process<FEEDBACK, CRUSH>(u0_32(freq), twist, warp,
-                                             1_f, 1_f, modulation,
-                                             mod_in, mod_out, out);
-    }
-
-    f atten = 1_f / f(grid.size());
-    atten *= 1_f + Data::normalization_factors[grid.size()];
-
-    for (auto [o1, o2] : zip(out1, out2)) {
-      o1 *= atten;
-      o2 *= atten;
-    }
-  }
-
   void set_freeze (bool frozen) { frozen_ = frozen; }
   bool frozen() { return frozen_; }
 };
 
 template<int block_size>
-class PolypticOscillator : public Oscillators<block_size> {
-  using Base = Oscillators<block_size>;
+class PolypticOscillator : public Oscillators<block_size>, PreListenOscillators<block_size> {
   Parameters& params_;
   Quantizer quantizer_;
   PreGrid pre_grid_;
@@ -214,15 +213,19 @@ public:
     return pre_grid_.add(x);
   }
 
+  bool remove_last_note() {
+    return pre_grid_.remove_last();
+  }
+
   void Process(Buffer<Frame, block_size>& out) {
     Buffer<f, block_size> out1;
     Buffer<f, block_size> out2;
 
     if (pre_listen_) {
-      Base::ProcessPreListen(params_, pre_grid_, out1, out2);
+      PreListenOscillators<block_size>::Process(params_, pre_grid_, out1, out2);
     } else {
       current_grid_ = quantizer_.get_grid(params_.grid);
-      Base::Process(params_, *current_grid_, out1, out2);
+      Oscillators<block_size>::Process(params_, *current_grid_, out1, out2);
     }
 
     for (auto [o1, o2, o] : zip(out1, out2, out)) {
