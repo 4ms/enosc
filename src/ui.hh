@@ -83,16 +83,16 @@ struct SwitchEventSource : EventSource<Event>, Switch {
 
 struct SwitchesEventSource : EventSource<Event>, Switches {
 
-  SwitchEventSource<Grid, SwitchGrid> grid_event_;
-  SwitchEventSource<Mod, SwitchMod> mod_event_;
-  SwitchEventSource<Twist, SwitchTwist> twist_event_;
-  SwitchEventSource<Warp, SwitchWarp> warp_event_;
+  SwitchEventSource<Grid, SwitchGrid> grid_;
+  SwitchEventSource<Mod, SwitchMod> mod_;
+  SwitchEventSource<Twist, SwitchTwist> twist_;
+  SwitchEventSource<Warp, SwitchWarp> warp_;
 
   void Poll(std::function<void(Event)> const& put) {
-    grid_event_.Poll(put);
-    mod_event_.Poll(put);
-    twist_event_.Poll(put);
-    warp_event_.Poll(put);
+    grid_.Poll(put);
+    mod_.Poll(put);
+    twist_.Poll(put);
+    warp_.Poll(put);
   }
 };
 
