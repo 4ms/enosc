@@ -17,7 +17,7 @@ data['sine'] = [s1_15(i) for i in sine]
 
 # base-2 exponential
 
-size = 128
+size = 1024
 spc = np.arange(0., size) / size
 exp2 = 2 ** spc
 
@@ -81,6 +81,8 @@ data['fold'] = fold
 # plt.plot(fold)
 # plt.show()
 
+# Trianges waveshaper
+
 triangles = [
     [0., 0.25, 0.5, 0.75, 1.],
     [0., 0.33333, 0.66666, 1., 1.],
@@ -96,7 +98,13 @@ triangles = [[-x for x in i][::-1][:-1] + i for i in triangles]
 
 data['triangles'] = triangles
 
-# Trianges waveshaper
+# Harmonic series in pitch
+
+size = 16
+harm = np.arange(1,size+1)
+harm = 12 * np.log2(harm) - 12
+
+data['harm'] = harm
 
 # Generate
 
