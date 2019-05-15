@@ -293,6 +293,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             osc_.enable_pre_listen();
             osc_.enable_follow_new_note();
             control_.root_pot_alternate_function();
+            control_.pitch_pot_alternate_function();
           } else {
             learn_led_.flash(Colors::black);
           }
@@ -324,6 +325,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
       if (e1.type == ButtonRelease && e1.data == BUTTON_LEARN) {
         control_.root_pot_main_function();
+        control_.pitch_pot_main_function();
         osc_.disable_follow_new_note();
         mode_ = LEARN;
       }

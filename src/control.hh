@@ -9,6 +9,7 @@ const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
 const f kRootPotRange = 10_f * 12_f;
 const f kNewNoteRange = 6_f * 12_f;
+const f kNewNoteFineRange = 4_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
@@ -221,7 +222,8 @@ class Control : public EventSource<Event> {
   PotCVCombiner<PotConditioner<POT_SPREAD, Law::LINEAR, NoFilter>,
                 CVConditioner<CV_SPREAD>, QuadraticOnePoleLp<1>> spread_ {adc_};
 
-  PotConditioner<POT_PITCH, Law::LINEAR, QuadraticOnePoleLp<2>> pitch_pot_ {adc_};
+  DualFunctionPotConditioner<POT_PITCH, Law::LINEAR,
+                             QuadraticOnePoleLp<2>, Takeover::SOFT> pitch_pot_ {adc_};
   DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT> root_pot_ {adc_};
   AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
@@ -325,23 +327,31 @@ public:
     }
 
     // Root & Pitch
-    auto [fc, root] = root_pot_.Process(put);
-    if (fc == PotFct::MAIN) {
+
+    auto [fct2, pitch] = pitch_pot_.Process(put);
+
+    f fine_tune = 0_f;
+
+    if (fct2 == PotFct::MAIN) {
+      pitch *= kPitchPotRange;                               // 0..range
+      pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
+      f pitch_cv = pitch_cv_.last();
+      pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
+      pitch += pitch_cv;
+      params_.pitch = pitch;
+    } else {
+      fine_tune = (pitch - 0.5_f) * kNewNoteFineRange;
+    }
+
+    auto [fct3, root] = root_pot_.Process(put);
+
+    if (fct3 == PotFct::MAIN) {
       root *= kRootPotRange;
       root += root_cv_.last();
       params_.root = root.max(0_f);
     } else {
-      params_.new_note = root * kNewNoteRange + kNewNoteRange * 0.5_f;
+      params_.new_note = root * kNewNoteRange + kNewNoteRange * 0.5_f + fine_tune;
     }
-
-    f pitch = pitch_pot_.Process(put);
-    pitch *= kPitchPotRange;                               // 0..range
-    pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
-
-    f pitch_cv = pitch_cv_.last();
-    pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
-    pitch += pitch_cv;
-    params_.pitch = pitch;
 
 
     // Start next conversion
@@ -357,10 +367,13 @@ public:
 
   void root_pot_alternate_function() { root_pot_.alt(); }
   void root_pot_main_function() { root_pot_.main(); }
+  void pitch_pot_alternate_function() { pitch_pot_.alt(); }
+  void pitch_pot_main_function() { pitch_pot_.main(); }
 
   void all_main_function() {
     grid_pot_main_function();
     root_pot_main_function();
+    pitch_pot_main_function();
   }
 
   bool CalibrateOffset() {
