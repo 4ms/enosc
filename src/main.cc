@@ -11,6 +11,7 @@ Debug debug;
 
 struct Main :
   System<kUiUpdateRate, Main>,
+  Math,
   DynamicData,
   Codec<kSampleRate, kBlockSize, Main>,
   Ui<kUiUpdateRate, kBlockSize> {

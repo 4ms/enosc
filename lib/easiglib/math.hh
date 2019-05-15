@@ -74,5 +74,6 @@ struct Math {
   Math();
 private:
   static constexpr int exp2_size = 1024;
+  static constexpr float exp2_increment = 1.000677130693066; // 2 ^ (1/exp2_size)
   static uint32_t exp2_table[exp2_size];
 };
