@@ -2,6 +2,7 @@
 
 #include "dsp.hh"
 #include "dynamic_data.hh"
+#include "bitfield.hh"
 
 namespace Distortion {
 
@@ -23,10 +24,10 @@ namespace Distortion {
   template<>
   inline u0_32 twist<DECIMATE>(u0_32 phase, f amount) {
     u0_16 am = u0_16(amount);
-    uint32_t x = phase.repr();
-    x ^= (u0_16::narrow(phase)*am).repr();
-    x ^= (0.25_u0_16 * am).repr();
-    return u0_32::of_repr(x);
+    Bitfield<32> x {phase};
+    x ^= Bitfield<32>(u0_16::narrow(phase)*am);
+    x ^= Bitfield<32>(0.25_u0_16 * am);
+    return u0_32::of_repr(x.repr());
   }
 
   template<>

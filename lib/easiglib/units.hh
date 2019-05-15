@@ -5,12 +5,12 @@
 
 struct Freq : private Float {
 
-  static constexpr f semitones_to_ratio(f p) {
+  static f semitones_to_ratio(f p) {
     return Math::fast_exp2(p/12_f);
   }
 
   explicit constexpr Freq(f x) : Float(x / f(kSampleRate)) {};
-  static constexpr Freq of_pitch(f p) {
+  static Freq of_pitch(f p) {
     return Freq(semitones_to_ratio(p - 69._f) * 440_f);
   }
 
