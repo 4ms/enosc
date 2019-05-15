@@ -2,8 +2,7 @@
 
 #include "dsp.hh"
 
-constexpr int sine_size = 512 + 1;
-
+static constexpr int sine_size = 512 + 1;
 static constexpr int cheby_tables = 12;
 static constexpr int cheby_size = 512 + 1;
 
