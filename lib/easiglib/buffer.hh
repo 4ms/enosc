@@ -73,6 +73,15 @@ struct Buffer : std::array<T, SIZE> {
     return Signal::crossfade(a, b, fractional);
   }
 
+  template<class U, typename = std::is_same<T, std::pair<U, U>>>
+  constexpr U interpolateDiff(f phase) const {
+    phase *= f(size()-1);
+    int integral = phase.floor();
+    f fractional = phase.fractional();
+    auto [a, d] = (*this)[integral];
+    return Signal::crossfade_with_diff(a, d, fractional);
+  }
+
   constexpr T interpolate(u0_32 const phase) const {
     static_assert(is_power_of_2(SIZE-1), "only power-of-two-sized buffers");
     constexpr int BITS = Log2<SIZE>::val;

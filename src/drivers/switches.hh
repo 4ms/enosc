@@ -28,6 +28,7 @@ struct Switches : Nocopy {
     for(int i=0; i<16; i++) Debounce();
   }
 
+  enum Switch { GRID, MOD, TWIST, WARP };
   enum State { UP=1, DOWN=2, MID=3 };
 
   template<class T>

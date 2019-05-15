@@ -6,12 +6,16 @@
 #pragma once
 
 struct OnePoleLp {
-  void Process(Float coef, Float input, Float &output) {
+  void Process(f coef, f input) {
     state_ += (input - state_) * coef;
+  }
+  void Process(f coef, f input, f &output) {
+    Process(coef, input);
     output = state_;
   }
+  f state() { return state_; }
 private:
-  Float state_;
+  f state_;
 };
 
 struct OnePoleHp : OnePoleLp {

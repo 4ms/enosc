@@ -86,14 +86,14 @@ SECTIONS
     _etext = .;        /* define a global symbols at end of code */
   } >FLASH
 
-  /* /\* Constant data goes into FLASH *\/ */
-  /* .rodata : */
-  /* { */
-  /*   . = ALIGN(4); */
-  /*   *(.rodata)         /\* .rodata sections (constants, strings, etc.) *\/ */
-  /*   *(.rodata*)        /\* .rodata* sections (constants, strings, etc.) *\/ */
-  /*   . = ALIGN(4); */
-  /* } >FLASH */
+  /* Constant data goes into FLASH */
+  .rodata :
+  {
+    . = ALIGN(4);
+    *(.rodata)         /* .rodata sections (constants, strings, etc.) */
+    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+    . = ALIGN(4);
+  } >FLASH
 
   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
   .ARM : {
@@ -131,8 +131,6 @@ SECTIONS
   {
     . = ALIGN(4);
     _sdata = .;        /* create a global symbol at data start */
-    *(.rodata)         /* .rodata sections (constants, strings, etc.) */
-    *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     *(.data)           /* .data sections */
     *(.data*)          /* .data* sections */
 

@@ -9,6 +9,7 @@ enum AdcInput {
   POT_SPREAD, POT_TILT, POT_TWIST,
   CV_SPREAD, CV_WARP, CV_TWIST,
   CV_TILT, CV_GRID, CV_MOD,
+  ADC_INPUT_MAX
 };
 
 class Adc : Nocopy {
