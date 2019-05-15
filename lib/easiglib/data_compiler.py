@@ -44,7 +44,7 @@ def write_value_of(file, value, indent_level):
     elif (t is np.uint32): file.write("%d" % (value))
     elif (t is s1_15): file.write("s1_15::inclusive(f(%f))" % (value))
     elif (t is bool): file.write("true" if value else "false")
-    elif (t is float or t is np.float64): file.write("%f_f" % (value))
+    elif (t is float or t is np.float64): file.write("%.32f_f" % (value))
     elif (t is str): file.write("\"%s\"" % (value))
     elif (t is tuple):
         file.write("{")
