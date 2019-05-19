@@ -172,6 +172,18 @@ class Quantizer {
         5.85216923_f, 7.31521154_f, 8.77825385_f, 10.24129616_f,
         11.70433847_f, 13.16738078_f, 14.63042308_f, 16.09346539_f,
         17.5565077_f, 19.01955001_f },
+
+      // Bohlen-Pierce major triad
+      { 0_f, 8.77825385_f, 14.63042308_f, 19.01955001_f },
+
+      // Bohlen-Pierce minor triad
+      { 0_f, 5.85216923_f, 14.63042308_f, 19.01955001_f },
+
+      // Carlos alpha
+      { 0_f, 0.78_f },
+
+      // Carlos beta
+      { 0_f, 0.638_f },
     }};
 public:
   Grid *get_grid(Parameters::Grid grid) {
