@@ -113,7 +113,7 @@ class Quantizer {
       {0_f, 2_f},                // whole tone = MLT#1
       {0_f, 1_f, 3_f},           // MLT #2
       {0_f, 2_f, 3_f, 4_f},      // MLT #3
-      {0_f, 1_f, 2_f, 5_f, 6_f}, // MLT #3
+      {0_f, 1_f, 2_f, 5_f, 6_f}, // MLT #4
       {0_f, 1_f},                // all semitones
     }, {
       // OCTAVE
