@@ -14,18 +14,15 @@
  * 32-bits Floating Point
  **************/
 
-// template here is a hack to be able to define min/max-val inside the
-// class as static constexpr; otherwise it complains that type is incomplete
-template<bool>
-class FloatT {
+class Float {
   float val_;
 public:
 
   // TODO: constructor from Fixed types
 
-  using T = FloatT;
-  explicit FloatT() { }
-  explicit constexpr FloatT(float v) : val_(v) { }
+  using T = Float;
+  explicit Float() { }
+  explicit constexpr Float(float v) : val_(v) { }
   constexpr float repr() const { return val_; }
   constexpr T const operator+(const T y) const { return T(repr() + y.repr()); }
   constexpr T const operator-(const T y) const { return T(repr() - y.repr()); }
@@ -68,9 +65,6 @@ public:
 #endif
   }
 
-  static constexpr T min_val = T(FLT_MIN);
-  static constexpr T max_val = T(FLT_MIN);
-
   T min(const T y) const {
 #ifdef __arm__
     float res;
@@ -91,8 +85,8 @@ public:
 #endif
   }
 
-  constexpr T clip(const T x, const T y) const { return max(x).min(y); }
-  constexpr T clip() const { return clip(T(-1.0f), T(1.0f)); }
+  T clip(const T x, const T y) const { return max(x).min(y); }
+  T clip() const { return clip(T(-1.0f), T(1.0f)); }
 
   constexpr int32_t floor() const {
     return static_cast<int32_t>(val_);
@@ -108,15 +102,18 @@ public:
 #endif
   }
 
-  constexpr T fractional() const {
+  T fractional() const {
     return *this - integral();
   }
 };
 
-using Float = FloatT<true>;
 using f32 = Float;
 using f = f32;
 
+struct Floats {
+  static constexpr f min_val = f(FLT_MIN);
+  static constexpr f max_val = f(FLT_MIN);
+};
 
 constexpr Float operator "" _f(long double f){ return Float(f); }
 constexpr Float operator "" _f(unsigned long long int f){ return Float(f); }
@@ -225,10 +222,10 @@ public:
 
   // from Float:
   explicit constexpr Fixed(Float x) :
-    val_(static_cast<Base>((x * Float(1ULL << FRAC)).repr())) { }
+    val_(((x * Float(1ULL << FRAC)).repr())) { }
 
   static constexpr T inclusive(Float x) {
-    return T::of_repr(static_cast<Base>((x * Float((1ULL << FRAC) - 1)).repr()));
+    return T::of_repr((x * Float((1ULL << FRAC) - 1)).repr());
   }
 
   // from Fixed:
@@ -260,8 +257,8 @@ public:
   }
 
   // Boundary values:
-  static constexpr T min_val = T::of_repr(SIGN==SIGNED ? (Base)(1 << (WIDTH-1)) : 0);
-  static constexpr T max_val = T::of_repr(SIGN==SIGNED ? (Base)(~(1 << (WIDTH-1))) : -1);
+  static constexpr T min_val = T::of_repr(SIGN==SIGNED ? (1 << (WIDTH-1)) : 0);
+  static constexpr T max_val = T::of_repr(SIGN==SIGNED ? (~(1 << (WIDTH-1))) : -1);
   static constexpr T increment = T::of_repr(1);
 
   // CONVERSIONS
