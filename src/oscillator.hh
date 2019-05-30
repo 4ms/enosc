@@ -36,6 +36,11 @@ class Oscillator {
   SineShaper sine_shaper_;
   IFloat fader_ {0_f};
 
+  // simple linear piecewise function: 0->1, 0.25->1, 0.5->0
+  static f antialias(f factor) {
+    return (2_f - 4_f * factor).clip(0_f,1_f);
+  }
+
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   static f Process(Phasor& ph, SineShaper& sh, u0_32 freq, u0_16 mod, f twist_amount, f warp_amount) {
@@ -51,16 +56,20 @@ public:
   }
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(u0_32 const freq, f const twist, f const warp,
-               f const fade, f const amplitude, f const modulation,
+  void Process(f const freq, f const twist, f const warp,
+               f fade, f const amplitude, f const modulation,
                Buffer<u0_16, block_size>& mod_in, Buffer<u0_16, block_size>& mod_out, Buffer<f, block_size>& sum_output) {
+    f aliasing_factor = freq;
+    fade *= antialias(aliasing_factor);
+
+    u0_32 const fr = u0_32(freq);
     Phasor ph = phasor_;
     SineShaper sh = sine_shaper_;
     IFloat fd = fader_;
     fd.set(fade, block_size);
 
     for (auto [sum, m_in, m_out] : zip(sum_output, mod_in, mod_out)) {
-      f sample = Process<twist_mode, warp_mode>(ph, sh, freq, m_in, twist, warp);
+      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, twist, warp);
       sample *= fd.next();
       // TODO comprendre +1
       m_out += u0_16((sample + 1_f) * modulation);
@@ -79,10 +88,6 @@ class OscillatorPair : Nocopy {
   Oscillator osc_[2];
   FrequencyPair previous_freq;
 
-  // simple linear piecewise function: 0->1, 0.25->1, 0.5->0
-  static f antialias(f factor) {
-    return (2_f - 4_f * factor).clip(0_f,1_f);
-  }
 public:
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
@@ -102,17 +107,12 @@ public:
     f fade1 = 1_f - crossfade;
     f fade2 = crossfade;
 
-    f aliasing_factor1 = freq.freq1; // TODO in Oscillator
-    fade1 *= antialias(aliasing_factor1);
-    f aliasing_factor2 = freq.freq2; // TODO
-    fade2 *= antialias(aliasing_factor2);
-
     // mod_out is accumulated in the two calls, so we need to zero it here
     mod_out.fill(0._u0_16);
-    osc_[0].Process<twist_mode, warp_mode>(u0_32(freq.freq1), twist, warp,
+    osc_[0].Process<twist_mode, warp_mode>(freq.freq1, twist, warp,
                                            fade1, amplitude, modulation,
                                            mod_in, mod_out, sum_output);
-    osc_[1].Process<twist_mode, warp_mode>(u0_32(freq.freq2), twist, warp,
+    osc_[1].Process<twist_mode, warp_mode>(freq.freq2, twist, warp,
                                            fade2, amplitude, modulation,
                                            mod_in, mod_out, sum_output);
   }

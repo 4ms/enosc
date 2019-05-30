@@ -23,7 +23,7 @@ public:
     for (int i=0; i<grid.size(); ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
       Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
-      oscs_[i].Process<FEEDBACK, CRUSH>(u0_32(freq), twist, warp,
+      oscs_[i].Process<FEEDBACK, CRUSH>(freq, twist, warp,
                                         1_f, 1_f, 0_f,
                                         dummy_block_, dummy_block_, out);
     }
