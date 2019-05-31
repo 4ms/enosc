@@ -231,10 +231,10 @@ public:
 
   // from Float:
   explicit constexpr Fixed(Float x) :
-    val_(((x * Float(1ULL << FRAC)).repr())) { }
+    val_(static_cast<Base>((x * Float(1ULL << FRAC)).repr())) { }
 
   static constexpr T inclusive(Float x) {
-    return T::of_repr((x * Float((1ULL << FRAC) - 1)).repr());
+    return T::of_repr(static_cast<Base>((x * Float((1ULL << FRAC) - 1)).repr()));
   }
 
   // from Fixed:
@@ -497,7 +497,7 @@ public:
     }
 #else
     using Wider = typename Basetype<WIDTH*2, SIGN>::T;
-    Wider r = (Wider)val_ + (Wider)y.val_;
+    Wider r = static_cast<Wider>(val_) + static_cast<Wider>(y.val_);
     r = saturate_integer<Wider, WIDTH>(r);
     return T::of_repr(r);
 #endif
@@ -518,7 +518,7 @@ public:
     }
 #else
     using Wider = typename Basetype<WIDTH*2, SIGN>::T;
-    Wider r = (Wider)val_ - (Wider)y.val_;
+    Wider r = static_cast<Wider>(val_) - static_cast<Wider>(y.val_);
     r = saturate_integer<Wider, WIDTH>(r);
     return T::of_repr(r);
 #endif
