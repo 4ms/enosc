@@ -15,7 +15,7 @@ struct Freq : private Float {
   }
 
   constexpr Float const repr() const { return *this; }
-  constexpr u0_32 to_increment() const { return u0_32(this->repr()); }
+  u0_32 to_increment() const { return u0_32(this->repr()); }
 
 };
 

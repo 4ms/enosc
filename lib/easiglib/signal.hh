@@ -3,15 +3,15 @@
 
 struct Signal {
 
-  static constexpr f crossfade(f x, f y, f phase) {
+  static f crossfade(f x, f y, f phase) {
     return x + (y - x) * phase;
   }
 
-  static constexpr f crossfade(f x, f y, u0_16 phase) {
+  static f crossfade(f x, f y, u0_16 phase) {
     return crossfade(x, y, f(phase));
   }
 
-  static constexpr f crossfade(f x, f y, u0_32 phase) {
+  static f crossfade(f x, f y, u0_32 phase) {
     return crossfade(x, y, f(phase));
   }
 
