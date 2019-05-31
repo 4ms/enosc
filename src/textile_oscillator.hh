@@ -233,7 +233,7 @@ public:
     }
 
     for (size_t s = 0; s<size; s++) {
-      f normalized = out[s].to_float() * Data::normalization_factors[kNumOsc-1];
+      f normalized = f(out[s]) * Data::normalization_factors[kNumOsc-1];
       normalized = Math::softclip1(normalized * 0.5_f);
       output[s] = s17_15(normalized).template to_sat<1,15>();
     }

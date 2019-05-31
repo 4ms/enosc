@@ -22,7 +22,7 @@ class AudioCVConditioner {
   f offset_, nominal_offset_;
   f slope_, nominal_slope_;
   f last_;
-  f last_raw_reading() { return lp_.last().to_float_inclusive(); }
+  f last_raw_reading() { return f::inclusive(lp_.last()); }
 public:
   AudioCVConditioner(f o, f s) :
     offset_(o), nominal_offset_(o),
@@ -51,7 +51,7 @@ public:
     cic_.Process(in.data(), &x, 1); // -1..1
     u0_16 y = x.to_unsigned_scale(); // 0..1
     y = lp_.Process(y);
-    last_ = y.to_float_inclusive(); // 0..1
+    last_ = f::inclusive(y); // 0..1
     last_ -= offset_;
     last_ *= slope_;                // -24..72
   }
@@ -81,7 +81,7 @@ public:
   PotConditioner(Adc& adc) : adc_(adc) {}
 
   f Process(std::function<void(Event)> const& put) {
-    f x = adc_.get(INPUT).to_float_inclusive();
+    f x = f::inclusive(adc_.get(INPUT));
     switch(LAW) {
     case Law::LINEAR: break;
     case Law::QUADRATIC: x = x * x; break;
@@ -155,7 +155,7 @@ public:
     u0_16 in = adc_.get(INPUT);
     // TODO calibration
     s1_15 x = in.to_signed_scale();
-    return x.to_float_inclusive();
+    return f::inclusive(x);
   }
 };
 

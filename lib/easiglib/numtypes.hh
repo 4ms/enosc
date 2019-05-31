@@ -10,6 +10,13 @@
   #include "hal.hh"
 #endif
 
+
+class Float;
+
+enum sign { UNSIGNED, SIGNED };
+template<sign SIGN, int INT, int FRAC>
+class Fixed;
+
 /**************
  * 32-bits Floating Point
  **************/
@@ -23,6 +30,14 @@ public:
   using T = Float;
   explicit Float() { }
   explicit constexpr Float(float v) : val_(v) { }
+
+  template<sign SIGN, int INT, int FRAC>
+  explicit constexpr Float(Fixed<SIGN, INT, FRAC>);
+
+  template<sign SIGN, int INT, int FRAC>
+  static constexpr Float inclusive(Fixed<SIGN, INT, FRAC>);
+
+
   constexpr float repr() const { return val_; }
   constexpr T const operator+(const T y) const { return T(repr() + y.repr()); }
   constexpr T const operator-(const T y) const { return T(repr() - y.repr()); }
@@ -54,7 +69,9 @@ public:
     return T(f.f);
   }
 
+  // compiles to vabs.f32 on arm
   constexpr T const abs() const { return T(val_ > 0 ? val_ : -val_); }
+
   T const sqrt() const {
 #ifdef __arm__
     float y;
@@ -138,14 +155,6 @@ using f16 = Float16;
 /***************
  * Fixed-Point
  ***************/
-
-enum class sign {
-  UNSIGNED,
-  SIGNED
-};
-
-constexpr sign SIGNED = sign::SIGNED;
-constexpr sign UNSIGNED = sign::UNSIGNED;
 
 template<int WIDTH, sign SIGN> struct Basetype;
 
@@ -265,10 +274,6 @@ public:
 
   // unsafe getter for representation
   constexpr Base repr() const { return val_; }
-
-  // TODO put these as constructors in Float
-  constexpr Float const to_float() const { return Float(repr()) / Float(1ULL << FRAC); }
-  constexpr Float const to_float_inclusive() const { return Float(repr()) / Float((1ULL << FRAC) - 1); }
 
   // TODO optimize for ARM: SAT/USAT instructions have built-in shift
   template <int INT2, int FRAC2>
@@ -520,6 +525,18 @@ public:
   }
 
 };
+
+template<sign SIGN, int INT, int FRAC>
+constexpr Float::Float(Fixed<SIGN, INT, FRAC> that) :
+  val_(static_cast<float>(that.repr()) /
+       static_cast<float>(1ULL << FRAC)) {}
+
+template<sign SIGN, int INT, int FRAC>
+constexpr Float Float::inclusive(Fixed<SIGN, INT, FRAC> that) {
+  return f(static_cast<float>(that.repr()) /
+           static_cast<float>((1ULL << FRAC) - 1));
+}
+
 
 using u0_16 = Fixed<UNSIGNED, 0, 16>;
 using u1_15 = Fixed<UNSIGNED, 1, 15>;

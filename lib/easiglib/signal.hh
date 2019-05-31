@@ -8,11 +8,11 @@ struct Signal {
   }
 
   static constexpr f crossfade(f x, f y, u0_16 phase) {
-    return crossfade(x, y, phase.to_float());
+    return crossfade(x, y, f(phase));
   }
 
   static constexpr f crossfade(f x, f y, u0_32 phase) {
-    return crossfade(x, y, phase.to_float());
+    return crossfade(x, y, f(phase));
   }
 
   static constexpr s1_15 crossfade(s1_15 x, s1_15 y, u0_32 phase) {
