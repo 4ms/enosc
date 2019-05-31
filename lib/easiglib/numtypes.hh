@@ -32,13 +32,11 @@ public:
   explicit constexpr Float(float v) : val_(v) { }
 
   template<sign SIGN, int INT, int FRAC>
-  explicit Float(Fixed<SIGN, INT, FRAC>);
+  explicit constexpr Float(Fixed<SIGN, INT, FRAC>);
 
   template<sign SIGN, int INT, int FRAC>
-  static Float inclusive(Fixed<SIGN, INT, FRAC>);
+  static constexpr Float inclusive(Fixed<SIGN, INT, FRAC>);
 
-  template<sign SIGN, int INT, int FRAC>
-  static constexpr Float cst(Fixed<SIGN, INT, FRAC>);
 
   constexpr float repr() const { return val_; }
   constexpr T const operator+(const T y) const { return T(repr() + y.repr()); }
@@ -173,11 +171,11 @@ template<> struct Basetype<64, UNSIGNED> { using T = uint64_t; };
 
 template<sign SIGN, int INT, int FRAC>
 class Fixed {
-public:
   static constexpr const int WIDTH = INT + FRAC;
+
   using Base = typename Basetype<WIDTH, SIGN>::T;
   using T = Fixed<SIGN, INT, FRAC>;
-private:
+
   Base val_;
 
   template <typename A, int BITS>
@@ -232,31 +230,8 @@ public:
   }
 
   // from Float:
-  static constexpr T cst(Float x) {
-    return T::of_repr(static_cast<Base>((x * Float(1ULL << FRAC)).repr()));
-  }
-
-  explicit Fixed(Float x) {
-    union { float f; Base i; } res = {x.repr()};
-    if (WIDTH==32)
-      if (SIGN==SIGNED)
-        if (FRAC==0)
-          __ASM volatile ("VCVT.S32.F32 %0, %0" : "+t" (res.f));
-        else
-          __ASM volatile ("VCVT.S32.F32 %0, %0, %1" : "+t" (res.f) : "I" (FRAC));
-      else
-        if (FRAC==0)
-          __ASM volatile ("VCVT.U32.F32 %0, %0" : "+t" (res.f));
-        else
-        __ASM volatile ("VCVT.U32.F32 %0, %0, %1" : "+t" (res.f) : "I" (FRAC));
-    else if (WIDTH==16)
-      if (SIGN==SIGNED)
-        __ASM volatile ("VCVT.S16.F32 %0, %0, %1" : "+t" (res.f) : "I" (FRAC));
-      else
-        __ASM volatile ("VCVT.U16.F32 %0, %0, %1" : "+t" (res.f) : "I" (FRAC));
-
-    val_ = res.i;
-  }
+  explicit constexpr Fixed(Float x) :
+    val_(static_cast<Base>((x * Float(1ULL << FRAC)).repr())) { }
 
   static constexpr T inclusive(Float x) {
     return T::of_repr(static_cast<Base>((x * Float((1ULL << FRAC) - 1)).repr()));
@@ -552,40 +527,16 @@ public:
 };
 
 template<sign SIGN, int INT, int FRAC>
-Float::Float(Fixed<SIGN, INT, FRAC> that) {
-  using T = Fixed<SIGN, INT, FRAC>;
-  union {
-    typename T::Base i;
-    float f;
-  } res = {that.repr()};
-
-  if (T::WIDTH==32)
-    if (SIGN==SIGNED)
-      __ASM volatile ("VCVT.F32.S32 %0, %0, %1" : "+t" (res.f) : "I" (FRAC));
-    else
-      __ASM volatile ("VCVT.F32.U32 %0, %0, %1" : "+t" (res.f) : "I" (FRAC));
-  else if (T::WIDTH==16)
-    if (SIGN==SIGNED)
-      __ASM volatile ("VCVT.F32.S16 %0, %0, %1" : "+t" (res.f) : "I" (FRAC));
-    else
-      __ASM volatile ("VCVT.F32.U16 %0, %0, %1" : "+t" (res.f) : "I" (FRAC));
-
-  val_ = res.f;
-}
+constexpr Float::Float(Fixed<SIGN, INT, FRAC> that) :
+  val_(static_cast<float>(that.repr()) /
+       static_cast<float>(1ULL << FRAC)) {}
 
 template<sign SIGN, int INT, int FRAC>
-Float Float::inclusive(Fixed<SIGN, INT, FRAC> that) {
-  // TODO: optimize using vcvt?
+constexpr Float Float::inclusive(Fixed<SIGN, INT, FRAC> that) {
   return f(static_cast<float>(that.repr()) /
            static_cast<float>((1ULL << FRAC) - 1));
 }
 
-// constexpr version, for tests
-template<sign SIGN, int INT, int FRAC>
-constexpr Float Float::cst(Fixed<SIGN, INT, FRAC> that) {
-  return f(static_cast<float>(that.repr()) /
-           static_cast<float>(1ULL << FRAC));
-}
 
 using u0_16 = Fixed<UNSIGNED, 0, 16>;
 using u1_15 = Fixed<UNSIGNED, 1, 15>;
