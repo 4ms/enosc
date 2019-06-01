@@ -65,9 +65,9 @@ struct Buffer : std::array<T, SIZE> {
   constexpr int size() const { return SIZE; }
 
   constexpr T& interpolate(f phase) const {
-    phase *= f(size()-1);
-    int integral = phase.floor();
-    f fractional = phase.fractional();
+    constexpr f const max = f(size()-1);
+    phase *= max;
+    auto [integral, fractional] = phase.integral_fractional();
     T a = (*this)[integral];
     T b = (*this)[integral+1];
     return Signal::crossfade(a, b, fractional);
@@ -75,9 +75,9 @@ struct Buffer : std::array<T, SIZE> {
 
   template<class U, typename = std::is_same<T, std::pair<U, U>>>
   constexpr U interpolateDiff(f phase) const {
-    phase *= f(size()-1);
-    int integral = phase.floor();
-    f fractional = phase.fractional();
+    constexpr f const max = f(size()-1);
+    phase *= max;
+    auto [integral, fractional] = phase.integral_fractional();
     auto [a, d] = (*this)[integral];
     return Signal::crossfade_with_diff(a, d, fractional);
   }
