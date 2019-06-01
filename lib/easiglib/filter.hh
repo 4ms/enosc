@@ -97,12 +97,18 @@ struct ITransferCubic {
 
 template<int divisor>
 struct FTransferQuadratic {
-  static f Process(f x) { return x.abs() * x * (1_f / f(divisor)); }
+  static f Process(f x) {
+    constexpr f const fact = 1_f / f(divisor);
+    return x.abs() * x * fact;
+  }
 };
 
 template<int divisor>
 struct FTransferCubic {
-  static f Process(f x) { return ((x * x) * x) * (1_f / f(divisor)); }
+  static f Process(f x) {
+    constexpr f const fact = 1_f / f(divisor);
+    return ((x * x) * x) * fact;
+  }
 };
 
 

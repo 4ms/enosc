@@ -4,7 +4,7 @@
 #include "data.hh"
 
 struct Math {
-  static constexpr f pi = f(3.14159265358979323846264338327950288);
+  static constexpr f pi = 3.14159265358979323846264338327950288_f;
 
   // [0..1] --> [0..1], f(0)=0, f(1)=1, f'(0)=0, f'(1)=0
   static constexpr f fast_raised_cosine(f x) {
@@ -41,7 +41,7 @@ struct Math {
 
   static f fast_exp2(f x) {
     static_assert(is_power_of_2(exp2_size), "");
-    constexpr int BITS = Log2<exp2_size>::val;
+    constexpr int const BITS = Log2<exp2_size>::val;
 
     typedef union {
       f f_repr;
@@ -53,7 +53,8 @@ struct Math {
       } parts;
     } float_cast;
 
-    u32 i = u32(((x + 127_f) * f(1 << 23)));
+    constexpr f const fact = f(1 << 23);
+    u32 i = u32(((x + 127_f) * fact));
     float_cast u = {.i_repr = i};
 
     u.parts.mantisa = exp2_table[u.parts.mantisa >> (23-BITS)];

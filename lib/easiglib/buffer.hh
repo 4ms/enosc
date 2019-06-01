@@ -172,7 +172,7 @@ class Queue {
   bool full_ = false;
 public:
   bool put(T item) {
-    if(full_) return false;
+    if (full_) return false;
     buf_[head_] = item;
     head_ = (head_+1) % SIZE;
     full_ = head_ == tail_;
@@ -180,7 +180,7 @@ public:
   }
 
   bool get(T& x) {
-    if(empty()) return false;
+    if (empty()) return false;
     x = buf_[tail_];
     full_ = false;
     tail_ = (tail_+1) % SIZE;
