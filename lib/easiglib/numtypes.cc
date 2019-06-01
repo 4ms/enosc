@@ -3,14 +3,14 @@
 // STATIC TESTS:
 
 static_assert(65536_u == 0_u, "");
-static_assert(f(10_u).repr() == 10.f, "");
-static_assert(f(12495_u) == 12495_f, "");
+static_assert(f::cst(10_u).repr() == 10.f, "");
+static_assert(f::cst(12495_u) == 12495_f, "");
 static_assert((32_u).min(42_u) == 32_u, "");
 static_assert((32_u).max(42_u) == 42_u, "");
 static_assert((42_u).min(32_u) == 32_u, "");
 static_assert((42_u).max(32_u) == 42_u, "");
-static_assert(f(-0.5_s1_15) == -0.5_f, "");
-static_assert(f(-0.125_s1_15 - 0.5_s1_15) == -0.625_f, "");
+static_assert(f::cst(-0.5_s1_15) == -0.5_f, "");
+static_assert(f::cst(-0.125_s1_15 - 0.5_s1_15) == -0.625_f, "");
 
 static_assert(s1_15::min_val.pred() == s1_15::max_val, "");
 static_assert(s1_15::max_val.succ() == s1_15::min_val, "");
@@ -25,24 +25,24 @@ static_assert(u0_32::max_val.succ() == u0_32::min_val, "");
 static_assert(-1.0_s1_15 == s1_15::min_val, "");
 static_assert((1.0_s1_15).pred() == s1_15::max_val, "");
 
-static_assert(f(-0.5_s1_15) == -0.5_f, "");
+static_assert(f::cst(-0.5_s1_15) == -0.5_f, "");
 static_assert(1.0_s1_15 == -1.0_s1_15, "");
-static_assert(f(-0.125_s1_15 - 0.5_s1_15) == -0.625_f, "");
+static_assert(f::cst(-0.125_s1_15 - 0.5_s1_15) == -0.625_f, "");
 static_assert(1.0_u0_16 == 0._u0_16, "");
-static_assert(f(0.5_u0_16 + 0.125_u0_16) == 0.625_f, "");
-static_assert(f(0.25_u0_16 - 0.125_u0_16) == 0.125_f, "");
-static_assert(f(0.25_u0_16 - 0.5_u0_16) == 0.75_f, "");
+static_assert(f::cst(0.5_u0_16 + 0.125_u0_16) == 0.625_f, "");
+static_assert(f::cst(0.25_u0_16 - 0.125_u0_16) == 0.125_f, "");
+static_assert(f::cst(0.25_u0_16 - 0.5_u0_16) == 0.75_f, "");
 
 // TODO: constexpr problem with this one:
 // static_assert(-1.0_s1_31 == 1.0_s1_31, "");
 
-static_assert(f(0.45_u0_32) == 0.45_f, "");
+static_assert(f::cst(0.45_u0_32) == 0.45_f, "");
 static_assert(0.5_u0_32 == 0.5_u0_32, "");
-static_assert(f(0.345_u0_32) == 0.345_f, "");
+static_assert(f::cst(0.345_u0_32) == 0.345_f, "");
 static_assert(1.0_u0_32 == 0.0_u0_32, "");
 static_assert(0.625_u0_32 + 0.125_u0_32 == 0.75_u0_32, "");
-static_assert(f(-0.5_s1_31) == -0.5_f, "");
-static_assert(f(-0.5_s1_31+0.75_s1_31) == 0.25_f, "");
+static_assert(f::cst(-0.5_s1_31) == -0.5_f, "");
+static_assert(f::cst(-0.5_s1_31+0.75_s1_31) == 0.25_f, "");
 
 static_assert(1024.0_u10_22 == 0.0_u10_22, "");
 static_assert(742.625_u10_22 == 742.625_u10_22, "");
@@ -79,9 +79,9 @@ static_assert((-1.2_s10_22).clip() == -1.0_s10_22, "");
 
 // pure widening
 static_assert(u32(42_u) == u32(42_u));
-static_assert(f(u32(42_u)) == 42_f, "");
-static_assert(f(s32(42_s)) == 42_f, "");
-static_assert(f(s32(-42_s)) == -42_f, "");
+static_assert(f::cst(u32(42_u)) == 42_f, "");
+static_assert(f::cst(s32(42_s)) == 42_f, "");
+static_assert(f::cst(s32(-42_s)) == -42_f, "");
 // widening with shift
 static_assert(u0_32(0.5_u0_16) == 0.5_u0_32, "");
 static_assert(s10_22(0.5_s1_15) == 0.5_s10_22, "");
