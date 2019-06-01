@@ -84,21 +84,31 @@ public:
 
 struct FrequencyPair { f freq1, freq2, crossfade; };
 
+struct FrequencyState {
+  OnePoleLp freq1, freq2, crossfade;
+  void Process(f coef, FrequencyPair p) {
+    freq1.Process(coef, p.freq1);
+    freq2.Process(coef, p.freq2);
+    crossfade.Process(coef, p.crossfade);
+  }
+};
+
 class OscillatorPair : Nocopy {
   Oscillator osc_[2];
-  FrequencyPair previous_freq;
+  FrequencyState freq;
 
 public:
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(FrequencyPair freq, bool frozen, f crossfade_factor,
+  void Process(FrequencyPair new_freq, bool frozen, f crossfade_factor,
                f const twist, f const warp, f const amplitude, f const modulation,
                Buffer<u0_16, block_size>& mod_in, Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {
-    if (frozen) freq = previous_freq;
-    else previous_freq = freq;
 
-    f crossfade = freq.crossfade;
+    f coef = frozen ? 0_f : 0.1_f;
+    freq.Process(coef, new_freq);
+
+    f crossfade = freq.crossfade.state();
 
     // shape crossfade so notes are easier to find
     // crossfade = Math::fast_raised_cosine(crossfade);
@@ -109,10 +119,10 @@ public:
 
     // mod_out is accumulated in the two calls, so we need to zero it here
     mod_out.fill(0._u0_16);
-    osc_[0].Process<twist_mode, warp_mode>(freq.freq1, twist, warp,
+    osc_[0].Process<twist_mode, warp_mode>(freq.freq1.state(), twist, warp,
                                            fade1, amplitude, modulation,
                                            mod_in, mod_out, sum_output);
-    osc_[1].Process<twist_mode, warp_mode>(freq.freq2, twist, warp,
+    osc_[1].Process<twist_mode, warp_mode>(freq.freq2.state(), twist, warp,
                                            fade2, amplitude, modulation,
                                            mod_in, mod_out, sum_output);
   }
