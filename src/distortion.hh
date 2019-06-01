@@ -40,9 +40,9 @@ namespace Distortion {
 
   template<>
   inline f warp<CHEBY>(s1_15 x, f amount) {
-    amount *= f(DynamicData::cheby.size() - 2);
-    int idx = amount.floor();
-    f frac = amount.fractional();
+    constexpr f const fact = f(DynamicData::cheby.size() - 2);
+    amount *= fact;
+    auto [idx, frac] = amount.integral_fractional();
     u0_32 phase = u0_32(x.to_unsigned_scale());
     f s1 = DynamicData::cheby[idx].interpolate(phase);
     f s2 = DynamicData::cheby[idx+1].interpolate(phase);
@@ -51,9 +51,9 @@ namespace Distortion {
 
   template<>
   inline f warp<CRUSH>(s1_15 x, f amount) {
-    amount *= f(Data::triangles.size() - 1);
-    int idx = amount.floor();
-    f frac = amount.fractional();
+    constexpr f const fact = f(Data::triangles.size() - 1);
+    amount *= fact;
+    auto [idx, frac] = amount.integral_fractional();
     u0_32 phase = u0_32(x.to_unsigned_scale());
     f s1 = Data::triangles[idx].interpolate(phase);
     f s2 = Data::triangles[idx+1].interpolate(phase);
