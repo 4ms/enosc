@@ -12,7 +12,7 @@ struct Random {
   }
   static int16_t Int16() { return Word() >> 16; }
   // float between 0 and 1
-  static Float Float01() { return Float(Word()) / Float(UINT32_MAX); }
+  static Float Float01() { return f(Word()) / f(UINT32_MAX); }
   static bool Bool() { return Word() & 1; }
 
   static constexpr uint32_t rand_max = UINT32_MAX;
