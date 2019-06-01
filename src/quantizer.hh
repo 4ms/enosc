@@ -106,14 +106,15 @@ class Quantizer {
   Grid grids_[kBankNr][kGridNr] = {{
       // 12TET
       {0_f, 12_f},              // octave
+      {0_f, 7_f, 12_f},         // octave+fifth
+      {0_f, 4_f, 7_f, 12_f},    // major triad
+      {0_f, 3_f, 7_f, 12_f},    // minor triad
+      {0_f, 3_f, 5_f, 7_f, 12_f},    // minor triad
+      // {0_f, 3_f, 5_f, 10_f, 12_f}, // ??
       {0_f, 7_f},               // circle of fifths
       {0_f, 5_f, 7_f},
       {0_f, 3_f, 5_f, 7_f},
       {0_f, 5_f},
-      {0_f, 2_f},                // whole tone = MLT#1
-      {0_f, 1_f, 3_f},           // MLT #2
-      {0_f, 2_f, 3_f, 4_f},      // MLT #3
-      {0_f, 1_f, 2_f, 5_f, 6_f}, // MLT #4
       {0_f, 1_f},                // all semitones
     }, {
       // OCTAVE
@@ -166,6 +167,10 @@ class Quantizer {
 
     }, {
       // FREE
+      {0_f, 2_f},                // whole tone = MLT#1
+      {0_f, 1_f, 3_f},           // MLT #2
+      {0_f, 2_f, 3_f, 4_f},      // MLT #3
+      {0_f, 1_f, 2_f, 5_f, 6_f}, // MLT #4
 
       // Bohlen-Pierce
       { 0_f, 1.46304231_f, 2.92608462_f, 4.38912693_f,
