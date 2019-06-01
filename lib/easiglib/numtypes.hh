@@ -25,8 +25,6 @@ class Float {
   float val_;
 public:
 
-  // TODO: constructor from Fixed types
-
   using T = Float;
   explicit Float() { }
   explicit constexpr Float(float v) : val_(v) { }
@@ -107,8 +105,8 @@ public:
   T clip(const T x, const T y) const { return max(x).min(y); }
   T clip() const { return clip(T(-1.0f), T(1.0f)); }
 
-  constexpr int32_t floor() const {
-    return static_cast<int32_t>(val_);
+  constexpr int floor() const {
+    return static_cast<int>(val_);
   }
 
   T integral() const {
@@ -123,6 +121,12 @@ public:
 
   T fractional() const {
     return *this - integral();
+  }
+
+  constexpr std::pair<int, T> const integral_fractional() const {
+    int integral = static_cast<int>(val_);
+    T fractional = *this - T(static_cast<float>(integral));
+    return std::pair(integral, fractional);
   }
 };
 
