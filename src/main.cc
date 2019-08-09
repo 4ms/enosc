@@ -5,8 +5,6 @@
 #include "polyptic_oscillator.hh"
 #include "dynamic_data.hh"
 
-// #define BYPASS
-
 Debug debug;
 
 struct Main :
@@ -36,11 +34,8 @@ struct Main :
     debug.set(3, true);
     Ui::Poll();
 
-#ifdef BYPASS
-    for(auto [i, o] : zip(in, out)) o = i;
-#else
     Ui::osc().Process(out);
-#endif
+
     debug.set(3, false);
   }
 } _;
