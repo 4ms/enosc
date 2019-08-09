@@ -11,6 +11,7 @@ SRCS = \
 	lib/easiglib/dsp.cc \
 	src/drivers/adc.cc \
 	src/drivers/codec.cc \
+	src/drivers/spi_adc.cc \
 	src/drivers/leds.cc \
 	src/drivers/buttons.cc \
 	src/drivers/debug.cc \
@@ -32,8 +33,6 @@ HAL = 	stm32f7xx_hal.o \
 	stm32f7xx_hal_rcc.o \
 	stm32f7xx_hal_rcc_ex.o \
 	stm32f7xx_hal_dma.o \
-	stm32f7xx_hal_i2c.o \
-	stm32f7xx_hal_i2c_ex.o \
 	stm32f7xx_hal_sai.o \
 	stm32f7xx_hal_sai_ex.o \
 	stm32f7xx_hal_spi.o \
@@ -41,6 +40,7 @@ HAL = 	stm32f7xx_hal.o \
 	stm32f7xx_hal_adc_ex.o \
 	stm32f7xx_hal_pwr.o \
 	stm32f7xx_hal_pwr_ex.o \
+	stm32f7xx_hal_qspi.o \
 	stm32f7xx_hal_tim.o \
 	stm32f7xx_hal_tim_ex.o \
 
