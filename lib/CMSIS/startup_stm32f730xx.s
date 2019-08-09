@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * @file      startup_stm32f722xx.s
+  * @file      startup_stm32f730xx.s
   * @author    MCD Application Team
-  * @brief     STM32F722xx Devices vector table for GCC based toolchain. 
+  * @brief     STM32F730xx Devices vector table for GCC based toolchain. 
   *            This module performs:
   *                - Set the initial SP
   *                - Set the initial PC == Reset_Handler,
@@ -260,7 +260,7 @@ g_pfnVectors:
   .word     OTG_HS_WKUP_IRQHandler            /* USB OTG HS Wakeup through EXTI */                         
   .word     OTG_HS_IRQHandler                 /* USB OTG HS                   */                   
   .word     0                                 /* Reserved                     */                   
-  .word     0                                 /* Reserved                     */                   
+  .word     AES_IRQHandler                    /* AES                          */ 
   .word     RNG_IRQHandler                    /* RNG                          */
   .word     FPU_IRQHandler                    /* FPU                          */
   .word     UART7_IRQHandler                  /* UART7                        */      
@@ -538,6 +538,9 @@ g_pfnVectors:
             
    .weak      OTG_HS_IRQHandler      
    .thumb_set OTG_HS_IRQHandler,Default_Handler
+
+   .weak      AES_IRQHandler             
+   .thumb_set AES_IRQHandler,Default_Handler 
 
    .weak      RNG_IRQHandler            
    .thumb_set RNG_IRQHandler,Default_Handler   
