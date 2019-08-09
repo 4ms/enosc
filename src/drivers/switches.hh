@@ -7,9 +7,9 @@
 #define MODSW_BOT_Pin GPIO_PIN_15
 #define MODSW_BOT_GPIO_Port GPIOE
 
-#define GRIDSW_TOP_Pin GPIO_PIN_12
+#define GRIDSW_TOP_Pin GPIO_PIN_10
 #define GRIDSW_TOP_GPIO_Port GPIOB
-#define GRIDSW_BOT_Pin GPIO_PIN_13
+#define GRIDSW_BOT_Pin GPIO_PIN_11
 #define GRIDSW_BOT_GPIO_Port GPIOB
 
 #define TWISTSW_TOP_Pin GPIO_PIN_14
@@ -17,9 +17,9 @@
 #define TWISTSW_BOT_Pin GPIO_PIN_15
 #define TWISTSW_BOT_GPIO_Port GPIOD
 
-#define WARPSW_TOP_Pin GPIO_PIN_11 /*reversed from PCB*/
-#define WARPSW_TOP_GPIO_Port GPIOC
-#define WARPSW_BOT_Pin GPIO_PIN_10 /*reversed from PCB*/
+#define WARPSW_TOP_Pin GPIO_PIN_15
+#define WARPSW_TOP_GPIO_Port GPIOA
+#define WARPSW_BOT_Pin GPIO_PIN_10
 #define WARPSW_BOT_GPIO_Port GPIOC
 
 struct Switches : Nocopy {
