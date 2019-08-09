@@ -256,18 +256,18 @@ private:
       HAL_Delay(1);
     }
 
-    enum PinStates { LOW = GPIO_PIN_RESET, HIGH = GPIO_PIN_SET };
+    enum PinStates { LOW = 0, HIGH = 1 };
 
     void data_pin(enum PinStates state) {
-      HAL_GPIO_WritePin(DACSAI_REG_GPIO, DACSAI_REG_DATA_PIN, state);
+      HAL_GPIO_WritePin(DACSAI_REG_GPIO, DACSAI_REG_DATA_PIN, (GPIO_PinState)state);
     }
 
     void clk_pin(enum PinStates state) {
-      HAL_GPIO_WritePin(DACSAI_REG_GPIO, DACSAI_REG_CLK_PIN, state);
+      HAL_GPIO_WritePin(DACSAI_REG_GPIO, DACSAI_REG_CLK_PIN, (GPIO_PinState)state);
     }
 
     void latch_pin(enum PinStates state) {
-      HAL_GPIO_WritePin(DACSAI_REG_GPIO, DACSAI_REG_LATCH_PIN, state);
+      HAL_GPIO_WritePin(DACSAI_REG_GPIO, DACSAI_REG_LATCH_PIN, (GPIO_PinState)state);
     }
 
   } bb_regsetup_;
