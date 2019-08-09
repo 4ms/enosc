@@ -1,4 +1,5 @@
 #include "codec.hh"
+#include "spi_adc.hh"
 #include "system.hh"
 #include "debug.hh"
 #include "ui.hh"
@@ -12,6 +13,7 @@ struct Main :
   Math,
   DynamicData,
   Codec<kSampleRate, kBlockSize, Main>,
+  SpiAdc,
   Ui<kUiUpdateRate, kBlockSize> {
 
   Main() {
@@ -31,11 +33,11 @@ struct Main :
 
   template<int block_size>
   void CodecCallback(Buffer<Frame, block_size>& out) {
-    debug.set(3, true);
+    // debug.set(3, true);
     Ui::Poll();
 
     Ui::osc().Process(out);
 
-    debug.set(3, false);
+    // debug.set(3, false);
   }
 } _;

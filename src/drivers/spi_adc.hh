@@ -1,0 +1,201 @@
+#pragma once
+
+#include "buffer.hh"
+#include "parameters.hh"
+#include "hal.hh"
+
+enum max11666_channels {
+	MAX11666_CHAN1 = 0x00FF,
+	MAX11666_CHAN2 = 0xFF00
+};
+
+enum max11666Errors {
+	MAX11666_NO_ERR = 0,
+	MAX11666_SPI_INIT_ERR,
+};
+
+void register_spi_adc_isr(void f());
+
+template<int numchannels>
+struct SpiAdc : Nocopy {
+	SpiAdc() {
+
+    instance_ = this; //Todo: why not just say "this" everywhere?
+    err = MAX11666_NO_ERR;
+
+    register_spi_adc_isr(spi_adc_IRQHandler__IN_ITCM_); //Todo: measure ITCM benefits
+
+    assign_pins();
+    SPI_disable();
+    SPI_GPIO_init();
+    SPI_init();
+    IRQ_init();
+    SPI_enable();
+	}
+  
+  void Start() {
+    //Send one word to start
+    cur_channel = MAX11666_CHAN1;
+    spih.Instance->DR = cur_channel;
+  }
+
+
+private:
+  typedef struct spiPin {
+    uint16_t  pin;
+    GPIO_TypeDef *gpio;
+    uint32_t  gpio_clk;
+    uint8_t   pin_source;
+    uint8_t   af;
+  } spiPin;
+
+  SPI_HandleTypeDef spih;
+  uint32_t      SPI_clk;
+  uint32_t      SPI_clk_pbnum; //1 = RCC_APB1PeriphClockCmd, 2 = RCC_APB2PeriphClockCmd
+  IRQn_Type     SPI_IRQn;
+  spiPin        SCK;
+  spiPin        MISO;
+  spiPin        CHSEL;
+  spiPin        CS;
+
+  float         buffer[numchannels];
+  max11666_channels  cur_channel;
+  max11666Errors  err;
+
+  static SpiAdc *instance_;
+
+  void assign_pins() {
+    spih.Instance = SPI2;
+    SPI_IRQn = SPI2_IRQn;
+
+    SCK.pin = GPIO_PIN_13;
+    SCK.gpio = GPIOB;
+    SCK.af = GPIO_AF5_SPI2;
+
+    MISO.pin = GPIO_PIN_14;
+    MISO.gpio = GPIOB;
+    MISO.af = GPIO_AF5_SPI2;
+
+    CHSEL.pin = GPIO_PIN_15;
+    CHSEL.gpio = GPIOB;
+    CHSEL.af = GPIO_AF5_SPI2;
+
+    CS.pin = GPIO_PIN_12;
+    CS.gpio = GPIOB;
+    CS.af = GPIO_AF5_SPI2;
+  }
+
+  //Todo: do we need to call a non-static ISR() from here like codec.hh does?
+  static void spi_adc_IRQHandler__IN_ITCM_() {
+    uint32_t itflag = instance_->spih.Instance->SR;
+    uint32_t itsource = instance_->spih.Instance->CR2;
+
+    if ((itflag & SPI_FLAG_RXNE) && (itsource & SPI_IT_RXNE))
+    { 
+      if (instance_->cur_channel==MAX11666_CHAN1)
+      {
+        instance_->buffer[0] = instance_->spih.Instance->DR;
+        instance_->cur_channel = MAX11666_CHAN2;
+      } else {
+        instance_->buffer[1] = instance_->spih.Instance->DR;
+        instance_->cur_channel = MAX11666_CHAN1;
+      }
+
+      instance_->spih.Instance->DR = instance_->cur_channel;
+    }
+  }
+
+
+
+  void SPI_init() {
+    spih.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+    spih.Init.Direction         = SPI_DIRECTION_2LINES;
+    spih.Init.CLKPhase          = SPI_PHASE_1EDGE;
+    spih.Init.CLKPolarity       = SPI_POLARITY_LOW;
+    spih.Init.DataSize          = SPI_DATASIZE_14BIT;
+    spih.Init.FirstBit          = SPI_FIRSTBIT_MSB;
+    spih.Init.TIMode            = SPI_TIMODE_DISABLE;
+    spih.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
+    spih.Init.CRCPolynomial     = 7;
+    spih.Init.NSS               = SPI_NSS_HARD_OUTPUT;
+    spih.Init.NSSPMode          = SPI_NSS_PULSE_ENABLE;
+    spih.Init.Mode              = SPI_MODE_MASTER;
+
+    if (HAL_SPI_Init(&spih) != HAL_OK)
+      err = MAX11666_SPI_INIT_ERR;
+  }
+
+  void SPI_disable() {
+    spih.Instance->CR1 &= ~SPI_CR1_SPE;
+  }
+
+  void SPI_enable() {
+    spih.Instance->CR1 |= SPI_CR1_SPE;
+  }
+
+
+  void IRQ_init()
+  {
+    HAL_NVIC_SetPriority(SPI_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(SPI_IRQn);
+
+    // Enable the Rx buffer not empty interrupt
+    __HAL_SPI_ENABLE_IT(&spih, SPI_IT_RXNE);
+
+    __HAL_SPI_DISABLE_IT(&spih, SPI_IT_TXE);
+  }
+
+  void SPI_GPIO_init()
+  {
+    GPIO_InitTypeDef gpio;
+
+    #ifdef SPI1
+      if (spih.Instance == SPI1)   
+        __HAL_RCC_SPI1_CLK_ENABLE();
+    #endif
+    #ifdef SPI2
+      if (spih.Instance == SPI2)   
+        __HAL_RCC_SPI2_CLK_ENABLE();
+    #endif
+    #ifdef SPI3
+      if (spih.Instance == SPI3)   
+        __HAL_RCC_SPI3_CLK_ENABLE();
+    #endif
+    #ifdef SPI4
+      if (spih.Instance == SPI4)   
+        __HAL_RCC_SPI4_CLK_ENABLE();
+    #endif
+    #ifdef SPI5
+      if (spih.Instance == SPI5)  
+       __HAL_RCC_SPI5_CLK_ENABLE();
+    #endif
+    #ifdef SPI6
+      if (spih.Instance == SPI6)   
+        __HAL_RCC_SPI6_CLK_ENABLE();
+    #endif
+
+    gpio.Mode   = GPIO_MODE_AF_PP;
+    gpio.Speed  = GPIO_SPEED_FREQ_VERY_HIGH;
+    gpio.Pull   = GPIO_PULLDOWN;
+
+    gpio.Pin    = SCK.pin;
+    gpio.Alternate  = SCK.af;
+    HAL_GPIO_Init(SCK.gpio, &gpio);
+
+    gpio.Pin    = CHSEL.pin;
+    gpio.Alternate  = CHSEL.af;
+    HAL_GPIO_Init(CHSEL.gpio, &gpio);
+
+    gpio.Pin    = MISO.pin;
+    gpio.Alternate  = MISO.af;
+    HAL_GPIO_Init(MISO.gpio, &gpio);  
+
+    gpio.Pin    = CS.pin;
+    gpio.Alternate  = CS.af;
+    HAL_GPIO_Init(CS.gpio, &gpio);
+  }
+};
+
+
+template<int numchannels>
+SpiAdc<numchannels> *SpiAdc<numchannels>::instance_;
