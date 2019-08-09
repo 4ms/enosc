@@ -13,12 +13,13 @@ struct Main :
   Math,
   DynamicData,
   Codec<kSampleRate, kBlockSize, Main>,
-  SpiAdc,
+  SpiAdc<2>,
   Ui<kUiUpdateRate, kBlockSize> {
 
   Main() {
     //Start audio processing
     Codec::Start();
+    SpiAdc::Start();
     while(1) {
       Ui::Process();
       // TODO understand why this is crucial
