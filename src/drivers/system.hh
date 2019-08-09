@@ -1,7 +1,7 @@
 #include "hal.hh"
 
 extern "C" {
-  extern uint32_t uwTick;
+  extern __IO uint32_t uwTick;
   void (*SysTick_ISR)();
   void RegisterSysTickISR(void f()) { SysTick_ISR = f; }
 }
