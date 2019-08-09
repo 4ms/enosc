@@ -4,8 +4,8 @@
 
 **  File        : LinkerScript.ld
 **
-**  Abstract    : Linker script for STM32F722ZETx Device with
-**                512KByte FLASH, 256KByte RAM
+**  Abstract    : Linker script for STM32F730V8 Device 
+**                64KByte FLASH, 256KByte RAM
 **
 **                Set heap size, stack size and stack location according
 **                to application requirements.
@@ -43,7 +43,8 @@ MEMORY
 {
 ITCM_RAM (rx)  : ORIGIN = 0x00000000, LENGTH = 16K
 RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 256K
-FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 512K
+FLASH (rx)     : ORIGIN = 0x08000000, LENGTH = 64K
+ITCMFLASH (rx) : ORIGIN = 0x00200000, LENGTH = 64K
 }
 
 /* Define output sections */

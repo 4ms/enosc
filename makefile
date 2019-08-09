@@ -65,7 +65,7 @@ INC = -I . \
       -I $(CMSIS_DIR) \
       -I $(HAL_DIR) \
 
-LDSCRIPT = $(CMSIS_DIR)/STM32F722VEx_FLASH.ld
+LDSCRIPT = $(CMSIS_DIR)/STM32F730V8x_FLASH.ld
 
 ARCHFLAGS =  	-mcpu=cortex-m7 \
 		-mthumb \
@@ -74,7 +74,7 @@ ARCHFLAGS =  	-mcpu=cortex-m7 \
 		-mthumb-interwork \
 		-mfp16-format=ieee \
 		-DARM_MATH_CM7 \
-		-DSTM32F722xx \
+		-DSTM32F730xx \
 
 CPPFLAGS= $(INC)
 
@@ -103,7 +103,7 @@ CXXFLAGS=$(CFLAGS) \
 LDFLAGS= $(CXXFLAGS) -T $(LDSCRIPT) \
 	-Wl,--gc-sections \
 
-STARTUP = $(CMSIS_DIR)startup_stm32f722xx
+STARTUP = $(CMSIS_DIR)startup_stm32f730xx
 SYSTEM = $(CMSIS_DIR)system_stm32f7xx
 
 OBJS := $(STARTUP).o \
