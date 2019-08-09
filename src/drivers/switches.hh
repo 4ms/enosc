@@ -94,10 +94,14 @@ struct Switches : Nocopy {
     Warp() {
       __HAL_RCC_GPIOC_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
-      gpio.Pin = WARPSW_TOP_Pin|WARPSW_BOT_Pin;
+      gpio.Pin = WARPSW_TOP_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLUP;
       HAL_GPIO_Init(WARPSW_TOP_GPIO_Port, &gpio);
+      gpio.Pin = WARPSW_BOT_Pin;
+      gpio.Mode = GPIO_MODE_INPUT;
+      gpio.Pull = GPIO_PULLUP;
+      HAL_GPIO_Init(WARPSW_BOT_GPIO_Port, &gpio);
     }
     bool get1() { return ReadPin(WARPSW_TOP_GPIO_Port, WARPSW_TOP_Pin); }
     bool get2() { return ReadPin(WARPSW_BOT_GPIO_Port, WARPSW_BOT_Pin); }
