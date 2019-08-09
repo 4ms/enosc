@@ -123,6 +123,8 @@ struct Codec : Nocopy {
     //Start Codec SAI
     SAI_init();
     init_audio_DMA();
+
+    bb_regsetup_.Init();
   }
 
   void Start() {
