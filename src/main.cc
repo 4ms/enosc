@@ -32,9 +32,9 @@ struct Main :
   }
 
   template<int block_size>
-  void CodecCallback(Buffer<Frame, block_size>& in, Buffer<Frame, block_size>& out) {
+  void CodecCallback(Buffer<Frame, block_size>& out) {
     debug.set(3, true);
-    Ui::Poll(in);
+    Ui::Poll();
 
 #ifdef BYPASS
     for(auto [i, o] : zip(in, out)) o = i;

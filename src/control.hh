@@ -17,12 +17,13 @@ const f kPotMoveThreshold = 0.01_f;
 
 template<int block_size>
 class AudioCVConditioner {
-  Average<8, 1> lp_;
-  CicDecimator<1, block_size> cic_;
+  // Average<8, 1> lp_;
+  // CicDecimator<1, block_size> cic_;
   f offset_, nominal_offset_;
   f slope_, nominal_slope_;
   f last_;
-  f last_raw_reading() { return f::inclusive(lp_.last()); }
+  f last_raw_reading() { return last_; } //Todo: get a value from the SPI ADC's lpf
+  //return f::inclusive(lp_.last()); }
 public:
   AudioCVConditioner(f o, f s) :
     offset_(o), nominal_offset_(o),
@@ -46,14 +47,16 @@ public:
     } else return false;
   }
 
-  void Process(Buffer<s1_15, block_size>& in) {
-    s1_15 x = in[0];
-    cic_.Process(in.data(), &x, 1); // -1..1
-    u0_16 y = x.to_unsigned_scale(); // 0..1
-    y = lp_.Process(y);
-    last_ = f::inclusive(y); // 0..1
-    last_ -= offset_;
-    last_ *= slope_;                // -24..72
+  void Process() {
+     last_ = 1_f; 
+    // Todo: move the ext adc conditioning to the SPI ADC IRQ handler
+    // s1_15 x = in[0];
+    // cic_.Process(in.data(), &x, 1); // -1..1
+    // u0_16 y = x.to_unsigned_scale(); // 0..1
+    // y = lp_.Process(y);
+    // last_ = f::inclusive(y); // 0..1
+    // last_ -= offset_;
+    // last_ *= slope_;                // -24..72
   }
 
   f last() { return last_; }
@@ -238,19 +241,21 @@ public:
   Control(Parameters& params) :
     params_(params) {}
 
-  void ProcessCodecInput(Buffer<Frame, block_size>& codec_in) {
+  void ProcessExtADCInput() {
+    pitch_cv_.Process();
+    root_cv_.Process();
 
     // Process codec input
-    Buffer<s1_15, block_size> pitch_block;
-    Buffer<s1_15, block_size> root_block;
+    // Buffer<s1_15, block_size> pitch_block;
+    // Buffer<s1_15, block_size> root_block;
 
-    for (auto [in, pi, ro] : zip(codec_in, pitch_block, root_block)) {
-      pi = in.l;
-      ro = in.r;
-    }
+    // for (auto [in, pi, ro] : zip(codec_in, pitch_block, root_block)) {
+    //   pi = in.l;
+    //   ro = in.r;
+    // }
 
-    pitch_cv_.Process(pitch_block);
-    root_cv_.Process(root_block);
+    // pitch_cv_.Process(pitch_block);
+    // root_cv_.Process(root_block);
   }
 
   void Poll(std::function<void(Event)> const& put) {

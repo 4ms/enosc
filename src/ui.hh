@@ -389,8 +389,9 @@ public:
 
   PolypticOscillator<block_size>& osc() { return osc_; }
 
-  void Poll(Buffer<Frame, block_size>& codec_in) {
-    control_.ProcessCodecInput(codec_in);
+  // void Poll(Buffer<Frame, block_size>& codec_in) {
+  void Poll() {
+    control_.ProcessExtADCInput();
     Base::Poll();
   }
 
