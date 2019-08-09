@@ -211,7 +211,7 @@ private:
       Write(ATTEN_REG2, NO_ATTEN);
       Write(RST_OSMP_MUTE_REG, OVER);
       Write(DEEMP_DACEN_REG, 0);
-      Write(FILTER_FORMAT_REG, FMT_I2S); // FMT_24LJ ??
+      Write(FILTER_FORMAT_REG, FMT_I2S);
       Write(ZEROFLAG_PHASE_REG, DREV);
     }
 
@@ -388,8 +388,8 @@ private:
     hdma_tx.Init.Direction            = DMA_MEMORY_TO_PERIPH;
     hdma_tx.Init.PeriphInc            = DMA_PINC_DISABLE;
     hdma_tx.Init.MemInc               = DMA_MINC_ENABLE;
-    hdma_tx.Init.PeriphDataAlignment  = DMA_PDATAALIGN_WORD;
-    hdma_tx.Init.MemDataAlignment     = DMA_MDATAALIGN_WORD;
+    hdma_tx.Init.PeriphDataAlignment  = DMA_PDATAALIGN_HALFWORD;
+    hdma_tx.Init.MemDataAlignment     = DMA_PDATAALIGN_HALFWORD;
     hdma_tx.Init.Mode                 = DMA_CIRCULAR;
     hdma_tx.Init.Priority             = DMA_PRIORITY_HIGH;
     hdma_tx.Init.FIFOMode             = DMA_FIFOMODE_DISABLE;
@@ -399,7 +399,7 @@ private:
     HAL_DMA_DeInit(&hdma_tx);
 
     // Must initialize the SAI before initializing the DMA
-    hal_assert(HAL_SAI_InitProtocol(&hsai_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2)); //FixMe: in test code this is SAI_PROTOCOL_DATASIZE_24BIT
+    hal_assert(HAL_SAI_InitProtocol(&hsai_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BITEXTENDED, 2));
 
     hal_assert(HAL_DMA_Init(&hdma_tx));
     __HAL_LINKDMA(&hsai_tx, hdmatx, hdma_tx);
