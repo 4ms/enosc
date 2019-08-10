@@ -34,11 +34,14 @@ struct Main :
 
   template<int block_size>
   void CodecCallback(Buffer<Frame, block_size>& out) {
-    // debug.set(3, true);
     Ui::Poll();
 
     Ui::osc().Process(out);
 
-    // debug.set(3, false);
+    // if (SpiAdc::get(0) > 1024)
+    //   debug.set(3, true);
+    // else
+    //   debug.set(3, false);
+
   }
 } _;

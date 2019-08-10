@@ -14,16 +14,18 @@ enum max11666Errors {
 	MAX11666_SPI_INIT_ERR,
 };
 
+#define MAX11666_SPI_IRQHANDLER     SPI2_IRQHandler
+
 void register_spi_adc_isr(void f());
 
 template<int numchannels>
 struct SpiAdc : Nocopy {
 	SpiAdc() {
 
-    instance_ = this; //Todo: why not just say "this" everywhere?
+    instance_ = this;
     err = MAX11666_NO_ERR;
 
-    register_spi_adc_isr(spi_adc_IRQHandler__IN_ITCM_); //Todo: measure ITCM benefits
+    register_spi_adc_isr(spihandler__IN_ITCM_); //Todo: measure ITCM benefits
 
     assign_pins();
     SPI_disable();
@@ -39,6 +41,9 @@ struct SpiAdc : Nocopy {
     spih.Instance->DR = cur_channel;
   }
 
+  uint16_t get(uint8_t chan) {
+    return values[chan];
+  }
 
 private:
   typedef struct spiPin {
@@ -51,14 +56,13 @@ private:
 
   SPI_HandleTypeDef spih;
   uint32_t      SPI_clk;
-  uint32_t      SPI_clk_pbnum; //1 = RCC_APB1PeriphClockCmd, 2 = RCC_APB2PeriphClockCmd
   IRQn_Type     SPI_IRQn;
   spiPin        SCK;
   spiPin        MISO;
   spiPin        CHSEL;
   spiPin        CS;
 
-  float         buffer[numchannels];
+  uint16_t  values[numchannels];
   max11666_channels  cur_channel;
   max11666Errors  err;
 
@@ -85,8 +89,7 @@ private:
     CS.af = GPIO_AF5_SPI2;
   }
 
-  //Todo: do we need to call a non-static ISR() from here like codec.hh does?
-  static void spi_adc_IRQHandler__IN_ITCM_() {
+  static void spihandler__IN_ITCM_() {
     uint32_t itflag = instance_->spih.Instance->SR;
     uint32_t itsource = instance_->spih.Instance->CR2;
 
@@ -94,18 +97,16 @@ private:
     { 
       if (instance_->cur_channel==MAX11666_CHAN1)
       {
-        instance_->buffer[0] = instance_->spih.Instance->DR;
+        instance_->values[0] = instance_->spih.Instance->DR;
         instance_->cur_channel = MAX11666_CHAN2;
       } else {
-        instance_->buffer[1] = instance_->spih.Instance->DR;
+        instance_->values[1] = instance_->spih.Instance->DR;
         instance_->cur_channel = MAX11666_CHAN1;
       }
 
       instance_->spih.Instance->DR = instance_->cur_channel;
     }
   }
-
-
 
   void SPI_init() {
     spih.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
@@ -148,6 +149,7 @@ private:
   void SPI_GPIO_init()
   {
     GPIO_InitTypeDef gpio;
+    __HAL_RCC_GPIOB_CLK_ENABLE();
 
     #ifdef SPI1
       if (spih.Instance == SPI1)   
@@ -196,6 +198,9 @@ private:
   }
 };
 
-
 template<int numchannels>
 SpiAdc<numchannels> *SpiAdc<numchannels>::instance_;
+
+template<int numchannels>
+uint16_t SpiAdc<numchannels>::values[numchannels];
+

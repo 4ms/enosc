@@ -148,7 +148,7 @@ private:
 
   static Codec *instance_;
 
-  static void handler__IN_ITCM_() {
+  static void handler__IN_ITCM_() { 
     instance_->ISR();
   }
 
