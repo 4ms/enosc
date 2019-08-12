@@ -200,7 +200,3 @@ private:
 
 template<int numchannels>
 SpiAdc<numchannels> *SpiAdc<numchannels>::instance_;
-
-template<int numchannels>
-uint16_t SpiAdc<numchannels>::values[numchannels];
-
