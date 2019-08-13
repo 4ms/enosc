@@ -45,11 +45,12 @@ enum QSPIUseInterruptFlags {
 #define QSPI_DUMMY_CYCLES_READ_QUAD      8
 #define QSPI_DUMMY_CYCLES_READ_QUAD_IO   4
 
-//Number of systicks (default values assume 1ms = 1 HAL systick)
-#define QSPI_CHIP_ERASE_MAX_TIME_SYSTICKS		     2000
-#define QSPI_64KBLOCK_ERASE_MAX_TIME_SYSTICKS	   1000
-#define QSPI_32KBLOCK_ERASE_MAX_TIME_SYSTICKS	   500
-#define QSPI_SECTOR_ERASE_MAX_TIME_SYSTICKS		   300
+//Number of systicks (default values assume 10ms = 1 HAL systick (kUpdateRate = 100Hz))
+//TODO: lock these to kUpdateRate
+#define QSPI_CHIP_ERASE_MAX_TIME_SYSTICKS		     200 //2000ms
+#define QSPI_64KBLOCK_ERASE_MAX_TIME_SYSTICKS	   100 //1000ms
+#define QSPI_32KBLOCK_ERASE_MAX_TIME_SYSTICKS	   50 //500ms
+#define QSPI_SECTOR_ERASE_MAX_TIME_SYSTICKS		   30 //300ms
 
 
 #define QSPI_CS_PIN                GPIO_PIN_11
