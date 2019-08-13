@@ -1,4 +1,5 @@
 #pragma once
+#include "hal.hh"
 
 enum Gate {
   GATE_LEARN,

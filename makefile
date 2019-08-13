@@ -51,6 +51,7 @@ CXX = $(TOOLCHAIN_DIR)arm-none-eabi-g++
 CC = $(TOOLCHAIN_DIR)arm-none-eabi-gcc
 OBJCOPY = $(TOOLCHAIN_DIR)arm-none-eabi-objcopy
 GDB = $(TOOLCHAIN_DIR)arm-none-eabi-gdb
+CMDSIZE = $(TOOLCHAIN_DIR)arm-none-eabi-size
 
 TEST_CXX = g++-8
 
@@ -65,7 +66,7 @@ INC = -I . \
       -I $(CMSIS_DIR) \
       -I $(HAL_DIR) \
 
-LDSCRIPT = $(CMSIS_DIR)/STM32F730V8x_FLASH.ld
+LDSCRIPT = $(CMSIS_DIR)STM32F730V8x_FLASH.ld
 
 ARCHFLAGS =  	-mcpu=cortex-m7 \
 		-mthumb \
@@ -101,7 +102,7 @@ CXXFLAGS=$(CFLAGS) \
 	-Wno-register \
 
 LDFLAGS= $(CXXFLAGS) -T $(LDSCRIPT) \
-	-Wl,--gc-sections \
+	-Wl,--gc-sections -Wl,-Map,main.map \
 
 STARTUP = $(CMSIS_DIR)startup_stm32f730xx
 SYSTEM = $(CMSIS_DIR)system_stm32f7xx
@@ -111,13 +112,17 @@ OBJS := $(STARTUP).o \
 	$(addprefix $(HAL_DIR), $(HAL)) \
 	$(OBJS)
 
-all: $(TARGET).bin
+all: $(TARGET).hex $(TARGET).bin
 
 %.elf: data.hh $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS)
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
+	$(CMDSIZE) $<
+
+%.hex: %.elf
+	$(OBJCOPY) --output-target=ihex $< $@
 
 %.o: %.s
 	$(CC) -c -x assembler-with-cpp $(ASFLAGS) $< -o $@
@@ -130,7 +135,7 @@ clean:
 	$(EASIGLIB_DIR)data_compiler.pyc
 
 flash: $(TARGET).bin
-	st-flash write $(TARGET).bin 0x8000000
+	st-flash write $(TARGET).bin 0x8004000
 
 erase:
 	st-flash erase
