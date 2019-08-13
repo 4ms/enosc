@@ -1,8 +1,13 @@
 #pragma once
 
-#include "buffer.hh"
-#include "parameters.hh"
 #include "hal.hh"
+#include "dsp.hh"
+
+enum SpiAdcInput {
+  CV_PITCH,
+  CV_ROOT,
+  NUM_SPI_ADC_CHANNELS
+};
 
 enum max11666_channels {
 	MAX11666_CHAN1 = 0x00FF,
@@ -17,12 +22,12 @@ enum max11666Errors {
 #define MAX11666_SPI_IRQHANDLER     SPI2_IRQHandler
 
 void register_spi_adc_isr(void f());
+void spiadc_ISR();
 
-template<int numchannels>
 struct SpiAdc : Nocopy {
 	SpiAdc() {
 
-    instance_ = this;
+    spiadc_instance_ = this;
     err = MAX11666_NO_ERR;
 
     register_spi_adc_isr(spihandler__IN_ITCM_); //Todo: measure ITCM benefits
@@ -33,17 +38,22 @@ struct SpiAdc : Nocopy {
     SPI_init();
     IRQ_init();
     SPI_enable();
-	}
-  
-  void Start() {
+
     //Send one word to start
     cur_channel = MAX11666_CHAN1;
     spih.Instance->DR = cur_channel;
   }
 
-  uint16_t get(uint8_t chan) {
-    return values[chan];
+  u4_12 get(uint8_t chan) {
+    return u4_12::of_repr(values[chan]);
   }
+
+  static SpiAdc *spiadc_instance_;
+  SPI_HandleTypeDef spih;
+  uint16_t values[NUM_SPI_ADC_CHANNELS];
+  max11666_channels cur_channel;
+  max11666Errors err;
+
 
 private:
   typedef struct spiPin {
@@ -54,19 +64,12 @@ private:
     uint8_t   af;
   } spiPin;
 
-  SPI_HandleTypeDef spih;
   uint32_t      SPI_clk;
   IRQn_Type     SPI_IRQn;
   spiPin        SCK;
   spiPin        MISO;
   spiPin        CHSEL;
   spiPin        CS;
-
-  uint16_t  values[numchannels];
-  max11666_channels  cur_channel;
-  max11666Errors  err;
-
-  static SpiAdc *instance_;
 
   void assign_pins() {
     spih.Instance = SPI2;
@@ -89,23 +92,8 @@ private:
     CS.af = GPIO_AF5_SPI2;
   }
 
-  static void spihandler__IN_ITCM_() {
-    uint32_t itflag = instance_->spih.Instance->SR;
-    uint32_t itsource = instance_->spih.Instance->CR2;
-
-    if ((itflag & SPI_FLAG_RXNE) && (itsource & SPI_IT_RXNE))
-    { 
-      if (instance_->cur_channel==MAX11666_CHAN1)
-      {
-        instance_->values[0] = instance_->spih.Instance->DR;
-        instance_->cur_channel = MAX11666_CHAN2;
-      } else {
-        instance_->values[1] = instance_->spih.Instance->DR;
-        instance_->cur_channel = MAX11666_CHAN1;
-      }
-
-      instance_->spih.Instance->DR = instance_->cur_channel;
-    }
+  static void spihandler__IN_ITCM_() { 
+    spiadc_ISR();
   }
 
   void SPI_init() {
@@ -197,6 +185,3 @@ private:
     HAL_GPIO_Init(CS.gpio, &gpio);
   }
 };
-
-template<int numchannels>
-SpiAdc<numchannels> *SpiAdc<numchannels>::instance_;

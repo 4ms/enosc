@@ -1,5 +1,4 @@
 #include "codec.hh"
-#include "spi_adc.hh"
 #include "system.hh"
 #include "debug.hh"
 #include "ui.hh"
@@ -7,19 +6,18 @@
 #include "dynamic_data.hh"
 
 Debug debug;
+__IO uint16_t mon1;
 
 struct Main :
   System<kUiUpdateRate, Main>,
   Math,
   DynamicData,
   Codec<kSampleRate, kBlockSize, Main>,
-  SpiAdc<2>,
   Ui<kUiUpdateRate, kBlockSize> {
 
   Main() {
     //Start audio processing
     Codec::Start();
-    SpiAdc::Start();
     while(1) {
       Ui::Process();
       // TODO understand why this is crucial
@@ -35,13 +33,6 @@ struct Main :
   template<int block_size>
   void CodecCallback(Buffer<Frame, block_size>& out) {
     Ui::Poll();
-
     Ui::osc().Process(out);
-
-    // if (SpiAdc::get(0) > 1024)
-    //   debug.set(3, true);
-    // else
-    //   debug.set(3, false);
-
   }
 } _;
