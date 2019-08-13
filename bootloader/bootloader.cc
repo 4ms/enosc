@@ -6,10 +6,9 @@
 	#define USING_QPSK
 #endif
 
-extern "C"{
-	#include "flash.h"
-	#include "bl_utils.h"
-}
+#include "bootloader.hh"
+#include "animations.hh"
+#include "periodic_func.hh"
 #include "buttons.hh"
 #include "gates.hh"
 #include "leds.hh"
@@ -23,6 +22,8 @@ extern "C"{
 #endif
 
 extern "C" {
+#include "flash.h"
+#include "bl_utils.h"
 
 using namespace stmlib;
 using namespace stm_audio_bootloader;
@@ -60,25 +61,11 @@ enum UiState {
 };
 volatile UiState ui_state;
 
-enum Animations {
-	ANI_WAITING, 
-	ANI_WRITING,
-	ANI_RECEIVING,
-	ANI_DONE,
-	ANI_SUCCESS,
-	ANI_FAIL_ERR,
-	ANI_FAIL_SYNC,
-	ANI_FAIL_CRC,
-	ANI_RESET
-};
-
 Leds leds;
 Gates gates;
 Buttons buttons;
 
 void read_gate_input(void);
-void animate(enum Animations animation_type);
-
 
 void update_LEDs(void)
 {
@@ -87,16 +74,12 @@ void update_LEDs(void)
 
 	if (ui_state == UI_STATE_RECEIVING)
 	{
-		if (packet_index > old_packet_index)
-		{
-			if (packet_index & 1)
-				leds.freeze_.set(Colors::white);
-			else
-				leds.freeze_.set(Colors::blue);
-
+		if (packet_index > old_packet_index) {
+			animate(ANI_RESET);
 			old_packet_index = packet_index;
-
 		}
+		animate(ANI_RECEIVING);
+
 	}
 	else if (ui_state == UI_STATE_WRITING)
 	{
@@ -159,9 +142,9 @@ void InitializeReception(void)
 
 void HAL_SYSTICK_Callback(void)
 {
-	read_gate_input();
 	update_LEDs();
 }
+
 
 
 int main(void)
@@ -173,7 +156,6 @@ int main(void)
 	PacketDecoderState state;
 	bool rcv_err;
 	uint32_t last_flash;
-	uint8_t learn_last_detected_released=0, freeze_last_detected_released=0;
 	uint8_t exit_updater=false;
 
 	SetVectorTable(0x08000000);
@@ -201,11 +183,10 @@ int main(void)
 			InitializeReception(); //FSK
 		#endif
 
-		while(buttons.learn_.pushed())
-			buttons.learn_.Debounce();
+		while(buttons.learn_.pushed()) buttons.learn_.Debounce();
 
-		learn_last_detected_released = 0;
-		freeze_last_detected_released = 0;
+		init_periodic_function(18000, 0, read_gate_input);
+		start_periodic_func();
 
 		buttons.learn_.Debounce();
 		HAL_Delay(1000);
@@ -261,13 +242,11 @@ int main(void)
 
 					case PACKET_DECODER_STATE_ERROR_SYNC:
 						leds.freeze_.set(Colors::magenta);
-						leds.learn_.set(Colors::red);
 						rcv_err = true;
 						break;
 
 					case PACKET_DECODER_STATE_ERROR_CRC:
 						leds.freeze_.set(Colors::red);
-						leds.learn_.set(Colors::magenta);
 						rcv_err = true;
 						break;
 
@@ -284,7 +263,6 @@ int main(void)
 						{
 							buttons.learn_.Debounce();
 							animate(ANI_SUCCESS);
-							HAL_Delay(1000);
 						}
 						while (buttons.learn_.pushed())
 							buttons.learn_.Debounce();
@@ -298,18 +276,9 @@ int main(void)
 			if (rcv_err) {
 				ui_state = UI_STATE_ERROR;
 
-				//flash button red/off until it's pressed
-				last_flash = HAL_GetTick();
-
 				while (!buttons.learn_.pushed()) {
 					buttons.learn_.Debounce();
-					if (HAL_GetTick() - last_flash >= 100){ 
-						leds.learn_.set(Colors::black);
-					}
-					if (HAL_GetTick() - last_flash >= 200){ 
-						last_flash = HAL_GetTick(); 
-						leds.learn_.set(Colors::red);
-					}
+					animate(ANI_FAIL_ERR);
 				}
 				while (buttons.learn_.pushed())
 					buttons.learn_.Debounce();
@@ -319,110 +288,26 @@ int main(void)
 
 				InitializeReception();
 
-				learn_last_detected_released = 0;
-				freeze_last_detected_released = 0;
-
 				exit_updater=false;
 			}
 
-			buttons.learn_.Debounce();
 			buttons.freeze_.Debounce();
-
 			if (buttons.freeze_.just_pushed()) {
 				if (packet_index==0)
 					exit_updater=true;
 			}
-
+			buttons.learn_.Debounce();
 			if (buttons.learn_.just_pushed()) {
 				if ((ui_state == UI_STATE_WAITING))
 					exit_updater=true;
 			}
 
-
-
 		}
 	}
 	HAL_DeInit();
 	HAL_RCC_DeInit();
-
 	JumpTo(0x08004000);
-
-
 	return 1;
-}
-
-void animate(enum Animations animation_type)
-{
-	uint32_t cur_tm = HAL_GetTick();
-	static uint32_t last_tm = 0;
-	static uint8_t ctr = 0;
-	uint32_t step_time;
-
-	switch (animation_type) {
-
-		case ANI_RESET:
-			last_tm = cur_tm;
-			ctr = 0;
-			break;
-
-		case ANI_SUCCESS:
-			step_time = 500*TICKS_PER_MS;
-
-			if (ctr==0) {
-				leds.freeze_.set(Colors::red);
-				leds.learn_.set(Colors::red);
-			}
-			if (ctr==1) {
-				leds.freeze_.set(Colors::yellow);
-				leds.learn_.set(Colors::yellow);
-			}
-			if (ctr==2) {
-				leds.freeze_.set(Colors::green);
-				leds.learn_.set(Colors::green);
-			}
-			if (ctr==3) {
-				leds.freeze_.set(Colors::cyan);
-				leds.learn_.set(Colors::cyan);
-			}
-			if (ctr==4) {
-				leds.freeze_.set(Colors::blue);
-				leds.learn_.set(Colors::blue);
-			}
-			if (ctr==5) {
-				leds.freeze_.set(Colors::magenta);
-				leds.learn_.set(Colors::magenta);
-			}
-			if (ctr==6) {
-				leds.freeze_.set(Colors::white);
-				leds.learn_.set(Colors::white);
-			}
-			if (ctr==7)
-				ctr = 0;
-			break;
-
-		case ANI_WAITING:
-			//Flash button green/off when waiting
-			step_time = 500*TICKS_PER_MS;
-
-			if (ctr==0)
-				leds.learn_.set(Colors::black);
-			if (ctr==1)
-				leds.learn_.set(Colors::green);
-			if (ctr==2)
-				ctr=0;
-
-
-			break;
-		default:
-			break;
-	}
-
-	if ((cur_tm - last_tm) > step_time) {
-		ctr++;
-		last_tm = cur_tm;
-	}
-
-
 }
 
 void read_gate_input(void)
@@ -439,6 +324,5 @@ void read_gate_input(void)
 		--discard_samples;
 	}
 }
-
 
 } //extern "C"

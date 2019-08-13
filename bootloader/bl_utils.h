@@ -2,8 +2,6 @@
 
 #include <stm32f7xx.h>
 
-#define TICKS_PER_MS 10
-
 void SystemClock_Config(void);
 void SetVectorTable(uint32_t reset_address);
 void JumpTo(uint32_t address);

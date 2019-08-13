@@ -1,3 +1,4 @@
+#include "bootloader.hh"
 #include "bl_utils.h"
 #include "flash.h"
 
@@ -88,7 +89,7 @@ void SystemClock_Config(void) {
     HAL_RCC_EnableCSS();
 
     // Configure the Systick interrupt time
-    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/10000);
+    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/(1000*TICKS_PER_MS));
     HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
     // Some IRQs interrupt configuration
