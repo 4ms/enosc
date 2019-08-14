@@ -13,6 +13,10 @@
 #include "gates.hh"
 #include "leds.hh"
 
+#include "debug.hh"
+
+Debug debug;
+
 #ifdef USING_QPSK
 	#include "stm_audio_bootloader/qpsk/packet_decoder.h"
 	#include "stm_audio_bootloader/qpsk/demodulator.h"
@@ -28,8 +32,6 @@ extern "C" {
 using namespace stmlib;
 using namespace stm_audio_bootloader;
 
-const uint32_t SAMPLE_RATE = 48000;
-
 #ifdef USING_QPSK
 const float kModulationRate = 6000.0;
 const float kBitRate = 12000.0;
@@ -41,7 +43,7 @@ uint32_t EndOfMemory =				0x0800FFFC;
 
 extern const uint32_t FLASH_SECTOR_ADDRESSES[];
 const uint32_t kBlkSize = 16384;
-const uint16_t kPacketsPerBlock = kBlkSize / kPacketSize;
+const uint16_t kPacketsPerBlock = kBlkSize / kPacketSize; //kPacketSize=256
 uint8_t recv_buffer[kBlkSize];
 
 PacketDecoder decoder;
@@ -138,6 +140,14 @@ void InitializeReception(void)
 	packet_index = 0;
 	old_packet_index = 0;
 	ui_state = UI_STATE_WAITING;
+
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	GPIO_InitTypeDef gpio = {0};
+	gpio.Pin = GPIO_PIN_0;
+	gpio.Mode = GPIO_MODE_INPUT;
+	gpio.Pull = GPIO_PULLDOWN;
+	HAL_GPIO_Init(GPIOC, &gpio);
+
 }
 
 void HAL_SYSTICK_Callback(void)
@@ -155,7 +165,6 @@ int main(void)
 	uint8_t symbol;
 	PacketDecoderState state;
 	bool rcv_err;
-	uint32_t last_flash;
 	uint8_t exit_updater=false;
 
 	SetVectorTable(0x08000000);
@@ -185,7 +194,7 @@ int main(void)
 
 		while(buttons.learn_.pushed()) buttons.learn_.Debounce();
 
-		init_periodic_function(18000, 0, read_gate_input);
+		init_periodic_function(4700, 0, read_gate_input);
 		start_periodic_func();
 
 		buttons.learn_.Debounce();
@@ -202,7 +211,6 @@ int main(void)
 
 				switch (state) {
 					case PACKET_DECODER_STATE_OK:
-					{
 						ui_state = UI_STATE_RECEIVING;
 						memcpy(recv_buffer + (packet_index % kPacketsPerBlock) * kPacketSize, decoder.packet_data(), kPacketSize);
 						++packet_index;
@@ -221,7 +229,6 @@ int main(void)
 								leds.learn_.set(Colors::red);
 								rcv_err = true;
 							}
-
 							decoder.Reset();
 
 							#ifndef USING_QPSK
@@ -237,8 +244,7 @@ int main(void)
 								demodulator.SyncDecision();//QPSK
 							#endif
 						}
-					}
-					break;
+						break;
 
 					case PACKET_DECODER_STATE_ERROR_SYNC:
 						leds.freeze_.set(Colors::magenta);
@@ -312,14 +318,23 @@ int main(void)
 
 void read_gate_input(void)
 {
-	bool sample = !gates.learn_.get();
+	//bool sample = !gates.learn_.get();
+	bool sample = ((GPIOC->IDR & GPIO_PIN_0) != 0);
 
 	if (!discard_samples) {
+		debug.set(3, true);
+		if (sample)
+			debug.set(2, true);
+		else 	
+			debug.set(2, false);
+
 		#ifdef USING_FSK
 		demodulator.PushSample(sample);
 		#else
 		demodulator.PushSample(sample ? 0x7FFF : 0);
 		#endif
+		debug.set(3, false);
+
 	} else {
 		--discard_samples;
 	}
