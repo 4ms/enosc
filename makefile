@@ -169,6 +169,12 @@ test/test: data.hh test/test.cc $(TEST_OBJS)
 %.test.o: %.cc %.cc.d
 	$(TEST_CXX) $(DEPFLAGS) $(CPPFLAGS) -c $< -o $@
 
+fsk-wav: $(TARGET).bin
+	python bootloader/stm_audio_bootloader/fsk/encoder.py \
+		-s 22050 -b 16 -n 8 -z 4 -p 256 -g 16384 -k 1800 \
+		$(TARGET).bin
+
+
 -include $(DEPS)
 
 .PRECIOUS: $(DEPS) $(OBJS) $(TEST_OBJS) $(TARGET).elf data.cc data.hh
