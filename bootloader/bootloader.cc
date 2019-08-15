@@ -7,14 +7,11 @@
 #endif
 
 #include "bootloader.hh"
-#include "animations.hh"
+#include "bl_ui.hh"
 #include "periodic_func.hh"
-#include "buttons.hh"
-#include "leds.hh"
 
-#include "debug.hh"
-
-Debug debug;
+// #include "debug.hh"
+// Debug debug;
 
 #ifdef USING_QPSK
 	#include "stm_audio_bootloader/qpsk/packet_decoder.h"
@@ -35,6 +32,8 @@ using namespace stm_audio_bootloader;
 const float kModulationRate = 6000.0;
 const float kBitRate = 12000.0;
 const float kSampleRate = 48000.0;
+#else
+const uint32_t kSampleRate = 22050;
 #endif
 uint32_t kStartExecutionAddress =	0x08004000;
 uint32_t kStartReceiveAddress = 	0x08004000;
@@ -60,10 +59,8 @@ enum UiState {
 };
 volatile UiState ui_state;
 
-Leds leds;
-Buttons buttons;
-
 void read_gate_input(void);
+void init_gate_input(void);
 
 void update_LEDs(void)
 {
@@ -103,14 +100,6 @@ void InitializeReception(void)
 	current_address = kStartReceiveAddress;
 	packet_index = 0;
 	ui_state = UI_STATE_WAITING;
-
-	__HAL_RCC_GPIOC_CLK_ENABLE();
-	GPIO_InitTypeDef gpio = {0};
-	gpio.Pin = GPIO_PIN_0;
-	gpio.Mode = GPIO_MODE_INPUT;
-	gpio.Pull = GPIO_PULLDOWN;
-	HAL_GPIO_Init(GPIOC, &gpio);
-
 }
 
 void HAL_SYSTICK_Callback(void)
@@ -137,14 +126,11 @@ int main(void)
 
 	HAL_Delay(3000);
 
-	leds.freeze_.set(Colors::black);
-	leds.learn_.set(Colors::green);
+	animate(ANI_RESET);
 
 	dly=32000;
 	while(dly--){
-		buttons.learn_.Debounce();
-		buttons.freeze_.Debounce();
-		if (buttons.learn_.pushed() && buttons.freeze_.pushed()) 
+		if (button_pushed(BUTTON_LEARN) && button_pushed(BUTTON_FREEZE))
 			button_debounce++;
 		else
 			button_debounce=0;
@@ -157,18 +143,12 @@ int main(void)
 			InitializeReception(); //FSK
 		#endif
 
-		while(buttons.learn_.pushed() || buttons.freeze_.pushed()) {
-			buttons.learn_.Debounce();
-			buttons.freeze_.Debounce();
-		}
-		//4890: -Os: 22.050k
-		init_periodic_function(4890, 0, read_gate_input);
+		while (button_pushed(BUTTON_LEARN) || button_pushed(BUTTON_FREEZE)) {;}
 
+		init_gate_input();
+		init_periodic_function(F_CPU / 2 / kSampleRate, 0, read_gate_input);
 		start_periodic_func();
 
-		buttons.learn_.Debounce();
-		buttons.freeze_.Debounce();
-		
 		HAL_Delay(1000);
 
 		while (!exit_updater)
@@ -196,8 +176,6 @@ int main(void)
 							}
 							else {
 								ui_state = UI_STATE_ERROR;
-								leds.freeze_.set(Colors::red);
-								leds.learn_.set(Colors::red);
 								rcv_err = true;
 							}
 							decoder.Reset();
@@ -218,21 +196,19 @@ int main(void)
 						break;
 
 					case PACKET_DECODER_STATE_ERROR_SYNC:
-						leds.freeze_.set(Colors::magenta);
 						rcv_err = true;
 						break;
 
 					case PACKET_DECODER_STATE_ERROR_CRC:
-						leds.freeze_.set(Colors::red);
 						rcv_err = true;
 						break;
 
 					case PACKET_DECODER_STATE_END_OF_TRANSMISSION:
 						exit_updater = true;
 						ui_state = UI_STATE_DONE;
-
-						//Do a success animation
 						animate_until_button_pushed(ANI_SUCCESS, BUTTON_LEARN);
+						animate(ANI_RESET);
+						HAL_Delay(1000);
 						break;
 
 					default:
@@ -241,25 +217,19 @@ int main(void)
 			}
 			if (rcv_err) {
 				ui_state = UI_STATE_ERROR;
-
 				animate_until_button_pushed(ANI_FAIL_ERR, BUTTON_LEARN);
+				animate(ANI_RESET);
 				HAL_Delay(1000);
-
-				leds.freeze_.set(Colors::black);
-				leds.learn_.set(Colors::black);
-
 				InitializeReception();
 
 				exit_updater=false;
 			}
 
-			buttons.freeze_.Debounce();
-			if (buttons.freeze_.just_pushed()) {
+			if (button_just_pushed(BUTTON_FREEZE)) {
 				if (packet_index==0)
 					exit_updater=true;
 			}
-			buttons.learn_.Debounce();
-			if (buttons.learn_.just_pushed()) {
+			if (button_just_pushed(BUTTON_LEARN)) {
 				if ((ui_state == UI_STATE_WAITING))
 					exit_updater=true;
 			}
@@ -272,22 +242,26 @@ int main(void)
 	return 1;
 }
 
+void init_gate_input(void)
+{
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+	GPIO_InitTypeDef gpio = {0};
+	gpio.Pin = GPIO_PIN_0;
+	gpio.Mode = GPIO_MODE_INPUT;
+	gpio.Pull = GPIO_PULLDOWN;
+	HAL_GPIO_Init(GPIOC, &gpio);
+}
+
 void read_gate_input(void)
 {
-	bool sample = ((GPIOC->IDR & GPIO_PIN_0) != 0);
+	bool sample = ((BOOTLOADER_INPUT_GPIO->IDR & BOOTLOADER_INPUT_PIN) != 0);
 
 	if (!discard_samples) {
-		debug.set(3, true);
-
-		debug.set(2, sample);
-
 		#ifdef USING_FSK
 		demodulator.PushSample(sample);
 		#else
 		demodulator.PushSample(sample ? 0x7FFF : 0);
 		#endif
-		debug.set(3, false);
-
 	} else {
 		--discard_samples;
 	}

@@ -1,9 +1,42 @@
-#include "animations.hh"
+#include "bl_ui.hh"
 #include "leds.hh"
 #include "bootloader.hh"
 
-extern Leds leds;
-extern Buttons buttons;
+Leds leds;
+Buttons buttons;
+
+// bool bootloader_entry_buttons_pushed(void)
+// {
+// 	buttons.learn_.Debounce();
+// 	buttons.freeze_.Debounce();
+// 	return (buttons.learn_.pushed() && buttons.freeze_.pushed());
+// }
+
+bool button_pushed(enum Button button)
+{
+	if (button == BUTTON_LEARN) {
+		buttons.learn_.Debounce();
+		return buttons.learn_.pushed();
+	}
+	else if (button == BUTTON_FREEZE) {
+		buttons.freeze_.Debounce();
+		return buttons.freeze_.pushed();
+	}
+	else return false;
+}
+
+bool button_just_pushed(enum Button button)
+{
+	if (button == BUTTON_LEARN) {
+		buttons.learn_.Debounce();
+		return buttons.learn_.just_pushed();
+	}
+	else if (button == BUTTON_FREEZE) {
+		buttons.freeze_.Debounce();
+		return buttons.freeze_.just_pushed();
+	}
+	else return false;
+}
 
 void animate_until_button_pushed(enum Animations animation_type, enum Button button)
 {
@@ -39,6 +72,8 @@ void animate(enum Animations animation_type)
 	switch (animation_type) {
 
 		case ANI_RESET:
+			leds.freeze_.set(Colors::black);
+			leds.learn_.set(Colors::black);
 			last_tm = cur_tm;
 			ctr = 0;
 			break;
@@ -96,17 +131,17 @@ void animate(enum Animations animation_type)
 				leds.freeze_.set(Colors::blue);
 				leds.learn_.set(Colors::blue);
 			} else if (ctr==3) {
-				leds.freeze_.set(Colors::white);
-				leds.learn_.set(Colors::blue);
-			} else if (ctr==4) {
 				leds.freeze_.set(Colors::blue);
 				leds.learn_.set(Colors::white);
+			} else if (ctr==4) {
+				leds.freeze_.set(Colors::white);
+				leds.learn_.set(Colors::blue);
 			} else
 				ctr=0;
 			break;
 
 		case ANI_WRITING:
-			step_time = 200*TICKS_PER_MS;
+			step_time = 100*TICKS_PER_MS;
 			if (ctr==0) {
 				leds.freeze_.set(Colors::yellow);
 				leds.learn_.set(Colors::black);
@@ -119,11 +154,14 @@ void animate(enum Animations animation_type)
 
 		case ANI_FAIL_ERR:
 			step_time = 100*TICKS_PER_MS;
-			if (ctr==0) 
+
+			if (ctr==0) {
 				leds.learn_.set(Colors::black);
-			else if (ctr==1) 
+				leds.freeze_.set(Colors::red);
+			} else if (ctr==1) {
 				leds.learn_.set(Colors::red);
-			else
+				leds.freeze_.set(Colors::red);
+			} else 
 				ctr=0;
 			break;
 

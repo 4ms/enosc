@@ -14,6 +14,8 @@ enum Animations {
 	ANI_RESET
 };
 
-
 void animate(enum Animations animation_type);
 void animate_until_button_pushed(enum Animations animation_type, enum Button button);
+
+bool button_pushed(enum Button button);
+bool button_just_pushed(enum Button button);
