@@ -7,10 +7,9 @@ extern "C" void MAX11666_SPI_IRQHANDLER(void) {
   spi_adc_isr();
 }
 
-//Todo: Fix scope issues so ISR can be part of SpiAdc struct
 SpiAdc *SpiAdc::spiadc_instance_;
 
-void spiadc_ISR() {
+void SpiAdc::spiadc_ISR__IN_ITCM() {
   uint32_t itflag = SpiAdc::spiadc_instance_->spih.Instance->SR;
   uint32_t itsource = SpiAdc::spiadc_instance_->spih.Instance->CR2;
 

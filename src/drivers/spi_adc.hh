@@ -22,15 +22,13 @@ enum max11666Errors {
 #define MAX11666_SPI_IRQHANDLER     SPI2_IRQHandler
 
 void register_spi_adc_isr(void f());
-void spiadc_ISR();
 
 struct SpiAdc : Nocopy {
 	SpiAdc() {
-
     spiadc_instance_ = this;
-    err = MAX11666_NO_ERR;
+    register_spi_adc_isr(SpiAdc::spiadc_ISR__IN_ITCM); //Todo: measure ITCM benefits
 
-    register_spi_adc_isr(spihandler__IN_ITCM_); //Todo: measure ITCM benefits
+    err = MAX11666_NO_ERR;
 
     assign_pins();
     SPI_disable();
@@ -53,7 +51,6 @@ struct SpiAdc : Nocopy {
   uint16_t values[NUM_SPI_ADC_CHANNELS];
   max11666_channels cur_channel;
   max11666Errors err;
-
 
 private:
   typedef struct spiPin {
@@ -92,10 +89,6 @@ private:
     CS.af = GPIO_AF5_SPI2;
   }
 
-  static void spihandler__IN_ITCM_() { 
-    spiadc_ISR();
-  }
-
   void SPI_init() {
     spih.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
     spih.Init.Direction         = SPI_DIRECTION_2LINES;
@@ -122,6 +115,7 @@ private:
     spih.Instance->CR1 |= SPI_CR1_SPE;
   }
 
+  static void spiadc_ISR__IN_ITCM();
 
   void IRQ_init()
   {
