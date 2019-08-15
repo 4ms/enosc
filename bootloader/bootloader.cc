@@ -183,7 +183,7 @@ int main(void)
 							ui_state = UI_STATE_WRITING;
 
 							//Check for valid flash address before writing to flash
-							if ((current_address + kBlkSize) < FLASH_SECTOR_ADDRESSES[NUM_FLASH_SECTORS])
+							if ((current_address + kBlkSize) <= FLASH_SECTOR_ADDRESSES[NUM_FLASH_SECTORS])
 							{
 								write_flash_page(recv_buffer, current_address, kBlkSize);
 								current_address += kBlkSize;
