@@ -87,7 +87,7 @@ CFLAGS += -I.  $(INCLUDES)
 CFLAGS += -fdata-sections -ffunction-sections
 # CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)"
 
-C0FLAGS  = -O0 -g -Wall
+C0FLAGS  = -O0 -g2 -Wall
 C0FLAGS += $(ARCH_CFLAGS) $(MCU)
 C0FLAGS += -I.  $(INCLUDES)
 
@@ -105,10 +105,9 @@ LDSCRIPT = $(LOADFILE)
 
 LFLAGS  = $(MCU) -specs=nano.specs  -T $(LDSCRIPT) -lc -lm -lnosys
 	
-# Main
-$(BLBUILDDIR)/bootloader.o: CFLAGS = $(C0FLAGS)
-# $(BLBUILDDIR)/bl_controls.o: CFLAGS = $(C0FLAGS)
-
+# $(BLBUILDDIR)/bootloader.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/bl_ui.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/stm_audio_bootloader/fsk/packet_decoder.o: CFLAGS = $(C0FLAGS)
 
 combo: $(COMBO).bin 
 
