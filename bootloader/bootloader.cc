@@ -158,8 +158,8 @@ int main(void)
 		#endif
 
 		while(buttons.learn_.pushed()) buttons.learn_.Debounce();
+		init_periodic_function(4890, 0, read_gate_input);
 
-		init_periodic_function(4700, 0, read_gate_input);
 		start_periodic_func();
 
 		buttons.learn_.Debounce();
