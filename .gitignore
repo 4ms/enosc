@@ -9,3 +9,5 @@ test.wav
 *.pyc
 /data.cc
 /data.hh
+*.hex
+main.wav
