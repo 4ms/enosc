@@ -1,5 +1,7 @@
 #pragma once
 
+#include "buttons.hh"
+
 enum Animations {
 	ANI_WAITING, 
 	ANI_WRITING,
@@ -14,3 +16,4 @@ enum Animations {
 
 
 void animate(enum Animations animation_type);
+void animate_until_button_pushed(enum Animations animation_type, enum Button button);

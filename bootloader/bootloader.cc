@@ -10,7 +10,6 @@
 #include "animations.hh"
 #include "periodic_func.hh"
 #include "buttons.hh"
-#include "gates.hh"
 #include "leds.hh"
 
 #include "debug.hh"
@@ -39,7 +38,6 @@ const float kSampleRate = 48000.0;
 #endif
 uint32_t kStartExecutionAddress =	0x08004000;
 uint32_t kStartReceiveAddress = 	0x08004000;
-uint32_t EndOfMemory =				0x0800FFFC;
 
 extern const uint32_t FLASH_SECTOR_ADDRESSES[];
 const uint32_t kBlkSize = 16384;
@@ -50,7 +48,6 @@ PacketDecoder decoder;
 Demodulator demodulator;
 
 uint16_t packet_index;
-uint16_t old_packet_index=0;
 uint16_t discard_samples = 8000;
 uint32_t current_address;
 
@@ -64,57 +61,24 @@ enum UiState {
 volatile UiState ui_state;
 
 Leds leds;
-Gates gates;
 Buttons buttons;
 
 void read_gate_input(void);
 
 void update_LEDs(void)
 {
-	static uint16_t dly=0;
-	uint16_t fade_speed=800;
-
 	if (ui_state == UI_STATE_RECEIVING)
-	{
-		if (packet_index > old_packet_index) {
-			animate(ANI_RESET);
-			old_packet_index = packet_index;
-		}
 		animate(ANI_RECEIVING);
 
-	}
 	else if (ui_state == UI_STATE_WRITING)
-	{
-		if (dly++>200)
-		{
-			leds.freeze_.set(Colors::yellow);
-			leds.learn_.set(Colors::black);
-			dly=0;
+		animate(ANI_WRITING);
 
-		} else if (dly==100)
-		{
-			leds.freeze_.set(Colors::black);
-			leds.learn_.set(Colors::yellow);
-		}
-	} 
 	else if (ui_state == UI_STATE_WAITING)
-	{
 		animate(ANI_WAITING);
-	} 
+
 	else if (ui_state == UI_STATE_DONE)
 	{
-		//Flash button blue/green when done
-		if (dly==(fade_speed>>1)){
-			leds.freeze_.set(Colors::green);
-			leds.learn_.set(Colors::green);
-		}
-		if (dly++>=fade_speed) {
-			dly=0;
-			leds.freeze_.set(Colors::blue);
-			leds.learn_.set(Colors::blue);
-		}
 	}
-
 }
 
 void InitializeReception(void)
@@ -138,7 +102,6 @@ void InitializeReception(void)
 	
 	current_address = kStartReceiveAddress;
 	packet_index = 0;
-	old_packet_index = 0;
 	ui_state = UI_STATE_WAITING;
 
 	__HAL_RCC_GPIOC_CLK_ENABLE();
@@ -174,15 +137,17 @@ int main(void)
 
 	HAL_Delay(3000);
 
-
 	leds.freeze_.set(Colors::black);
 	leds.learn_.set(Colors::green);
 
 	dly=32000;
 	while(dly--){
 		buttons.learn_.Debounce();
-		if (buttons.learn_.pushed()) button_debounce++;
-		else button_debounce=0;
+		buttons.freeze_.Debounce();
+		if (buttons.learn_.pushed() && buttons.freeze_.pushed()) 
+			button_debounce++;
+		else
+			button_debounce=0;
 	}
 	do_bootloader = (button_debounce>15000) ? 1 : 0;
 
@@ -257,22 +222,11 @@ int main(void)
 						break;
 
 					case PACKET_DECODER_STATE_END_OF_TRANSMISSION:
-						//Copy from Receive buffer to Execution memory
-						//copy_flash_page(kStartReceiveAddress, kStartExecutionAddress, (current_address-kStartReceiveAddress));
-
 						exit_updater = true;
 						ui_state = UI_STATE_DONE;
 
 						//Do a success animation
-						animate(ANI_RESET);
-						while (!buttons.learn_.pushed())
-						{
-							buttons.learn_.Debounce();
-							animate(ANI_SUCCESS);
-						}
-						while (buttons.learn_.pushed())
-							buttons.learn_.Debounce();
-
+						animate_until_button_pushed(ANI_SUCCESS, BUTTON_LEARN);
 						break;
 
 					default:
@@ -282,12 +236,8 @@ int main(void)
 			if (rcv_err) {
 				ui_state = UI_STATE_ERROR;
 
-				while (!buttons.learn_.pushed()) {
-					buttons.learn_.Debounce();
-					animate(ANI_FAIL_ERR);
-				}
-				while (buttons.learn_.pushed())
-					buttons.learn_.Debounce();
+				animate_until_button_pushed(ANI_FAIL_ERR, BUTTON_LEARN);
+				HAL_Delay(1000);
 
 				leds.freeze_.set(Colors::black);
 				leds.learn_.set(Colors::black);
@@ -312,21 +262,18 @@ int main(void)
 	}
 	HAL_DeInit();
 	HAL_RCC_DeInit();
-	JumpTo(0x08004000);
+	JumpTo(kStartExecutionAddress);
 	return 1;
 }
 
 void read_gate_input(void)
 {
-	//bool sample = !gates.learn_.get();
 	bool sample = ((GPIOC->IDR & GPIO_PIN_0) != 0);
 
 	if (!discard_samples) {
 		debug.set(3, true);
-		if (sample)
-			debug.set(2, true);
-		else 	
-			debug.set(2, false);
+
+		debug.set(2, sample);
 
 		#ifdef USING_FSK
 		demodulator.PushSample(sample);

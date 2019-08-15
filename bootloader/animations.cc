@@ -3,6 +3,31 @@
 #include "bootloader.hh"
 
 extern Leds leds;
+extern Buttons buttons;
+
+void animate_until_button_pushed(enum Animations animation_type, enum Button button)
+{
+	animate(ANI_RESET);
+
+	if (button == BUTTON_LEARN) {
+		while (!buttons.learn_.pushed())
+		{
+			buttons.learn_.Debounce();
+			animate(animation_type);
+		}
+		while (buttons.learn_.pushed())
+			buttons.learn_.Debounce();
+	}
+	else if (button == BUTTON_FREEZE) {
+		while (!buttons.freeze_.pushed())
+		{
+			buttons.freeze_.Debounce();
+			animate(animation_type);
+		}
+		while (buttons.freeze_.pushed())
+			buttons.freeze_.Debounce();
+	}
+}
 
 void animate(enum Animations animation_type)
 {
@@ -25,31 +50,31 @@ void animate(enum Animations animation_type)
 				leds.freeze_.set(Colors::red);
 				leds.learn_.set(Colors::red);
 			}
-			if (ctr==1) {
+			else if (ctr==1) {
 				leds.freeze_.set(Colors::yellow);
 				leds.learn_.set(Colors::yellow);
 			}
-			if (ctr==2) {
+			else if (ctr==2) {
 				leds.freeze_.set(Colors::green);
 				leds.learn_.set(Colors::green);
 			}
-			if (ctr==3) {
+			else if (ctr==3) {
 				leds.freeze_.set(Colors::cyan);
 				leds.learn_.set(Colors::cyan);
 			}
-			if (ctr==4) {
+			else if (ctr==4) {
 				leds.freeze_.set(Colors::blue);
 				leds.learn_.set(Colors::blue);
 			}
-			if (ctr==5) {
+			else if (ctr==5) {
 				leds.freeze_.set(Colors::magenta);
 				leds.learn_.set(Colors::magenta);
 			}
-			if (ctr==6) {
+			else if (ctr==6) {
 				leds.freeze_.set(Colors::white);
 				leds.learn_.set(Colors::white);
 			}
-			if (ctr==7)
+			else 
 				ctr = 0;
 			break;
 
@@ -59,20 +84,36 @@ void animate(enum Animations animation_type)
 
 			if (ctr==0)
 				leds.learn_.set(Colors::black);
-			if (ctr==1)
+			else if (ctr==1)
 				leds.learn_.set(Colors::green);
-			if (ctr==2)
+			else
 				ctr=0;
 			break;
 
 		case ANI_RECEIVING:
-			step_time = 100*TICKS_PER_MS;
-
-			if (ctr==0)
-				leds.freeze_.set(Colors::white);
-			if (ctr==1)
+			step_time = 200*TICKS_PER_MS;
+			if (ctr<3) {
 				leds.freeze_.set(Colors::blue);
-			if (ctr==2)
+				leds.learn_.set(Colors::blue);
+			} else if (ctr==3) {
+				leds.freeze_.set(Colors::white);
+				leds.learn_.set(Colors::blue);
+			} else if (ctr==4) {
+				leds.freeze_.set(Colors::blue);
+				leds.learn_.set(Colors::white);
+			} else
+				ctr=0;
+			break;
+
+		case ANI_WRITING:
+			step_time = 200*TICKS_PER_MS;
+			if (ctr==0) {
+				leds.freeze_.set(Colors::yellow);
+				leds.learn_.set(Colors::black);
+			} else if (ctr==1) {
+				leds.freeze_.set(Colors::black);
+				leds.learn_.set(Colors::yellow);
+			} else
 				ctr=0;
 			break;
 
@@ -80,11 +121,10 @@ void animate(enum Animations animation_type)
 			step_time = 100*TICKS_PER_MS;
 			if (ctr==0) 
 				leds.learn_.set(Colors::black);
-			if (ctr==1) 
+			else if (ctr==1) 
 				leds.learn_.set(Colors::red);
-			if (ctr==2)
+			else
 				ctr=0;
-
 			break;
 
 		default:
