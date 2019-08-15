@@ -43,7 +43,7 @@ enum PacketDecoderState {
   PACKET_DECODER_STATE_END_OF_TRANSMISSION
 };
 
-const uint16_t kMaxSyncDuration = 9167;  // Was: 500 //Symbols
+const uint16_t kMaxSyncDuration = 6800;  // Was: 9167, and before that was 500 //Symbols
 const uint16_t kPreambleSize = 32;
 const uint16_t kPacketSize = 256;
 
