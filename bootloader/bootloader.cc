@@ -157,12 +157,18 @@ int main(void)
 			InitializeReception(); //FSK
 		#endif
 
-		while(buttons.learn_.pushed()) buttons.learn_.Debounce();
+		while(buttons.learn_.pushed() || buttons.freeze_.pushed()) {
+			buttons.learn_.Debounce();
+			buttons.freeze_.Debounce();
+		}
+		//4890: -Os: 22.050k
 		init_periodic_function(4890, 0, read_gate_input);
 
 		start_periodic_func();
 
 		buttons.learn_.Debounce();
+		buttons.freeze_.Debounce();
+		
 		HAL_Delay(1000);
 
 		while (!exit_updater)
