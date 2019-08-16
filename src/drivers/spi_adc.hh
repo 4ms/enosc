@@ -24,12 +24,14 @@ enum max11666Errors {
 void register_spi_adc_isr(void f());
 
 //Oversample and average blocks of 2^oversampling_bitsize samples 
+//Todo: Template with oversampling amount?
 #define OVERSAMPLING_AMT_BITS   3
 #define OVERSAMPLING_AMT (1<<OVERSAMPLING_AMT_BITS)
 #define OVERSAMPLING_MASK (OVERSAMPLING_AMT-1)
 
 struct SpiAdc : Nocopy {
 	SpiAdc() {
+    static_assert(OVERSAMPLING_AMT_BITS == 3, "FRAC bits of the return type of SpiAdc::get() must equal (OVERSAMPLING_AMT_BITS + ADC bits)");
     spiadc_instance_ = this;
     register_spi_adc_isr(SpiAdc::spiadc_ISR__IN_ITCM); //Todo: measure ITCM benefits
 
