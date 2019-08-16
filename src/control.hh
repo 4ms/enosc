@@ -6,6 +6,9 @@
 #include "polyptic_oscillator.hh"
 #include "event_handler.hh"
 
+#include "debug.hh"
+extern Debug debug;
+
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
 const f kRootPotRange = 10_f * 12_f;
@@ -19,13 +22,12 @@ const f kPotMoveThreshold = 0.01_f;
 template<int block_size, int chan>
 class AudioCVConditioner {
   SpiAdc& spi_adc_;
-  Average<8, 1> lp_;
   // CicDecimator<1, block_size> cic_;
   f offset_, nominal_offset_;
   f slope_, nominal_slope_;
   f last_;
-  f last_raw_reading() { return last_; }
- //   return f::inclusive(lp_.last()); }
+  f last_raw_reading() { return f::inclusive(spi_adc_.get_last_raw(chan)); }
+  
 public:
   AudioCVConditioner(f o, f s, SpiAdc& spi_adc) :
     offset_(o), nominal_offset_(o),
@@ -51,10 +53,10 @@ public:
   }
 
   void Process() {
-    // Todo: collect a block of values in SPI IRQ, and process them here
-    u4_12 x = spi_adc_.get(chan);
-    // x = lp_.Process(x); //Todo: how to convert to u0_16?
-    last_ = f::inclusive(x);
+    // Info: ~0.28us to execute this block (per channel), runs every 167us
+    u1_15 x = spi_adc_.get(chan);
+    u0_16 y = u0_16::wrap(x);
+    last_ = f::inclusive(y);
     last_ -= offset_;
     last_ *= slope_;
   }

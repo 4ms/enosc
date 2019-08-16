@@ -23,6 +23,11 @@ enum max11666Errors {
 
 void register_spi_adc_isr(void f());
 
+//Oversample and average blocks of 2^oversampling_bitsize samples 
+#define OVERSAMPLING_AMT_BITS   3
+#define OVERSAMPLING_AMT (1<<OVERSAMPLING_AMT_BITS)
+#define OVERSAMPLING_MASK (OVERSAMPLING_AMT-1)
+
 struct SpiAdc : Nocopy {
 	SpiAdc() {
     spiadc_instance_ = this;
@@ -42,13 +47,22 @@ struct SpiAdc : Nocopy {
     spih.Instance->DR = cur_channel;
   }
 
-  u4_12 get(uint8_t chan) {
-    return u4_12::of_repr(values[chan]);
+  u4_12 get_last_raw(uint8_t chan) {
+    return u4_12::of_repr(values[chan][os_idx[chan]]);
+  }
+
+  u1_15 get(uint8_t chan) {
+    uint32_t avg = 0;
+    for (int i=0; i<OVERSAMPLING_AMT; i++){
+      avg += values[chan][i];
+    }
+    return u1_15::of_repr(avg);
   }
 
   static SpiAdc *spiadc_instance_;
   SPI_HandleTypeDef spih;
-  uint16_t values[NUM_SPI_ADC_CHANNELS];
+  uint16_t values[NUM_SPI_ADC_CHANNELS][OVERSAMPLING_AMT]={0};
+  static uint32_t os_idx[NUM_SPI_ADC_CHANNELS];
   max11666_channels cur_channel;
   max11666Errors err;
 
@@ -119,7 +133,7 @@ private:
 
   void IRQ_init()
   {
-    HAL_NVIC_SetPriority(SPI_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(SPI_IRQn, 0, 1);
     HAL_NVIC_EnableIRQ(SPI_IRQn);
 
     // Enable the Rx buffer not empty interrupt
