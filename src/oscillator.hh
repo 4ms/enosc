@@ -35,6 +35,9 @@ class Oscillator {
   Phasor phasor_;
   SineShaper sine_shaper_;
   IFloat fader_ {0_f};
+  IFloat warp_ {0_f};
+  IFloat twist_ {0_f};
+  IFloat mod_ {0_f};
 
   // simple linear piecewise function: 0->1, 0.25->1, 0.5->0
   static f antialias(f factor) {
@@ -66,19 +69,28 @@ public:
     Phasor ph = phasor_;
     SineShaper sh = sine_shaper_;
     IFloat fd = fader_;
+    IFloat wa = warp_;
+    IFloat tw = twist_;
+    IFloat md = mod_;
     fd.set(fade, block_size);
+    wa.set(warp, block_size);
+    tw.set(twist, block_size);
+    md.set(modulation, block_size);
 
     for (auto [sum, m_in, m_out] : zip(sum_output, mod_in, mod_out)) {
-      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, twist, warp);
+      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, tw.next(), wa.next());
       sample *= fd.next();
       // TODO comprendre +1
-      m_out += u0_16((sample + 1_f) * modulation);
+      m_out += u0_16((sample + 1_f) * md.next());
       sum += sample * amplitude;
     }
 
     phasor_ = ph;
     sine_shaper_ = sh;
     fader_ = fd;
+    warp_ = wa;
+    twist_ = tw;
+    mod_ = md;
   }
 };
 
