@@ -17,8 +17,11 @@ public:
     out1.fill(0_f);
     out2.fill(0_f);
 
-    f twist = params.twist.value;
-    f warp = params.warp.value;
+    Buffer<f, block_size> twist;
+    for (auto& x : twist) { x = params.twist.value; }
+    
+    Buffer<f, block_size> warp;
+    for (auto& x : warp) { x = params.warp.value; }
 
     for (int i=0; i<grid.size(); ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
@@ -75,10 +78,16 @@ class Oscillators : Nocopy {
     }
   }
 
-  using processor_t = void (OscillatorPair::*)(FrequencyPair, bool, f, f, f, f, f,
-                                               Buffer<u0_16, block_size>&,
-                                               Buffer<u0_16, block_size>&,
-                                               Buffer<f, block_size>&);
+  using processor_t = void (OscillatorPair::*)(FrequencyPair,
+                                               bool, // frozen
+                                               f,    // crossfade_factor
+                                               Buffer<f, block_size>&, // twist
+                                               Buffer<f, block_size>&, // warp
+                                               Buffer<f, block_size>&, // modulation
+                                               f, // amplitude
+                                               Buffer<u0_16, block_size>&, // mod_in
+                                               Buffer<u0_16, block_size>&, // mod_out
+                                               Buffer<f, block_size>&); // sum_output
 
   processor_t pick_processor(TwistMode t, WarpMode m) {
     static processor_t tab[3][3] = {
@@ -140,6 +149,10 @@ class Oscillators : Nocopy {
     }
   };
 
+  IFloat twist_ {0_f};
+  IFloat warp_ {0_f};
+  IFloat modulation_ {0_f};
+
 public:
   void Process(Parameters const &params, Grid const &grid,
                Buffer<f, block_size>& out1, Buffer<f, block_size>& out2) {
@@ -151,9 +164,19 @@ public:
                                     params.spread, params.detune};
 
     processor_t process = pick_processor(params.twist.mode, params.warp.mode);
-    f twist = params.twist.value;
-    f warp = params.warp.value;
-    f modulation = params.modulation.value;
+
+    twist_.set(params.twist.value, block_size);
+    Buffer<f, block_size> twist;
+    for (auto& x : twist) { x = twist_.next(); }
+
+    warp_.set(params.warp.value, block_size);
+    Buffer<f, block_size> warp;
+    for (auto& x : warp) { x = warp_.next(); }
+
+    modulation_.set(params.modulation.value, block_size);
+    Buffer<f, block_size> modulation;
+    for (auto& x : modulation) { x = modulation_.next(); }
+
     f crossfade_factor = params.crossfade_factor;
     int numOsc = params.numOsc;
     SplitMode stereo_mode = params.stereo_mode;
@@ -167,7 +190,7 @@ public:
       auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, numOsc);
       dummy_block_.fill(0._u0_16);
       bool frozen = pick_split(freeze_mode, i, numOsc) && frozen_;
-      (oscs_[i].*process)(p, frozen, crossfade_factor, twist, warp, amp, modulation,
+      (oscs_[i].*process)(p, frozen, crossfade_factor, twist, warp, modulation, amp,
                          mod_in, mod_out, out);
     }
 

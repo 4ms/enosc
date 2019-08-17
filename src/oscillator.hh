@@ -59,9 +59,14 @@ public:
   }
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(f const freq, f const twist, f const warp,
-               f fade, f const amplitude, f const modulation,
-               Buffer<u0_16, block_size>& mod_in, Buffer<u0_16, block_size>& mod_out, Buffer<f, block_size>& sum_output) {
+  void Process(f const freq,
+               Buffer<f, block_size>& twist,
+               Buffer<f, block_size>& warp,
+               f fade, f const amplitude,
+               Buffer<f, block_size>& modulation,
+               Buffer<u0_16, block_size>& mod_in,
+               Buffer<u0_16, block_size>& mod_out,
+               Buffer<f, block_size>& sum_output) {
     f aliasing_factor = freq;
     fade *= antialias(aliasing_factor);
 
@@ -71,23 +76,8 @@ public:
     IFloat fd = fader_;
     fd.set(fade, block_size);
 
-    IFloat wa = warp_;
-    wa.set(warp, block_size);
-    Buffer<f, block_size> warps;
-    for (auto& x : warps) { x = wa.next(); }
-
-    IFloat tw = twist_;
-    tw.set(twist, block_size);
-    Buffer<f, block_size> twists;
-    for (auto& x : twists) { x = tw.next(); }
-
-    IFloat md = mod_;
-    md.set(modulation, block_size);
-    Buffer<f, block_size> mods;
-    for (auto& x : mods) { x = md.next(); }
-
     for (auto [sum, m_in, m_out, w, t, m] :
-           zip(sum_output, mod_in, mod_out, warps, twists, mods)) {
+           zip(sum_output, mod_in, mod_out, warp, twist, modulation)) {
       f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, t, w);
       sample *= fd.next();
       // TODO comprendre +1
@@ -98,9 +88,6 @@ public:
     phasor_ = ph;
     sine_shaper_ = sh;
     fader_ = fd;
-    warp_ = wa;
-    twist_ = tw;
-    mod_ = md;
   }
 };
 
@@ -122,8 +109,13 @@ class OscillatorPair : Nocopy {
 public:
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(FrequencyPair new_freq, bool frozen, f crossfade_factor,
-               f const twist, f const warp, f const amplitude, f const modulation,
+  void Process(FrequencyPair new_freq,
+               bool frozen,
+               f crossfade_factor,
+               Buffer<f, block_size>& twist,
+               Buffer<f, block_size>& warp,
+               Buffer<f, block_size>& modulation,
+               f const amplitude,
                Buffer<u0_16, block_size>& mod_in, Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {
 
