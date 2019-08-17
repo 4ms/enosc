@@ -69,19 +69,29 @@ public:
     Phasor ph = phasor_;
     SineShaper sh = sine_shaper_;
     IFloat fd = fader_;
-    IFloat wa = warp_;
-    IFloat tw = twist_;
-    IFloat md = mod_;
     fd.set(fade, block_size);
-    wa.set(warp, block_size);
-    tw.set(twist, block_size);
-    md.set(modulation, block_size);
 
-    for (auto [sum, m_in, m_out] : zip(sum_output, mod_in, mod_out)) {
-      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, tw.next(), wa.next());
+    IFloat wa = warp_;
+    wa.set(warp, block_size);
+    Buffer<f, block_size> warps;
+    for (auto& x : warps) { x = wa.next(); }
+
+    IFloat tw = twist_;
+    tw.set(twist, block_size);
+    Buffer<f, block_size> twists;
+    for (auto& x : twists) { x = tw.next(); }
+
+    IFloat md = mod_;
+    md.set(modulation, block_size);
+    Buffer<f, block_size> mods;
+    for (auto& x : mods) { x = md.next(); }
+
+    for (auto [sum, m_in, m_out, w, t, m] :
+           zip(sum_output, mod_in, mod_out, warps, twists, mods)) {
+      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, t, w);
       sample *= fd.next();
       // TODO comprendre +1
-      m_out += u0_16((sample + 1_f) * md.next());
+      m_out += u0_16((sample + 1_f) * m);
       sum += sample * amplitude;
     }
 
