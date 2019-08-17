@@ -71,7 +71,7 @@ public:
     Phasor ph = phasor_;
     SineShaper sh = sine_shaper_;
     IFloat fd = fader_;
-    // TODO tw, wa, md in registers
+
     fd.set(fade, block_size);
 
     for (auto [sum, m_in, m_out] : zip(sum_output, mod_in, mod_out)) {
@@ -106,7 +106,7 @@ class OscillatorPair : Nocopy {
 public:
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(FrequencyPair new_freq, // TODO passer par ref &
+  void Process(FrequencyPair new_freq,
                bool frozen,
                f crossfade_factor,
                IFloat& twist,
