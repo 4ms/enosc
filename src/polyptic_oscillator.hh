@@ -184,6 +184,11 @@ public:
                          mod_in, mod_out, out);
     }
 
+    // reset interpolated parameters values
+    twist_.jump(params.twist.value);
+    warp_.jump(params.warp.value);
+    modulation_.jump(params.modulation.value);
+
     f atten = 1_f / amplitude.Sum();
     f tilt = params.tilt <= 1_f ? params.tilt : 1_f / params.tilt;
     atten *= 0.5_f + (0.5_f + Data::normalization_factors[numOsc]) * tilt;
@@ -193,10 +198,6 @@ public:
     for (auto [o1, o2] : zip(out1, out2)) {
       o1 *= atten;
       o2 *= atten2;
-      // TODO optimize
-      twist_.next();
-      warp_.next();
-      modulation_.next();
     }
   }
 

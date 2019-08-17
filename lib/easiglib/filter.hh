@@ -277,6 +277,7 @@ public:
   SimpleFloat(f value) : value_(value) { }
   f next() { return value_; }
   void set(f value, int t) { value_ = value; }
+  void jump(f value) { value_ = value; }
 };
 
 template<class FLOAT>
@@ -296,6 +297,11 @@ public:
    * steps (i.e. calls to [next]) */
   void set(f value, int time) {
     increment_.set((value - value_) / f(time), time);
+  }
+
+  void jump(f value) {
+    value_ = value;
+    increment_.jump(0_f);
   }
 };
 
