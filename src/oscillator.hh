@@ -35,9 +35,6 @@ class Oscillator {
   Phasor phasor_;
   SineShaper sine_shaper_;
   IFloat fader_ {0_f};
-  IFloat warp_ {0_f};
-  IFloat twist_ {0_f};
-  IFloat mod_ {0_f};
 
   // simple linear piecewise function: 0->1, 0.25->1, 0.5->0
   static f antialias(f factor) {
@@ -60,10 +57,10 @@ public:
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
   void Process(f const freq,
-               Buffer<f, block_size>& twist,
-               Buffer<f, block_size>& warp,
+               IFloat twist,
+               IFloat warp,
+               IFloat modulation,
                f fade, f const amplitude,
-               Buffer<f, block_size>& modulation,
                Buffer<u0_16, block_size>& mod_in,
                Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {
@@ -74,14 +71,14 @@ public:
     Phasor ph = phasor_;
     SineShaper sh = sine_shaper_;
     IFloat fd = fader_;
+    // TODO tw, wa, md in registers
     fd.set(fade, block_size);
 
-    for (auto [sum, m_in, m_out, w, t, m] :
-           zip(sum_output, mod_in, mod_out, warp, twist, modulation)) {
-      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, t, w);
+    for (auto [sum, m_in, m_out] : zip(sum_output, mod_in, mod_out)) {
+      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, twist.next(), warp.next());
       sample *= fd.next();
       // TODO comprendre +1
-      m_out += u0_16((sample + 1_f) * m);
+      m_out += u0_16((sample + 1_f) * modulation.next());
       sum += sample * amplitude;
     }
 
@@ -109,12 +106,12 @@ class OscillatorPair : Nocopy {
 public:
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(FrequencyPair new_freq,
+  void Process(FrequencyPair new_freq, // TODO passer par ref &
                bool frozen,
                f crossfade_factor,
-               Buffer<f, block_size>& twist,
-               Buffer<f, block_size>& warp,
-               Buffer<f, block_size>& modulation,
+               IFloat& twist,
+               IFloat& warp,
+               IFloat& modulation,
                f const amplitude,
                Buffer<u0_16, block_size>& mod_in, Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {
@@ -134,10 +131,10 @@ public:
     // mod_out is accumulated in the two calls, so we need to zero it here
     mod_out.fill(0._u0_16);
     osc_[0].Process<twist_mode, warp_mode>(freq.freq1.state(), twist, warp,
-                                           fade1, amplitude, modulation,
+                                           modulation, fade1, amplitude,
                                            mod_in, mod_out, sum_output);
     osc_[1].Process<twist_mode, warp_mode>(freq.freq2.state(), twist, warp,
-                                           fade2, amplitude, modulation,
+                                           modulation, fade2, amplitude,
                                            mod_in, mod_out, sum_output);
   }
 };

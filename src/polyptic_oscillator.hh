@@ -17,17 +17,15 @@ public:
     out1.fill(0_f);
     out2.fill(0_f);
 
-    Buffer<f, block_size> twist;
-    for (auto& x : twist) { x = params.twist.value; }
-    
-    Buffer<f, block_size> warp;
-    for (auto& x : warp) { x = params.warp.value; }
+    IFloat twist {params.twist.value};
+    IFloat warp {params.warp.value};
+    IFloat modulation {0_f};    // no modulation in pre-listen
 
     for (int i=0; i<grid.size(); ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
       Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
       oscs_[i].Process<FEEDBACK, CRUSH>(freq, twist, warp,
-                                        1_f, 1_f, 0_f,
+                                        modulation, 1_f, 1_f,
                                         dummy_block_, dummy_block_, out);
     }
 
@@ -81,9 +79,9 @@ class Oscillators : Nocopy {
   using processor_t = void (OscillatorPair::*)(FrequencyPair,
                                                bool, // frozen
                                                f,    // crossfade_factor
-                                               Buffer<f, block_size>&, // twist
-                                               Buffer<f, block_size>&, // warp
-                                               Buffer<f, block_size>&, // modulation
+                                               IFloat&, // twist
+                                               IFloat&, // warp
+                                               IFloat&, // modulation
                                                f, // amplitude
                                                Buffer<u0_16, block_size>&, // mod_in
                                                Buffer<u0_16, block_size>&, // mod_out
@@ -166,16 +164,8 @@ public:
     processor_t process = pick_processor(params.twist.mode, params.warp.mode);
 
     twist_.set(params.twist.value, block_size);
-    Buffer<f, block_size> twist;
-    for (auto& x : twist) { x = twist_.next(); }
-
     warp_.set(params.warp.value, block_size);
-    Buffer<f, block_size> warp;
-    for (auto& x : warp) { x = warp_.next(); }
-
     modulation_.set(params.modulation.value, block_size);
-    Buffer<f, block_size> modulation;
-    for (auto& x : modulation) { x = modulation_.next(); }
 
     f crossfade_factor = params.crossfade_factor;
     int numOsc = params.numOsc;
@@ -190,7 +180,7 @@ public:
       auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, numOsc);
       dummy_block_.fill(0._u0_16);
       bool frozen = pick_split(freeze_mode, i, numOsc) && frozen_;
-      (oscs_[i].*process)(p, frozen, crossfade_factor, twist, warp, modulation, amp,
+      (oscs_[i].*process)(p, frozen, crossfade_factor, twist_, warp_, modulation_, amp,
                          mod_in, mod_out, out);
     }
 
@@ -203,6 +193,10 @@ public:
     for (auto [o1, o2] : zip(out1, out2)) {
       o1 *= atten;
       o2 *= atten2;
+      // TODO optimize
+      twist_.next();
+      warp_.next();
+      modulation_.next();
     }
   }
 
