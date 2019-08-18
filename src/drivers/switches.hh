@@ -33,7 +33,7 @@ struct Switches : Nocopy {
 
   template<class T>
   struct Combiner : crtp<T, Combiner<T>> {
-    uint8_t state_ = 0xFF;
+    uint8_t state_ = 0x00;
     void Debounce() {
       state_ = (state_ << 2) | (**this).get2() | ((**this).get1() << 1);
     }
@@ -48,7 +48,10 @@ struct Switches : Nocopy {
     bool just_switched_down() {
       return state_ == 0b11101010;
     }
-    State get() { return static_cast<State>(state_ & 0b11); }
+    State get() {
+      Debounce();
+      return static_cast<State>(state_ & 0b11);
+    }
   };
 
   struct Grid : Combiner<Grid> {
