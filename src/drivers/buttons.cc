@@ -11,7 +11,6 @@ Buttons::Learn::Learn() {
   gpio.Mode = GPIO_MODE_INPUT;
   gpio.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &gpio);
-  for (int i=0; i<16; i++) Debounce();
 }
 
 bool Buttons::Learn::get() { return ReadPin(GPIOC, GPIO_PIN_9); };
@@ -23,7 +22,6 @@ Buttons::Freeze::Freeze() {
   gpio.Mode = GPIO_MODE_INPUT;
   gpio.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &gpio);
-  for (int i=0; i<16; i++) Debounce();
 }
 
 bool Buttons::Freeze::get() { return ReadPin(GPIOA, GPIO_PIN_11); };
