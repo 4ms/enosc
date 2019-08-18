@@ -11,7 +11,13 @@ enum Button {
 struct Buttons : Nocopy {
 
   Buttons() {
-    for (int i=16; i--;) Debounce();
+    // this delay avoids false detection of button press on startup
+    // (entering calibration mode)
+    // TODO: check with p2 if it is still necessary
+    for (int j=10000000; j--;) asm("nop");
+    for (int i=16; i--;) {
+      Debounce();
+    }
   }
 
   template<class T>
