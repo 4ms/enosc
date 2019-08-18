@@ -183,7 +183,7 @@ struct Codec : Nocopy {
 
   Codec() {
     instance_ = this;
-    register_codec_isr(handler__IN_ITCM_);
+    register_codec_isr(handler);
 
     // Setup PLL clock for codec
     init_SAI_clock();
@@ -225,11 +225,11 @@ private:
 
   static Codec *instance_;
 
-  static void handler__IN_ITCM_() {
-    instance_->ISR();
+  static void handler() {
+    instance_->ISR__IN_ITCM_();
   }
 
-  void ISR() {
+  void ISR__IN_ITCM_() {
     //Read the interrupt status register (ISR)
     uint32_t tmpisr = CODEC_SAI_RX_DMA->CODEC_SAI_RX_DMA_ISR;
 
