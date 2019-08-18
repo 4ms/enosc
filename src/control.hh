@@ -260,6 +260,7 @@ public:
     f detune = detune_.Process(put);
     detune = Signal::crop_down(kPotDeadZone, detune);
     detune = (detune * detune) * (detune * detune);
+    detune *= 10_f / f(kMaxNumOsc);
     params_.detune = detune;
 
     f tilt = tilt_.Process(put);
@@ -308,6 +309,7 @@ public:
 
     f spread = spread_.Process(put);
     spread = Signal::crop(kPotDeadZone, spread);
+    spread *= 10_f / f(kMaxNumOsc);
     params_.spread = spread * kSpreadRange;
 
     auto [fct, grid] = grid_.ProcessDualFunction(put);
