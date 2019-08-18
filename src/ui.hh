@@ -378,6 +378,7 @@ public:
     Base::put({SwitchMod, switches_.mod_.get()});
     Base::put({SwitchTwist, switches_.twist_.get()});
     Base::put({SwitchWarp, switches_.warp_.get()});
+    Base::Process();
 
     // Enter calibration if Learn is pushed
     if (buttons_.learn_.pushed()) {
