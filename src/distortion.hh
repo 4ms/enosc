@@ -33,8 +33,10 @@ namespace Distortion {
   template<>
   inline f warp<FOLD>(s1_15 x, f amount) {
     u0_16 sample = x.abs().to_unsigned();
+    // TODO: this u0_16 conversion induces quantization noise; passing
+    // [phase] in float reduces it but incurs +5% computation
     u0_32 phase = sample * u0_16(amount);
-    f res = Data::fold.interpolate(phase);
+    f res = DynamicData::fold.interpolateDiff<f>(phase);
     return x > 0._s1_15 ? res : -res;
   }
 
