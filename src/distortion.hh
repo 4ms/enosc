@@ -37,6 +37,7 @@ namespace Distortion {
     // [phase] in float reduces it but incurs +5% computation
     u0_32 phase = sample * u0_16(amount);
     f res = DynamicData::fold.interpolateDiff<f>(phase);
+    res *= DynamicData::fold_max.interpolate(amount);
     return x > 0._s1_15 ? res : -res;
   }
 
