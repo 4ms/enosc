@@ -64,8 +64,8 @@ struct Buffer : std::array<T, SIZE> {
 
   constexpr int size() const { return SIZE; }
 
-  constexpr T& interpolate(f phase) const {
-    constexpr f const max = f(size()-1);
+  constexpr T interpolate(f phase) const {
+    constexpr f const max = f(SIZE-1);
     phase *= max;
     auto [integral, fractional] = phase.integral_fractional();
     T a = (*this)[integral];
@@ -75,7 +75,7 @@ struct Buffer : std::array<T, SIZE> {
 
   template<class U, typename = std::is_same<T, std::pair<U, U>>>
   constexpr U interpolateDiff(f phase) const {
-    constexpr f const max = f(size()-1);
+    constexpr f const max = f(SIZE-1);
     phase *= max;
     auto [integral, fractional] = phase.integral_fractional();
     auto [a, d] = (*this)[integral];
