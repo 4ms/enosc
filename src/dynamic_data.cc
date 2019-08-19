@@ -49,7 +49,7 @@ DynamicData::DynamicData() {
   { f max = 0.001_f;
     for (int i=0; i<fold_size; ++i) {
       max = fold[i].first.abs().max(max);
-      f val = 1_f / max;
+      f val = 0.95_f / max;
       fold_max[i] = val;
     }
   }
