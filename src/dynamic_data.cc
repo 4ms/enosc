@@ -4,6 +4,7 @@
 Buffer<std::pair<s1_15, s1_15>, sine_size> DynamicData::sine;
 Buffer<Buffer<f, cheby_size>, cheby_tables> DynamicData::cheby;
 Buffer<std::pair<f, f>, fold_size> DynamicData::fold;
+Buffer<f, fold_size> DynamicData::fold_max;
 
 DynamicData::DynamicData() {
 
@@ -43,4 +44,24 @@ DynamicData::DynamicData() {
       previous = x;
     }
   }
+
+  // fold_max
+  { f max = 0.001_f;
+    for (int i=0; i<fold_size; ++i) {
+      max = fold[i].first.abs().max(max);
+      f val = 1_f / max;
+      fold_max[i] = val;
+    }
+  }
+
+  // // fold_max
+  // { f max = fold[0].first;
+  //   f previous = max;
+  //   for (int i=0; i<fold_size; ++i) {
+  //     max = max.max(fold[i+1].first);
+  //     f val = 1_f / max;
+  //     fold_max[i] = std::pair(previous, val - previous);
+  //     previous = val;
+  //   }
+  // }
 }

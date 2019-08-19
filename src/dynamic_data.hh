@@ -12,4 +12,5 @@ struct DynamicData {
   static Buffer<std::pair<s1_15, s1_15>, sine_size> sine;
   static Buffer<Buffer<f, cheby_size>, cheby_tables> cheby;
   static Buffer<std::pair<f, f>, fold_size> fold;
+  static Buffer<f, fold_size> fold_max;
 };
