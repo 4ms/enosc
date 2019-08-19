@@ -4,7 +4,7 @@
 Buffer<std::pair<s1_15, s1_15>, sine_size> DynamicData::sine;
 Buffer<Buffer<f, cheby_size>, cheby_tables> DynamicData::cheby;
 Buffer<std::pair<f, f>, fold_size> DynamicData::fold;
-Buffer<f, fold_size> DynamicData::fold_max;
+Buffer<f, (fold_size-1)/2 + 1> DynamicData::fold_max;
 
 DynamicData::DynamicData() {
 
@@ -35,10 +35,13 @@ DynamicData::DynamicData() {
   { f folds = 6_f;
     f previous = 0_f;
     for (int i=0; i<fold_size; ++i) {
-      f x = folds * f(i+1) / f(fold_size);
-      f g = 1_f / (1_f + x.abs());
+      // TODO: this -3 make the wavefolding curve symmetrical; why?
+      f x = f(i) / f(fold_size-3); // 0..1
+      x = folds * (2_f * x - 1_f); // -folds..folds
+      f g = 1_f / (1_f + x.abs()); // 0..0.5
       f p = 16_f / (2_f * Math::pi) * x * g;
       while(p > 1_f) p--;
+      while(p < 0_f) p++;
       x = - g * (x + Math::fast_sine(p));
       fold[i] = std::pair(previous, x - previous);
       previous = x;
@@ -46,22 +49,13 @@ DynamicData::DynamicData() {
   }
 
   // fold_max
-  { f max = 0.001_f;
-    for (int i=0; i<fold_size; ++i) {
-      max = fold[i].first.abs().max(max);
-      f val = 0.95_f / max;
-      fold_max[i] = val;
+  { f max = 0_f;
+    int start = (fold_size-1) / 2;
+    for (int i=0; i<fold_max.size(); ++i) {
+      max = fold[i+start].first.abs().max(max);
+      // the attenuation factor accounts for interpolation error, so
+      // we don't overestimate the 1/x curve and amplify to clipping
+      fold_max[i] = 0.95_f / (max);
     }
   }
-
-  // // fold_max
-  // { f max = fold[0].first;
-  //   f previous = max;
-  //   for (int i=0; i<fold_size; ++i) {
-  //     max = max.max(fold[i+1].first);
-  //     f val = 1_f / max;
-  //     fold_max[i] = std::pair(previous, val - previous);
-  //     previous = val;
-  //   }
-  // }
 }
