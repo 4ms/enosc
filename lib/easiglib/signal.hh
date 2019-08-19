@@ -35,6 +35,10 @@ struct Signal {
     return a + d * fractional;
   }
 
+  static constexpr f crossfade_with_diff(f a, f d, u0_32 fractional) {
+    return a + d * f(fractional);
+  }
+
   // (p..1 -> 0..1)
   static f crop_down(f p, f x) {
     return ((x-p) / (1_f-p)).max(0_f);
