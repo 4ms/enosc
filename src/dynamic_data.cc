@@ -39,7 +39,7 @@ DynamicData::DynamicData() {
       f g = 1_f / (1_f + x.abs());
       f p = 16_f / (2_f * Math::pi) * x * g;
       while(p > 1_f) p--;
-      x = g * (x + Math::fast_sine(p));
+      x = - g * (x + Math::fast_sine(p));
       fold[i] = std::pair(previous, x - previous);
       previous = x;
     }
