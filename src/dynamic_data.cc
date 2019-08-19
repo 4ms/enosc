@@ -7,12 +7,13 @@ Buffer<Buffer<f, cheby_size>, cheby_tables> DynamicData::cheby;
 DynamicData::DynamicData() {
 
   // sine + difference
-  MagicSine magic(1_f / f(sine_size-1));
-  s1_15 previous = s1_15::inclusive(magic.Process());
-  for (auto& [v, d] : sine) {
-    v = previous;
-    previous = s1_15::inclusive(magic.Process());
-    d = previous - v;
+  { MagicSine magic(1_f / f(sine_size-1));
+    s1_15 previous = s1_15::inclusive(magic.Process());
+    for (auto& [v, d] : sine) {
+      v = previous;
+      previous = s1_15::inclusive(magic.Process());
+      d = previous - v;
+    }
   }
 
   // cheby[1] = [-1..1]
