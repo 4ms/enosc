@@ -213,13 +213,12 @@ class Control : public EventSource<Event> {
                 CVConditioner<CV_TILT>, QuadraticOnePoleLp<1>> tilt_ {adc_};
   PotCVCombiner<PotConditioner<POT_TWIST, Law::LINEAR, NoFilter>,
                 CVConditioner<CV_TWIST>, QuadraticOnePoleLp<1>> twist_ {adc_};
-  PotCVCombiner<
-    DualFunctionPotConditioner<POT_GRID, Law::LINEAR,
-                               QuadraticOnePoleLp<1>, Takeover::SOFT>,
+  PotCVCombiner<PotConditioner<POT_GRID, Law::LINEAR, NoFilter>,
                 CVConditioner<CV_GRID>, QuadraticOnePoleLp<1>> grid_ {adc_};
   PotCVCombiner<PotConditioner<POT_MOD, Law::LINEAR, NoFilter>,
                 CVConditioner<CV_MOD>, QuadraticOnePoleLp<1>> mod_ {adc_};
-  PotCVCombiner<PotConditioner<POT_SPREAD, Law::LINEAR, NoFilter>,
+  PotCVCombiner<DualFunctionPotConditioner<POT_SPREAD, Law::LINEAR,
+                                           QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_SPREAD>, QuadraticOnePoleLp<1>> spread_ {adc_};
 
   DualFunctionPotConditioner<POT_PITCH, Law::LINEAR,
@@ -310,26 +309,26 @@ public:
     }
     params_.modulation.value = mod;
 
-    f spread = spread_.Process(put);
-    spread = Signal::crop(kPotDeadZone, spread);
-    spread *= 10_f / f(kMaxNumOsc);
-    params_.spread = spread * kSpreadRange;
-
-    auto [fct, grid] = grid_.ProcessDualFunction(put);
-    grid = Signal::crop(kPotDeadZone, grid); // [0..1]
+    auto [fct, spread] = spread_.ProcessDualFunction(put);
     if (fct == PotFct::MAIN) {
-      grid *= 9_f;                           // [0..9]
-      grid += 0.5_f;                         // [0.5..9.5]
-      int g = grid.floor();
-      if (g != params_.grid.value) put({GridChange, g});
-      params_.grid.value = g; // [0..9]
+      spread = Signal::crop(kPotDeadZone, spread);
+      spread *= 10_f / f(kMaxNumOsc);
+      params_.spread = spread * kSpreadRange;
     } else {
-      grid *= f(kMaxNumOsc-1); // [0..max+1]
-      grid += 1.5_f;           // [1.5..max+0.5]
-      int n = grid.floor();    // [1..max]
+      spread *= f(kMaxNumOsc-1); // [0..max]
+      spread += 1.5_f;           // [1.5..max+0.5]
+      int n = spread.floor();    // [1..max]
       if (n != params_.numOsc) put({NumOscChange, n});
       params_.numOsc = n;
     }
+
+    f grid = grid_.Process(put);
+    grid = Signal::crop(kPotDeadZone, grid); // [0..1]
+    grid *= 9_f;                           // [0..9]
+    grid += 0.5_f;                         // [0.5..9.5]
+    int g = grid.floor();
+    if (g != params_.grid.value) put({GridChange, g});
+    params_.grid.value = g; // [0..9]
 
     // Root & Pitch
 
@@ -367,8 +366,8 @@ public:
   void hold_pitch_cv() { pitch_cv_sampler_.hold(); }
   void release_pitch_cv() { pitch_cv_sampler_.release(); }
 
-  void grid_pot_alternate_function() { grid_.pot_.alt(); }
-  void grid_pot_main_function() { grid_.pot_.main(); }
+  void spread_pot_alternate_function() { spread_.pot_.alt(); }
+  void spread_pot_main_function() { spread_.pot_.main(); }
 
   void root_pot_alternate_function() { root_pot_.alt(); }
   void root_pot_main_function() { root_pot_.main(); }
@@ -376,7 +375,7 @@ public:
   void pitch_pot_main_function() { pitch_pot_.main(); }
 
   void all_main_function() {
-    grid_pot_main_function();
+    spread_pot_main_function();
     root_pot_main_function();
     pitch_pot_main_function();
   }

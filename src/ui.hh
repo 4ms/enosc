@@ -244,9 +244,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         Base::put({StartCatchup, ADC_INPUT_MAX+Switches::WARP});
       } break;
       case PotMove: {
-        if (e1.data == POT_GRID) {
+        if (e1.data == POT_SPREAD) {
           freeze_led_.set_background(Colors::grey);
-          control_.grid_pot_alternate_function();
+          control_.spread_pot_alternate_function();
         }
       }
       case ButtonRelease: {
