@@ -296,7 +296,7 @@ public:
   /** Initializes a ramp from current value to [value] in [time]
    * steps (i.e. calls to [next]) */
   void set(f value, int time) {
-    increment_.set((value - value_) / f(time), time);
+    increment_.set((value - value_) * (1_f / f(time)), time);
   }
 
   void jump(f value) {
