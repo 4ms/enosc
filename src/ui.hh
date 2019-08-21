@@ -250,6 +250,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         } else if (e1.data == POT_TWIST) {
           freeze_led_.set_background(Colors::grey);
           control_.twist_pot_alternate_function();
+        } else if (e1.data == POT_WARP) {
+          freeze_led_.set_background(Colors::grey);
+          control_.warp_pot_alternate_function();
         }
       }
       case ButtonRelease: {

@@ -207,7 +207,8 @@ class Control : public EventSource<Event> {
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>> detune_ {adc_};
-  PotCVCombiner<PotConditioner<POT_WARP, Law::LINEAR, NoFilter>,
+  PotCVCombiner<DualFunctionPotConditioner<POT_WARP, Law::LINEAR,
+                                           QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>> warp_ {adc_};
   PotCVCombiner<PotConditioner<POT_TILT, Law::LINEAR, NoFilter>,
                 CVConditioner<CV_TILT>, QuadraticOnePoleLp<1>> tilt_ {adc_};
@@ -257,20 +258,25 @@ public:
 
     // Process potentiometer & CV
 
-    f detune = detune_.Process(put);
-    detune = Signal::crop_down(kPotDeadZone, detune);
-    detune = (detune * detune) * (detune * detune);
-    detune *= 10_f / f(kMaxNumOsc);
-    params_.detune = detune;
+    // DETUNE
+    { f detune = detune_.Process(put);
+      detune = Signal::crop_down(kPotDeadZone, detune);
+      detune = (detune * detune) * (detune * detune);
+      detune *= 10_f / f(kMaxNumOsc);
+      params_.detune = detune;
+    }
 
-    f tilt = tilt_.Process(put);
-    tilt = Signal::crop(kPotDeadZone, tilt);
-    tilt = tilt * 2_f - 1_f;
-    tilt *= tilt * tilt;
-    tilt *= 4_f;
-    tilt = Math::fast_exp2(tilt);
-    params_.tilt = tilt;
+    // TILT
+    { f tilt = tilt_.Process(put);
+      tilt = Signal::crop(kPotDeadZone, tilt);
+      tilt = tilt * 2_f - 1_f;
+      tilt *= tilt * tilt;
+      tilt *= 4_f;
+      tilt = Math::fast_exp2(tilt);
+      params_.tilt = tilt;
+    }
 
+    // TWIST
     { auto [fct, twist] = twist_.ProcessDualFunction(put);
 
       if (fct == PotFct::MAIN) {
@@ -294,20 +300,31 @@ public:
       }
     }
 
-    f warp = warp_.Process(put);
-    warp = Signal::crop(kPotDeadZone, warp);
-    if (params_.warp.mode == FOLD) {
-      warp *= warp;
-      warp *= 0.9_f;
-      // this little offset avoids scaling the input too close to
-      // zero; reducing it makes the wavefolder more linear around
-      // warp=0, but increases the quantization noise.
-      warp += 0.004_f;
-    } else if (params_.warp.mode == CHEBY) {
-    } else if (params_.warp.mode == CRUSH) {
-    }
-    params_.warp.value = warp;
+    // WARP
+    { auto [fct, warp] = warp_.ProcessDualFunction(put);
 
+      if (fct == PotFct::MAIN) {
+        warp = Signal::crop(kPotDeadZone, warp);
+        if (params_.warp.mode == FOLD) {
+          warp *= warp;
+          warp *= 0.9_f;
+          // this little offset avoids scaling the input too close to
+          // zero; reducing it makes the wavefolder more linear around
+          // warp=0, but increases the quantization noise.
+          warp += 0.004_f;
+        } else if (params_.warp.mode == CHEBY) {
+        } else if (params_.warp.mode == CRUSH) {
+        }
+        params_.warp.value = warp;
+      } else {
+        warp *= 3_f;           // 3 split modes
+        SplitMode m = static_cast<SplitMode>(warp.floor());
+        if (m != params_.stereo_mode) put({AltParamChange, m});
+        params_.stereo_mode = m;
+      }
+    }
+
+    // MODULATION
     f mod = mod_.Process(put);
     mod = Signal::crop(kPotDeadZone, mod);
     mod *= 4_f / f(params_.numOsc);
@@ -320,6 +337,7 @@ public:
     }
     params_.modulation.value = mod;
 
+    // SPREAD
     { auto [fct, spread] = spread_.ProcessDualFunction(put);
       if (fct == PotFct::MAIN) {
         spread = Signal::crop(kPotDeadZone, spread);
@@ -334,6 +352,7 @@ public:
       }
     }
 
+    // GRID
     f grid = grid_.Process(put);
     grid = Signal::crop(kPotDeadZone, grid); // [0..1]
     grid *= 9_f;                           // [0..9]
@@ -342,7 +361,7 @@ public:
     if (g != params_.grid.value) put({GridChange, g});
     params_.grid.value = g; // [0..9]
 
-    // Root & Pitch
+    // ROOT & PITCH
 
     f fine_tune = 0_f;
 
@@ -371,7 +390,6 @@ public:
       }
     }
 
-
     // Start next conversion
     adc_.Start();
   }
@@ -389,12 +407,15 @@ public:
   void pitch_pot_main_function() { pitch_pot_.main(); }
   void twist_pot_alternate_function() { twist_.pot_.alt(); }
   void twist_pot_main_function() { twist_.pot_.main(); }
+  void warp_pot_alternate_function() { warp_.pot_.alt(); }
+  void warp_pot_main_function() { warp_.pot_.main(); }
 
   void all_main_function() {
     spread_pot_main_function();
     root_pot_main_function();
     pitch_pot_main_function();
     twist_pot_main_function();
+    warp_pot_main_function();
   }
 
   bool CalibrateOffset() {
