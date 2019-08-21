@@ -74,7 +74,7 @@ enum EventType {
   PotMove,
   NewNote,
   GridChange,
-  NumOscChange,
+  AltParamChange,
   StartCatchup,
   EndOfCatchup,
 };

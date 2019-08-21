@@ -247,6 +247,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         if (e1.data == POT_SPREAD) {
           freeze_led_.set_background(Colors::grey);
           control_.spread_pot_alternate_function();
+        } else if (e1.data == POT_TWIST) {
+          freeze_led_.set_background(Colors::grey);
+          control_.twist_pot_alternate_function();
         }
       }
       case ButtonRelease: {
@@ -265,7 +268,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           }
         }
       } break;
-      case NumOscChange: {
+      case AltParamChange: {
         freeze_led_.flash(Colors::white);
       } break;
       }

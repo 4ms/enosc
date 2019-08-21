@@ -211,7 +211,8 @@ class Control : public EventSource<Event> {
                 CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>> warp_ {adc_};
   PotCVCombiner<PotConditioner<POT_TILT, Law::LINEAR, NoFilter>,
                 CVConditioner<CV_TILT>, QuadraticOnePoleLp<1>> tilt_ {adc_};
-  PotCVCombiner<PotConditioner<POT_TWIST, Law::LINEAR, NoFilter>,
+  PotCVCombiner<DualFunctionPotConditioner<POT_TWIST, Law::LINEAR,
+                                           QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_TWIST>, QuadraticOnePoleLp<1>> twist_ {adc_};
   PotCVCombiner<PotConditioner<POT_GRID, Law::LINEAR, NoFilter>,
                 CVConditioner<CV_GRID>, QuadraticOnePoleLp<1>> grid_ {adc_};
@@ -270,18 +271,28 @@ public:
     tilt = Math::fast_exp2(tilt);
     params_.tilt = tilt;
 
-    f twist = twist_.Process(put);
-    twist = Signal::crop(kPotDeadZone, twist);
-    if (params_.twist.mode == FEEDBACK) {
-      twist *= twist * 0.7_f;
-    } else if (params_.twist.mode == PULSAR) {
-      twist *= twist;
-      twist = Math::fast_exp2(twist * 7_f);
-      // twist: 0..2^7
-    } else if (params_.twist.mode == DECIMATE) {
-      twist *= twist * 0.5_f;
+    { auto [fct, twist] = twist_.ProcessDualFunction(put);
+
+      if (fct == PotFct::MAIN) {
+        twist = Signal::crop(kPotDeadZone, twist);
+        // scaling of Twist
+        if (params_.twist.mode == FEEDBACK) {
+          twist *= twist * 0.7_f;
+        } else if (params_.twist.mode == PULSAR) {
+          twist *= twist;
+          twist = Math::fast_exp2(twist * 7_f);
+          // twist: 0..2^7
+        } else if (params_.twist.mode == DECIMATE) {
+          twist *= twist * 0.5_f;
+        }
+        params_.twist.value = twist;
+      } else {
+        twist *= 3_f;           // 3 split modes
+        SplitMode m = static_cast<SplitMode>(twist.floor());
+        if (m != params_.freeze_mode) put({AltParamChange, m});
+        params_.freeze_mode = m;
+      }
     }
-    params_.twist.value = twist;
 
     f warp = warp_.Process(put);
     warp = Signal::crop(kPotDeadZone, warp);
@@ -309,17 +320,18 @@ public:
     }
     params_.modulation.value = mod;
 
-    auto [fct, spread] = spread_.ProcessDualFunction(put);
-    if (fct == PotFct::MAIN) {
-      spread = Signal::crop(kPotDeadZone, spread);
-      spread *= 10_f / f(kMaxNumOsc);
-      params_.spread = spread * kSpreadRange;
-    } else {
-      spread *= f(kMaxNumOsc-1); // [0..max]
-      spread += 1.5_f;           // [1.5..max+0.5]
-      int n = spread.floor();    // [1..max]
-      if (n != params_.numOsc) put({NumOscChange, n});
-      params_.numOsc = n;
+    { auto [fct, spread] = spread_.ProcessDualFunction(put);
+      if (fct == PotFct::MAIN) {
+        spread = Signal::crop(kPotDeadZone, spread);
+        spread *= 10_f / f(kMaxNumOsc);
+        params_.spread = spread * kSpreadRange;
+      } else {
+        spread *= f(kMaxNumOsc-1); // [0..max]
+        spread += 1.5_f;           // [1.5..max+0.5]
+        int n = spread.floor();    // [1..max]
+        if (n != params_.numOsc) put({AltParamChange, n});
+        params_.numOsc = n;
+      }
     }
 
     f grid = grid_.Process(put);
@@ -332,29 +344,31 @@ public:
 
     // Root & Pitch
 
-    auto [fct2, pitch] = pitch_pot_.Process(put);
-
     f fine_tune = 0_f;
 
-    if (fct2 == PotFct::MAIN) {
-      pitch *= kPitchPotRange;                               // 0..range
-      pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
-      f pitch_cv = pitch_cv_.last();
-      pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
-      pitch += pitch_cv;
-      params_.pitch = pitch;
-    } else {
-      fine_tune = (pitch - 0.5_f) * kNewNoteFineRange;
+    { auto [fct, pitch] = pitch_pot_.Process(put);
+
+      if (fct == PotFct::MAIN) {
+        pitch *= kPitchPotRange;                               // 0..range
+        pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
+        f pitch_cv = pitch_cv_.last();
+        pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
+        pitch += pitch_cv;
+        params_.pitch = pitch;
+      } else {
+        fine_tune = (pitch - 0.5_f) * kNewNoteFineRange;
+      }
     }
 
-    auto [fct3, root] = root_pot_.Process(put);
+    { auto [fct, root] = root_pot_.Process(put);
 
-    if (fct3 == PotFct::MAIN) {
-      root *= kRootPotRange;
-      root += root_cv_.last();
-      params_.root = root.max(0_f);
-    } else {
-      params_.new_note = root * kNewNoteRange + kNewNoteRange * 0.5_f + fine_tune;
+      if (fct == PotFct::MAIN) {
+        root *= kRootPotRange;
+        root += root_cv_.last();
+        params_.root = root.max(0_f);
+      } else {
+        params_.new_note = root * kNewNoteRange + kNewNoteRange * 0.5_f + fine_tune;
+      }
     }
 
 
@@ -373,11 +387,14 @@ public:
   void root_pot_main_function() { root_pot_.main(); }
   void pitch_pot_alternate_function() { pitch_pot_.alt(); }
   void pitch_pot_main_function() { pitch_pot_.main(); }
+  void twist_pot_alternate_function() { twist_.pot_.alt(); }
+  void twist_pot_main_function() { twist_.pot_.main(); }
 
   void all_main_function() {
     spread_pot_main_function();
     root_pot_main_function();
     pitch_pot_main_function();
+    twist_pot_main_function();
   }
 
   bool CalibrateOffset() {
