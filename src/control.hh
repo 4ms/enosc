@@ -210,7 +210,8 @@ class Control : public EventSource<Event> {
   PotCVCombiner<DualFunctionPotConditioner<POT_WARP, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>> warp_ {adc_};
-  PotCVCombiner<PotConditioner<POT_TILT, Law::LINEAR, NoFilter>,
+  PotCVCombiner<DualFunctionPotConditioner<POT_TILT, Law::LINEAR,
+                                           QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_TILT>, QuadraticOnePoleLp<1>> tilt_ {adc_};
   PotCVCombiner<DualFunctionPotConditioner<POT_TWIST, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
@@ -267,13 +268,20 @@ public:
     }
 
     // TILT
-    { f tilt = tilt_.Process(put);
-      tilt = Signal::crop(kPotDeadZone, tilt);
-      tilt = tilt * 2_f - 1_f;
-      tilt *= tilt * tilt;
-      tilt *= 4_f;
-      tilt = Math::fast_exp2(tilt);
-      params_.tilt = tilt;
+    { auto [fct, tilt] = tilt_.ProcessDualFunction(put);
+      if (fct == PotFct::MAIN) {
+        tilt = Signal::crop(kPotDeadZone, tilt);
+        tilt = tilt * 2_f - 1_f; // -1..1
+        tilt *= tilt * tilt;     // -1..1 cubic
+        tilt *= 4_f;             // -4..4
+        tilt = Math::fast_exp2(tilt); // 0.0625..16
+        params_.tilt = tilt;
+      } else {
+        tilt *= tilt;
+        tilt = 1_f - tilt;
+        tilt *= 0.5_f;
+        params_.crossfade_factor = tilt; // 0..1
+      }
     }
 
     // TWIST
@@ -409,6 +417,8 @@ public:
   void twist_pot_main_function() { twist_.pot_.main(); }
   void warp_pot_alternate_function() { warp_.pot_.alt(); }
   void warp_pot_main_function() { warp_.pot_.main(); }
+  void tilt_pot_alternate_function() { tilt_.pot_.alt(); }
+  void tilt_pot_main_function() { tilt_.pot_.main(); }
 
   void all_main_function() {
     spread_pot_main_function();
@@ -416,6 +426,7 @@ public:
     pitch_pot_main_function();
     twist_pot_main_function();
     warp_pot_main_function();
+    tilt_pot_main_function();
   }
 
   bool CalibrateOffset() {
