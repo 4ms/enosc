@@ -397,9 +397,6 @@ public:
         params_.new_note = root * kNewNoteRange + kNewNoteRange * 0.5_f + fine_tune;
       }
     }
-
-    // Start next conversion
-    adc_.Start();
   }
 
   f pitch_cv() { return pitch_cv_.last(); }
