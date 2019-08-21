@@ -166,6 +166,26 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     case ButtonPush: {
       button_timeouts_[e1.data].trigger_after(kLongPressTime, {ButtonTimeout, e1.data});
     } break;
+    case SwitchGrid: {
+      params_.grid.mode =
+        e1.data == Switches::UP ? TWELVE :
+        e1.data == Switches::MID ? OCTAVE : FREE;
+    } break;
+    case SwitchMod: {
+      params_.modulation.mode =
+        e1.data == Switches::UP ? ONE :
+        e1.data == Switches::MID ? TWO : THREE;
+    } break;
+    case SwitchTwist: {
+      params_.twist.mode =
+        e1.data == Switches::UP ? FEEDBACK :
+        e1.data == Switches::MID ? PULSAR : DECIMATE;
+    } break;
+    case SwitchWarp: {
+      params_.warp.mode =
+        e1.data == Switches::UP ? FOLD :
+        e1.data == Switches::MID ? CHEBY : CRUSH;
+    } break;
     }
     
     switch(mode_) {
@@ -190,59 +210,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           mode_ = SHIFT;
         }
       } break;
-      case SwitchGrid: {
-        params_.grid.mode =
-          e1.data == Switches::UP ? TWELVE :
-          e1.data == Switches::MID ? OCTAVE : FREE;
-        Base::put({EndOfCatchup, ADC_INPUT_MAX + Switches::GRID});
-      } break;
-      case SwitchMod: {
-        params_.modulation.mode =
-          e1.data == Switches::UP ? ONE :
-          e1.data == Switches::MID ? TWO : THREE;
-        Base::put({EndOfCatchup, ADC_INPUT_MAX + Switches::MOD});
-      } break;
-      case SwitchTwist: {
-        params_.twist.mode =
-          e1.data == Switches::UP ? FEEDBACK :
-          e1.data == Switches::MID ? PULSAR : DECIMATE;
-        Base::put({EndOfCatchup, ADC_INPUT_MAX + Switches::TWIST});
-      } break;
-      case SwitchWarp: {
-        params_.warp.mode =
-          e1.data == Switches::UP ? FOLD :
-          e1.data == Switches::MID ? CHEBY : CRUSH;
-        Base::put({EndOfCatchup, ADC_INPUT_MAX + Switches::WARP});
-      } break;
       }
     } break;
 
     case SHIFT: {
       switch(e1.type) {
-      case SwitchGrid: {
-        freeze_led_.flash(Colors::white);
-        freeze_led_.set_background(Colors::grey);
-        params_.crossfade_factor =
-          e1.data == Switches::UP ? Crossfade::linear :
-          e1.data == Switches::MID ? Crossfade::mid : Crossfade::steep;
-        Base::put({StartCatchup, ADC_INPUT_MAX+Switches::GRID});
-      } break;
-      case SwitchTwist: {
-        freeze_led_.flash(Colors::white);
-        freeze_led_.set_background(Colors::grey);
-        params_.stereo_mode =
-          e1.data == Switches::UP ? ALTERNATE :
-          e1.data == Switches::MID ? LOW_HIGH : LOWEST_REST;
-        Base::put({StartCatchup, ADC_INPUT_MAX+Switches::TWIST});
-      } break;
-      case SwitchWarp: {
-        freeze_led_.flash(Colors::white);
-        freeze_led_.set_background(Colors::grey);
-        params_.freeze_mode =
-          e1.data == Switches::UP ? ALTERNATE :
-          e1.data == Switches::MID ? LOW_HIGH : LOWEST_REST;
-        Base::put({StartCatchup, ADC_INPUT_MAX+Switches::WARP});
-      } break;
       case PotMove: {
         if (e1.data == POT_SPREAD) {
           freeze_led_.set_background(Colors::grey);
