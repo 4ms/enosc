@@ -22,6 +22,7 @@ struct LedManager : Leds::ILed<T> {
   }
 
   void set_background(Color c) { background_color_ = c; }
+  void set_solid(Color c) { solid_color_ = c; }
 
   // freq in secs
   void set_glow(Color c, f freq = 1_f) {
@@ -36,6 +37,7 @@ struct LedManager : Leds::ILed<T> {
 
   void Update() {
     Color c = background_color_;
+    if (solid_color_ != Colors::black) c = solid_color_;
     c = c.blend(glow_color_, u0_8::narrow(osc_.Process()));
     c = c.blend(flash_color_, u0_8::narrow(flash_phase_));
     Leds::ILed<T>::set(c);
@@ -45,6 +47,7 @@ struct LedManager : Leds::ILed<T> {
 private:
   TriangleOscillator osc_;
   Color background_color_ = Colors::black;
+  Color solid_color_ = Colors::black;
   Color flash_color_ = Colors::white;
   Color glow_color_ = Colors::red;
   u0_16 flash_freq_ = 0.0014_u0_16;
@@ -144,12 +147,12 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     case GateOn: {
       if (e1.data == GATE_FREEZE)
         osc_.set_freeze(!osc_.frozen());
-      freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+      freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
     } break;
     case GateOff: {
       if (e1.data == GATE_FREEZE)
         osc_.set_freeze(!osc_.frozen());
-      freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+      freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
     } break;
     case StartCatchup: {
       active_catchups_ = active_catchups_.set(e1.data);
@@ -199,7 +202,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           // Learn pressed
           if (e1.data == BUTTON_LEARN) {
             mode_ = LEARN;
-            learn_led_.set_background(Colors::dark_red);
+            learn_led_.set_solid(Colors::dark_red);
             osc_.enable_learn();
             control_.hold_pitch_cv();
           }
@@ -217,16 +220,16 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       switch(e1.type) {
       case PotMove: {
         if (e1.data == POT_SPREAD) {
-          freeze_led_.set_background(Colors::grey);
+          freeze_led_.set_solid(Colors::grey);
           control_.spread_pot_alternate_function();
         } else if (e1.data == POT_TWIST) {
-          freeze_led_.set_background(Colors::grey);
+          freeze_led_.set_solid(Colors::grey);
           control_.twist_pot_alternate_function();
         } else if (e1.data == POT_WARP) {
-          freeze_led_.set_background(Colors::grey);
+          freeze_led_.set_solid(Colors::grey);
           control_.warp_pot_alternate_function();
         } else if (e1.data == POT_TILT) {
-          freeze_led_.set_background(Colors::grey);
+          freeze_led_.set_solid(Colors::grey);
           control_.tilt_pot_alternate_function();
         }
       }
@@ -236,13 +239,13 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
               e2.data == BUTTON_FREEZE) {
             // Freeze pressed
             osc_.set_freeze(!osc_.frozen());
-            freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+            freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
             mode_ = NORMAL;
           } else {
             // Released after a change
             mode_ = NORMAL;
             control_.all_main_function();
-            freeze_led_.set_background(osc_.frozen() ? Colors::blue : Colors::black);
+            freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
           }
         }
       } break;
@@ -290,7 +293,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           if (success) learn_led_.flash(Colors::green);
           control_.release_pitch_cv();
           learn_led_.reset_glow();
-          learn_led_.set_background(Colors::black);
+          learn_led_.set_solid(Colors::black);
         } else if (e1.data == BUTTON_FREEZE &&
             e2.type == ButtonPush &&
             e2.data == BUTTON_FREEZE) {
