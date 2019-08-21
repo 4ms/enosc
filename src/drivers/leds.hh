@@ -34,6 +34,11 @@ struct Color {
                  Signal::crossfade(g_, that.g_, phase),
                  Signal::crossfade(b_, that.b_, phase));
   }
+
+  constexpr const bool operator!=(Color const that) {
+    return this->r_ != that.r_ || this->g_ != that.g_ || this->b_ != that.b_;
+  }
+
 private:
   u0_8 r_, g_, b_;
 };
@@ -48,6 +53,7 @@ struct Colors {
   static constexpr Color yellow = Color(u0_8::max_val, u0_8::max_val, 0._u0_8);
   static constexpr Color magenta = Color(u0_8::max_val, 0._u0_8, u0_8::max_val);
   static constexpr Color cyan = Color(0._u0_8, u0_8::max_val, u0_8::max_val);
+  static constexpr Color orange = red.blend(yellow);
   static constexpr Color dark_red = red.blend(black);
   static constexpr Color dark_green = green.blend(black);
   static constexpr Color dark_blue = blue.blend(black);
