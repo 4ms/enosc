@@ -380,6 +380,17 @@ public:
   }
 
   void Update() {
+    auto [c1, c2] = osc_.levels();
+    osc_.reset_levels();
+    c1 *= f(kUiUpdateRate) / f(kSampleRate);
+    c2 *= f(kUiUpdateRate) / f(kSampleRate);
+
+    // shape the LED intensity response to a bit brighter
+    c1 = c1 * (2_f - c1);
+    c2 = c2 * (2_f - c2);
+
+    learn_led_.set_background(Colors::black.blend(Colors::yellow, u0_8::inclusive(c1)));
+    freeze_led_.set_background(Colors::black.blend(Colors::yellow, u0_8::inclusive(c2)));
     learn_led_.Update();
     freeze_led_.Update();
   }
