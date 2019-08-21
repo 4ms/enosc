@@ -7,7 +7,7 @@ constexpr struct Frame {
   s1_15 r = 0._s1_15;
 } zero;
 
-constexpr int kUiUpdateRate = 100; // Hz
+constexpr int kUiUpdateRate = 200; // Hz
 constexpr int kSampleRate = 96000; // Hz
 constexpr int kBlockSize = 16;
 constexpr int kMaxNumOsc = 10;
