@@ -104,7 +104,7 @@ class DualFunctionPotConditioner : PotConditioner<INPUT, LAW, FILTER> {
   enum State { MAIN, ALT, ARMING, CATCHUP } state_ = MAIN;
   f main_value_;
   f alt_value_;
-  bool sgn_;
+  f error_;
 public:
 
   DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW, FILTER>(adc) {}
@@ -118,7 +118,7 @@ public:
     case MAIN: main_value_ = input; return std::pair(PotFct::MAIN, input);
     case ALT: alt_value_ = input; return std::pair(PotFct::ALT, input);
     case ARMING: {
-      sgn_ = input - main_value_ > 0_f;
+      error_ = input - main_value_;
       state_ = CATCHUP;
       put({StartCatchup, INPUT});
       return std::pair(PotFct::ALT, input);
@@ -132,7 +132,11 @@ public:
         }
       } break;
       case Takeover::SOFT: {
-        if ((input - main_value_ > 0_f) != sgn_) {
+        // end of catchup happens if errors don't have the same sign
+        // (the knob crossed its previous recorded value). The small
+        // constant is to avoid being stuck in catchup when the error
+        // is close to zero (pot didn't move) or if main_value_ = 0.
+        if ((input - main_value_) * error_ <= 0.0001_f) {
           state_ = MAIN;
           put({EndOfCatchup, INPUT});
         }
