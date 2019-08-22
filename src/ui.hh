@@ -292,6 +292,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           bool success = osc_.disable_learn();
           if (success) learn_led_.flash(Colors::green);
           control_.release_pitch_cv();
+          control_.root_pot_main_function();
+          control_.pitch_pot_main_function();
           learn_led_.reset_glow();
           learn_led_.set_solid(Colors::black);
         } else if (e1.data == BUTTON_FREEZE &&
@@ -308,8 +310,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     case MANUAL_LEARN: {
 
       if (e1.type == ButtonRelease && e1.data == BUTTON_LEARN) {
-        control_.root_pot_main_function();
-        control_.pitch_pot_main_function();
         osc_.disable_follow_new_note();
         mode_ = LEARN;
       }
