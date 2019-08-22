@@ -251,10 +251,10 @@ public:
     return pre_grid_.add(x);
   }
 
-  void change_last_note(f x) {
+  void change_last_note(f coarse, f fine) {
     if (params_.grid.mode == TWELVE)
-      x = x.integral();
-    pre_grid_.set_last(x);
+      coarse = coarse.integral();
+    pre_grid_.set_last(coarse + fine);
   }
 
   bool remove_last_note() {
@@ -267,7 +267,7 @@ public:
 
     if (pre_listen_) {
       if (follow_new_note_)
-        change_last_note(params_.new_note);
+        change_last_note(params_.new_note, params_.fine_tune);
       PreListenOscillators<block_size>::Process(params_, pre_grid_, out1, out2);
     } else {
       current_grid_ = quantizer_.get_grid(params_.grid);

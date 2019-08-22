@@ -375,8 +375,6 @@ public:
 
     // ROOT & PITCH
 
-    f fine_tune = 0_f;
-
     { auto [fct, pitch] = pitch_pot_.Process(put);
       pitch = Signal::crop(kPotDeadZone, pitch);
 
@@ -388,7 +386,7 @@ public:
         pitch += pitch_cv;
         params_.pitch = pitch;
       } else {
-        fine_tune = (pitch - 0.5_f) * kNewNoteFineRange;
+        params_.fine_tune = (pitch - 0.5_f) * kNewNoteFineRange;
       }
     }
 
@@ -400,7 +398,7 @@ public:
         root += root_cv_.last();
         params_.root = root.max(0_f);
       } else {
-        params_.new_note = root * kNewNoteRange + kNewNoteRange * 0.5_f + fine_tune;
+        params_.new_note = root * kNewNoteRange + kNewNoteRange * 0.5_f;
       }
     }
   }

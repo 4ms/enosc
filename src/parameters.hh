@@ -58,7 +58,7 @@ struct Parameters {
 
   f crossfade_factor = Crossfade::mid;
 
-  f new_note;
+  f new_note, fine_tune;
 };
 
 enum EventType {
