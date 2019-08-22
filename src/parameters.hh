@@ -19,14 +19,8 @@ enum ModulationMode { ONE, TWO, THREE };
 
 enum SplitMode { ALTERNATE, LOW_HIGH, LOWEST_REST };
 
-struct Crossfade {
-  static constexpr f linear = 0._f;
-  static constexpr f mid = 0.2_f;
-  static constexpr f steep = 0.45_f;
-};
-
 struct Parameters {
-  int numOsc = kMaxNumOsc;
+  int numOsc;                   // 0..kMaxNumOsc
   f tilt;                       // -1..1
   f root;
   f pitch;                       // midi note
@@ -53,10 +47,10 @@ struct Parameters {
     f value;                    // 0..1
   } warp;
 
-  SplitMode stereo_mode = ALTERNATE;
-  SplitMode freeze_mode = ALTERNATE;
+  SplitMode stereo_mode;
+  SplitMode freeze_mode;
 
-  f crossfade_factor = Crossfade::mid;
+  f crossfade_factor;
 
   f new_note, fine_tune;
 };
