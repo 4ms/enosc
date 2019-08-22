@@ -175,7 +175,7 @@ public:
 
   PotCVCombiner(Adc& adc) : adc_(adc) {}
 
-  // TODO disable this function if PotCondition = DualFunction
+  // TODO disable this function if PotConditioner = DualFunction
   f Process(std::function<void(Event)> const& put) {
     f x = pot_.Process(put);
     x -= cv_.Process();
