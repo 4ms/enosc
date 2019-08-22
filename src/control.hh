@@ -374,6 +374,7 @@ public:
     f fine_tune = 0_f;
 
     { auto [fct, pitch] = pitch_pot_.Process(put);
+      pitch = Signal::crop(kPotDeadZone, pitch);
 
       if (fct == PotFct::MAIN) {
         pitch *= kPitchPotRange;                               // 0..range
@@ -388,6 +389,7 @@ public:
     }
 
     { auto [fct, root] = root_pot_.Process(put);
+      root = Signal::crop(kPotDeadZone, root);
 
       if (fct == PotFct::MAIN) {
         root *= kRootPotRange;
