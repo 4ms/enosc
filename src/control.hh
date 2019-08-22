@@ -82,6 +82,7 @@ public:
 
   f Process(std::function<void(Event)> const& put) {
     f x = f::inclusive(adc_.get(INPUT));
+    x = Signal::crop(kPotDeadZone, x);
     switch(LAW) {
     case Law::LINEAR: break;
     case Law::QUADRATIC: x = x * x; break;
@@ -112,26 +113,27 @@ public:
   void alt() { state_ = ALT; }
   void main() { if (state_ == ALT) state_ = ARMING; }
 
-  std::pair<PotFct, f> Process(std::function<void(Event)> const& put) {
+  std::pair<f, f> Process(std::function<void(Event)> const& put) {
     f input = PotConditioner<INPUT, LAW, FILTER>::Process(put);
     switch(state_) {
-    case MAIN: main_value_ = input; return std::pair(PotFct::MAIN, input);
-    case ALT: alt_value_ = input; return std::pair(PotFct::ALT, input);
+    case MAIN: {
+      main_value_ = input;
+    } break;
+    case ALT: {
+      alt_value_ = input;
+    } break;
     case ARMING: {
       error_ = input - main_value_;
       state_ = CATCHUP;
       put({StartCatchup, INPUT});
-      return std::pair(PotFct::ALT, input);
     } break;
     case CATCHUP: {
-      switch (TO) {
-      case Takeover::HARD: {
+      if (TO == Takeover::HARD) {
         if ((input - alt_value_).abs() > kPotMoveThreshold) {
           state_ = MAIN;
           put({EndOfCatchup, INPUT});
         }
-      } break;
-      case Takeover::SOFT: {
+      } else if (TO == Takeover::SOFT) {
         // end of catchup happens if errors don't have the same sign
         // (the knob crossed its previous recorded value). The small
         // constant is to avoid being stuck in catchup when the error
@@ -140,11 +142,10 @@ public:
           state_ = MAIN;
           put({EndOfCatchup, INPUT});
         }
-      } break;
       }
-    } break;
     }
-    return std::pair(PotFct::MAIN, main_value_);
+    }
+    return std::pair(main_value_, alt_value_);
   }
 };
 
@@ -187,14 +188,15 @@ public:
     return filter_.Process(x);
   }
 
-  std::pair<PotFct, f> ProcessDualFunction(std::function<void(Event)> const& put) {
-    auto [fct, x] = pot_.Process(put);
-    if (fct == PotFct::MAIN) {
-      x -= cv_.Process();
-      x = x.clip(0_f, 1_f);
-      x = filter_.Process(x);
-    }
-    return std::pair(fct, x);
+  std::pair<f, f> ProcessDualFunction(std::function<void(Event)> const& put) {
+    auto [main, alt] = pot_.Process(put);
+
+    // sum main pot function and its associated CV
+    main -= cv_.Process();
+    main = main.clip(0_f, 1_f);
+    main = filter_.Process(main);
+
+    return std::pair(main, alt);
   }
 
   f last() { return filter_.last(); }
@@ -265,141 +267,122 @@ public:
 
     // DETUNE
     { f detune = detune_.Process(put);
-      detune = Signal::crop_down(kPotDeadZone, detune);
       detune = (detune * detune) * (detune * detune);
       detune *= 10_f / f(kMaxNumOsc);
       params_.detune = detune;
     }
 
     // TILT
-    { auto [fct, tilt] = tilt_.ProcessDualFunction(put);
-      if (fct == PotFct::MAIN) {
-        tilt = Signal::crop(kPotDeadZone, tilt);
-        tilt = tilt * 2_f - 1_f; // -1..1
-        tilt *= tilt * tilt;     // -1..1 cubic
-        tilt *= 4_f;             // -4..4
-        tilt = Math::fast_exp2(tilt); // 0.0625..16
-        params_.tilt = tilt;
-      } else {
-        tilt *= tilt;
-        tilt = 1_f - tilt;
-        tilt *= 0.5_f;
-        params_.crossfade_factor = tilt; // 0..1
-      }
+    { auto [tilt, crossfade] = tilt_.ProcessDualFunction(put);
+
+      tilt = tilt * 2_f - 1_f; // -1..1
+      tilt *= tilt * tilt;     // -1..1 cubic
+      tilt *= 4_f;             // -4..4
+      tilt = Math::fast_exp2(tilt); // 0.0625..16
+      params_.tilt = tilt;
+
+      crossfade *= crossfade;
+      crossfade = 1_f - crossfade;
+      crossfade *= 0.5_f;
+      params_.crossfade_factor = crossfade; // 0..1
     }
 
     // TWIST
-    { auto [fct, twist] = twist_.ProcessDualFunction(put);
+    { auto [twist, freeze_mode] = twist_.ProcessDualFunction(put);
 
-      if (fct == PotFct::MAIN) {
-        twist = Signal::crop(kPotDeadZone, twist);
-        // scaling of Twist
-        if (params_.twist.mode == FEEDBACK) {
-          twist *= twist * 0.7_f;
-        } else if (params_.twist.mode == PULSAR) {
-          twist *= twist;
-          twist = Math::fast_exp2(twist * 7_f);
-          // twist: 0..2^7
-        } else if (params_.twist.mode == DECIMATE) {
-          twist *= twist * 0.5_f;
-        }
-        params_.twist.value = twist;
-      } else {
-        twist *= 3_f;           // 3 split modes
-        SplitMode m = static_cast<SplitMode>(twist.floor());
-        if (m != params_.freeze_mode) put({AltParamChange, m});
-        params_.freeze_mode = m;
+      // scaling of Twist
+      if (params_.twist.mode == FEEDBACK) {
+        twist *= twist * 0.7_f;
+      } else if (params_.twist.mode == PULSAR) {
+        twist *= twist;
+        twist = Math::fast_exp2(twist * 7_f);
+        // twist: 0..2^7
+      } else if (params_.twist.mode == DECIMATE) {
+        twist *= twist * 0.5_f;
       }
+      params_.twist.value = twist;
+
+      freeze_mode *= 3_f;           // 3 split modes
+      SplitMode m = static_cast<SplitMode>(freeze_mode.floor());
+      if (m != params_.freeze_mode) put({AltParamChange, m});
+      params_.freeze_mode = m;
     }
 
     // WARP
-    { auto [fct, warp] = warp_.ProcessDualFunction(put);
+    { auto [warp, stereo_mode] = warp_.ProcessDualFunction(put);
 
-      if (fct == PotFct::MAIN) {
-        warp = Signal::crop(kPotDeadZone, warp);
-        if (params_.warp.mode == FOLD) {
-          warp *= warp;
-          warp *= 0.9_f;
-          // this little offset avoids scaling the input too close to
-          // zero; reducing it makes the wavefolder more linear around
-          // warp=0, but increases the quantization noise.
-          warp += 0.004_f;
-        } else if (params_.warp.mode == CHEBY) {
-        } else if (params_.warp.mode == CRUSH) {
-        }
-        params_.warp.value = warp;
-      } else {
-        warp *= 3_f;           // 3 split modes
-        SplitMode m = static_cast<SplitMode>(warp.floor());
-        if (m != params_.stereo_mode) put({AltParamChange, m});
-        params_.stereo_mode = m;
+      if (params_.warp.mode == FOLD) {
+        warp *= warp;
+        warp *= 0.9_f;
+        // this little offset avoids scaling the input too close to
+        // zero; reducing it makes the wavefolder more linear around
+        // warp=0, but increases the quantization noise.
+        warp += 0.004_f;
+      } else if (params_.warp.mode == CHEBY) {
+      } else if (params_.warp.mode == CRUSH) {
       }
+      params_.warp.value = warp;
+
+      stereo_mode *= 3_f;           // 3 split modes
+      SplitMode m = static_cast<SplitMode>(stereo_mode.floor());
+      if (m != params_.stereo_mode) put({AltParamChange, m});
+      params_.stereo_mode = m;
     }
 
     // MODULATION
-    f mod = mod_.Process(put);
-    mod = Signal::crop(kPotDeadZone, mod);
-    mod *= 4_f / f(params_.numOsc);
-    if (params_.modulation.mode == ONE) {
-      mod *= 0.9_f;
-    } else if (params_.modulation.mode == TWO) {
-      mod *= 6.0_f;
-    } else if (params_.modulation.mode == THREE) {
-      mod *= 4.0_f;
+    { f mod = mod_.Process(put);
+      mod *= 4_f / f(params_.numOsc);
+      if (params_.modulation.mode == ONE) {
+        mod *= 0.9_f;
+      } else if (params_.modulation.mode == TWO) {
+        mod *= 6.0_f;
+      } else if (params_.modulation.mode == THREE) {
+        mod *= 4.0_f;
+      }
+      params_.modulation.value = mod;
     }
-    params_.modulation.value = mod;
 
     // SPREAD
-    { auto [fct, spread] = spread_.ProcessDualFunction(put);
-      if (fct == PotFct::MAIN) {
-        spread = Signal::crop(kPotDeadZone, spread);
-        spread *= 10_f / f(kMaxNumOsc);
-        params_.spread = spread * kSpreadRange;
-      } else {
-        spread *= f(kMaxNumOsc-1); // [0..max]
-        spread += 1.5_f;           // [1.5..max+0.5]
-        int n = spread.floor();    // [1..max]
-        if (n != params_.numOsc) put({AltParamChange, n});
-        params_.numOsc = n;
-      }
+    { auto [spread, numOsc] = spread_.ProcessDualFunction(put);
+
+      spread *= 10_f / f(kMaxNumOsc);
+      params_.spread = spread * kSpreadRange;
+
+      numOsc *= f(kMaxNumOsc-1); // [0..max]
+      numOsc += 1.5_f;           // [1.5..max+0.5]
+      int n = numOsc.floor();    // [1..max]
+      if (n != params_.numOsc) put({AltParamChange, n});
+      params_.numOsc = n;
     }
 
     // GRID
-    f grid = grid_.Process(put);
-    grid = Signal::crop(kPotDeadZone, grid); // [0..1]
-    grid *= 9_f;                           // [0..9]
-    grid += 0.5_f;                         // [0.5..9.5]
-    int g = grid.floor();
-    if (g != params_.grid.value) put({GridChange, g});
-    params_.grid.value = g; // [0..9]
-
-    // ROOT & PITCH
-
-    { auto [fct, pitch] = pitch_pot_.Process(put);
-      pitch = Signal::crop(kPotDeadZone, pitch);
-
-      if (fct == PotFct::MAIN) {
-        pitch *= kPitchPotRange;                               // 0..range
-        pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
-        f pitch_cv = pitch_cv_.last();
-        pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
-        pitch += pitch_cv;
-        params_.pitch = pitch;
-      } else {
-        params_.fine_tune = (pitch - 0.5_f) * kNewNoteFineRange;
-      }
+    { f grid = grid_.Process(put);
+      grid *= 9_f;                           // [0..9]
+      grid += 0.5_f;                         // [0.5..9.5]
+      int g = grid.floor();
+      if (g != params_.grid.value) put({GridChange, g});
+      params_.grid.value = g; // [0..9]
     }
 
-    { auto [fct, root] = root_pot_.Process(put);
-      root = Signal::crop(kPotDeadZone, root);
+    // PITCH
+    { auto [pitch, fine_tune] = pitch_pot_.Process(put);
+      pitch *= kPitchPotRange;                               // 0..range
+      pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
+      f pitch_cv = pitch_cv_.last();
+      pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
+      pitch += pitch_cv;
+      params_.pitch = pitch;
 
-      if (fct == PotFct::MAIN) {
-        root *= kRootPotRange;
-        root += root_cv_.last();
-        params_.root = root.max(0_f);
-      } else {
-        params_.new_note = root * kNewNoteRange + kNewNoteRange * 0.5_f;
-      }
+      params_.fine_tune = (fine_tune - 0.5_f) * kNewNoteFineRange;
+    }
+
+    // ROOT
+    { auto [root, new_note] = root_pot_.Process(put);
+      root *= kRootPotRange;
+      root += root_cv_.last();
+      params_.root = root.max(0_f);
+
+      params_.new_note = new_note * kNewNoteRange + kNewNoteRange * 0.5_f;
     }
   }
 
