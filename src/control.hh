@@ -312,13 +312,14 @@ public:
     // TWIST
     { auto [twist, freeze_mode] = twist_.ProcessDualFunction(put);
 
+      // avoids CV noise to produce harmonics near 0
+      twist = Signal::crop_down(0.01_f, twist);
       // scaling of Twist
       if (params_.twist.mode == FEEDBACK) {
         twist *= twist * 0.7_f;
       } else if (params_.twist.mode == PULSAR) {
         twist *= twist;
-        twist = Math::fast_exp2(twist * 7_f);
-        // twist: 0..2^7
+        twist = Math::fast_exp2(twist * 7_f); // 0..2^7
       } else if (params_.twist.mode == DECIMATE) {
         twist *= twist * 0.5_f;
       }
@@ -333,6 +334,8 @@ public:
     // WARP
     { auto [warp, stereo_mode] = warp_.ProcessDualFunction(put);
 
+      // avoids CV noise to produce harmonics near 0
+      warp = Signal::crop_down(0.01_f, warp);
       if (params_.warp.mode == FOLD) {
         warp *= warp;
         warp *= 0.9_f;
@@ -353,6 +356,8 @@ public:
 
     // MODULATION
     { f mod = mod_.Process(put);
+      // avoids CV noise to produce harmonics near 0
+      mod = Signal::crop_down(0.01_f, mod);
       mod *= 4_f / f(params_.numOsc);
       if (params_.modulation.mode == ONE) {
         mod *= 0.9_f;
