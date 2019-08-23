@@ -81,7 +81,6 @@ CPPFLAGS= $(INC)
 CFLAGS= $(ARCHFLAGS) \
 	-g \
 	-O$(OPTIM) \
-	-flto \
 	-ffast-math \
 	-fdata-sections \
 	-ffunction-sections \
