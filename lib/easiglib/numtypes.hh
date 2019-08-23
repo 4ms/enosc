@@ -126,6 +126,15 @@ public:
     T fractional = *this - T(static_cast<float>(integral));
     return std::pair(integral, fractional);
   }
+
+  constexpr const T square() const {
+    return *this * *this;
+  }
+
+  constexpr const T cube() const {
+    return *this * *this * *this;
+  }
+
 };
 
 using f32 = Float;
