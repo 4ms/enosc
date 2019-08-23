@@ -67,7 +67,7 @@ class CVConditioner {
   f offset_;
 
 public:
-  CVConditioner(Adc& adc) : adc_(adc) {}
+  CVConditioner(Adc& adc, f offset) : adc_(adc), offset_(offset) {}
 
   bool calibrate_offset() {
     f reading = 0_f;
@@ -97,7 +97,7 @@ public:
 };
 
 struct NoCVInput {
-  NoCVInput(Adc& adc) {}
+  NoCVInput(Adc& adc, f offset) {}
   f Process() { return 0._f; }
 };
 
@@ -193,14 +193,13 @@ public:
 
 template<class PotConditioner, class CVConditioner, class FILTER>
 class PotCVCombiner {
-  Adc& adc_;
   FILTER filter_;
 
 public:
-  PotConditioner pot_ {adc_};
-  CVConditioner cv_ {adc_};
+  PotConditioner pot_;
+  CVConditioner cv_;
 
-  PotCVCombiner(Adc& adc) : adc_(adc) {}
+  PotCVCombiner(Adc& adc, f cv_offset) : pot_(adc), cv_(adc, cv_offset) {}
 
   // TODO disable this function if PotConditioner = DualFunction
   f Process(std::function<void(Event)> const& put) {
@@ -234,23 +233,23 @@ class Control : public EventSource<Event> {
   Adc adc_;
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
-                NoCVInput, QuadraticOnePoleLp<1>> detune_ {adc_};
+                NoCVInput, QuadraticOnePoleLp<1>> detune_ {adc_, 0_f};
   PotCVCombiner<DualFunctionPotConditioner<POT_WARP, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>> warp_ {adc_};
+                CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>> warp_ {adc_, 0.000183111057_f};
   PotCVCombiner<DualFunctionPotConditioner<POT_TILT, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_TILT>, QuadraticOnePoleLp<1>> tilt_ {adc_};
+                CVConditioner<CV_TILT>, QuadraticOnePoleLp<1>> tilt_ {adc_, 0.000793481246_f};
   PotCVCombiner<DualFunctionPotConditioner<POT_TWIST, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_TWIST>, QuadraticOnePoleLp<1>> twist_ {adc_};
+                CVConditioner<CV_TWIST>, QuadraticOnePoleLp<1>> twist_ {adc_, 0.00189214759_f};
   PotCVCombiner<PotConditioner<POT_GRID, Law::LINEAR, NoFilter>,
-                CVConditioner<CV_GRID>, QuadraticOnePoleLp<1>> grid_ {adc_};
+                CVConditioner<CV_GRID>, QuadraticOnePoleLp<1>> grid_ {adc_, 0.00146488845_f};
   PotCVCombiner<PotConditioner<POT_MOD, Law::LINEAR, NoFilter>,
-                CVConditioner<CV_MOD>, QuadraticOnePoleLp<1>> mod_ {adc_};
+                CVConditioner<CV_MOD>, QuadraticOnePoleLp<1>> mod_ {adc_, -0.00106814783_f};
   PotCVCombiner<DualFunctionPotConditioner<POT_SPREAD, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_SPREAD>, QuadraticOnePoleLp<1>> spread_ {adc_};
+                CVConditioner<CV_SPREAD>, QuadraticOnePoleLp<1>> spread_ {adc_, 0.00129703665_f};
 
   DualFunctionPotConditioner<POT_PITCH, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT> pitch_pot_ {adc_};
