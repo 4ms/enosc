@@ -140,7 +140,7 @@ debug-server:
 
 debug:
 	$(TOOLCHAIN_DIR)arm-none-eabi-gdb $(TARGET).elf \
-	--eval-command="target remote localhost:4242"
+	-x gdbinit
 
 # File dependencies:
 
