@@ -59,6 +59,38 @@ public:
   f last() { return last_; }
 };
 
+template<AdcInput INPUT>
+class CVConditioner {
+  Adc& adc_;
+  f offset_;
+
+public:
+  CVConditioner(Adc& adc) : adc_(adc) {}
+
+  bool calibrate_offset() {
+    u0_16 in = adc_.get(INPUT);
+    s1_15 x = in.to_signed_scale();
+    f reading = f::inclusive(x);
+    if (reading.abs() < 0.1_f) {
+      offset_ = reading;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  f Process() {
+    u0_16 in = adc_.get(INPUT);
+    s1_15 x = in.to_signed_scale();
+    return f::inclusive(x) - offset_;
+  }
+};
+
+struct NoCVInput {
+  NoCVInput(Adc& adc) {}
+  f Process() { return 0._f; }
+};
+
 class MovementDetector {
   f previous_value_;
 public:
@@ -147,26 +179,6 @@ public:
     }
     return std::pair(main_value_, alt_value_);
   }
-};
-
-template<AdcInput INPUT>
-class CVConditioner {
-  Adc& adc_;
-
-public:
-  CVConditioner(Adc& adc) : adc_(adc) {}
-
-  f Process() {
-    u0_16 in = adc_.get(INPUT);
-    // TODO calibration
-    s1_15 x = in.to_signed_scale();
-    return f::inclusive(x);
-  }
-};
-
-struct NoCVInput {
-  NoCVInput(Adc& adc) {}
-  f Process() { return 0._f; }
 };
 
 template<class PotConditioner, class CVConditioner, class FILTER>
@@ -415,7 +427,13 @@ public:
 
   bool CalibrateOffset() {
     return pitch_cv_.calibrate_offset()
-      && root_cv_.calibrate_offset();
+      && root_cv_.calibrate_offset()
+      && warp_.cv_.calibrate_offset()
+      && tilt_.cv_.calibrate_offset()
+      && twist_.cv_.calibrate_offset()
+      && grid_.cv_.calibrate_offset()
+      && mod_.cv_.calibrate_offset()
+      && spread_.cv_.calibrate_offset();
   }
   bool CalibrateSlope() {
     return pitch_cv_.calibrate_slope()
