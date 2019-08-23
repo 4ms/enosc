@@ -20,12 +20,11 @@ enum ModulationMode { ONE, TWO, THREE };
 enum SplitMode { ALTERNATE, LOW_HIGH, LOWEST_REST };
 
 struct Parameters {
-  int numOsc;                   // 0..kMaxNumOsc
   f tilt;                       // -1..1
   f root;
   f pitch;                       // midi note
   f spread;                      // semitones
-  f detune;                     // semitones
+  f detune;                      // semitones
 
   struct Modulation {
     ModulationMode mode;
@@ -47,10 +46,12 @@ struct Parameters {
     f value;                    // 0..1
   } warp;
 
-  SplitMode stereo_mode;
-  SplitMode freeze_mode;
+  // Alt. parameters
 
-  f crossfade_factor;
+  int numOsc = kMaxNumOsc;      // 0..kMaxNumOsc
+  SplitMode stereo_mode = ALTERNATE;
+  SplitMode freeze_mode = LOW_HIGH;
+  f crossfade_factor = 0.125_f;
 
   f new_note, fine_tune;
 };
