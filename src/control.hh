@@ -15,6 +15,8 @@ const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
 const f kPotMoveThreshold = 0.01_f;
 
+const int kCalibrationIterations = 16;
+
 template<int block_size>
 class AudioCVConditioner {
   Average<8, 1> lp_;
@@ -68,9 +70,17 @@ public:
   CVConditioner(Adc& adc) : adc_(adc) {}
 
   bool calibrate_offset() {
-    u0_16 in = adc_.get(INPUT);
-    s1_15 x = in.to_signed_scale();
-    f reading = f::inclusive(x);
+    f reading = 0_f;
+
+    for (int i=0; i<kCalibrationIterations; i++) {
+      u0_16 in = adc_.get(INPUT);
+      s1_15 x = in.to_signed_scale();
+      reading += f::inclusive(x);
+      HAL_Delay(1);
+    }
+
+    reading /= f(kCalibrationIterations);
+
     if (reading.abs() < 0.1_f) {
       offset_ = reading;
       return true;
