@@ -365,7 +365,7 @@ public:
     { f mod = mod_.Process(put);
       // avoids CV noise to produce harmonics near 0
       mod = Signal::crop_down(0.01_f, mod);
-      mod *= 4_f / f(params_.numOsc);
+      mod *= 6_f / f(params_.numOsc);
       if (params_.modulation.mode == ONE) {
         mod *= 0.9_f;
       } else if (params_.modulation.mode == TWO) {
