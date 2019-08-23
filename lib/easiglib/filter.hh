@@ -286,6 +286,8 @@ class InterpolatedFloat {
   FLOAT increment_;
 public:
   InterpolatedFloat(f value) : increment_(0_f), value_(value) {}
+  InterpolatedFloat() : InterpolatedFloat(0_f) {}
+
   /** Returns next interpolated value. Warning: do not call more than
    * [time] times between two calls to [set]
    */
@@ -293,12 +295,14 @@ public:
     value_ += increment_.next();
     return value_;
   }
+
   /** Initializes a ramp from current value to [value] in [time]
    * steps (i.e. calls to [next]) */
   void set(f value, int time) {
     increment_.set((value - value_) * (1_f / f(time)), time);
   }
 
+  /** Instantly sets the value */
   void jump(f value) {
     value_ = value;
     increment_.jump(0_f);
