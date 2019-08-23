@@ -8,9 +8,9 @@ constexpr struct Frame {
 } zero;
 
 constexpr int kUiUpdateRate = 200; // Hz
-constexpr int kSampleRate = 96000; // Hz
-constexpr int kBlockSize = 16;
-constexpr int kMaxNumOsc = 10;
+constexpr int kSampleRate = 48000; // Hz
+constexpr int kBlockSize = 8;
+constexpr int kMaxNumOsc = 14;
 
 enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
 enum WarpMode { FOLD, CHEBY, CRUSH };
