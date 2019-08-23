@@ -55,17 +55,22 @@ public:
     return Distortion::warp<warp_mode>(sine, warp_amount);
   }
 
+  IFloat twist_, warp_, modulation_;
+
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
   void Process(f const freq,
-               IFloat twist,
-               IFloat warp,
-               IFloat modulation,
+               f twist,
+               f warp,
+               f modulation,
                f fade, f const amplitude,
                Buffer<u0_16, block_size>& mod_in,
                Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {
     f aliasing_factor = freq;
     fade *= antialias(aliasing_factor);
+    twist_.set(twist, block_size);
+    warp_.set(warp, block_size);
+    modulation_.set(modulation, block_size);
 
     u0_32 const fr = u0_32(freq);
     Phasor ph = phasor_;
@@ -75,10 +80,10 @@ public:
     fd.set(fade, block_size);
 
     for (auto [sum, m_in, m_out] : zip(sum_output, mod_in, mod_out)) {
-      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, twist.next(), warp.next());
+      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, twist_.next(), warp_.next());
       sample *= fd.next();
       // TODO comprendre +1
-      m_out += u0_16((sample + 1_f) * modulation.next());
+      m_out += u0_16((sample + 1_f) * modulation_.next());
       sum += sample * amplitude;
     }
 
@@ -109,9 +114,9 @@ public:
   void Process(FrequencyPair new_freq,
                bool frozen,
                f crossfade_factor,
-               IFloat& twist,
-               IFloat& warp,
-               IFloat& modulation,
+               f twist,
+               f warp,
+               f modulation,
                f const amplitude,
                Buffer<u0_16, block_size>& mod_in, Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {

@@ -17,9 +17,9 @@ public:
     out1.fill(0_f);
     out2.fill(0_f);
 
-    IFloat twist {params.twist.value};
-    IFloat warp {params.warp.value};
-    IFloat modulation {0_f};    // no modulation in pre-listen
+    f twist = params.twist.value;
+    f warp = params.warp.value;
+    f modulation = 0_f;    // no modulation in pre-listen
 
     for (int i=0; i<grid.size(); ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
@@ -79,9 +79,9 @@ class Oscillators : Nocopy {
   using processor_t = void (OscillatorPair::*)(FrequencyPair,
                                                bool, // frozen
                                                f,    // crossfade_factor
-                                               IFloat&, // twist
-                                               IFloat&, // warp
-                                               IFloat&, // modulation
+                                               f, // twist
+                                               f, // warp
+                                               f, // modulation
                                                f, // amplitude
                                                Buffer<u0_16, block_size>&, // mod_in
                                                Buffer<u0_16, block_size>&, // mod_out
@@ -147,10 +147,6 @@ class Oscillators : Nocopy {
     }
   };
 
-  IFloat twist_ {0_f};
-  IFloat warp_ {0_f};
-  IFloat modulation_ {0_f};
-
 public:
   void Process(Parameters const &params, Grid const &grid,
                Buffer<f, block_size>& out1, Buffer<f, block_size>& out2) {
@@ -163,9 +159,9 @@ public:
 
     processor_t process = pick_processor(params.twist.mode, params.warp.mode);
 
-    twist_.set(params.twist.value, block_size);
-    warp_.set(params.warp.value, block_size);
-    modulation_.set(params.modulation.value, block_size);
+    f twist = params.twist.value;
+    f warp = params.warp.value;
+    f modulation = params.modulation.value;
 
     f crossfade_factor = params.crossfade_factor;
     int numOsc = params.numOsc;
@@ -180,14 +176,9 @@ public:
       auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, numOsc);
       dummy_block_.fill(0._u0_16);
       bool frozen = pick_split(freeze_mode, i, numOsc) && frozen_;
-      (oscs_[i].*process)(p, frozen, crossfade_factor, twist_, warp_, modulation_, amp,
+      (oscs_[i].*process)(p, frozen, crossfade_factor, twist, warp, modulation, amp,
                          mod_in, mod_out, out);
     }
-
-    // reset interpolated parameters values
-    twist_.jump(params.twist.value);
-    warp_.jump(params.warp.value);
-    modulation_.jump(params.modulation.value);
 
     f atten = 1_f / amplitude.Sum();
     f tilt = params.tilt <= 1_f ? params.tilt : 1_f / params.tilt;
