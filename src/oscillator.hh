@@ -36,11 +36,6 @@ class Oscillator {
   SineShaper sine_shaper_;
   IFloat fader_ {0_f};
 
-  // simple linear piecewise function: 0->1, 0.25->1, 0.5->0
-  static f antialias(f factor) {
-    return (2_f - 4_f * factor).clip(0_f,1_f);
-  }
-
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
   static f Process(Phasor& ph, SineShaper& sh, u0_32 freq, u0_16 mod, f twist_amount, f warp_amount) {
@@ -66,8 +61,12 @@ public:
                Buffer<u0_16, block_size>& mod_in,
                Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {
-    f aliasing_factor = freq;
-    fade *= antialias(aliasing_factor);
+
+    fade = Antialias::freq(freq, fade);
+    modulation = Antialias::modulation(freq, modulation);
+    twist = Antialias::twist<twist_mode>(freq, twist);
+    warp = Antialias::warp<warp_mode>(freq, warp);
+
     twist_.set(twist, block_size);
     warp_.set(warp, block_size);
     modulation_.set(modulation, block_size);

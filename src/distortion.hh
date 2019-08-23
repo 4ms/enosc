@@ -61,3 +61,45 @@ namespace Distortion {
     return Signal::crossfade(s1, s2, frac);
   }
 };
+
+namespace Antialias {
+
+  // simple linear piecewise function: 0->1, 0.25->1, 0.5->0
+  static f freq(f freq, f fade) {
+    return fade * (1_f - 4_f * freq * freq).max(0_f);
+  }
+
+  static f modulation(f freq, f mod) {
+    return mod * (1_f - 2_f * freq).max(0_f).square();
+  }
+
+  template<TwistMode> f twist(f freq, f amount);
+  template<WarpMode> f warp(f freq, f amount);
+
+  template<> f twist<FEEDBACK>(f freq, f amount) {
+    return amount * (1_f - 2_f * freq).max(0_f).square();
+  }
+
+  template<> f twist<PULSAR>(f freq, f amount) {
+    return (amount - 1_f) * (1_f - 2_f * freq).max(0_f).square().square().square().square() + 1_f;
+  }
+
+  template<> f twist<DECIMATE>(f freq, f amount) {
+    return amount; // no antialiasing here
+  }
+
+  template<> f warp<FOLD>(f freq, f amount) {
+    // the little offset avoids scaling the input too close to
+    // zero; reducing it makes the wavefolder more linear around
+    // warp=0, but increases the quantization noise.
+    return amount * (1_f - 8_f * freq).max(0_f).square().square() + 0.004_f;
+  }
+
+  template<> f warp<CHEBY>(f freq, f amount) {
+    return amount * (1_f - 6_f * freq).max(0_f);
+  }
+
+  template<> f warp<CRUSH>(f freq, f amount) {
+    return amount * (1_f - 4_f * freq).cube().max(0_f);
+  }
+};
