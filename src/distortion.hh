@@ -16,9 +16,9 @@ namespace Distortion {
 
   template<>
   inline u0_32 twist<PULSAR>(u0_32 phase, f amount) {
-    // amount: 0..255
-    u8_8 p = u8_8(amount);
-    return u0_32::wrap((u0_16::narrow(phase) * p).clip());
+    // amount: 1..64
+    u7_9 p = u7_9(amount);
+    return u0_32::wrap((u0_16::narrow(phase) * p).min(1._u7_25));
   }
 
   template<>
