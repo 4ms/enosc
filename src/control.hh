@@ -134,7 +134,7 @@ public:
     x = filter_.Process(x);
     if (MovementDetector::Process(x))
       put({PotMove, INPUT});
-    return x;
+    return x;                   // 0..1
   }
 };
 
@@ -146,7 +146,7 @@ template<AdcInput INPUT, Law LAW, class FILTER, Takeover TO>
 class DualFunctionPotConditioner : PotConditioner<INPUT, LAW, FILTER> {
   enum State { MAIN, ALT, ARMING, CATCHUP } state_ = MAIN;
   f main_value_;
-  f alt_value_;
+  f alt_value_ = -1_f;          // -1 indicates no value
   f error_;
 public:
 
@@ -302,10 +302,12 @@ public:
       tilt = Math::fast_exp2(tilt); // 0.0625..16
       params_.tilt = tilt;
 
-      crossfade *= crossfade;
-      crossfade = 1_f - crossfade;
-      crossfade *= 0.5_f;
-      params_.crossfade_factor = crossfade; // 0..1
+      if (crossfade > 0_f) {
+        crossfade *= crossfade;
+        crossfade = 1_f - crossfade;
+        crossfade *= 0.5_f;
+        params_.crossfade_factor = crossfade; // 0..1
+      }
     }
 
     // TWIST
@@ -324,10 +326,12 @@ public:
       }
       params_.twist.value = twist;
 
-      freeze_mode *= 3_f;           // 3 split modes
-      SplitMode m = static_cast<SplitMode>(freeze_mode.floor());
-      if (m != params_.freeze_mode) put({AltParamChange, m});
-      params_.freeze_mode = m;
+      if (freeze_mode > 0_f) {
+        freeze_mode *= 3_f;           // 3 split modes
+        SplitMode m = static_cast<SplitMode>(freeze_mode.floor());
+        if (m != params_.freeze_mode) put({AltParamChange, m});
+        params_.freeze_mode = m;
+      }
     }
 
     // WARP
@@ -347,10 +351,12 @@ public:
       }
       params_.warp.value = warp;
 
-      stereo_mode *= 3_f;           // 3 split modes
-      SplitMode m = static_cast<SplitMode>(stereo_mode.floor());
-      if (m != params_.stereo_mode) put({AltParamChange, m});
-      params_.stereo_mode = m;
+      if (stereo_mode > 0_f) {
+        stereo_mode *= 3_f;           // 3 split modes
+        SplitMode m = static_cast<SplitMode>(stereo_mode.floor());
+        if (m != params_.stereo_mode) put({AltParamChange, m});
+        params_.stereo_mode = m;
+      }
     }
 
     // MODULATION
@@ -374,11 +380,13 @@ public:
       spread *= 10_f / f(kMaxNumOsc);
       params_.spread = spread * kSpreadRange;
 
-      numOsc *= f(kMaxNumOsc-1); // [0..max]
-      numOsc += 1.5_f;           // [1.5..max+0.5]
-      int n = numOsc.floor();    // [1..max]
-      if (n != params_.numOsc) put({AltParamChange, n});
-      params_.numOsc = n;
+      if (numOsc > 0_f) {
+        numOsc *= f(kMaxNumOsc-1); // [0..max]
+        numOsc += 1.5_f;           // [1.5..max+0.5]
+        int n = numOsc.floor();    // [1..max]
+        if (n != params_.numOsc) put({AltParamChange, n});
+        params_.numOsc = n;
+      }
     }
 
     // GRID
@@ -399,7 +407,9 @@ public:
       pitch += pitch_cv;
       params_.pitch = pitch;
 
-      params_.fine_tune = (fine_tune - 0.5_f) * kNewNoteFineRange;
+      if (fine_tune > 0_f) {
+        params_.fine_tune = (fine_tune - 0.5_f) * kNewNoteFineRange;
+      }
     }
 
     // ROOT
@@ -408,7 +418,9 @@ public:
       root += root_cv_.last();
       params_.root = root.max(0_f);
 
-      params_.new_note = new_note * kNewNoteRange + kNewNoteRange * 0.5_f;
+      if (new_note > 0_f) {
+        params_.new_note = new_note * kNewNoteRange + kNewNoteRange * 0.5_f;
+      }
     }
   }
 
