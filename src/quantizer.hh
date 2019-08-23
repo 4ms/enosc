@@ -167,6 +167,7 @@ class Quantizer {
 
     }, {
       // FREE
+      {0_f, 7.0195500086_f},     // perfect fifths spiral
       {0_f, 2_f},                // whole tone = MLT#1
       {0_f, 1_f, 3_f},           // MLT #2
       {0_f, 2_f, 3_f, 4_f},      // MLT #3
