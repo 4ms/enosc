@@ -320,6 +320,8 @@ public:
         twist *= twist * 0.7_f;
       } else if (params_.twist.mode == PULSAR) {
         twist *= twist;
+        // Warning: when changing this constant, also change Pulsar
+        // distortion function
         twist = Math::fast_exp2(twist * 6_f); // 1..2^6
       } else if (params_.twist.mode == DECIMATE) {
         twist *= twist * 0.5_f;
