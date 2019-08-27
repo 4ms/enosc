@@ -21,12 +21,16 @@ public:
     f warp = params.warp.value;
     f modulation = 0_f;    // no modulation in pre-listen
 
-    for (int i=0; i<grid.size(); ++i) {
+    f gridSize = f(grid.size());
+
+    for (int i=0; i<kMaxGridSize; ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
+      f amp = gridSize > 0_f ? 1_f : 0_f;
       Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
       oscs_[i].Process<FEEDBACK, CRUSH>(freq, twist, warp,
-                                        modulation, 1_f, 1_f,
+                                        modulation, 1_f, amp,
                                         dummy_block_, dummy_block_, out);
+      gridSize--;
     }
 
     f atten = 1_f / f(grid.size());
