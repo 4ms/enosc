@@ -34,7 +34,7 @@ public:
 class Oscillator {
   Phasor phasor_;
   SineShaper sine_shaper_;
-  IFloat fade_, twist_, warp_, modulation_;
+  IFloat fade_, twist_, warp_, modulation_, amplitude_;
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
@@ -68,25 +68,30 @@ public:
     twist_.set(twist, block_size);
     warp_.set(warp, block_size);
     modulation_.set(modulation, block_size);
+    amplitude_.set(amplitude, block_size);
 
     u0_32 const fr = u0_32(freq);
     Phasor ph = phasor_;
     SineShaper sh = sine_shaper_;
-    IFloat fd = fade_;
+    IFloat fd=fade_, am=amplitude_, md=modulation_, tw=twist_, wa=warp_;
 
     fd.set(fade, block_size);
 
     for (auto [sum, m_in, m_out] : zip(sum_output, mod_in, mod_out)) {
-      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, twist_.next(), warp_.next());
+      f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, tw.next(), wa.next());
       sample *= fd.next();
       // TODO comprendre +1
-      m_out += u0_16((sample + 1_f) * modulation_.next());
-      sum += sample * amplitude;
+      m_out += u0_16((sample + 1_f) * md.next());
+      sum += sample * am.next();
     }
 
     phasor_ = ph;
     sine_shaper_ = sh;
     fade_ = fd;
+    amplitude_ = am;
+    modulation_ = md;
+    twist_ = tw;
+    warp_ = wa;
   }
 };
 
