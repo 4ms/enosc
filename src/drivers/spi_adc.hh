@@ -33,7 +33,7 @@ struct SpiAdc : Nocopy {
 	SpiAdc() {
     static_assert(OVERSAMPLING_AMT_BITS == 3, "FRAC bits of the return type of SpiAdc::get() must equal (OVERSAMPLING_AMT_BITS + ADC bits)");
     spiadc_instance_ = this;
-    register_spi_adc_isr(SpiAdc::spiadc_ISR__IN_ITCM); //Todo: measure ITCM benefits
+    register_spi_adc_isr(SpiAdc::spiadc_ISR__IN_ITCM_); //Todo: measure ITCM benefits
 
     err = MAX11666_NO_ERR;
 
@@ -131,7 +131,7 @@ private:
     spih.Instance->CR1 |= SPI_CR1_SPE;
   }
 
-  static void spiadc_ISR__IN_ITCM();
+  static void spiadc_ISR__IN_ITCM_();
 
   void IRQ_init()
   {

@@ -14,7 +14,7 @@ uint32_t SpiAdc::os_idx[NUM_SPI_ADC_CHANNELS]={0};
 
 //Info: SPI ISR takes ~116ns to execute, and runs 15 times between every call to Ui.Poll()
 //Each execution is 2.7us after the previous, until the Codec's ISR takes control for ~120us
-void SpiAdc::spiadc_ISR__IN_ITCM() {
+void SpiAdc::spiadc_ISR__IN_ITCM_() {
   uint32_t itflag = SpiAdc::spiadc_instance_->spih.Instance->SR;
   uint32_t itsource = SpiAdc::spiadc_instance_->spih.Instance->CR2;
 
