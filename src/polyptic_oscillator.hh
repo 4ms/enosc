@@ -180,14 +180,21 @@ public:
                          mod_in, mod_out, out);
     }
 
+    f atten1, atten2;
+
     f atten = 1_f / amplitude.Sum();
     f tilt = params.tilt <= 1_f ? params.tilt : 1_f / params.tilt;
     atten *= 0.5_f + (0.5_f + Data::normalization_factors[numOsc]) * tilt;
 
-    f atten2 = stereo_mode == LOWEST_REST ? atten * 0.5_f : atten;
+    atten1 = atten2 = atten;
+
+    if (stereo_mode == LOWEST_REST) {
+      atten1 = 1_f;
+      atten2 = 0.5_f * atten;
+    }
 
     for (auto [o1, o2] : zip(out1, out2)) {
-      o1 *= atten;
+      o1 *= atten1;
       o2 *= atten2;
     }
   }
