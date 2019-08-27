@@ -34,7 +34,7 @@ public:
 class Oscillator {
   Phasor phasor_;
   SineShaper sine_shaper_;
-  IFloat fader_ {0_f};
+  IFloat fade_, twist_, warp_, modulation_;
 
 public:
   template<TwistMode twist_mode, WarpMode warp_mode>
@@ -49,8 +49,6 @@ public:
 
     return Distortion::warp<warp_mode>(sine, warp_amount);
   }
-
-  IFloat twist_, warp_, modulation_;
 
   template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
   void Process(f const freq,
@@ -74,7 +72,7 @@ public:
     u0_32 const fr = u0_32(freq);
     Phasor ph = phasor_;
     SineShaper sh = sine_shaper_;
-    IFloat fd = fader_;
+    IFloat fd = fade_;
 
     fd.set(fade, block_size);
 
@@ -88,7 +86,7 @@ public:
 
     phasor_ = ph;
     sine_shaper_ = sh;
-    fader_ = fd;
+    fade_ = fd;
   }
 };
 
