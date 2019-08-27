@@ -99,7 +99,11 @@ CXXFLAGS=$(CFLAGS) \
 	-Wdouble-promotion \
 	-Wno-register \
 
-AFLAGS = $(MCU)
+AFLAGS = -mcpu=cortex-m7 \
+	-mthumb-interwork \
+	-mlittle-endian \
+ 	-mfpu=fpv5-d16 \
+ 	-mfloat-abi=hard
 
 LDSCRIPT = $(LOADFILE)
 
@@ -109,6 +113,8 @@ LFLAGS  = $(MCU) -specs=nano.specs  -T $(LDSCRIPT) -lc -lm -lnosys
 # $(BLBUILDDIR)/bl_ui.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/stm_audio_bootloader/fsk/packet_decoder.o: CFLAGS = $(C0FLAGS)
 
+all: Makefile $(BIN) $(HEX) $(COMBO).bin
+
 combo: $(COMBO).bin 
 
 $(COMBO).bin:  $(MAINAPP_HEX) $(HEX)
@@ -117,13 +123,11 @@ $(COMBO).bin:  $(MAINAPP_HEX) $(HEX)
 	awk -f util/merge_hex.awk > $(COMBO).hex
 	$(OBJCPY) -I ihex -O binary $(COMBO).hex $(COMBO).bin
 
-all: Makefile $(BIN) $(HEX)
 
 $(BIN): $(ELF)
 	$(OBJCPY) -O binary $< $@
 	$(OBJDMP) -x --syms $< > $(addsuffix .dmp, $(basename $<))
 	$(CMDSIZE) $<
-	ls -l $@ $<
 
 $(HEX): $(ELF)
 	$(OBJCPY) --output-target=ihex $< $@
@@ -152,4 +156,7 @@ flash: $(BIN)
 
 clean:
 	rm -rf $(BUILDDIR)
+
+.PHONY: all combo
+
 	
