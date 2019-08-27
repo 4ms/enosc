@@ -107,12 +107,18 @@ class Oscillators : Nocopy {
     f amplitude = 1_f;
     f amplitudes = 0_f;
     f tilt;
+    int numOsc;
   public:
-    AmplitudeAccumulator(f t) : tilt(t) {}
+    AmplitudeAccumulator(f t, int n) : tilt(t), numOsc(n) {}
     f Next() {
       f r = amplitude;
-      amplitudes += amplitude;
-      amplitude *= tilt;
+      if (numOsc-- <= 0) {
+        r = 0_f;
+      } else {
+        amplitudes += amplitude;
+        amplitude *= tilt;
+      }
+
       return r;
     }
     f Sum() { return amplitudes; }
@@ -153,7 +159,7 @@ public:
     out1.fill(0_f);
     out2.fill(0_f);
 
-    AmplitudeAccumulator amplitude {params.tilt};
+    AmplitudeAccumulator amplitude {params.tilt, params.numOsc};
     FrequencyAccumulator frequency {grid, params.root, params.pitch,
                                     params.spread, params.detune};
 
@@ -169,7 +175,7 @@ public:
     SplitMode freeze_mode = params.freeze_mode;
     ModulationMode modulation_mode = params.modulation.mode;
 
-    for (int i=0; i<numOsc; ++i) {
+    for (int i=0; i<kMaxNumOsc; ++i) {
       FrequencyPair p = frequency.Next(); // 3%
       f amp = amplitude.Next();
       Buffer<f, block_size>& out = pick_split(stereo_mode, i, numOsc) ? out1 : out2;
