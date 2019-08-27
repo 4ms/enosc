@@ -6,6 +6,28 @@
 #include "oscillator.hh"
 #include "quantizer.hh"
 
+class AmplitudeAccumulator {
+  f amplitude = 1_f;
+  f amplitudes = 0_f;
+  f tilt;
+  int numOsc;
+public:
+  AmplitudeAccumulator(f t, int n) : tilt(t), numOsc(n) {}
+  f next() {
+    f r = amplitude;
+    if (numOsc-- <= 0) {
+      r = 0_f;
+    } else {
+      amplitudes += amplitude;
+      amplitude *= tilt;
+    }
+
+    return r;
+  }
+
+  f sum() { return amplitudes; }
+};
+
 template<int block_size>
 class PreListenOscillators : Nocopy {
   Oscillator oscs_[kMaxGridSize];
@@ -21,19 +43,18 @@ public:
     f warp = params.warp.value;
     f modulation = 0_f;    // no modulation in pre-listen
 
-    f gridSize = f(grid.size());
+    AmplitudeAccumulator amplitudes { 1_f, grid.size() };
 
     for (int i=0; i<kMaxGridSize; ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
-      f amp = gridSize > 0_f ? 1_f : 0_f;
       Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
       oscs_[i].Process<FEEDBACK, CRUSH>(freq, twist, warp,
-                                        modulation, 1_f, amp,
+                                        modulation, 1_f, amplitudes.next(),
                                         dummy_block_, dummy_block_, out);
-      gridSize--;
     }
 
-    f atten = 1_f / f(grid.size());
+    f sum = amplitudes.sum();
+    f atten = 1_f / sum;
     atten *= 1_f + Data::normalization_factors[grid.size()];
 
     for (auto [o1, o2] : zip(out1, out2)) {
@@ -107,27 +128,6 @@ class Oscillators : Nocopy {
     return tab[t][m];
   }
 
-  class AmplitudeAccumulator {
-    f amplitude = 1_f;
-    f amplitudes = 0_f;
-    f tilt;
-    int numOsc;
-  public:
-    AmplitudeAccumulator(f t, int n) : tilt(t), numOsc(n) {}
-    f Next() {
-      f r = amplitude;
-      if (numOsc-- <= 0) {
-        r = 0_f;
-      } else {
-        amplitudes += amplitude;
-        amplitude *= tilt;
-      }
-
-      return r;
-    }
-    f Sum() { return amplitudes; }
-  };
-
   class FrequencyAccumulator {
     f root;
     f pitch;
@@ -138,7 +138,7 @@ class Oscillators : Nocopy {
   public:
     FrequencyAccumulator(Grid const &g, f r, f p, f s, f d) :
       grid(g), root(r), pitch(p), spread(s), detune(d) {}
-    FrequencyPair Next() {
+    FrequencyPair next() {
 
       // root > 0
       PitchPair p = grid.Process(root); // 2%
@@ -180,8 +180,8 @@ public:
     ModulationMode modulation_mode = params.modulation.mode;
 
     for (int i=0; i<kMaxNumOsc; ++i) {
-      FrequencyPair p = frequency.Next(); // 3%
-      f amp = amplitude.Next();
+      FrequencyPair p = frequency.next(); // 3%
+      f amp = amplitude.next();
       Buffer<f, block_size>& out = pick_split(stereo_mode, i, numOsc) ? out1 : out2;
       auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, numOsc);
       dummy_block_.fill(0._u0_16);
@@ -192,7 +192,7 @@ public:
 
     f atten1, atten2;
 
-    f atten = 1_f / amplitude.Sum();
+    f atten = 1_f / amplitude.sum();
     f tilt = params.tilt <= 1_f ? params.tilt : 1_f / params.tilt;
     atten *= 0.5_f + (0.5_f + Data::normalization_factors[numOsc]) * tilt;
 
