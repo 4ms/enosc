@@ -6,8 +6,9 @@
 #pragma once
 
 struct OnePoleLp {
-  void Process(f coef, f input) {
+  f Process(f coef, f input) {
     state_ += (input - state_) * coef;
+    return state_;
   }
   void Process(f coef, f input, f &output) {
     Process(coef, input);
