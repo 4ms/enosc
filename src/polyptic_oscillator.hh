@@ -206,20 +206,8 @@ class PolypticOscillator : public Oscillators<block_size>, PreListenOscillators<
   bool pre_listen_ = false;
   bool follow_new_note_ = false;
 
-  // for visualization
-  f levels_[2];                 // 0..1
-
 public:
   PolypticOscillator(Parameters& params) : params_(params) {}
-
-  std::pair<f,f> levels() {
-    return std::pair(levels_[0], levels_[1]);
-  }
-
-  void reset_levels() {
-    levels_[0] = 0_f;
-    levels_[1] = 0_f;
-  }
 
   void enable_pre_listen() { pre_listen_ = true; }
   void disable_pre_listen() { pre_listen_ = false; }
@@ -265,16 +253,9 @@ public:
       Oscillators<block_size>::Process(params_, *current_grid_, out1, out2);
     }
 
-    f level_l=0_f, level_r=0_f;
-
     for (auto [o1, o2, o] : zip(out1, out2, out)) {
-      level_l += o1.abs();
-      level_r += o2.abs();
       o.l = s1_15(o1);
       o.r = s1_15(o2);
     }
-
-    levels_[0] += level_l;
-    levels_[1] += level_r;
   }
 };
