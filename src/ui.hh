@@ -290,6 +290,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           } else {
             learn_led_.flash(Colors::black);
           }
+        } else if (e1.data == POT_PITCH &&
+                   e2.type == ButtonPush &&
+                   e2.data == BUTTON_LEARN) {
+          mode_ = MANUAL_LEARN;
+          osc_.enable_follow_new_note();
         }
       } break;
       case ButtonRelease: {
