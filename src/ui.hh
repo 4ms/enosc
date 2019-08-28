@@ -283,7 +283,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         }
       } break;
       case NewNote: {
-        bool success = osc_.new_note(control_.pitch_cv());
+        // the offset makes the lowest note on a keyboard (0V) about 60Hz
+        bool success = osc_.new_note(control_.pitch_cv() + 36_f);
+        osc_.enable_pre_listen();
         learn_led_.flash(success ? Colors::white : Colors::black);
       } break;
       case PotMove: {
