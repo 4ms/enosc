@@ -10,18 +10,17 @@ class AmplitudeAccumulator {
   f amplitude = 1_f;
   f amplitudes = 0_f;
   f tilt;
-  int numOsc;
+  f numOsc;
 public:
-  AmplitudeAccumulator(f t, int n) : tilt(t), numOsc(n) {}
+  AmplitudeAccumulator(f t, f n) : tilt(t), numOsc(n) {}
   f next() {
-    f r = amplitude;
-    if (numOsc-- <= 0) {
-      r = 0_f;
-    } else {
-      amplitudes += amplitude;
-      amplitude *= tilt;
-    }
-
+    f r =
+      numOsc > 1_f ? amplitude :
+      numOsc > 0_f ? amplitude * numOsc :
+      0_f;
+    amplitudes += r;
+    amplitude *= tilt;
+    numOsc--;
     return r;
   }
 
@@ -32,6 +31,7 @@ template<int block_size>
 class PreListenOscillators : Nocopy {
   Oscillator oscs_[kMaxGridSize];
   Buffer<u0_16, block_size> dummy_block_;
+  OnePoleLp amp_lp_;
 
 public:
   void Process(Parameters const &params, PreGrid &grid,
@@ -43,7 +43,8 @@ public:
     f warp = params.warp.value;
     f modulation = 0_f;    // no modulation in pre-listen
 
-    AmplitudeAccumulator amplitudes { 1_f, grid.size() };
+    f grid_size = amp_lp_.Process(0.05_f, f(grid.size()));
+    AmplitudeAccumulator amplitudes { 1_f, grid_size };
 
     for (int i=0; i<kMaxGridSize; ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
@@ -55,7 +56,7 @@ public:
 
     f sum = amplitudes.sum();
     f atten = 1_f / sum;
-    atten *= 1_f + Data::normalization_factors[grid.size()];
+    atten *= 1_f + Data::normalization_factors.interpolate_from_index(sum);
 
     for (auto [o1, o2] : zip(out1, out2)) {
       o1 *= atten;
@@ -163,7 +164,9 @@ public:
     out1.fill(0_f);
     out2.fill(0_f);
 
-    AmplitudeAccumulator amplitude {params.tilt, params.numOsc};
+    int numOsc = params.numOsc;
+
+    AmplitudeAccumulator amplitude {params.tilt, f(numOsc)};
     FrequencyAccumulator frequency {grid, params.root, params.pitch,
                                     params.spread, params.detune};
 
@@ -174,7 +177,6 @@ public:
     f modulation = params.modulation.value;
 
     f crossfade_factor = params.crossfade_factor;
-    int numOsc = params.numOsc;
     SplitMode stereo_mode = params.stereo_mode;
     SplitMode freeze_mode = params.freeze_mode;
     ModulationMode modulation_mode = params.modulation.mode;
