@@ -273,6 +273,10 @@ public:
     return pre_grid_.remove_last();
   }
 
+  void reset_current_grid() {
+    quantizer_.reset_grid(params_.grid);
+  }
+
   void Process(Buffer<Frame, block_size>& out) {
     Buffer<f, block_size> out1;
     Buffer<f, block_size> out2;

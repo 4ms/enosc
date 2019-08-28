@@ -208,6 +208,15 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           }
         }
       } break;
+      case ButtonTimeout: {
+        if (e1.data == BUTTON_LEARN &&
+            e2.type == ButtonPush &&
+            e2.data == BUTTON_LEARN) {
+          // long-press on Learn
+          osc_.reset_current_grid();
+          learn_led_.flash(Colors::green, 2_f);
+        }
+      } break;
       case GateOn: {
         if (e1.data == GATE_LEARN) {
           mode_ = LEARN;
