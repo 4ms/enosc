@@ -106,14 +106,38 @@ struct FrequencyState {
   }
 };
 
+template<int block_size>
 class OscillatorPair : Nocopy {
   Oscillator osc_[2];
   FrequencyState freq;
 
 public:
 
-  template<TwistMode twist_mode, WarpMode warp_mode, int block_size>
-  void Process(FrequencyPair new_freq,
+  using processor_t = void (Oscillator::*)(f const freq,
+                                           f twist,
+                                           f warp,
+                                           f modulation,
+                                           f fade, f const amplitude,
+                                           Buffer<u0_16, block_size>& mod_in,
+                                           Buffer<u0_16, block_size>& mod_out,
+                                           Buffer<f, block_size>& sum_output);
+
+  static processor_t pick_processor(TwistMode t, WarpMode m) {
+    static processor_t tab[3][3] = {
+      &Oscillator::Process<FEEDBACK, FOLD, block_size>,
+      &Oscillator::Process<FEEDBACK, CHEBY, block_size>,
+      &Oscillator::Process<FEEDBACK, CRUSH, block_size>,
+      &Oscillator::Process<PULSAR, FOLD, block_size>,
+      &Oscillator::Process<PULSAR, CHEBY, block_size>,
+      &Oscillator::Process<PULSAR, CRUSH, block_size>,
+      &Oscillator::Process<DECIMATE, FOLD, block_size>,
+      &Oscillator::Process<DECIMATE, CHEBY, block_size>,
+      &Oscillator::Process<DECIMATE, CRUSH, block_size>,
+    };
+    return tab[t][m];
+  }
+
+  void Process(TwistMode twist_mode, WarpMode warp_mode, FrequencyPair new_freq,
                bool frozen,
                f crossfade_factor,
                f twist,
@@ -126,6 +150,8 @@ public:
     f coef = frozen ? 0_f : 0.1_f;
     freq.Process(coef, new_freq);
 
+    processor_t process = pick_processor(twist_mode, warp_mode);
+    
     f crossfade = freq.crossfade.state();
 
     // shape crossfade so notes are easier to find
@@ -137,10 +163,10 @@ public:
 
     // mod_out is accumulated in the two calls, so we need to zero it here
     mod_out.fill(0._u0_16);
-    osc_[0].Process<twist_mode, warp_mode>(freq.freq1.state(), twist, warp,
+    (osc_[0].*process)(freq.freq1.state(), twist, warp,
                                            modulation, fade1, amplitude,
                                            mod_in, mod_out, sum_output);
-    osc_[1].Process<twist_mode, warp_mode>(freq.freq2.state(), twist, warp,
+    (osc_[1].*process)(freq.freq2.state(), twist, warp,
                                            modulation, fade2, amplitude,
                                            mod_in, mod_out, sum_output);
   }

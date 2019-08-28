@@ -46,12 +46,15 @@ public:
     f grid_size = amp_lp_.Process(0.05_f, f(grid.size()));
     AmplitudeAccumulator amplitudes { 1_f, grid_size };
 
+    typename OscillatorPair<block_size>::processor_t process =
+      OscillatorPair<block_size>::pick_processor(params.twist.mode, params.warp.mode);
+
     for (int i=0; i<kMaxGridSize; ++i) {
       f freq = Freq::of_pitch(grid.get(i)).repr();
       Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
-      oscs_[i].Process<FEEDBACK, CRUSH>(freq, twist, warp,
-                                        modulation, 1_f, amplitudes.next(),
-                                        dummy_block_, dummy_block_, out);
+      (oscs_[i].*process)(freq, twist, warp,
+                          modulation, 1_f, amplitudes.next(),
+                          dummy_block_, dummy_block_, out);
     }
 
     f sum = amplitudes.sum();
@@ -67,7 +70,7 @@ public:
 
 template<int block_size>
 class Oscillators : Nocopy {
-  OscillatorPair oscs_[kMaxNumOsc];
+  OscillatorPair<block_size> oscs_[kMaxNumOsc];
   Buffer<u0_16, block_size> modulation_blocks_[kMaxNumOsc+1];
   Buffer<u0_16, block_size> dummy_block_;
   bool frozen_ = false;
@@ -101,33 +104,6 @@ class Oscillators : Nocopy {
         return std::forward_as_tuple(modulation_blocks_[0], dummy_block_);
       }
     }
-  }
-
-  using processor_t = void (OscillatorPair::*)(FrequencyPair,
-                                               bool, // frozen
-                                               f,    // crossfade_factor
-                                               f, // twist
-                                               f, // warp
-                                               f, // modulation
-                                               f, // amplitude
-                                               Buffer<u0_16, block_size>&, // mod_in
-                                               Buffer<u0_16, block_size>&, // mod_out
-                                               Buffer<f, block_size>&); // sum_output
-
-  processor_t pick_processor(TwistMode t, WarpMode m) {
-    static processor_t tab[3][3] = {
-      &OscillatorPair::Process<FEEDBACK, FOLD, block_size>,
-      &OscillatorPair::Process<FEEDBACK, CHEBY, block_size>,
-      &OscillatorPair::Process<FEEDBACK, CRUSH, block_size>,
-      &OscillatorPair::Process<PULSAR, FOLD, block_size>,
-      &OscillatorPair::Process<PULSAR, CHEBY, block_size>,
-      &OscillatorPair::Process<PULSAR, CRUSH, block_size>,
-      &OscillatorPair::Process<DECIMATE, FOLD, block_size>,
-      &OscillatorPair::Process<DECIMATE, CHEBY, block_size>,
-      &OscillatorPair::Process<DECIMATE, CRUSH, block_size>,
-    };
-
-    return tab[t][m];
   }
 
   class FrequencyAccumulator {
@@ -179,8 +155,8 @@ public:
 
     lowest_pitch_ = frequency.next_pitch();
 
-    processor_t process = pick_processor(params.twist.mode, params.warp.mode);
-
+    TwistMode twist_mode = params.twist.mode;
+    WarpMode warp_mode = params.warp.mode;
     f twist = params.twist.value;
     f warp = params.warp.value;
     f modulation = params.modulation.value;
@@ -197,8 +173,10 @@ public:
       auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, numOsc);
       dummy_block_.fill(0._u0_16);
       bool frozen = pick_split(freeze_mode, i, numOsc) && frozen_;
-      (oscs_[i].*process)(p, frozen, crossfade_factor, twist, warp, modulation, amp,
-                         mod_in, mod_out, out);
+      oscs_[i].Process(twist_mode, warp_mode,
+                       p, frozen, crossfade_factor,
+                       twist, warp, modulation, amp,
+                       mod_in, mod_out, out);
     }
 
     f atten1, atten2;
