@@ -319,7 +319,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           // Learn pressed
           mode_ = NORMAL;
           bool success = osc_.disable_learn();
-          if (success) learn_led_.flash(Colors::green);
+          if (success) learn_led_.flash(Colors::green, 2_f);
           control_.release_pitch_cv();
           control_.root_pot_main_function();
           control_.pitch_pot_main_function();
@@ -373,8 +373,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e2.type == ButtonPush &&
           e2.data == BUTTON_LEARN) {
         if (control_.CalibrateSlope()) {
-          learn_led_.flash(Colors::white);
-          freeze_led_.flash(Colors::white);
+          learn_led_.flash(Colors::white, 2_f);
+          freeze_led_.flash(Colors::white, 2_f);
         }
         learn_led_.reset_glow();
         freeze_led_.reset_glow();
