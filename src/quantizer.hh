@@ -17,6 +17,7 @@ class Grid : Nocopy {
   int size_ = 0;
   friend class PreGrid;
 public:
+  Grid() {}
   Grid(std::initializer_list<f> grid) {
     size_ = grid.size();
     std::copy(grid.begin(), grid.end(), grid_);
@@ -46,6 +47,11 @@ public:
     }
 
     return {p1, p2, crossfade};
+  }
+
+  void copy_from(const Grid& g) {
+    size_ = g.size_;
+    std::copy(std::begin(g.grid_), std::end(g.grid_), grid_);
   }
 };
 
@@ -103,7 +109,9 @@ public:
 };
 
 class Quantizer {
-  Grid grids_[kBankNr][kGridNr] = {{
+  Grid grids_[kBankNr][kGridNr];
+
+  Grid const default_grids_[kBankNr][kGridNr] = {{
       // 12TET
       {0_f, 12_f},              // octave
       {0_f, 7_f, 12_f},         // octave+fifth
@@ -191,7 +199,23 @@ class Quantizer {
       // Carlos beta
       { 0_f, 0.638_f },
     }};
+
 public:
+  Quantizer() {
+    // copy default grids to actual grids
+    for (int i=0; i<kBankNr; ++i) {
+      for (int j=0; j<kGridNr; ++j) {
+        grids_[i][j].copy_from(default_grids_[i][j]);
+      }
+    }
+  }
+
+  void reset_grid(Parameters::Grid grid) {
+    int i=grid.mode;
+    int j=grid.value;
+    grids_[i][j].copy_from(default_grids_[i][j]);
+  }
+
   Grid *get_grid(Parameters::Grid grid) {
     return &grids_[grid.mode][grid.value];
   }
