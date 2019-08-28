@@ -6,7 +6,6 @@
 #include "dynamic_data.hh"
 
 Debug debug;
-__IO uint16_t mon1;
 
 struct Main :
   System<kUiUpdateRate, Main>,
@@ -32,7 +31,9 @@ struct Main :
 
   template<int block_size>
   void CodecCallback(Buffer<Frame, block_size>& out) {
+    debug.set(3, true);
     Ui::Poll();
     Ui::osc().Process(out);
+    debug.set(3, false);
   }
 } _;

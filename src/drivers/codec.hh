@@ -225,8 +225,6 @@ private:
 
   private:
     void Write(enum PCM1753Registers reg_addr, uint8_t reg_value) {
-      uint8_t i;
-      uint16_t data = (reg_addr << 8) | reg_value;
 
       latch_pin(HIGH);
       HAL_Delay(1);
@@ -235,9 +233,9 @@ private:
       clk_pin(LOW);
       HAL_Delay(1);
 
-      i=16;
-      while(i--)
-      {
+      uint16_t data = (reg_addr << 8) | reg_value;
+
+      for (int i=16; i--;) {
         if (data & (1<<i))
           data_pin(HIGH);
         else
@@ -275,7 +273,7 @@ private:
   void Reboot() {
     //Take everything down...
     bb_regsetup_.Reset();
-    HAL_Delay(10);
+    HAL_Delay(1);
 
     DeInit_I2S_Clock();
     DeInit_SAIDMA();
@@ -394,7 +392,7 @@ private:
     hdma_tx.Init.Priority             = DMA_PRIORITY_HIGH;
     hdma_tx.Init.FIFOMode             = DMA_FIFOMODE_DISABLE;
     hdma_tx.Init.MemBurst             = DMA_MBURST_SINGLE;
-    hdma_tx.Init.PeriphBurst          = DMA_PBURST_SINGLE; 
+    hdma_tx.Init.PeriphBurst          = DMA_PBURST_SINGLE;
 
     HAL_DMA_DeInit(&hdma_tx);
 
