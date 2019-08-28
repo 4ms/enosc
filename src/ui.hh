@@ -233,6 +233,24 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           mode_ = SHIFT;
         }
       } break;
+      case PotMove: {
+        if (e1.data == POT_ROOT &&
+            e2.type == ButtonPush &&
+            e2.data == BUTTON_LEARN) {
+          // manually add a first note
+          learn_led_.set_solid(Colors::dark_red);
+          osc_.enable_learn();
+          f cur_pitch = osc_.lowest_pitch();
+          osc_.new_note(cur_pitch);
+          learn_led_.flash(Colors::white);
+          mode_ = MANUAL_LEARN;
+          learn_led_.set_glow(Colors::red, 3_f);
+          osc_.enable_pre_listen();
+          osc_.enable_follow_new_note();
+          control_.root_pot_alternate_function();
+          control_.pitch_pot_alternate_function();
+        }
+      } break;
       }
     } break;
 
