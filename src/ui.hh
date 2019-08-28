@@ -223,9 +223,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           learn_led_.set_solid(Colors::dark_red);
           osc_.enable_learn();
           control_.hold_pitch_cv();
-          // No new note from the first gate, to avoid pitch
-          // modification from the held Pitch CV
-          // new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
+          new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
         }
       } break;
       case ButtonPush: {
