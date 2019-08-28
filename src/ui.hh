@@ -330,7 +330,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e2.data == BUTTON_FREEZE) {
           // Freeze pressed
           bool success = osc_.remove_last_note();
-          if (success) freeze_led_.flash(Colors::magenta);
+          if (success) freeze_led_.flash(Colors::black);
         }
       } break;
       }
