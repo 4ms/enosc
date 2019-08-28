@@ -1,19 +1,24 @@
 #include "adc.hh"
+//Todo after merging back into master: Rename:
+//  MOD_* to CROSSFM_*
+//  GRID_* to SCALE_*
+//  TILT_* to BALANCE_*
 
-#define SPREAD_CV_1_Pin GPIO_PIN_0
-#define SPREAD_CV_1_GPIO_Port GPIOC
-#define WARP_CV_Pin GPIO_PIN_1
-#define WARP_CV_GPIO_Port GPIOC
-#define SPREAD_CV_2_Pin GPIO_PIN_2
-#define SPREAD_CV_2_GPIO_Port GPIOC
-#define TWIST_CV_Pin GPIO_PIN_3
+#define SPREAD_CV_Pin GPIO_PIN_1
+#define SPREAD_CV_GPIO_Port GPIOA
+#define WARP_CV_Pin GPIO_PIN_2
+#define WARP_CV_GPIO_Port GPIOA
+#define MOD_CV_1_Pin GPIO_PIN_0
+#define MOD_CV_1_GPIO_Port GPIOC
+#define TWIST_CV_Pin GPIO_PIN_1
 #define TWIST_CV_GPIO_Port GPIOC
-#define TILT_CV_Pin GPIO_PIN_0
-#define TILT_CV_GPIO_Port GPIOA
-#define GRID_CV_Pin GPIO_PIN_1
+#define TILT_CV_Pin GPIO_PIN_3
+#define TILT_CV_GPIO_Port GPIOC
+#define GRID_CV_Pin GPIO_PIN_0
 #define GRID_CV_GPIO_Port GPIOA
-#define MOD_CV_Pin GPIO_PIN_2
-#define MOD_CV_GPIO_Port GPIOA
+#define MOD_CV_2_Pin GPIO_PIN_2
+#define MOD_CV_2_GPIO_Port GPIOC
+
 #define WARP_POT_Pin GPIO_PIN_3
 #define WARP_POT_GPIO_Port GPIOA
 #define DETUNE_POT_Pin GPIO_PIN_4
@@ -50,13 +55,13 @@ enum Adc1Channels {
 
 // ADC3
 enum Adc3Channels{
-	SPREAD_CV_1_ADC,	//  0
+	SPREAD_CV_ADC,	//  0
 	WARP_CV_ADC,		//  1
-	SPREAD_CV_2_ADC,	//  2
+	MOD_CV_1_ADC,	//  2
 	TWIST_CV_ADC, 		//  3
 	TILT_CV_ADC,		//  4
 	GRID_CV_ADC,		//  5
-	MOD_CV_ADC,			//  6
+	MOD_CV_2_ADC,			//  6
 	
 	NUM_ADC3
 };
@@ -184,40 +189,40 @@ void Adc::ADC3_Init()
 {
   AdcSetup adc_setup[NUM_ADC3];
 
-  adc_setup[SPREAD_CV_1_ADC].gpio = SPREAD_CV_1_GPIO_Port;
-  adc_setup[SPREAD_CV_1_ADC].pin = SPREAD_CV_1_Pin;
-  adc_setup[SPREAD_CV_1_ADC].channel = ADC_CHANNEL_10;
-  adc_setup[SPREAD_CV_1_ADC].sample_time = kAdcSampleTime;
+  adc_setup[SPREAD_CV_ADC].gpio = SPREAD_CV_GPIO_Port;
+  adc_setup[SPREAD_CV_ADC].pin = SPREAD_CV_Pin;
+  adc_setup[SPREAD_CV_ADC].channel = ADC_CHANNEL_1;
+  adc_setup[SPREAD_CV_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[WARP_CV_ADC].gpio = WARP_CV_GPIO_Port;
   adc_setup[WARP_CV_ADC].pin = WARP_CV_Pin;
-  adc_setup[WARP_CV_ADC].channel = ADC_CHANNEL_11;
+  adc_setup[WARP_CV_ADC].channel = ADC_CHANNEL_2;
   adc_setup[WARP_CV_ADC].sample_time = kAdcSampleTime;
 
-  adc_setup[SPREAD_CV_2_ADC].gpio = SPREAD_CV_2_GPIO_Port;
-  adc_setup[SPREAD_CV_2_ADC].pin = SPREAD_CV_2_Pin;
-  adc_setup[SPREAD_CV_2_ADC].channel = ADC_CHANNEL_12;
-	adc_setup[SPREAD_CV_2_ADC].sample_time = kAdcSampleTime;
+  adc_setup[MOD_CV_1_ADC].gpio = MOD_CV_1_GPIO_Port;
+  adc_setup[MOD_CV_1_ADC].pin = MOD_CV_1_Pin;
+  adc_setup[MOD_CV_1_ADC].channel = ADC_CHANNEL_10;
+	adc_setup[MOD_CV_1_ADC].sample_time = kAdcSampleTime;
+
+  adc_setup[MOD_CV_2_ADC].gpio = MOD_CV_2_GPIO_Port;
+  adc_setup[MOD_CV_2_ADC].pin = MOD_CV_2_Pin;
+  adc_setup[MOD_CV_2_ADC].channel = ADC_CHANNEL_12;
+  adc_setup[MOD_CV_2_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[TWIST_CV_ADC].gpio = TWIST_CV_GPIO_Port;
   adc_setup[TWIST_CV_ADC].pin = TWIST_CV_Pin;
-  adc_setup[TWIST_CV_ADC].channel = ADC_CHANNEL_13;
+  adc_setup[TWIST_CV_ADC].channel = ADC_CHANNEL_11;
   adc_setup[TWIST_CV_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[TILT_CV_ADC].gpio = TILT_CV_GPIO_Port;
   adc_setup[TILT_CV_ADC].pin = TILT_CV_Pin;
-  adc_setup[TILT_CV_ADC].channel = ADC_CHANNEL_0;
+  adc_setup[TILT_CV_ADC].channel = ADC_CHANNEL_13;
   adc_setup[TILT_CV_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[GRID_CV_ADC].gpio = GRID_CV_GPIO_Port;
   adc_setup[GRID_CV_ADC].pin = GRID_CV_Pin;
-  adc_setup[GRID_CV_ADC].channel = ADC_CHANNEL_1;
+  adc_setup[GRID_CV_ADC].channel = ADC_CHANNEL_0;
   adc_setup[GRID_CV_ADC].sample_time = kAdcSampleTime;
-
-  adc_setup[MOD_CV_ADC].gpio = MOD_CV_GPIO_Port;
-  adc_setup[MOD_CV_ADC].pin = MOD_CV_Pin;
-  adc_setup[MOD_CV_ADC].channel = ADC_CHANNEL_2;
-  adc_setup[MOD_CV_ADC].sample_time = kAdcSampleTime;
 
   ADC_ChannelConfTypeDef sConfig = {0};
   GPIO_InitTypeDef gpio = {0};

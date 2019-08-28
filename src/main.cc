@@ -5,9 +5,8 @@
 #include "polyptic_oscillator.hh"
 #include "dynamic_data.hh"
 
-// #define BYPASS
-
 Debug debug;
+__IO uint16_t mon1;
 
 struct Main :
   System<kUiUpdateRate, Main>,
@@ -32,15 +31,8 @@ struct Main :
   }
 
   template<int block_size>
-  void CodecCallback(Buffer<Frame, block_size>& in, Buffer<Frame, block_size>& out) {
-    debug.set(3, true);
-    Ui::Poll(in);
-
-#ifdef BYPASS
-    for(auto [i, o] : zip(in, out)) o = i;
-#else
+  void CodecCallback(Buffer<Frame, block_size>& out) {
+    Ui::Poll();
     Ui::osc().Process(out);
-#endif
-    debug.set(3, false);
   }
 } _;

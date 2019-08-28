@@ -1,9 +1,13 @@
 #pragma once
 
 #include "adc.hh"
+#include "spi_adc.hh"
 #include "dsp.hh"
 #include "polyptic_oscillator.hh"
 #include "event_handler.hh"
+
+#include "debug.hh"
+extern Debug debug;
 
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
@@ -17,18 +21,20 @@ const f kPotMoveThreshold = 0.01_f;
 
 const int kCalibrationIterations = 16;
 
-template<int block_size>
+template<int block_size, int chan>
 class AudioCVConditioner {
-  Average<8, 1> lp_;
-  CicDecimator<1, block_size> cic_;
+  SpiAdc& spi_adc_;
+  // CicDecimator<1, block_size> cic_;
   f offset_, nominal_offset_;
   f slope_, nominal_slope_;
   f last_;
-  f last_raw_reading() { return f::inclusive(lp_.last()); }
+  f last_raw_reading() { return f::inclusive(spi_adc_.get_last_raw(chan)); }
+  
 public:
-  AudioCVConditioner(f o, f s) :
+  AudioCVConditioner(f o, f s, SpiAdc& spi_adc) :
     offset_(o), nominal_offset_(o),
-    slope_(s), nominal_slope_(s) {}
+    slope_(s), nominal_slope_(s),
+    spi_adc_(spi_adc) {}
 
   bool calibrate_offset() {
     f offset = last_raw_reading();
@@ -48,14 +54,13 @@ public:
     } else return false;
   }
 
-  void Process(Buffer<s1_15, block_size>& in) {
-    s1_15 x = in[0];
-    cic_.Process(in.data(), &x, 1); // -1..1
-    u0_16 y = x.to_unsigned_scale(); // 0..1
-    y = lp_.Process(y);
-    last_ = f::inclusive(y); // 0..1
+  void Process() {
+    // Info: ~0.28us to execute this block (per channel), runs every 167us
+    u1_15 x = spi_adc_.get(chan);
+    u0_16 y = u0_16::wrap(x);
+    last_ = f::inclusive(y);
     last_ -= offset_;
-    last_ *= slope_;                // -24..72
+    last_ *= slope_;
   }
 
   f last() { return last_; }
@@ -231,6 +236,7 @@ template<int block_size>
 class Control : public EventSource<Event> {
 
   Adc adc_;
+  SpiAdc spi_adc_;
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>> detune_ {adc_, 0_f};
@@ -255,8 +261,8 @@ class Control : public EventSource<Event> {
                              QuadraticOnePoleLp<2>, Takeover::SOFT> pitch_pot_ {adc_};
   DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT> root_pot_ {adc_};
-  AudioCVConditioner<block_size> pitch_cv_ {0.240466923_f, 96.8885345_f};
-  AudioCVConditioner<block_size> root_cv_  {0.24319829_f, 97.4769897_f};
+  AudioCVConditioner<block_size, CV_PITCH> pitch_cv_ {0.75_f, -111.7_f, spi_adc_};
+  AudioCVConditioner<block_size, CV_ROOT> root_cv_ {0.75_f, -111.7_f, spi_adc_};
 
   Parameters& params_;
 
@@ -267,19 +273,9 @@ public:
   Control(Parameters& params) :
     params_(params) {}
 
-  void ProcessCodecInput(Buffer<Frame, block_size>& codec_in) {
-
-    // Process codec input
-    Buffer<s1_15, block_size> pitch_block;
-    Buffer<s1_15, block_size> root_block;
-
-    for (auto [in, pi, ro] : zip(codec_in, pitch_block, root_block)) {
-      pi = in.l;
-      ro = in.r;
-    }
-
-    pitch_cv_.Process(pitch_block);
-    root_cv_.Process(root_block);
+  void ProcessSpiAdcInput() {
+    pitch_cv_.Process();
+    root_cv_.Process();
   }
 
   void Poll(std::function<void(Event)> const& put) {

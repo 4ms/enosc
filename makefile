@@ -11,6 +11,7 @@ SRCS = \
 	lib/easiglib/dsp.cc \
 	src/drivers/adc.cc \
 	src/drivers/codec.cc \
+	src/drivers/spi_adc.cc \
 	src/drivers/leds.cc \
 	src/drivers/buttons.cc \
 	src/drivers/debug.cc \
@@ -32,8 +33,6 @@ HAL = 	stm32f7xx_hal.o \
 	stm32f7xx_hal_rcc.o \
 	stm32f7xx_hal_rcc_ex.o \
 	stm32f7xx_hal_dma.o \
-	stm32f7xx_hal_i2c.o \
-	stm32f7xx_hal_i2c_ex.o \
 	stm32f7xx_hal_sai.o \
 	stm32f7xx_hal_sai_ex.o \
 	stm32f7xx_hal_spi.o \
@@ -41,6 +40,7 @@ HAL = 	stm32f7xx_hal.o \
 	stm32f7xx_hal_adc_ex.o \
 	stm32f7xx_hal_pwr.o \
 	stm32f7xx_hal_pwr_ex.o \
+	stm32f7xx_hal_qspi.o \
 	stm32f7xx_hal_tim.o \
 	stm32f7xx_hal_tim_ex.o \
 
@@ -51,6 +51,7 @@ CXX = $(TOOLCHAIN_DIR)arm-none-eabi-g++
 CC = $(TOOLCHAIN_DIR)arm-none-eabi-gcc
 OBJCOPY = $(TOOLCHAIN_DIR)arm-none-eabi-objcopy
 GDB = $(TOOLCHAIN_DIR)arm-none-eabi-gdb
+CMDSIZE = $(TOOLCHAIN_DIR)arm-none-eabi-size
 
 TEST_CXX = g++-8
 
@@ -65,7 +66,7 @@ INC = -I . \
       -I $(CMSIS_DIR) \
       -I $(HAL_DIR) \
 
-LDSCRIPT = $(CMSIS_DIR)/STM32F722VEx_FLASH.ld
+LDSCRIPT = $(CMSIS_DIR)STM32F730V8x_FLASH.ld
 
 ARCHFLAGS =  	-mcpu=cortex-m7 \
 		-mthumb \
@@ -74,7 +75,7 @@ ARCHFLAGS =  	-mcpu=cortex-m7 \
 		-mthumb-interwork \
 		-mfp16-format=ieee \
 		-DARM_MATH_CM7 \
-		-DSTM32F722xx \
+		-DSTM32F730xx \
 
 CPPFLAGS= $(INC)
 
@@ -100,9 +101,9 @@ CXXFLAGS=$(CFLAGS) \
 	-Wno-register \
 
 LDFLAGS= $(CXXFLAGS) -T $(LDSCRIPT) \
-	-Wl,--gc-sections \
+	-Wl,--gc-sections -Wl,-Map,main.map \
 
-STARTUP = $(CMSIS_DIR)startup_stm32f722xx
+STARTUP = $(CMSIS_DIR)startup_stm32f730xx
 SYSTEM = $(CMSIS_DIR)system_stm32f7xx
 
 OBJS := $(STARTUP).o \
@@ -110,13 +111,17 @@ OBJS := $(STARTUP).o \
 	$(addprefix $(HAL_DIR), $(HAL)) \
 	$(OBJS)
 
-all: $(TARGET).bin
+all: $(TARGET).hex $(TARGET).bin
 
 %.elf: data.hh $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS)
 
 %.bin: %.elf
 	$(OBJCOPY) -O binary $< $@
+	$(CMDSIZE) $<
+
+%.hex: %.elf
+	$(OBJCOPY) --output-target=ihex $< $@
 
 %.o: %.s
 	$(CC) -c -x assembler-with-cpp $(ASFLAGS) $< -o $@
@@ -129,7 +134,7 @@ clean:
 	$(EASIGLIB_DIR)data_compiler.pyc
 
 flash: $(TARGET).bin
-	st-flash write $(TARGET).bin 0x8000000
+	st-flash write $(TARGET).bin 0x8004000
 
 erase:
 	st-flash erase
@@ -162,6 +167,12 @@ test/test: data.hh test/test.cc $(TEST_OBJS)
 
 %.test.o: %.cc %.cc.d
 	$(TEST_CXX) $(DEPFLAGS) $(CPPFLAGS) -c $< -o $@
+
+fsk-wav: $(TARGET).bin
+	PYTHONPATH='bootloader/:.' && python bootloader/stm_audio_bootloader/fsk/encoder.py \
+		-s 22050 -b 16 -n 8 -z 4 -p 256 -g 16384 -k 1800 \
+		$(TARGET).bin
+
 
 -include $(DEPS)
 
