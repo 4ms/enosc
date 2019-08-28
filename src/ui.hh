@@ -208,6 +208,15 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           }
         }
       } break;
+      case GateOn: {
+        if (e1.data == GATE_LEARN) {
+          mode_ = LEARN;
+          learn_led_.set_solid(Colors::dark_red);
+          osc_.enable_learn();
+          control_.hold_pitch_cv();
+          new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
+        }
+      } break;
       case ButtonPush: {
         if (e1.data == BUTTON_FREEZE) {
           mode_ = SHIFT;
