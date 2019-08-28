@@ -20,8 +20,8 @@ enum ModulationMode { ONE, TWO, THREE };
 enum SplitMode { ALTERNATE, LOW_HIGH, LOWEST_REST };
 
 struct Parameters {
-  f tilt;                       // -1..1
-  f root;
+  f tilt;                        // -1..1
+  f root;                        // semitones
   f pitch;                       // midi note
   f spread;                      // semitones
   f detune;                      // semitones

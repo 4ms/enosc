@@ -71,6 +71,7 @@ class Oscillators : Nocopy {
   Buffer<u0_16, block_size> modulation_blocks_[kMaxNumOsc+1];
   Buffer<u0_16, block_size> dummy_block_;
   bool frozen_ = false;
+  f lowest_pitch_;
 
   static inline bool pick_split(SplitMode mode, int i, int numOsc) {
     return
@@ -139,6 +140,12 @@ class Oscillators : Nocopy {
   public:
     FrequencyAccumulator(Grid const &g, f r, f p, f s, f d) :
       grid(g), root(r), pitch(p), spread(s), detune(d) {}
+
+    f next_pitch() {
+      PitchPair p = grid.Process(root);
+      return p.p1 + pitch + detune_accum;
+    }
+
     FrequencyPair next() {
 
       // root > 0
@@ -169,6 +176,8 @@ public:
     AmplitudeAccumulator amplitude {params.tilt, f(numOsc)};
     FrequencyAccumulator frequency {grid, params.root, params.pitch,
                                     params.spread, params.detune};
+
+    lowest_pitch_ = frequency.next_pitch();
 
     processor_t process = pick_processor(params.twist.mode, params.warp.mode);
 
@@ -213,6 +222,7 @@ public:
 
   void set_freeze (bool frozen) { frozen_ = frozen; }
   bool frozen() { return frozen_; }
+  f lowest_pitch() { return lowest_pitch_; }
 };
 
 template<int block_size>
@@ -247,6 +257,10 @@ public:
     if (params_.grid.mode == TWELVE)
       x = x.integral();
     return pre_grid_.add(x);
+  }
+
+  bool empty_pre_grid() {
+    return pre_grid_.size() == 0;
   }
 
   void change_last_note(f coarse, f fine) {

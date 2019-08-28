@@ -279,6 +279,12 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         if (e1.data == POT_ROOT &&
             e2.type == ButtonPush &&
             e2.data == BUTTON_LEARN) {
+          // manually add notes
+          if (osc_.empty_pre_grid()) {
+            // if grid is empty, add note with current pitch
+            f cur_pitch = osc_.lowest_pitch();
+            osc_.new_note(cur_pitch);
+          }
           if (osc_.new_note(0_f)) {
             learn_led_.flash(Colors::white);
             mode_ = MANUAL_LEARN;
