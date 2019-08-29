@@ -2,39 +2,39 @@
 
 #include "buffer.hh"
 
-constexpr const int kGridNr = 10;
+constexpr const int kScaleNr = 10;
 constexpr const int kBankNr = 3;
-constexpr const int kMaxGridSize = 2 * kMaxNumOsc;
-constexpr const f kGridUnicityThreshold = 0.1_f;
+constexpr const int kMaxScaleSize = 2 * kMaxNumOsc;
+constexpr const f kScaleUnicityThreshold = 0.1_f;
 
 struct PitchPair {
   f p1, p2, crossfade;
 };
 
-class Grid : Nocopy {
-  // grid_[0] = 0, contains [size_] sorted elements
-  f grid_[kMaxGridSize];
+class Scale : Nocopy {
+  // scale_[0] = 0, contains [size_] sorted elements
+  f scale_[kMaxScaleSize];
   int size_ = 0;
-  friend class PreGrid;
+  friend class PreScale;
 public:
-  Grid() {}
-  Grid(std::initializer_list<f> grid) {
-    size_ = grid.size();
-    std::copy(grid.begin(), grid.end(), grid_);
+  Scale() {}
+  Scale(std::initializer_list<f> scale) {
+    size_ = scale.size();
+    std::copy(scale.begin(), scale.end(), scale_);
   }
 
   // pitch>0
   PitchPair Process(f const pitch) const {
-    f max = grid_[size_-1];
+    f max = scale_[size_-1];
     // quotient by the max
     f oct = (pitch / max).integral();
     f octaves = oct * max;
     f semitones = pitch - octaves;
     // semitones [0..max[
-    int index = binary_search(semitones, grid_, size_);
+    int index = binary_search(semitones, scale_, size_);
     // index: [0..size_-2]
-    f p1 = grid_[index];
-    f p2 = grid_[index+1];
+    f p1 = scale_[index];
+    f p2 = scale_[index+1];
     f crossfade = (semitones - p1) / (p2 - p1);
     p1 += octaves;
     p2 += octaves;
@@ -49,19 +49,19 @@ public:
     return {p1, p2, crossfade};
   }
 
-  void copy_from(const Grid& g) {
+  void copy_from(const Scale& g) {
     size_ = g.size_;
-    std::copy(std::begin(g.grid_), std::end(g.grid_), grid_);
+    std::copy(std::begin(g.scale_), std::end(g.scale_), scale_);
   }
 };
 
-class PreGrid : Nocopy {
-  f grid_[kMaxGridSize];
+class PreScale : Nocopy {
+  f scale_[kMaxScaleSize];
   int size_ = 0;
 public:
   bool add(f x) {
-    if (size_ < kMaxGridSize-2) { // -2: if Octave wrap, will add one
-      grid_[size_++] = x;
+    if (size_ < kMaxScaleSize-2) { // -2: if Octave wrap, will add one
+      scale_[size_++] = x;
       return true;
     } else {
       return false;
@@ -70,8 +70,8 @@ public:
 
   int size() const { return size_; }
   void clear() { size_ = 0; }
-  f get(int i) const { return grid_[i]; }
-  void set_last(f const x) { grid_[size_-1] = x; }
+  f get(int i) const { return scale_[i]; }
+  void set_last(f const x) { scale_[size_-1] = x; }
   bool remove_last() {
     if (size_ > 1) {
       size_--;
@@ -80,26 +80,26 @@ public:
   }
 
   // do not call if size==0
-  bool copy_to(Grid *g, bool wrap_octave) {
+  bool copy_to(Scale *g, bool wrap_octave) {
     // sort table
-    std::sort(grid_, grid_+size_);
+    std::sort(scale_, scale_+size_);
     // normalize from smallest element
-    f base = grid_[0];
-    for (f& x : grid_) {
+    f base = scale_[0];
+    for (f& x : scale_) {
       x -= base;
     }
 
     if (wrap_octave) {
-      f max = grid_[size_-1];
-      grid_[size_++] = ((max / 12_f).integral() + 1_f) * 12_f;
+      f max = scale_[size_-1];
+      scale_[size_++] = ((max / 12_f).integral() + 1_f) * 12_f;
     }
 
     // remove duplicate elements
-    uniquify(grid_, size_, kGridUnicityThreshold);
+    uniquify(scale_, size_, kScaleUnicityThreshold);
 
     if (size_ > 1) {
-      // copy to real grid
-      std::copy(grid_, grid_+size_, g->grid_);
+      // copy to real scale
+      std::copy(scale_, scale_+size_, g->scale_);
       g->size_=size_;
       return true;
     } else {
@@ -109,9 +109,9 @@ public:
 };
 
 class Quantizer {
-  Grid grids_[kBankNr][kGridNr];
+  Scale scales_[kBankNr][kScaleNr];
 
-  Grid const default_grids_[kBankNr][kGridNr] = {{
+  Scale const default_scales_[kBankNr][kScaleNr] = {{
       // 12TET
       {0_f, 12_f},              // octave
       {0_f, 7_f, 12_f},         // octave+fifth
@@ -202,21 +202,21 @@ class Quantizer {
 
 public:
   Quantizer() {
-    // copy default grids to actual grids
+    // copy default scales to actual scales
     for (int i=0; i<kBankNr; ++i) {
-      for (int j=0; j<kGridNr; ++j) {
-        grids_[i][j].copy_from(default_grids_[i][j]);
+      for (int j=0; j<kScaleNr; ++j) {
+        scales_[i][j].copy_from(default_scales_[i][j]);
       }
     }
   }
 
-  void reset_grid(Parameters::Grid grid) {
-    int i=grid.mode;
-    int j=grid.value;
-    grids_[i][j].copy_from(default_grids_[i][j]);
+  void reset_scale(Parameters::Scale scale) {
+    int i=scale.mode;
+    int j=scale.value;
+    scales_[i][j].copy_from(default_scales_[i][j]);
   }
 
-  Grid *get_grid(Parameters::Grid grid) {
-    return &grids_[grid.mode][grid.value];
+  Scale *get_scale(Parameters::Scale scale) {
+    return &scales_[scale.mode][scale.value];
   }
 };

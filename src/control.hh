@@ -247,14 +247,14 @@ class Control : public EventSource<Event> {
   PotCVCombiner<DualFunctionPotConditioner<POT_WARP, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>> warp_ {adc_, 0.000183111057_f};
-  PotCVCombiner<DualFunctionPotConditioner<POT_TILT, Law::LINEAR,
+  PotCVCombiner<DualFunctionPotConditioner<POT_BALANCE, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_TILT>, QuadraticOnePoleLp<1>> tilt_ {adc_, 0.000793481246_f};
+                CVConditioner<CV_BALANCE>, QuadraticOnePoleLp<1>> balance_ {adc_, 0.000793481246_f};
   PotCVCombiner<DualFunctionPotConditioner<POT_TWIST, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_TWIST>, QuadraticOnePoleLp<1>> twist_ {adc_, 0.00189214759_f};
-  PotCVCombiner<PotConditioner<POT_GRID, Law::LINEAR, NoFilter>,
-                CVConditioner<CV_GRID>, QuadraticOnePoleLp<1>> grid_ {adc_, 0.00146488845_f};
+  PotCVCombiner<PotConditioner<POT_SCALE, Law::LINEAR, NoFilter>,
+                CVConditioner<CV_SCALE>, QuadraticOnePoleLp<1>> scale_ {adc_, 0.00146488845_f};
   PotCVCombiner<PotConditioner<POT_MOD, Law::LINEAR, NoFilter>,
                 CVConditioner<CV_MOD>, QuadraticOnePoleLp<1>> mod_ {adc_, -0.00106814783_f};
   PotCVCombiner<DualFunctionPotConditioner<POT_SPREAD, Law::LINEAR,
@@ -293,14 +293,14 @@ public:
       params_.detune = detune;
     }
 
-    // TILT
-    { auto [tilt, crossfade] = tilt_.ProcessDualFunction(put);
+    // BALANCE
+    { auto [balance, crossfade] = balance_.ProcessDualFunction(put);
 
-      tilt = tilt * 2_f - 1_f; // -1..1
-      tilt *= tilt * tilt;     // -1..1 cubic
-      tilt *= 4_f;             // -4..4
-      tilt = Math::fast_exp2(tilt); // 0.0625..16
-      params_.tilt = tilt;
+      balance = balance * 2_f - 1_f; // -1..1
+      balance *= balance * balance;     // -1..1 cubic
+      balance *= 4_f;             // -4..4
+      balance = Math::fast_exp2(balance); // 0.0625..16
+      params_.balance = balance;
 
       if (crossfade > 0_f) {
         crossfade *= crossfade;
@@ -387,13 +387,13 @@ public:
       }
     }
 
-    // GRID
-    { f grid = grid_.Process(put);
-      grid *= 9_f;                           // [0..9]
-      grid += 0.5_f;                         // [0.5..9.5]
-      int g = grid.floor();
-      if (g != params_.grid.value) put({GridChange, g});
-      params_.grid.value = g; // [0..9]
+    // SCALE
+    { f scale = scale_.Process(put);
+      scale *= 9_f;                           // [0..9]
+      scale += 0.5_f;                         // [0.5..9.5]
+      int g = scale.floor();
+      if (g != params_.scale.value) put({ScaleChange, g});
+      params_.scale.value = g; // [0..9]
     }
 
     // PITCH
@@ -437,8 +437,8 @@ public:
   void twist_pot_main_function() { twist_.pot_.main(); }
   void warp_pot_alternate_function() { warp_.pot_.alt(); }
   void warp_pot_main_function() { warp_.pot_.main(); }
-  void tilt_pot_alternate_function() { tilt_.pot_.alt(); }
-  void tilt_pot_main_function() { tilt_.pot_.main(); }
+  void balance_pot_alternate_function() { balance_.pot_.alt(); }
+  void balance_pot_main_function() { balance_.pot_.main(); }
 
   void all_main_function() {
     spread_pot_main_function();
@@ -446,16 +446,16 @@ public:
     pitch_pot_main_function();
     twist_pot_main_function();
     warp_pot_main_function();
-    tilt_pot_main_function();
+    balance_pot_main_function();
   }
 
   bool CalibrateOffset() {
     return pitch_cv_.calibrate_offset()
       && root_cv_.calibrate_offset()
       && warp_.cv_.calibrate_offset()
-      && tilt_.cv_.calibrate_offset()
+      && balance_.cv_.calibrate_offset()
       && twist_.cv_.calibrate_offset()
-      && grid_.cv_.calibrate_offset()
+      && scale_.cv_.calibrate_offset()
       && mod_.cv_.calibrate_offset()
       && spread_.cv_.calibrate_offset();
   }

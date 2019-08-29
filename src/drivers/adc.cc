@@ -1,8 +1,8 @@
 #include "adc.hh"
 //Todo after merging back into master: Rename:
 //  MOD_* to CROSSFM_*
-//  GRID_* to SCALE_*
-//  TILT_* to BALANCE_*
+//  SCALE_* to SCALE_*
+//  BALANCE_* to BALANCE_*
 
 #define SPREAD_CV_Pin GPIO_PIN_1
 #define SPREAD_CV_GPIO_Port GPIOA
@@ -12,10 +12,10 @@
 #define MOD_CV_1_GPIO_Port GPIOC
 #define TWIST_CV_Pin GPIO_PIN_1
 #define TWIST_CV_GPIO_Port GPIOC
-#define TILT_CV_Pin GPIO_PIN_3
-#define TILT_CV_GPIO_Port GPIOC
-#define GRID_CV_Pin GPIO_PIN_0
-#define GRID_CV_GPIO_Port GPIOA
+#define BALANCE_CV_Pin GPIO_PIN_3
+#define BALANCE_CV_GPIO_Port GPIOC
+#define SCALE_CV_Pin GPIO_PIN_0
+#define SCALE_CV_GPIO_Port GPIOA
 #define MOD_CV_2_Pin GPIO_PIN_2
 #define MOD_CV_2_GPIO_Port GPIOC
 
@@ -27,14 +27,14 @@
 #define MOD_POT_GPIO_Port GPIOA
 #define ROOT_POT_Pin GPIO_PIN_6
 #define ROOT_POT_GPIO_Port GPIOA
-#define GRID_POT_Pin GPIO_PIN_7
-#define GRID_POT_GPIO_Port GPIOA
+#define SCALE_POT_Pin GPIO_PIN_7
+#define SCALE_POT_GPIO_Port GPIOA
 #define PITCH_POT_Pin GPIO_PIN_4
 #define PITCH_POT_GPIO_Port GPIOC
 #define SPREAD_POT_Pin GPIO_PIN_5
 #define SPREAD_POT_GPIO_Port GPIOC
-#define TILT_POT_Pin GPIO_PIN_0
-#define TILT_POT_GPIO_Port GPIOB
+#define BALANCE_POT_Pin GPIO_PIN_0
+#define BALANCE_POT_GPIO_Port GPIOB
 #define TWIST_POT_Pin GPIO_PIN_1
 #define TWIST_POT_GPIO_Port GPIOB
 
@@ -44,10 +44,10 @@ enum Adc1Channels {
 	DETUNE_POT_ADC,		//  1
 	MOD_POT_ADC,		//  2
 	ROOT_POT_ADC, 		//  3
-	GRID_POT_ADC,		//  4
+	SCALE_POT_ADC,		//  4
 	PITCH_POT_ADC,		//  5
 	SPREAD_POT_ADC,		//  6
-	TILT_POT_ADC,		//  7
+	BALANCE_POT_ADC,		//  7
 	TWIST_POT_ADC,		//  8
 
 	NUM_ADC1
@@ -59,8 +59,8 @@ enum Adc3Channels{
 	WARP_CV_ADC,		//  1
 	MOD_CV_1_ADC,	//  2
 	TWIST_CV_ADC, 		//  3
-	TILT_CV_ADC,		//  4
-	GRID_CV_ADC,		//  5
+	BALANCE_CV_ADC,		//  4
+	SCALE_CV_ADC,		//  5
 	MOD_CV_2_ADC,			//  6
 	
 	NUM_ADC3
@@ -104,10 +104,10 @@ void Adc::ADC1_Init()
   adc_setup[ROOT_POT_ADC].channel = ADC_CHANNEL_6;
   adc_setup[ROOT_POT_ADC].sample_time = kAdcSampleTime;
 
-  adc_setup[GRID_POT_ADC].gpio = GRID_POT_GPIO_Port;
-  adc_setup[GRID_POT_ADC].pin = GRID_POT_Pin;
-  adc_setup[GRID_POT_ADC].channel = ADC_CHANNEL_7;
-  adc_setup[GRID_POT_ADC].sample_time = kAdcSampleTime;
+  adc_setup[SCALE_POT_ADC].gpio = SCALE_POT_GPIO_Port;
+  adc_setup[SCALE_POT_ADC].pin = SCALE_POT_Pin;
+  adc_setup[SCALE_POT_ADC].channel = ADC_CHANNEL_7;
+  adc_setup[SCALE_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[PITCH_POT_ADC].gpio = PITCH_POT_GPIO_Port;
   adc_setup[PITCH_POT_ADC].pin = PITCH_POT_Pin;
@@ -119,10 +119,10 @@ void Adc::ADC1_Init()
   adc_setup[SPREAD_POT_ADC].channel = ADC_CHANNEL_15;
   adc_setup[SPREAD_POT_ADC].sample_time = kAdcSampleTime;
 
-  adc_setup[TILT_POT_ADC].gpio = TILT_POT_GPIO_Port;
-  adc_setup[TILT_POT_ADC].pin = TILT_POT_Pin;
-  adc_setup[TILT_POT_ADC].channel = ADC_CHANNEL_8;
-  adc_setup[TILT_POT_ADC].sample_time = kAdcSampleTime;
+  adc_setup[BALANCE_POT_ADC].gpio = BALANCE_POT_GPIO_Port;
+  adc_setup[BALANCE_POT_ADC].pin = BALANCE_POT_Pin;
+  adc_setup[BALANCE_POT_ADC].channel = ADC_CHANNEL_8;
+  adc_setup[BALANCE_POT_ADC].sample_time = kAdcSampleTime;
 
   adc_setup[TWIST_POT_ADC].gpio = TWIST_POT_GPIO_Port;
   adc_setup[TWIST_POT_ADC].pin = TWIST_POT_Pin;
@@ -214,15 +214,15 @@ void Adc::ADC3_Init()
   adc_setup[TWIST_CV_ADC].channel = ADC_CHANNEL_11;
   adc_setup[TWIST_CV_ADC].sample_time = kAdcSampleTime;
 
-  adc_setup[TILT_CV_ADC].gpio = TILT_CV_GPIO_Port;
-  adc_setup[TILT_CV_ADC].pin = TILT_CV_Pin;
-  adc_setup[TILT_CV_ADC].channel = ADC_CHANNEL_13;
-  adc_setup[TILT_CV_ADC].sample_time = kAdcSampleTime;
+  adc_setup[BALANCE_CV_ADC].gpio = BALANCE_CV_GPIO_Port;
+  adc_setup[BALANCE_CV_ADC].pin = BALANCE_CV_Pin;
+  adc_setup[BALANCE_CV_ADC].channel = ADC_CHANNEL_13;
+  adc_setup[BALANCE_CV_ADC].sample_time = kAdcSampleTime;
 
-  adc_setup[GRID_CV_ADC].gpio = GRID_CV_GPIO_Port;
-  adc_setup[GRID_CV_ADC].pin = GRID_CV_Pin;
-  adc_setup[GRID_CV_ADC].channel = ADC_CHANNEL_0;
-  adc_setup[GRID_CV_ADC].sample_time = kAdcSampleTime;
+  adc_setup[SCALE_CV_ADC].gpio = SCALE_CV_GPIO_Port;
+  adc_setup[SCALE_CV_ADC].pin = SCALE_CV_Pin;
+  adc_setup[SCALE_CV_ADC].channel = ADC_CHANNEL_0;
+  adc_setup[SCALE_CV_ADC].sample_time = kAdcSampleTime;
 
   ADC_ChannelConfTypeDef sConfig = {0};
   GPIO_InitTypeDef gpio = {0};

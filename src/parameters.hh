@@ -14,13 +14,13 @@ constexpr int kMaxNumOsc = 16;
 
 enum TwistMode { FEEDBACK, PULSAR, CRUSH };
 enum WarpMode { FOLD, CHEBY, SEGMENT };
-enum GridMode { TWELVE, OCTAVE, FREE };
+enum ScaleMode { TWELVE, OCTAVE, FREE };
 enum ModulationMode { ONE, TWO, THREE };
 
 enum SplitMode { ALTERNATE, LOW_HIGH, LOWEST_REST };
 
 struct Parameters {
-  f tilt;                        // -1..1
+  f balance;                        // -1..1
   f root;                        // semitones
   f pitch;                       // midi note
   f spread;                      // semitones
@@ -31,10 +31,10 @@ struct Parameters {
     f value;                 // 0..1
   } modulation;
 
-  struct Grid {
-    GridMode mode;
+  struct Scale {
+    ScaleMode mode;
     int value;                     // 0..9
-  } grid;
+  } scale;
 
   struct Twist {
     TwistMode mode;
@@ -62,13 +62,13 @@ enum EventType {
   ButtonTimeout,
   GateOn,
   GateOff,
-  SwitchGrid,
+  SwitchScale,
   SwitchMod,
   SwitchTwist,
   SwitchWarp,
   PotMove,
   NewNote,
-  GridChange,
+  ScaleChange,
   AltParamChange,
   StartCatchup,
   EndOfCatchup,

@@ -7,10 +7,10 @@
 #define MODSW_BOT_Pin GPIO_PIN_15
 #define MODSW_BOT_GPIO_Port GPIOE
 
-#define GRIDSW_TOP_Pin GPIO_PIN_10
-#define GRIDSW_TOP_GPIO_Port GPIOB
-#define GRIDSW_BOT_Pin GPIO_PIN_11
-#define GRIDSW_BOT_GPIO_Port GPIOB
+#define SCALESW_TOP_Pin GPIO_PIN_10
+#define SCALESW_TOP_GPIO_Port GPIOB
+#define SCALESW_BOT_Pin GPIO_PIN_11
+#define SCALESW_BOT_GPIO_Port GPIOB
 
 #define TWISTSW_TOP_Pin GPIO_PIN_14
 #define TWISTSW_TOP_GPIO_Port GPIOD
@@ -28,7 +28,7 @@ struct Switches : Nocopy {
     for(int i=0; i<16; i++) Debounce();
   }
 
-  enum Switch { GRID, MOD, TWIST, WARP };
+  enum Switch { SCALE, MOD, TWIST, WARP };
   enum State { UP=1, DOWN=2, MID=3 };
 
   template<class T>
@@ -54,18 +54,18 @@ struct Switches : Nocopy {
     }
   };
 
-  struct Grid : Combiner<Grid> {
-    Grid() {
+  struct Scale : Combiner<Scale> {
+    Scale() {
       __HAL_RCC_GPIOB_CLK_ENABLE();
       GPIO_InitTypeDef gpio = {0};
-      gpio.Pin = GRIDSW_TOP_Pin|GRIDSW_BOT_Pin;
+      gpio.Pin = SCALESW_TOP_Pin|SCALESW_BOT_Pin;
       gpio.Mode = GPIO_MODE_INPUT;
       gpio.Pull = GPIO_PULLUP;
-      HAL_GPIO_Init(GRIDSW_TOP_GPIO_Port, &gpio);
+      HAL_GPIO_Init(SCALESW_TOP_GPIO_Port, &gpio);
     }
-    bool get1() { return ReadPin(GRIDSW_TOP_GPIO_Port, GRIDSW_TOP_Pin); }
-    bool get2() { return ReadPin(GRIDSW_BOT_GPIO_Port, GRIDSW_BOT_Pin); }
-  } grid_;
+    bool get1() { return ReadPin(SCALESW_TOP_GPIO_Port, SCALESW_TOP_Pin); }
+    bool get2() { return ReadPin(SCALESW_BOT_GPIO_Port, SCALESW_BOT_Pin); }
+  } scale_;
 
   struct Mod : Combiner<Mod> {
     Mod() {
@@ -111,7 +111,7 @@ struct Switches : Nocopy {
   } warp_;
 
   void Debounce() {
-    grid_.Debounce();
+    scale_.Debounce();
     mod_.Debounce();
     twist_.Debounce();
     warp_.Debounce();

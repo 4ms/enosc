@@ -86,13 +86,13 @@ struct SwitchEventSource : EventSource<Event>, Switch {
 
 struct SwitchesEventSource : EventSource<Event>, Switches {
 
-  SwitchEventSource<Grid, SwitchGrid> grid_;
+  SwitchEventSource<Scale, SwitchScale> scale_;
   SwitchEventSource<Mod, SwitchMod> mod_;
   SwitchEventSource<Twist, SwitchTwist> twist_;
   SwitchEventSource<Warp, SwitchWarp> warp_;
 
   void Poll(std::function<void(Event)> const& put) {
-    grid_.Poll(put);
+    scale_.Poll(put);
     mod_.Poll(put);
     twist_.Poll(put);
     warp_.Poll(put);
@@ -163,14 +163,14 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       freeze_led_.reset_glow();
       freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
     } break;
-    case GridChange: {
+    case ScaleChange: {
       learn_led_.flash(Colors::white);
     } break;
     case ButtonPush: {
       button_timeouts_[e1.data].trigger_after(kLongPressTime, {ButtonTimeout, e1.data});
     } break;
-    case SwitchGrid: {
-      params_.grid.mode =
+    case SwitchScale: {
+      params_.scale.mode =
         e1.data == Switches::UP ? TWELVE :
         e1.data == Switches::MID ? OCTAVE : FREE;
     } break;
@@ -213,7 +213,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e2.type == ButtonPush &&
             e2.data == BUTTON_LEARN) {
           // long-press on Learn
-          osc_.reset_current_grid();
+          osc_.reset_current_scale();
           learn_led_.flash(Colors::green, 2_f);
         }
       } break;
@@ -266,9 +266,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         } else if (e1.data == POT_WARP) {
           freeze_led_.set_solid(Colors::grey);
           control_.warp_pot_alternate_function();
-        } else if (e1.data == POT_TILT) {
+        } else if (e1.data == POT_BALANCE) {
           freeze_led_.set_solid(Colors::grey);
-          control_.tilt_pot_alternate_function();
+          control_.balance_pot_alternate_function();
         }
       }
       case ButtonRelease: {
@@ -312,8 +312,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e2.type == ButtonPush &&
             e2.data == BUTTON_LEARN) {
           // manually add notes
-          if (osc_.empty_pre_grid()) {
-            // if grid is empty, add note with current pitch
+          if (osc_.empty_pre_scale()) {
+            // if scale is empty, add note with current pitch
             f cur_pitch = osc_.lowest_pitch();
             osc_.new_note(cur_pitch);
           }
@@ -410,7 +410,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 public:
   Ui() {
     // Initialize switches to their current positions
-    Base::put({SwitchGrid, switches_.grid_.get()});
+    Base::put({SwitchScale, switches_.scale_.get()});
     Base::put({SwitchMod, switches_.mod_.get()});
     Base::put({SwitchTwist, switches_.twist_.get()});
     Base::put({SwitchWarp, switches_.warp_.get()});
