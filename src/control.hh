@@ -21,6 +21,7 @@ const f kPotMoveThreshold = 0.01_f;
 
 const int kCalibrationIterations = 16;
 
+// TODO remove chan
 template<int block_size, int chan>
 class AudioCVConditioner {
   SpiAdc& spi_adc_;
@@ -28,6 +29,7 @@ class AudioCVConditioner {
   f offset_, nominal_offset_;
   f slope_, nominal_slope_;
   f last_;
+  // TODO bug: should return the filtered value
   f last_raw_reading() { return f::inclusive(spi_adc_.get_last_raw(chan)); }
   
 public:
@@ -37,6 +39,7 @@ public:
     spi_adc_(spi_adc) {}
 
   bool calibrate_offset() {
+    // TODO: make several reads?
     f offset = last_raw_reading();
     if ((offset / nominal_offset_ - 1_f).abs() < kCalibrationSuccessTolerance) {
       offset_ = offset;
@@ -57,8 +60,9 @@ public:
   void Process() {
     // Info: ~0.28us to execute this block (per channel), runs every 167us
     u1_15 x = spi_adc_.get(chan);
-    u0_16 y = u0_16::wrap(x);
-    last_ = f::inclusive(y);
+    // TODO pb here: we can return the f value directly
+    // last_ is still useful for Ui
+    last_ = f::inclusive(x);
     last_ -= offset_;
     last_ *= slope_;
   }
