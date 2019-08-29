@@ -10,7 +10,7 @@ SRCS = \
 	lib/easiglib/math.cc \
 	lib/easiglib/dsp.cc \
 	src/drivers/adc.cc \
-	src/drivers/codec.cc \
+	src/drivers/dac.cc \
 	src/drivers/spi_adc.cc \
 	src/drivers/leds.cc \
 	src/drivers/buttons.cc \
@@ -130,7 +130,8 @@ data.cc data.hh: $(EASIGLIB_DIR)data_compiler.py data/data.py
 	PYTHONPATH=$(EASIGLIB_DIR) python data/data.py
 
 clean:
-	rm -f $(OBJS) $(TEST_OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin test/test data.cc data.hh \
+	rm -f $(OBJS) $(TEST_OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin $(TARGET).hex \
+	main.map test/test data.cc data.hh \
 	$(EASIGLIB_DIR)data_compiler.pyc
 
 flash: $(TARGET).bin
