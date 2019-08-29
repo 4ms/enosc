@@ -12,8 +12,8 @@ constexpr int kSampleRate = 48000; // Hz
 constexpr int kBlockSize = 8;
 constexpr int kMaxNumOsc = 16;
 
-enum TwistMode { FEEDBACK, PULSAR, DECIMATE };
-enum WarpMode { FOLD, CHEBY, CRUSH };
+enum TwistMode { FEEDBACK, PULSAR, CRUSH };
+enum WarpMode { FOLD, CHEBY, SEGMENT };
 enum GridMode { TWELVE, OCTAVE, FREE };
 enum ModulationMode { ONE, TWO, THREE };
 

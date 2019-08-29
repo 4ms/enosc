@@ -126,13 +126,13 @@ public:
     static processor_t tab[3][3] = {
       &Oscillator::Process<FEEDBACK, FOLD, block_size>,
       &Oscillator::Process<FEEDBACK, CHEBY, block_size>,
-      &Oscillator::Process<FEEDBACK, CRUSH, block_size>,
+      &Oscillator::Process<FEEDBACK, SEGMENT, block_size>,
       &Oscillator::Process<PULSAR, FOLD, block_size>,
       &Oscillator::Process<PULSAR, CHEBY, block_size>,
-      &Oscillator::Process<PULSAR, CRUSH, block_size>,
-      &Oscillator::Process<DECIMATE, FOLD, block_size>,
-      &Oscillator::Process<DECIMATE, CHEBY, block_size>,
-      &Oscillator::Process<DECIMATE, CRUSH, block_size>,
+      &Oscillator::Process<PULSAR, SEGMENT, block_size>,
+      &Oscillator::Process<CRUSH, FOLD, block_size>,
+      &Oscillator::Process<CRUSH, CHEBY, block_size>,
+      &Oscillator::Process<CRUSH, SEGMENT, block_size>,
     };
     return tab[t][m];
   }

@@ -22,7 +22,7 @@ namespace Distortion {
   }
 
   template<>
-  inline u0_32 twist<DECIMATE>(u0_32 phase, f amount) {
+  inline u0_32 twist<CRUSH>(u0_32 phase, f amount) {
     u0_16 am = u0_16(amount);
     Bitfield<32> x {phase};
     x ^= Bitfield<32>(u0_16::narrow(phase)*am);
@@ -51,7 +51,7 @@ namespace Distortion {
   }
 
   template<>
-  inline f warp<CRUSH>(s1_15 x, f amount) {
+  inline f warp<SEGMENT>(s1_15 x, f amount) {
     constexpr f const fact = f(Data::triangles.size() - 1);
     amount *= fact;
     auto [idx, frac] = amount.integral_fractional();
@@ -84,7 +84,7 @@ namespace Antialias {
     return (amount - 1_f) * (1_f - 2_f * freq).max(0_f).square().square().square().square() + 1_f;
   }
 
-  template<> f twist<DECIMATE>(f freq, f amount) {
+  template<> f twist<CRUSH>(f freq, f amount) {
     return amount; // no antialiasing here
   }
 
@@ -99,7 +99,7 @@ namespace Antialias {
     return amount * (1_f - 6_f * freq).max(0_f);
   }
 
-  template<> f warp<CRUSH>(f freq, f amount) {
+  template<> f warp<SEGMENT>(f freq, f amount) {
     return amount * (1_f - 4_f * freq).cube().max(0_f);
   }
 };

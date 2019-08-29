@@ -182,12 +182,12 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     case SwitchTwist: {
       params_.twist.mode =
         e1.data == Switches::UP ? FEEDBACK :
-        e1.data == Switches::MID ? PULSAR : DECIMATE;
+        e1.data == Switches::MID ? PULSAR : CRUSH;
     } break;
     case SwitchWarp: {
       params_.warp.mode =
         e1.data == Switches::UP ? FOLD :
-        e1.data == Switches::MID ? CHEBY : CRUSH;
+        e1.data == Switches::MID ? CHEBY : SEGMENT;
     } break;
     }
     

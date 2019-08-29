@@ -323,7 +323,7 @@ public:
         // Warning: when changing this constant, also change Pulsar
         // distortion function
         twist = Math::fast_exp2(twist * 6_f); // 1..2^6
-      } else if (params_.twist.mode == DECIMATE) {
+      } else if (params_.twist.mode == CRUSH) {
         twist *= twist * 0.5_f;
       }
       params_.twist.value = twist;
@@ -345,7 +345,7 @@ public:
         warp *= warp;
         warp *= 0.9_f;
       } else if (params_.warp.mode == CHEBY) {
-      } else if (params_.warp.mode == CRUSH) {
+      } else if (params_.warp.mode == SEGMENT) {
       }
       params_.warp.value = warp;
 
