@@ -5,7 +5,7 @@
 #include "hal.hh"
 
 //
-// Codec SAI pins
+// Dac SAI pins
 //
 
 #define DACSAI_SAI                      SAI1
@@ -52,7 +52,7 @@
 
 
 //
-// Codec BitBang register setup pins
+// Dac BitBang register setup pins
 // 
 #define DACSAI_REG_GPIO_CLOCK_ENABLE  __HAL_RCC_GPIOE_CLK_ENABLE
 #define DACSAI_REG_GPIO               GPIOE
@@ -106,21 +106,21 @@ enum PCM1753Registers {
 
 
 
-void register_codec_isr(void f());
+void register_dac_isr(void f());
 
 template<int sample_rate, int block_size, class T>
-struct Codec : Nocopy {
+struct Dac : Nocopy {
 
-  Codec() {
+  Dac() {
     instance_ = this;
-    register_codec_isr(handler__IN_ITCM_);
+    register_dac_isr(handler__IN_ITCM_);
 
-    // Setup PLL clock for codec
+    // Setup PLL clock for dac
     init_SAI_clock();
 
     gpio_.Init();
 
-    //Start Codec SAI
+    //Start Dac SAI
     SAI_init();
     init_audio_DMA();
 
@@ -146,7 +146,7 @@ private:
     } arrays;
   };
 
-  static Codec *instance_;
+  static Dac *instance_;
 
   static void handler__IN_ITCM_() { 
     instance_->ISR__IN_ITCM_();
@@ -161,14 +161,14 @@ private:
       // Transfer Complete (TC) -> Point to 2nd half of buffers
       __HAL_DMA_CLEAR_FLAG(&instance_->hdma_tx,
                            __HAL_DMA_GET_TC_FLAG_INDEX(&instance_->hdma_tx));
-      static_cast<T&>(*this).template CodecCallback<block_size>(instance_->buffers.tx[1]);
+      static_cast<T&>(*this).template DacCallback<block_size>(instance_->buffers.tx[1]);
 
     } else if ((tmpisr & __HAL_DMA_GET_HT_FLAG_INDEX(&instance_->hdma_tx))
                && __HAL_DMA_GET_IT_SOURCE(&instance_->hdma_tx, DMA_IT_HT)) {
       // Half Transfer complete (HT) -> Point to 1st half of buffers
       __HAL_DMA_CLEAR_FLAG(&instance_->hdma_tx,
                            __HAL_DMA_GET_HT_FLAG_INDEX(&instance_->hdma_tx));
-      static_cast<T&>(*this).template CodecCallback<block_size>(instance_->buffers.tx[0]);
+      static_cast<T&>(*this).template DacCallback<block_size>(instance_->buffers.tx[0]);
     }
   }
 
@@ -411,4 +411,4 @@ private:
 };
 
 template<int sample_rate, int block_size, class T>
-Codec<sample_rate, block_size, T> *Codec<sample_rate, block_size, T>::instance_;
+Dac<sample_rate, block_size, T> *Dac<sample_rate, block_size, T>::instance_;

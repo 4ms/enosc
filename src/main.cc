@@ -1,4 +1,4 @@
-#include "codec.hh"
+#include "dac.hh"
 #include "system.hh"
 #include "debug.hh"
 #include "ui.hh"
@@ -11,12 +11,12 @@ struct Main :
   System<kUiUpdateRate, Main>,
   Math,
   DynamicData,
-  Codec<kSampleRate, kBlockSize, Main>,
+  Dac<kSampleRate, kBlockSize, Main>,
   Ui<kUiUpdateRate, kBlockSize> {
 
   Main() {
     //Start audio processing
-    Codec::Start();
+    Dac::Start();
     while(1) {
       Ui::Process();
       // TODO understand why this is crucial
@@ -30,7 +30,7 @@ struct Main :
   }
 
   template<int block_size>
-  void CodecCallback(Buffer<Frame, block_size>& out) {
+  void DacCallback(Buffer<Frame, block_size>& out) {
     debug.set(3, true);
     Ui::Poll();
     Ui::osc().Process(out);
