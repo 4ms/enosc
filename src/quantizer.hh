@@ -118,11 +118,10 @@ class Quantizer {
       {0_f, 4_f, 7_f, 12_f},    // major triad
       {0_f, 3_f, 7_f, 12_f},    // minor triad
       {0_f, 3_f, 5_f, 7_f, 12_f},    // minor triad
-      // {0_f, 3_f, 5_f, 10_f, 12_f}, // ??
+      {0_f, 3_f, 5_f, 10_f, 12_f}, // ??
+      {0_f, 1_f, 5_f, 8_f, 12_f},
       {0_f, 7_f},               // circle of fifths
-      {0_f, 5_f, 7_f},
       {0_f, 3_f, 5_f, 7_f},
-      {0_f, 5_f},
       {0_f, 1_f},                // all semitones
     }, {
       // OCTAVE
