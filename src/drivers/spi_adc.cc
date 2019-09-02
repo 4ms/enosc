@@ -20,15 +20,11 @@ void SpiAdc::spiadc_ISR__IN_ITCM_() {
 
   if ((itflag & SPI_FLAG_RXNE) && (itsource & SPI_IT_RXNE))
   { 
-    // debug.set(3,true);
-    uint8_t chan = (SpiAdc::spiadc_instance_->cur_channel==MAX11666_CHAN2)?1:0;
+    uint8_t chan = (SpiAdc::spiadc_instance_->cur_channel == MAX11666_CHAN2);
     SpiAdc::spiadc_instance_->values[chan][os_idx[chan]] = SpiAdc::spiadc_instance_->spih.Instance->DR;
-    SpiAdc::spiadc_instance_->cur_channel = MAX11666_CHAN2;
     os_idx[chan]++;
     os_idx[chan] &= OVERSAMPLING_MASK;
     SpiAdc::spiadc_instance_->cur_channel = chan ? MAX11666_CHAN1 : MAX11666_CHAN2;
-    // debug.set(3,false);
-
     SpiAdc::spiadc_instance_->spih.Instance->DR = SpiAdc::spiadc_instance_->cur_channel;
   }
 }
