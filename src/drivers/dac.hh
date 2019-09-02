@@ -104,6 +104,10 @@ enum PCM1753Registers {
   ZEROFLAG_PHASE_REG = 22
 }; 
 
+static void delay() {
+  for (int i = 0; i < 100; ++i)
+   __asm__ __volatile__ ("nop\n\t":::"memory");
+}
 
 
 void register_dac_isr(void f());
@@ -227,11 +231,11 @@ private:
     void Write(enum PCM1753Registers reg_addr, uint8_t reg_value) {
 
       latch_pin(HIGH);
-      HAL_Delay(1);
+      delay();
 
       latch_pin(LOW);
       clk_pin(LOW);
-      HAL_Delay(1);
+      delay();
 
       uint16_t data = (reg_addr << 8) | reg_value;
 
@@ -241,17 +245,17 @@ private:
         else
           data_pin(LOW);
 
-        HAL_Delay(1);
+        delay();
 
         clk_pin(HIGH);
-        HAL_Delay(1);
+        delay();
 
         clk_pin(LOW);
-        HAL_Delay(1);
+        delay();
       }
 
       latch_pin(HIGH);
-      HAL_Delay(1);
+      delay();
     }
 
     enum PinStates { LOW = 0, HIGH = 1 };
@@ -273,7 +277,7 @@ private:
   void Reboot() {
     //Take everything down...
     bb_regsetup_.Reset();
-    HAL_Delay(1);
+    delay();
 
     DeInit_I2S_Clock();
     DeInit_SAIDMA();
