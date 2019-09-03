@@ -239,7 +239,7 @@ class Control : public EventSource<Event> {
                 CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>> warp_ {adc_, 0.000183111057_f};
   PotCVCombiner<DualFunctionPotConditioner<POT_BALANCE, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_BALANCE>, QuadraticOnePoleLp<1>> balance_ {adc_, 0.000793481246_f};
+                CVConditioner<CV_BALANCE>, QuadraticOnePoleLp<2>> balance_ {adc_, 0.000793481246_f};
   PotCVCombiner<DualFunctionPotConditioner<POT_TWIST, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_TWIST>, QuadraticOnePoleLp<1>> twist_ {adc_, 0.00189214759_f};
