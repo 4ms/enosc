@@ -97,19 +97,21 @@ public:
 
 struct FrequencyPair { f freq1, freq2, crossfade; };
 
-struct FrequencyState {
-  OnePoleLp freq1, freq2, crossfade;
-  void Process(f coef, FrequencyPair p) {
-    freq1.Process(coef, p.freq1);
-    freq2.Process(coef, p.freq2);
-    crossfade.Process(coef, p.crossfade);
+class FrequencyState {
+  OnePoleLp freq1_, freq2_, crossfade_;
+public:
+  FrequencyPair Process(f coef, FrequencyPair p) {
+    freq1_.Process(coef, p.freq1);
+    freq2_.Process(coef, p.freq2);
+    crossfade_.Process(coef, p.crossfade);
+    return {freq1_.state(), freq2_.state(), crossfade_.state()};
   }
 };
 
 template<int block_size>
 class OscillatorPair : Nocopy {
   Oscillator osc_[2];
-  FrequencyState freq;
+  FrequencyState freq_;
 
 public:
 
@@ -137,7 +139,7 @@ public:
     return tab[t][m];
   }
 
-  void Process(TwistMode twist_mode, WarpMode warp_mode, FrequencyPair new_freq,
+  void Process(TwistMode twist_mode, WarpMode warp_mode, FrequencyPair freq,
                bool frozen,
                f crossfade_factor,
                f twist,
@@ -147,12 +149,10 @@ public:
                Buffer<u0_16, block_size>& mod_in, Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {
 
-    f coef = frozen ? 0_f : 0.1_f;
-    freq.Process(coef, new_freq);
+    f coef = frozen ? 0_f : 1.0_f;
+    auto [freq1, freq2, crossfade] = freq_.Process(coef, freq);
 
     processor_t process = pick_processor(twist_mode, warp_mode);
-    
-    f crossfade = freq.crossfade.state();
 
     // shape crossfade so notes are easier to find
     // crossfade = Math::fast_raised_cosine(crossfade);
@@ -163,11 +163,11 @@ public:
 
     // mod_out is accumulated in the two calls, so we need to zero it here
     mod_out.fill(0._u0_16);
-    (osc_[0].*process)(freq.freq1.state(), twist, warp,
-                                           modulation, fade1, amplitude,
-                                           mod_in, mod_out, sum_output);
-    (osc_[1].*process)(freq.freq2.state(), twist, warp,
-                                           modulation, fade2, amplitude,
-                                           mod_in, mod_out, sum_output);
+    (osc_[0].*process)(freq1, twist, warp,
+                       modulation, fade1, amplitude,
+                       mod_in, mod_out, sum_output);
+    (osc_[1].*process)(freq2, twist, warp,
+                       modulation, fade2, amplitude,
+                       mod_in, mod_out, sum_output);
   }
 };
