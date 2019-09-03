@@ -73,6 +73,8 @@ template<class T, class transfer>
 class NonLinearOnePoleLp {
   T state_;
 public:
+  NonLinearOnePoleLp(f state) : state_(state) {}
+  NonLinearOnePoleLp() : state_(0_f) {}
   T Process(T input) {
     state_ += transfer::Process(input-state_);
     return state_;
@@ -97,7 +99,7 @@ struct ITransferCubic {
 };
 
 template<int divisor>
-struct FTransferQuadratic {
+struct TransferQuadratic {
   static f Process(f x) {
     constexpr f const fact = 1_f / f(divisor);
     return x.abs() * x * fact;
@@ -105,13 +107,20 @@ struct FTransferQuadratic {
 };
 
 template<int divisor>
-struct FTransferCubic {
+struct TransferCubic {
   static f Process(f x) {
     constexpr f const fact = 1_f / f(divisor);
     return ((x * x) * x) * fact;
   }
 };
 
+template<int divisor>
+struct TransferPositiveLimit {
+  static f Process(f x) {
+    constexpr f const limit = 1_f / f(divisor);
+    return x.min(limit);
+  }
+};
 
 template<int divisor>
 class IQuadraticOnePoleLp : public NonLinearOnePoleLp<s1_15, ITransferQuadratic<divisor> > {};
@@ -119,9 +128,11 @@ template<int divisor>
 class ICubicOnePoleLp : public NonLinearOnePoleLp<s1_15, ITransferCubic<divisor> > {};
 
 template<int divisor>
-class QuadraticOnePoleLp : public NonLinearOnePoleLp<f, FTransferQuadratic<divisor> > {};
+class QuadraticOnePoleLp : public NonLinearOnePoleLp<f, TransferQuadratic<divisor> > {};
 template<int divisor>
-class CubicOnePoleLp : public NonLinearOnePoleLp<f, FTransferCubic<divisor> > {};
+class CubicOnePoleLp : public NonLinearOnePoleLp<f, TransferCubic<divisor> > {};
+template<int divisor>
+class PositiveSlewLimiter : public NonLinearOnePoleLp<f, TransferPositiveLimit<divisor> > {};
 
 struct FourPoleLadderLp {
   OnePoleLp lp_[4];
