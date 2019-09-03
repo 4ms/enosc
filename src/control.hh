@@ -3,11 +3,7 @@
 #include "adc.hh"
 #include "spi_adc.hh"
 #include "dsp.hh"
-#include "polyptic_oscillator.hh"
 #include "event_handler.hh"
-
-#include "debug.hh"
-extern Debug debug;
 
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
