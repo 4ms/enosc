@@ -99,8 +99,10 @@ struct FrequencyPair { f freq1, freq2, crossfade; };
 
 class FrequencyState {
   OnePoleLp freq1_, freq2_, crossfade_;
+  PositiveSlewLimiter<1024> coef_ {0_f};
 public:
-  FrequencyPair Process(f coef, FrequencyPair p) {
+  FrequencyPair Process(f coef, FrequencyPair const p) {
+    coef = coef_.Process(coef);
     freq1_.Process(coef, p.freq1);
     freq2_.Process(coef, p.freq2);
     crossfade_.Process(coef, p.crossfade);
@@ -149,7 +151,9 @@ public:
                Buffer<u0_16, block_size>& mod_in, Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {
 
-    f coef = frozen ? 0_f : 1.0_f;
+    // filter frequencies and amplitudes to avoid clicks when out of
+    // Freeze or when switching Scale
+    f coef = frozen ? 0_f : 1_f;
     auto [freq1, freq2, crossfade] = freq_.Process(coef, freq);
 
     processor_t process = pick_processor(twist_mode, warp_mode);
