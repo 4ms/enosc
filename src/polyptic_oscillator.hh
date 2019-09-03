@@ -74,6 +74,7 @@ class Oscillators : Nocopy {
   Buffer<u0_16, block_size> modulation_blocks_[kMaxNumOsc+1];
   Buffer<u0_16, block_size> dummy_block_;
   bool frozen_ = false;
+  bool temp_frozen_ = false;
   f lowest_pitch_;
 
   static inline bool pick_split(SplitMode mode, int i, int numOsc) {
@@ -172,12 +173,14 @@ public:
       Buffer<f, block_size>& out = pick_split(stereo_mode, i, numOsc) ? out1 : out2;
       auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, numOsc);
       dummy_block_.fill(0._u0_16);
-      bool frozen = pick_split(freeze_mode, i, numOsc) && frozen_;
+      bool frozen = (pick_split(freeze_mode, i, numOsc) && frozen_) || temp_frozen_;
       oscs_[i].Process(twist_mode, warp_mode,
                        p, frozen, crossfade_factor,
                        twist, warp, modulation, amp,
                        mod_in, mod_out, out);
     }
+
+    temp_frozen_ = false;
 
     f atten1, atten2;
 
@@ -199,6 +202,7 @@ public:
   }
 
   void set_freeze (bool frozen) { frozen_ = frozen; }
+  void set_temporary_freeze() { temp_frozen_ = true; }
   bool frozen() { return frozen_; }
   f lowest_pitch() { return lowest_pitch_; }
 };
@@ -212,6 +216,8 @@ class PolypticOscillator : public Oscillators<block_size>, PreListenOscillators<
 
   bool pre_listen_ = false;
   bool follow_new_note_ = false;
+
+  int previous_scale_index;
 
 public:
   PolypticOscillator(Parameters& params) : params_(params) {}
@@ -264,6 +270,10 @@ public:
         change_last_note(params_.new_note, params_.fine_tune);
       PreListenOscillators<block_size>::Process(params_, pre_scale_, out1, out2);
     } else {
+      if (previous_scale_index != params_.scale.value) {
+        Oscillators<block_size>::set_temporary_freeze();
+        previous_scale_index = params_.scale.value;
+      }
       current_scale_ = quantizer_.get_scale(params_.scale);
       Oscillators<block_size>::Process(params_, *current_scale_, out1, out2);
     }
