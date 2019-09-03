@@ -599,6 +599,7 @@ using u8_24 = Fixed<UNSIGNED, 8, 24>;
 using u24_8 = Fixed<UNSIGNED, 24, 8>;
 using s10_22 = Fixed<SIGNED, 10, 22>;
 using u10_22 = Fixed<UNSIGNED, 10, 22>;
+using u17_15 = Fixed<UNSIGNED, 17, 15>;
 
 using s16_0 = Fixed<SIGNED, 16, 0>;
 using u16_0 = Fixed<UNSIGNED, 16, 0>;
@@ -648,6 +649,7 @@ constexpr u32 operator "" _u32(unsigned long long int x) { return u32::of_long_l
 constexpr s1_15 operator "" _s1_15(long double x) { return s1_15::of_double(x); }
 constexpr s16_16 operator "" _s16_16(long double x) { return s16_16::of_double(x); }
 constexpr s17_15 operator "" _s17_15(long double x) { return s17_15::of_double(x); }
+constexpr u17_15 operator "" _u17_15(long double x) { return u17_15::of_double(x); }
 constexpr u0_16 operator "" _u0_16(long double x) { return u0_16::of_double(x); }
 constexpr s1_31 operator "" _s1_31(long double x) { return s1_31::of_double(x); }
 constexpr u0_32 operator "" _u0_32(long double x) { return u0_32::of_double(x); }
