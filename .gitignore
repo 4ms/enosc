@@ -12,3 +12,5 @@ test.wav
 *.hex
 main.wav
 main.map
+bootloader/build/bootloader/bootloader.dmp
+bootloader/build/lib/CMSIS/startup_stm32f730xx.lst
