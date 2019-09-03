@@ -23,6 +23,8 @@ enum max11666Errors {
 
 void register_spi_adc_isr(void f());
 
+#define ADC_BIT_DEPTH 12
+
 //Oversample and average blocks of 2^oversampling_bitsize samples 
 //Todo: Template with oversampling amount?
 #define OVERSAMPLING_AMT_BITS   3
@@ -30,8 +32,11 @@ void register_spi_adc_isr(void f());
 #define OVERSAMPLING_MASK (OVERSAMPLING_AMT-1)
 
 struct SpiAdc : Nocopy {
+
+  static constexpr int value_bits = ADC_BIT_DEPTH + OVERSAMPLING_AMT_BITS;
+  using value_t = Fixed<UNSIGNED, 16 - value_bits, value_bits>; // u1_15
+
 	SpiAdc() {
-    static_assert(OVERSAMPLING_AMT_BITS == 3, "FRAC bits of the return type of SpiAdc::get() must equal (OVERSAMPLING_AMT_BITS + ADC bits)");
     spiadc_instance_ = this;
     register_spi_adc_isr(SpiAdc::spiadc_ISR__IN_ITCM_); //Todo: measure ITCM benefits
 
@@ -49,17 +54,17 @@ struct SpiAdc : Nocopy {
     spih.Instance->DR = cur_channel;
   }
 
-  u1_15 get(uint8_t chan) {
-    uint32_t avg = 0;
+  u0_16 get(uint8_t chan) {
+    u17_15 avg = 0._u17_15;
     for (int i=0; i<OVERSAMPLING_AMT; i++){
-      avg += values[chan][i];
+      avg += u17_15(values[chan][i]);
     }
-    return u1_15::of_repr(avg);
+    return u0_16::wrap(avg);
   }
 
   static SpiAdc *spiadc_instance_;
   SPI_HandleTypeDef spih;
-  uint16_t values[NUM_SPI_ADC_CHANNELS][OVERSAMPLING_AMT]={0};
+  value_t values[NUM_SPI_ADC_CHANNELS][OVERSAMPLING_AMT];
   static uint32_t os_idx[NUM_SPI_ADC_CHANNELS];
   max11666_channels cur_channel;
   max11666Errors err;

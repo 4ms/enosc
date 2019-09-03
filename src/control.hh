@@ -23,7 +23,7 @@ class ExtCVConditioner {
   SpiAdc& spi_adc_;
   f offset_, nominal_offset_;
   f slope_, nominal_slope_;
-  f last_;
+  u0_16 lp_;
 
   f last_raw_reading() { return f::inclusive(spi_adc_.get(chan)); }
   
@@ -53,14 +53,13 @@ public:
   }
 
   void Process() {
-    // Info: ~0.28us to execute this block (per channel), runs every 167us
-    u1_15 x = spi_adc_.get(chan);
-    last_ = f::inclusive(x);
-    last_ -= offset_;
-    last_ *= slope_;
+    u0_16 x = spi_adc_.get(chan);
+    lp_ = (x);
   }
 
-  f last() { return last_; }
+  f last() {
+    return (f::inclusive(lp_) - offset_) * slope_;
+  }
 };
 
 template<AdcInput INPUT>
