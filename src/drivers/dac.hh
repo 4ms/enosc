@@ -410,7 +410,7 @@ private:
     // DMA IRQ and start DMA
     HAL_NVIC_SetPriority(DACSAI_SAI_TX_DMA_IRQn, 0, 0);
     HAL_NVIC_DisableIRQ(DACSAI_SAI_TX_DMA_IRQn); 
-    HAL_SAI_Transmit_DMA(&hsai_tx, arrays.tx[0], block_size * 2 * 4);
+    HAL_SAI_Transmit_DMA(&hsai_tx, arrays.tx[0], block_size * 2 * 2);
   }
 
 };
