@@ -3,8 +3,8 @@
 #include "numtypes.hh"
 
 constexpr struct Frame {
-  s1_15 l = 0._s1_15;
-  s1_15 r = 0._s1_15;
+  s1_31 l = 0._s1_31;
+  s1_31 r = 0._s1_31;
 } zero;
 
 constexpr int kUiUpdateRate = 200; // Hz

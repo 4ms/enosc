@@ -279,8 +279,8 @@ public:
     }
 
     for (auto [o1, o2, o] : zip(out1, out2, out)) {
-      o.l = s1_15(o1);
-      o.r = s1_15(o2);
+      o.l = s1_31(o1);
+      o.r = s1_31(o2);
     }
   }
 };

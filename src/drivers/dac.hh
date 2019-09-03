@@ -142,6 +142,7 @@ private:
   SAI_HandleTypeDef hsai_tx;
 
   union {
+    // TODO cleanup: no struct necessary
     struct {
       Buffer<Frame, block_size> tx[2];
     } buffers;
@@ -390,8 +391,8 @@ private:
     hdma_tx.Init.Direction            = DMA_MEMORY_TO_PERIPH;
     hdma_tx.Init.PeriphInc            = DMA_PINC_DISABLE;
     hdma_tx.Init.MemInc               = DMA_MINC_ENABLE;
-    hdma_tx.Init.PeriphDataAlignment  = DMA_PDATAALIGN_HALFWORD;
-    hdma_tx.Init.MemDataAlignment     = DMA_PDATAALIGN_HALFWORD;
+    hdma_tx.Init.PeriphDataAlignment  = DMA_PDATAALIGN_WORD;
+    hdma_tx.Init.MemDataAlignment     = DMA_PDATAALIGN_WORD;
     hdma_tx.Init.Mode                 = DMA_CIRCULAR;
     hdma_tx.Init.Priority             = DMA_PRIORITY_HIGH;
     hdma_tx.Init.FIFOMode             = DMA_FIFOMODE_DISABLE;
@@ -401,7 +402,7 @@ private:
     HAL_DMA_DeInit(&hdma_tx);
 
     // Must initialize the SAI before initializing the DMA
-    hal_assert(HAL_SAI_InitProtocol(&hsai_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BITEXTENDED, 2));
+    hal_assert(HAL_SAI_InitProtocol(&hsai_tx, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_24BIT, 2));
 
     hal_assert(HAL_DMA_Init(&hdma_tx));
     __HAL_LINKDMA(&hsai_tx, hdmatx, hdma_tx);
@@ -409,7 +410,7 @@ private:
     // DMA IRQ and start DMA
     HAL_NVIC_SetPriority(DACSAI_SAI_TX_DMA_IRQn, 0, 0);
     HAL_NVIC_DisableIRQ(DACSAI_SAI_TX_DMA_IRQn); 
-    HAL_SAI_Transmit_DMA(&hsai_tx, arrays.tx[0], block_size * 2 * 2);
+    HAL_SAI_Transmit_DMA(&hsai_tx, arrays.tx[0], block_size * 2 * 4);
   }
 
 };
