@@ -17,12 +17,12 @@ const f kPotMoveThreshold = 0.01_f;
 
 const int kCalibrationIterations = 16;
 
-template<int block_size, int CHAN>
+template<int CHAN, class FILTER>
 class ExtCVConditioner {
   SpiAdc& spi_adc_;
   f offset_, nominal_offset_;
   f slope_, nominal_slope_;
-  Average<4, 2> lp_;
+  FILTER lp_;
 
   f last_raw_reading() { return f::inclusive(lp_.last()); }
   
@@ -255,8 +255,8 @@ class Control : public EventSource<Event> {
                              QuadraticOnePoleLp<2>, Takeover::SOFT> pitch_pot_ {adc_};
   DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT> root_pot_ {adc_};
-  ExtCVConditioner<block_size, CV_PITCH> pitch_cv_ {0.75_f, -111.7_f, spi_adc_};
-  ExtCVConditioner<block_size, CV_ROOT> root_cv_ {0.75_f, -111.7_f, spi_adc_};
+  ExtCVConditioner<CV_PITCH, Average<4, 2>> pitch_cv_ {0.75_f, -111.7_f, spi_adc_};
+  ExtCVConditioner<CV_ROOT, Average<4, 2>> root_cv_ {0.75_f, -111.7_f, spi_adc_};
 
   Parameters& params_;
 
