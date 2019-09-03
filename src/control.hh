@@ -17,15 +17,14 @@ const f kPotMoveThreshold = 0.01_f;
 
 const int kCalibrationIterations = 16;
 
-// TODO remove chan
-template<int block_size, int chan>
+template<int block_size, int CHAN>
 class ExtCVConditioner {
   SpiAdc& spi_adc_;
   f offset_, nominal_offset_;
   f slope_, nominal_slope_;
-  u0_16 lp_;
+  Average<4, 2> lp_;
 
-  f last_raw_reading() { return f::inclusive(spi_adc_.get(chan)); }
+  f last_raw_reading() { return f::inclusive(lp_.last()); }
   
 public:
   ExtCVConditioner(f o, f s, SpiAdc& spi_adc) :
@@ -34,7 +33,6 @@ public:
     spi_adc_(spi_adc) {}
 
   bool calibrate_offset() {
-    // TODO: make several reads?
     f offset = last_raw_reading();
     if ((offset / nominal_offset_ - 1_f).abs() < kCalibrationSuccessTolerance) {
       offset_ = offset;
@@ -53,12 +51,12 @@ public:
   }
 
   void Process() {
-    u0_16 x = spi_adc_.get(chan);
-    lp_ = (x);
+    u0_16 x = spi_adc_.get(CHAN);
+    lp_.Process(x);
   }
 
   f last() {
-    return (f::inclusive(lp_) - offset_) * slope_;
+    return (f::inclusive(lp_.last()) - offset_) * slope_;
   }
 };
 
