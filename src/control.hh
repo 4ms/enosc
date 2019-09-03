@@ -19,17 +19,16 @@ const int kCalibrationIterations = 16;
 
 // TODO remove chan
 template<int block_size, int chan>
-class AudioCVConditioner {
+class ExtCVConditioner {
   SpiAdc& spi_adc_;
-  // CicDecimator<1, block_size> cic_;
   f offset_, nominal_offset_;
   f slope_, nominal_slope_;
   f last_;
-  // TODO bug: should return the filtered value
-  f last_raw_reading() { return f::inclusive(spi_adc_.get_last_raw(chan)); }
+
+  f last_raw_reading() { return f::inclusive(spi_adc_.get(chan)); }
   
 public:
-  AudioCVConditioner(f o, f s, SpiAdc& spi_adc) :
+  ExtCVConditioner(f o, f s, SpiAdc& spi_adc) :
     offset_(o), nominal_offset_(o),
     slope_(s), nominal_slope_(s),
     spi_adc_(spi_adc) {}
@@ -56,8 +55,6 @@ public:
   void Process() {
     // Info: ~0.28us to execute this block (per channel), runs every 167us
     u1_15 x = spi_adc_.get(chan);
-    // TODO pb here: we can return the f value directly
-    // last_ is still useful for Ui
     last_ = f::inclusive(x);
     last_ -= offset_;
     last_ *= slope_;
@@ -261,8 +258,8 @@ class Control : public EventSource<Event> {
                              QuadraticOnePoleLp<2>, Takeover::SOFT> pitch_pot_ {adc_};
   DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT> root_pot_ {adc_};
-  AudioCVConditioner<block_size, CV_PITCH> pitch_cv_ {0.75_f, -111.7_f, spi_adc_};
-  AudioCVConditioner<block_size, CV_ROOT> root_cv_ {0.75_f, -111.7_f, spi_adc_};
+  ExtCVConditioner<block_size, CV_PITCH> pitch_cv_ {0.75_f, -111.7_f, spi_adc_};
+  ExtCVConditioner<block_size, CV_ROOT> root_cv_ {0.75_f, -111.7_f, spi_adc_};
 
   Parameters& params_;
 
