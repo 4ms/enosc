@@ -102,7 +102,7 @@ enum PCM1753Registers {
   DEEMP_DACEN_REG = 19,
   FILTER_FORMAT_REG = 20,
   ZEROFLAG_PHASE_REG = 22
-}; 
+};
 
 static void delay() {
   for (int i = 0; i < 100; ++i)

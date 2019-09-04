@@ -280,8 +280,8 @@ public:
     }
 
     for (auto [o1, o2, o] : zip(out1, out2, out)) {
-      o.l = s1_31(o1/256_f); //FixMe! do a sensible bit-shift
-      o.r = s1_31(o2/256_f);
+      o.l = s9_23(o1);
+      o.r = s9_23(o2);
     }
   }
 };
