@@ -2,7 +2,7 @@
 
 // STATIC TESTS:
 
-static_assert(65536_u == 0_u, "");
+static_assert(65536_u16 == 0_u16, "");
 static_assert(f(10_u).repr() == 10.f, "");
 static_assert(f(12495_u) == 12495_f, "");
 static_assert((32_u).min(42_u) == 32_u, "");
