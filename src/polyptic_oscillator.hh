@@ -191,8 +191,9 @@ public:
     atten1 = atten2 = atten;
 
     if (stereo_mode == LOWEST_REST) {
-      atten1 = 1_f;
-      atten2 = 0.5_f * atten;
+      // adjust attenuation to not clip the output
+      atten1 = 0.7_f;
+      atten2 = 0.6_f * atten;
     }
 
     for (auto [o1, o2] : zip(out1, out2)) {

@@ -46,6 +46,12 @@ for i in range(size):
     u = np.convolve(u, v) / resolution
 
 factors = factors * np.arange(1., size+1) - 1
+
+# exception: attenuate normalization factor for 1 oscillator. This
+# avoids clipping the output with the current (imperfect)
+# normalization
+factors[1] = -0.4
+
 data['normalization_factors'] = factors
 
 # Chebyschev polynomials
