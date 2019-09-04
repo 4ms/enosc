@@ -51,19 +51,17 @@ public:
 
     for (int i=0; i<kMaxScaleSize; ++i) {
       f freq = Freq::of_pitch(scale.get(i)).repr();
-      Buffer<f, block_size>& out = i&1 ? out1 : out2; // alternate
       (oscs_[i].*process)(freq, twist, warp,
                           modulation, 1_f, amplitudes.next(),
-                          dummy_block_, dummy_block_, out);
+                          dummy_block_, dummy_block_, out1);
     }
 
     f sum = amplitudes.sum();
-    f atten = 1_f / sum;
+    f atten = 0.5_f / sum;
     atten *= 1_f + Data::normalization_factors.interpolate_from_index(sum);
 
     for (auto [o1, o2] : zip(out1, out2)) {
-      o1 *= atten;
-      o2 *= atten;
+      o2 = o1 = o1 * atten;
     }
   }
 };
