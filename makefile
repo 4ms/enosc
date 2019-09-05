@@ -15,6 +15,7 @@ SRCS = \
 	src/drivers/leds.cc \
 	src/drivers/buttons.cc \
 	src/drivers/debug.cc \
+	src/drivers/qspi_flash.cc \
 	src/dynamic_data.cc \
 	src/main.cc \
 
