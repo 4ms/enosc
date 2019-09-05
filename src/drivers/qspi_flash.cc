@@ -1,3 +1,5 @@
+//Largely taken from CubeMX Example for QSPI_ReadWrite on the STM32F73xx DISCO
+
 #include <stm32f7xx.h>
 
 #include "qspi_flash.hh"
@@ -123,54 +125,41 @@
 #define QSPI_SR_QUADEN                   ((uint8_t)0x40)    /*!< Quad IO mode enabled if =1 */
 #define QSPI_SR_SRWREN                   ((uint8_t)0x80)    /*!< Status register write enable/disable */
 
-QSPI_HandleTypeDef QSPIHandle;
-QSPI_CommandTypeDef s_command;
-volatile enum QSPIFlashStatus QSPI_status = QSPI_STATUS_READY;
-
-//private
-static uint8_t QSPI_WriteEnable(void);
-static void QSPI_GPIO_Init_1IO(void);
-static void QSPI_GPIO_Init_IO2_IO3_AF(void);
-static uint8_t QSPI_AutoPollingMemReady(uint32_t Timeout);
-uint8_t QSPI_AutoPollingMemReady_IT(void);
-static uint8_t QSPI_EnterMemory_QPI(void);
-void QSPI_init_command(QSPI_CommandTypeDef *s_command);
-
-uint8_t QSPI_is_ready(void) { return QSPI_status == QSPI_STATUS_READY; }
-uint8_t QSPI_done_TXing(void) { return QSPI_status == QSPI_STATUS_TX_COMPLETE; }
 
 static uint8_t test_encode_num(uint32_t num)	{return (num*7) + (num>>7);}
 
 //
 // Tests one sector
 // Returns 1 if passed, 0 if failed
-uint8_t QSPI_Test_Sector(uint8_t sector_num)
+uint8_t QSpiFlash::Test_Sector(uint8_t sector_num)
 {
 	uint32_t i;
 	uint8_t test_buffer[QSPI_SECTOR_SIZE];
-	uint32_t test_addr = QSPI_get_sector_addr(sector_num);
+	uint32_t test_addr = get_sector_addr(sector_num);
 
 	for (i=0; i<QSPI_SECTOR_SIZE; i++)
 		test_buffer[i] = test_encode_num(i);
 	
 	// Initiate Erasing a sector (~18us/sector)
-	QSPI_Erase(QSPI_SECTOR, test_addr, QSPI_EXECUTE_BACKGROUND);
+	Erase(SECTOR, test_addr, EXECUTE_BACKGROUND);
 	// Free to execute code here... ~38ms
-	while (!QSPI_is_ready()) {;}
+	while (!is_ready()) {;}
 
 	// Writing with TX and chip status polling in background:
 	for (i=0; i<(QSPI_SECTOR_SIZE/QSPI_PAGE_SIZE); i++)
 	{
 		// Initiate a TX the data to be written (~30us/page typical)
-		QSPI_Write_Page(&(test_buffer[i*QSPI_PAGE_SIZE]), test_addr+i*QSPI_PAGE_SIZE, QSPI_PAGE_SIZE, QSPI_EXECUTE_BACKGROUND); 
+		Write_Page(&(test_buffer[i*QSPI_PAGE_SIZE]),
+                    test_addr+i*QSPI_PAGE_SIZE,
+                    QSPI_PAGE_SIZE, EXECUTE_BACKGROUND);
 		// Free to execute code here... ~380us/page
-		while (!QSPI_is_ready()) {;}
+		while (!is_ready()) {;}
 	}
 
 	// Initiate a RX to read a sector: ~5us/sector
-	QSPI_Read(test_buffer, test_addr, QSPI_SECTOR_SIZE, QSPI_EXECUTE_BACKGROUND);
+	Read(test_buffer, test_addr, QSPI_SECTOR_SIZE, EXECUTE_BACKGROUND);
 	// Free to execute code here... ~680-850us/sector
-	while (!QSPI_is_ready()) {;}
+	while (!is_ready()) {;}
 
 	// Verify the chip integrity by checking the data we read against our "encoding" function
 	for (i=0; i<(QSPI_SECTOR_SIZE-1); i++) {
@@ -183,18 +172,18 @@ uint8_t QSPI_Test_Sector(uint8_t sector_num)
 
 // Tests entire chip sector-by-sector
 // Returns 1 if passed, 0 if failed
-uint8_t QSPI_Test(void)
+uint8_t QSpiFlash::Test(void)
 {
 	uint8_t i;
 	for (i=0; i<QSPI_NUM_SECTORS; i++) {
-		if (QSPI_Test_Sector(i)==0)
+		if (Test_Sector(i)==0)
 			return 0; //fail
 	}
 	return 1; //pass
 }
 
 
-uint32_t QSPI_get_64kblock_addr(uint8_t block64k_num)
+uint32_t QSpiFlash::get_64kblock_addr(uint8_t block64k_num)
 {
 	if (block64k_num>=QSPI_NUM_64KBLOCKS)
 		return 0;
@@ -202,7 +191,7 @@ uint32_t QSPI_get_64kblock_addr(uint8_t block64k_num)
 	return block64k_num * QSPI_64KBLOCK_SIZE;
 }
 
-uint32_t QSPI_get_32kblock_addr(uint8_t block32k_num)
+uint32_t QSpiFlash::get_32kblock_addr(uint8_t block32k_num)
 {
 	if (block32k_num>=QSPI_NUM_32KBLOCKS)
 		return 0;
@@ -210,7 +199,7 @@ uint32_t QSPI_get_32kblock_addr(uint8_t block32k_num)
 	return block32k_num * QSPI_32KBLOCK_SIZE;
 }
 
-uint32_t QSPI_get_sector_addr(uint8_t sector_num)
+uint32_t QSpiFlash::get_sector_addr(uint8_t sector_num)
 {
 	if (sector_num>=QSPI_NUM_SECTORS)
 		return 0;
@@ -218,11 +207,11 @@ uint32_t QSPI_get_sector_addr(uint8_t sector_num)
 	return sector_num * QSPI_SECTOR_SIZE;
 }
 
-uint8_t QSPI_Init(void)
+uint8_t QSpiFlash::Init(void)
 {
-	QSPIHandle.Instance = QUADSPI;
+	handle.Instance = QUADSPI;
 
-	if (HAL_QSPI_DeInit(&QSPIHandle) != HAL_OK)
+	if (HAL_QSPI_DeInit(&handle) != HAL_OK)
 		return HAL_ERROR;
 
 	QSPI_CLK_ENABLE();
@@ -231,42 +220,42 @@ uint8_t QSPI_Init(void)
 	QSPI_RELEASE_RESET();
 
 	//Initialize chip pins in single IO mode
-	QSPI_GPIO_Init_1IO();
+	GPIO_Init_1IO();
 
 	HAL_NVIC_SetPriority(QUADSPI_IRQn, 2, 2);
 	HAL_NVIC_EnableIRQ(QUADSPI_IRQn);
 
 	/* QSPI initialization */
 	/* QSPI freq = SYSCLK /(1 + ClockPrescaler) = 216 MHz/(1+1) = 108 Mhz */
-	QSPIHandle.Init.ClockPrescaler     = 1; 
-	QSPIHandle.Init.FifoThreshold      = 16;
-	QSPIHandle.Init.SampleShifting     = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
-	QSPIHandle.Init.FlashSize          = QSPI_FLASH_SIZE_ADDRESSBITS - 1;
-	QSPIHandle.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_8_CYCLE; //was 1
-	QSPIHandle.Init.ClockMode          = QSPI_CLOCK_MODE_0;
-	QSPIHandle.Init.FlashID            = QSPI_FLASH_ID_2;
-	QSPIHandle.Init.DualFlash          = QSPI_DUALFLASH_DISABLE;
+	handle.Init.ClockPrescaler     = 1; 
+	handle.Init.FifoThreshold      = 16;
+	handle.Init.SampleShifting     = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
+	handle.Init.FlashSize          = QSPI_FLASH_SIZE_ADDRESSBITS - 1;
+	handle.Init.ChipSelectHighTime = QSPI_CS_HIGH_TIME_8_CYCLE; //was 1
+	handle.Init.ClockMode          = QSPI_CLOCK_MODE_0;
+	handle.Init.FlashID            = QSPI_FLASH_ID_2;
+	handle.Init.DualFlash          = QSPI_DUALFLASH_DISABLE;
 
-	if (HAL_QSPI_Init(&QSPIHandle) != HAL_OK)
+	if (HAL_QSPI_Init(&handle) != HAL_OK)
 		return HAL_ERROR;
 	
-	QSPI_init_command(&s_command);
+	init_command(&s_command);
 
-	QSPI_status = QSPI_STATUS_READY;
+	status = STATUS_READY;
 
-	if (QSPI_Reset()!=HAL_OK )
+	if (Reset()!=HAL_OK )
 		return HAL_ERROR;
 
-	if (QSPI_EnterMemory_QPI()!=HAL_OK )
+	if (EnterMemory_QPI()!=HAL_OK )
 		return HAL_ERROR;
 
 	// Now that chip is in QPI mode, IO2 and IO3 can be initialized
-	QSPI_GPIO_Init_IO2_IO3_AF();
+	GPIO_Init_IO2_IO3_AF();
 
 	return HAL_OK;
 }
 
-void QSPI_GPIO_Init_1IO(void)
+void QSpiFlash::GPIO_Init_1IO(void)
 {
 	GPIO_InitTypeDef gpio;
 
@@ -310,7 +299,7 @@ void QSPI_GPIO_Init_1IO(void)
 	QSPI_D3_GPIO_PORT->BSRR = QSPI_D3_PIN;
 }
 
-void QSPI_GPIO_Init_IO2_IO3_AF(void)
+void QSpiFlash::GPIO_Init_IO2_IO3_AF(void)
 {
 	GPIO_InitTypeDef gpio;
 
@@ -327,7 +316,7 @@ void QSPI_GPIO_Init_IO2_IO3_AF(void)
 	HAL_GPIO_Init(QSPI_D3_GPIO_PORT, &gpio);
 }
 
-void QSPI_init_command(QSPI_CommandTypeDef *s_command)
+void QSpiFlash::init_command(QSPI_CommandTypeDef *s_command)
 {
 	s_command->InstructionMode   = QSPI_INSTRUCTION_1_LINE;
 	s_command->AddressSize       = QSPI_ADDRESS_24_BITS;
@@ -336,7 +325,7 @@ void QSPI_init_command(QSPI_CommandTypeDef *s_command)
 	s_command->SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
 }
 
-uint8_t QSPI_Reset(void)
+uint8_t QSpiFlash::Reset(void)
 {
 	// Enable Reset
 	s_command.Instruction       = RESET_ENABLE_CMD;
@@ -345,42 +334,42 @@ uint8_t QSPI_Reset(void)
 	s_command.DataMode          = QSPI_DATA_NONE;
 	s_command.DummyCycles       = 0;
 
-	if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
 	// Perform Reset
 	s_command.Instruction = RESET_CMD;
 
-	if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
 	return HAL_OK;
 }
 
-uint8_t QSPI_Erase(enum QSPIErasableSizes size, uint32_t BaseAddress, enum QSPIUseInterruptFlags use_interrupt)
+uint8_t QSpiFlash::Erase(ErasableSizes size, uint32_t BaseAddress, UseInterruptFlags use_interrupt)
 {
 	uint8_t status;
 	uint32_t timeout;
 
-	if (size==QSPI_SECTOR) {
+	if (size==SECTOR) {
 		s_command.Instruction 	= SECTOR_ERASE_CMD;
 		s_command.Address 		= BaseAddress;
 		s_command.AddressMode   = QSPI_ADDRESS_1_LINE;
 		timeout 				= QSPI_SECTOR_ERASE_MAX_TIME_SYSTICKS;
 	}
-	else if (size==QSPI_BLOCK_32K) {
+	else if (size==BLOCK_32K) {
 		s_command.Instruction 	= BLOCK_ERASE_32K_CMD;
 		s_command.Address 		= BaseAddress;
 		s_command.AddressMode   = QSPI_ADDRESS_1_LINE;
 		timeout 				= QSPI_32KBLOCK_ERASE_MAX_TIME_SYSTICKS;
 	}
-	else if (size==QSPI_BLOCK_64K) {
+	else if (size==BLOCK_64K) {
 		s_command.Instruction 	= BLOCK_ERASE_64K_CMD;
 		s_command.Address 		= BaseAddress;
 		s_command.AddressMode   = QSPI_ADDRESS_1_LINE;
 		timeout 				= QSPI_64KBLOCK_ERASE_MAX_TIME_SYSTICKS;
 	}
-	else if (size==QSPI_ENTIRE_CHIP) {
+	else if (size==ENTIRE_CHIP) {
 		s_command.Instruction 	= BULK_ERASE_CMD;
 		s_command.Address 		= QSPI_ADDRESS_NONE;
 		s_command.AddressMode   = QSPI_ADDRESS_NONE;
@@ -393,16 +382,16 @@ uint8_t QSPI_Erase(enum QSPIErasableSizes size, uint32_t BaseAddress, enum QSPIU
 	s_command.DataMode          = QSPI_DATA_NONE;
 	s_command.DummyCycles       = 0;
 
-	if (QSPI_WriteEnable() != HAL_OK)
+	if (WriteEnable() != HAL_OK)
 		return HAL_ERROR;
 
-	if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
-	if (use_interrupt==QSPI_EXECUTE_BACKGROUND)
-		status = QSPI_AutoPollingMemReady_IT();
+	if (use_interrupt==EXECUTE_BACKGROUND)
+		status = AutoPollingMemReady_IT();
 	else 
-		status = QSPI_AutoPollingMemReady(timeout);
+		status = AutoPollingMemReady(timeout);
 	
 	if (status!=HAL_OK)
 		return HAL_ERROR;
@@ -410,7 +399,7 @@ uint8_t QSPI_Erase(enum QSPIErasableSizes size, uint32_t BaseAddress, enum QSPIU
 	return HAL_OK;
 }
 
-uint8_t QSPI_Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
+uint8_t QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 {
 	uint32_t end_addr, current_size, current_addr;
 
@@ -441,16 +430,16 @@ uint8_t QSPI_Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 		s_command.Address = current_addr;
 		s_command.NbData  = current_size;
 
-		if (QSPI_WriteEnable() != HAL_OK)
+		if (WriteEnable() != HAL_OK)
 			return HAL_ERROR;
 
-		if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+		if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 			return HAL_ERROR;
 
-		if (HAL_QSPI_Transmit(&QSPIHandle, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+		if (HAL_QSPI_Transmit(&handle, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 			return HAL_ERROR;
 
-		if (QSPI_AutoPollingMemReady(HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+		if (AutoPollingMemReady(HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 			return HAL_ERROR;
 
 		current_addr += current_size;
@@ -466,7 +455,7 @@ uint8_t QSPI_Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 // Setting use_interrupt to 1 means HAL_QSPI_TxCpltCallback() interrupt will be called when TX is done,
 // but you must still check the chip status before accessing it again.
 //
-  uint8_t QSPI_Write_Page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes, enum QSPIUseInterruptFlags use_interrupt)
+  uint8_t QSpiFlash::Write_Page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes, UseInterruptFlags use_interrupt)
 {
 	//Cannot write more than a page
 	if (num_bytes > QSPI_PAGE_SIZE)
@@ -488,37 +477,37 @@ uint8_t QSPI_Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 	s_command.Address 			= write_addr;
 	s_command.NbData  			= num_bytes;
 
-	if (QSPI_WriteEnable() != HAL_OK)
+	if (WriteEnable() != HAL_OK)
 		return HAL_ERROR;
 
-	if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
-	if (use_interrupt==QSPI_EXECUTE_BACKGROUND)
+	if (use_interrupt==EXECUTE_BACKGROUND)
 	{
-		QSPI_status = QSPI_STATUS_TXING;
+		status = STATUS_TXING;
 
-		if (HAL_QSPI_Transmit_IT(&QSPIHandle, pData) != HAL_OK)
+		if (HAL_QSPI_Transmit_IT(&handle, pData) != HAL_OK)
 			return HAL_ERROR;
 
-		while (!QSPI_done_TXing()) {;}
+		while (!done_TXing()) {;}
 
 		// Set-up auto polling, which periodically queries the chip in the background
-		QSPI_AutoPollingMemReady_IT();
+		AutoPollingMemReady_IT();
 	}
 	else
 	{
-		if (HAL_QSPI_Transmit(&QSPIHandle, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+		if (HAL_QSPI_Transmit(&handle, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 			return HAL_ERROR;
 
-		if (QSPI_AutoPollingMemReady_IT() != HAL_OK)
+		if (AutoPollingMemReady_IT() != HAL_OK)
 			return HAL_ERROR;
 	}
 
 	return HAL_OK;
 }
 
-uint8_t QSPI_Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes, enum QSPIUseInterruptFlags use_interrupt)
+uint8_t QSpiFlash::Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes, UseInterruptFlags use_interrupt)
 {
 	uint8_t status;
 
@@ -539,15 +528,15 @@ uint8_t QSPI_Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes, enum Q
 	s_command.DummyCycles       = QSPI_DUMMY_CYCLES_READ_QUAD_IO;
 	s_command.NbData            = num_bytes;
 
-	if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
-	if (use_interrupt==QSPI_EXECUTE_BACKGROUND) {
-		QSPI_status = QSPI_STATUS_RXING;
+	if (use_interrupt==EXECUTE_BACKGROUND) {
+		status = STATUS_RXING;
 
-		status = HAL_QSPI_Receive_IT(&QSPIHandle, pData);
+		status = HAL_QSPI_Receive_IT(&handle, pData);
 	} else 
-		status = HAL_QSPI_Receive(&QSPIHandle, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
+		status = HAL_QSPI_Receive(&handle, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 			
 	if (status!=HAL_OK)
 		return HAL_ERROR;
@@ -555,7 +544,7 @@ uint8_t QSPI_Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes, enum Q
 	return HAL_OK;
 }
 
-uint8_t QSPI_WriteEnable(void)
+uint8_t QSpiFlash::WriteEnable(void)
 {
 	QSPI_AutoPollingTypeDef s_config;
 
@@ -566,7 +555,7 @@ uint8_t QSPI_WriteEnable(void)
 	s_command.DataMode          = QSPI_DATA_NONE;
 	s_command.DummyCycles       = 0;
 
-	if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
 	/* Configure automatic polling mode to wait for write enabling */
@@ -580,7 +569,7 @@ uint8_t QSPI_WriteEnable(void)
 	s_command.Instruction    = READ_STATUS_REG_CMD;
 	s_command.DataMode       = QSPI_DATA_1_LINE;
 
-	if (HAL_QSPI_AutoPolling(&QSPIHandle, &s_command, &s_config, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_AutoPolling(&handle, &s_command, &s_config, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
 	return HAL_OK;
@@ -591,7 +580,7 @@ uint8_t QSPI_WriteEnable(void)
   * @param  Timeout
   * @retval None
   */
-uint8_t QSPI_AutoPollingMemReady(uint32_t Timeout)
+uint8_t QSpiFlash::AutoPollingMemReady(uint32_t Timeout)
 {
 	QSPI_AutoPollingTypeDef s_config;
 
@@ -609,7 +598,7 @@ uint8_t QSPI_AutoPollingMemReady(uint32_t Timeout)
 	s_config.Interval        = 0x10;
 	s_config.AutomaticStop   = QSPI_AUTOMATIC_STOP_ENABLE;
 
-	if (HAL_QSPI_AutoPolling(&QSPIHandle, &s_command, &s_config, Timeout) != HAL_OK)
+	if (HAL_QSPI_AutoPolling(&handle, &s_command, &s_config, Timeout) != HAL_OK)
 		return HAL_ERROR;
 
 	return HAL_OK;
@@ -621,7 +610,7 @@ uint8_t QSPI_AutoPollingMemReady(uint32_t Timeout)
   * @retval None
   */
 
-uint8_t QSPI_AutoPollingMemReady_IT(void)
+uint8_t QSpiFlash::AutoPollingMemReady_IT(void)
 {
 	QSPI_AutoPollingTypeDef s_config;
 
@@ -639,9 +628,9 @@ uint8_t QSPI_AutoPollingMemReady_IT(void)
 	s_config.Interval        = 0x10;
 	s_config.AutomaticStop   = QSPI_AUTOMATIC_STOP_ENABLE;
 
-	QSPI_status = QSPI_STATUS_WIP;
+	status = STATUS_WIP;
 
-	if (HAL_QSPI_AutoPolling_IT(&QSPIHandle, &s_command, &s_config) != HAL_OK)
+	if (HAL_QSPI_AutoPolling_IT(&handle, &s_command, &s_config) != HAL_OK)
 		return HAL_ERROR;
 
 	return HAL_OK;
@@ -652,7 +641,7 @@ uint8_t QSPI_AutoPollingMemReady_IT(void)
   * @brief  This function put QSPI memory in QPI mode (quad I/O).
   * @retval None
   */
-uint8_t QSPI_EnterMemory_QPI(void)
+uint8_t QSpiFlash::EnterMemory_QPI(void)
 {
 	QSPI_AutoPollingTypeDef  s_config;
 	uint8_t	reg;
@@ -665,7 +654,7 @@ uint8_t QSPI_EnterMemory_QPI(void)
 	s_command.DataMode          = QSPI_DATA_NONE;
 	s_command.DummyCycles       = 0;
 
-	if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
 
@@ -676,10 +665,10 @@ uint8_t QSPI_EnterMemory_QPI(void)
 	s_command.DummyCycles       = 0;
 	s_command.NbData            = 1;
 
-	if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
-	if (HAL_QSPI_Transmit(&QSPIHandle, &reg, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_Transmit(&handle, &reg, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
 	/* 40ms  Write Status/Configuration Register Cycle Time */
@@ -696,31 +685,33 @@ uint8_t QSPI_EnterMemory_QPI(void)
 	s_command.Instruction    = READ_STATUS_REG_CMD;
 	s_command.DataMode       = QSPI_DATA_1_LINE;
 
-	if (HAL_QSPI_AutoPolling(&QSPIHandle, &s_command, &s_config, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
+	if (HAL_QSPI_AutoPolling(&handle, &s_command, &s_config, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
 
 	return HAL_OK;
 }
 
 
+// Callbacks & IRQ handlers
+
 void HAL_QSPI_StatusMatchCallback(QSPI_HandleTypeDef *hqspi)
 {
-	QSPI_status = QSPI_STATUS_READY;
+  QSpiFlash::instance_->status = QSpiFlash::STATUS_READY;
 }
 
 void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
 {
-	if (QSPI_status == QSPI_STATUS_RXING)
-		QSPI_status = QSPI_STATUS_READY;
+	if (QSpiFlash::instance_->status == QSpiFlash::STATUS_RXING)
+		QSpiFlash::instance_->status = QSpiFlash::STATUS_READY;
 }
 
 void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
 {
-	if (QSPI_status == QSPI_STATUS_TXING)
-		QSPI_status = QSPI_STATUS_TX_COMPLETE;
+	if (QSpiFlash::instance_->status == QSpiFlash::STATUS_TXING)
+		QSpiFlash::instance_->status = QSpiFlash::STATUS_TX_COMPLETE;
 }
 
 void QUADSPI_IRQHandler(void)
 {
-	HAL_QSPI_IRQHandler(&QSPIHandle);
+	HAL_QSPI_IRQHandler(&QSpiFlash::instance_->handle);
 }
