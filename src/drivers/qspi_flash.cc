@@ -1,7 +1,5 @@
 //Largely taken from CubeMX Example for QSPI_ReadWrite on the STM32F73xx DISCO
-
-#include <stm32f7xx.h>
-
+#include "hal.hh"
 #include "qspi_flash.hh"
 
 //IS25LQ020B
@@ -207,12 +205,13 @@ uint32_t QSpiFlash::get_sector_addr(uint8_t sector_num)
 	return sector_num * QSPI_SECTOR_SIZE;
 }
 
-uint8_t QSpiFlash::Init(void)
+QSpiFlash::QSpiFlash()
 {
+  instance_ = this;
+
 	handle.Instance = QUADSPI;
 
-	if (HAL_QSPI_DeInit(&handle) != HAL_OK)
-		return HAL_ERROR;
+	hal_assert(HAL_QSPI_DeInit(&handle));
 
 	QSPI_CLK_ENABLE();
 
@@ -236,23 +235,17 @@ uint8_t QSpiFlash::Init(void)
 	handle.Init.FlashID            = QSPI_FLASH_ID_2;
 	handle.Init.DualFlash          = QSPI_DUALFLASH_DISABLE;
 
-	if (HAL_QSPI_Init(&handle) != HAL_OK)
-		return HAL_ERROR;
-	
+	hal_assert(HAL_QSPI_Init(&handle));
+
 	init_command(&s_command);
 
 	status = STATUS_READY;
 
-	if (Reset()!=HAL_OK )
-		return HAL_ERROR;
-
-	if (EnterMemory_QPI()!=HAL_OK )
-		return HAL_ERROR;
+	hal_assert(Reset());
+	hal_assert(EnterMemory_QPI());
 
 	// Now that chip is in QPI mode, IO2 and IO3 can be initialized
 	GPIO_Init_IO2_IO3_AF();
-
-	return HAL_OK;
 }
 
 void QSpiFlash::GPIO_Init_1IO(void)
@@ -325,7 +318,7 @@ void QSpiFlash::init_command(QSPI_CommandTypeDef *s_command)
 	s_command->SIOOMode          = QSPI_SIOO_INST_EVERY_CMD;
 }
 
-uint8_t QSpiFlash::Reset(void)
+HAL_StatusTypeDef QSpiFlash::Reset(void)
 {
 	// Enable Reset
 	s_command.Instruction       = RESET_ENABLE_CMD;
@@ -641,7 +634,7 @@ uint8_t QSpiFlash::AutoPollingMemReady_IT(void)
   * @brief  This function put QSPI memory in QPI mode (quad I/O).
   * @retval None
   */
-uint8_t QSpiFlash::EnterMemory_QPI(void)
+HAL_StatusTypeDef QSpiFlash::EnterMemory_QPI(void)
 {
 	QSPI_AutoPollingTypeDef  s_config;
 	uint8_t	reg;

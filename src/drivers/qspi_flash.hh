@@ -39,7 +39,7 @@ private:
   void GPIO_Init_IO2_IO3_AF(void);
   uint8_t AutoPollingMemReady(uint32_t Timeout);
   uint8_t AutoPollingMemReady_IT(void);
-  uint8_t EnterMemory_QPI(void);
+  HAL_StatusTypeDef EnterMemory_QPI(void);
   void init_command(QSPI_CommandTypeDef *s_command);
 
   uint8_t done_TXing(void) { return status == STATUS_TX_COMPLETE; }
@@ -47,6 +47,7 @@ private:
   static uint8_t test_encode_num(uint32_t num)	{return (num*7) + (num>>7);}
 
 public:
+  QSpiFlash();
 
   uint8_t is_ready(void) { return status == STATUS_READY; }
 
@@ -57,8 +58,7 @@ public:
   uint32_t get_32kblock_addr(uint8_t block32k_num);
   uint32_t get_sector_addr(uint8_t sector_num);
 
-  uint8_t Init(void);
-  uint8_t Reset(void);
+  HAL_StatusTypeDef Reset(void);
 
   uint8_t Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes, UseInterruptFlags use_interrupt);
   uint8_t Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes);
