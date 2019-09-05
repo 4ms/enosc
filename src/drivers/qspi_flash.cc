@@ -124,12 +124,10 @@
 #define QSPI_SR_SRWREN                   ((uint8_t)0x80)    /*!< Status register write enable/disable */
 
 
-static uint8_t test_encode_num(uint32_t num)	{return (num*7) + (num>>7);}
-
 //
 // Tests one sector
 // Returns 1 if passed, 0 if failed
-uint8_t QSpiFlash::Test_Sector(uint8_t sector_num)
+bool QSpiFlash::Test_Sector(uint8_t sector_num)
 {
 	uint32_t i;
 	uint8_t test_buffer[QSPI_SECTOR_SIZE];
@@ -162,22 +160,22 @@ uint8_t QSpiFlash::Test_Sector(uint8_t sector_num)
 	// Verify the chip integrity by checking the data we read against our "encoding" function
 	for (i=0; i<(QSPI_SECTOR_SIZE-1); i++) {
 		if (test_buffer[i] != test_encode_num(i))
-			return 0; //fail
+			return false; //fail
 	}
 
-	return 1; //pass
+	return true; //pass
 }
 
 // Tests entire chip sector-by-sector
 // Returns 1 if passed, 0 if failed
-uint8_t QSpiFlash::Test(void)
+bool QSpiFlash::Test()
 {
 	uint8_t i;
 	for (i=0; i<QSPI_NUM_SECTORS; i++) {
 		if (Test_Sector(i)==0)
-			return 0; //fail
+			return false; //fail
 	}
-	return 1; //pass
+	return true; //pass
 }
 
 
@@ -339,7 +337,7 @@ HAL_StatusTypeDef QSpiFlash::Reset(void)
 	return HAL_OK;
 }
 
-uint8_t QSpiFlash::Erase(ErasableSizes size, uint32_t BaseAddress, UseInterruptFlags use_interrupt)
+bool QSpiFlash::Erase(ErasableSizes size, uint32_t BaseAddress, UseInterruptFlags use_interrupt)
 {
 	uint8_t status;
 	uint32_t timeout;
@@ -369,17 +367,17 @@ uint8_t QSpiFlash::Erase(ErasableSizes size, uint32_t BaseAddress, UseInterruptF
 		timeout 				= QSPI_CHIP_ERASE_MAX_TIME_SYSTICKS;
 	}
 	else  
-		return HAL_ERROR; //invalid size
+		return false; //invalid size
 
 	s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
 	s_command.DataMode          = QSPI_DATA_NONE;
 	s_command.DummyCycles       = 0;
 
 	if (WriteEnable() != HAL_OK)
-		return HAL_ERROR;
+		return false;
 
 	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-		return HAL_ERROR;
+		return false;
 
 	if (use_interrupt==EXECUTE_BACKGROUND)
 		status = AutoPollingMemReady_IT();
@@ -387,12 +385,12 @@ uint8_t QSpiFlash::Erase(ErasableSizes size, uint32_t BaseAddress, UseInterruptF
 		status = AutoPollingMemReady(timeout);
 	
 	if (status!=HAL_OK)
-		return HAL_ERROR;
+		return false;
 
-	return HAL_OK;
+	return false;
 }
 
-uint8_t QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
+bool QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 {
 	uint32_t end_addr, current_size, current_addr;
 
@@ -424,23 +422,23 @@ uint8_t QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes
 		s_command.NbData  = current_size;
 
 		if (WriteEnable() != HAL_OK)
-			return HAL_ERROR;
+			return false;
 
 		if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-			return HAL_ERROR;
+			return false;
 
 		if (HAL_QSPI_Transmit(&handle, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-			return HAL_ERROR;
+			return false;
 
 		if (AutoPollingMemReady(HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-			return HAL_ERROR;
+			return false;
 
 		current_addr += current_size;
 		pData += current_size;
 		current_size = ((current_addr + QSPI_PAGE_SIZE) > end_addr) ? (end_addr - current_addr) : QSPI_PAGE_SIZE;
 	} while (current_addr < end_addr);
 
-	return HAL_OK;
+	return true;
 }
 
 // Writes within a page (256 Bytes)
@@ -448,7 +446,7 @@ uint8_t QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes
 // Setting use_interrupt to 1 means HAL_QSPI_TxCpltCallback() interrupt will be called when TX is done,
 // but you must still check the chip status before accessing it again.
 //
-  uint8_t QSpiFlash::Write_Page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes, UseInterruptFlags use_interrupt)
+  bool QSpiFlash::Write_Page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes, UseInterruptFlags use_interrupt)
 {
 	//Cannot write more than a page
 	if (num_bytes > QSPI_PAGE_SIZE)
@@ -459,7 +457,7 @@ uint8_t QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes
 
 	//Cannot cross page boundaries
 	if (start_page != end_page)
-		return HAL_ERROR;
+		return false;
 
 	// Initialize the program command
 	s_command.Instruction       = QUAD_IN_FAST_PROG_CMD;
@@ -471,17 +469,17 @@ uint8_t QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes
 	s_command.NbData  			= num_bytes;
 
 	if (WriteEnable() != HAL_OK)
-		return HAL_ERROR;
+		return false;
 
 	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-		return HAL_ERROR;
+		return false;
 
 	if (use_interrupt==EXECUTE_BACKGROUND)
 	{
 		status = STATUS_TXING;
 
 		if (HAL_QSPI_Transmit_IT(&handle, pData) != HAL_OK)
-			return HAL_ERROR;
+			return false;
 
 		while (!done_TXing()) {;}
 
@@ -491,16 +489,16 @@ uint8_t QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes
 	else
 	{
 		if (HAL_QSPI_Transmit(&handle, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
-			return HAL_ERROR;
+			return false;
 
 		if (AutoPollingMemReady_IT() != HAL_OK)
-			return HAL_ERROR;
+			return false;
 	}
 
-	return HAL_OK;
+	return true;
 }
 
-uint8_t QSpiFlash::Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes, UseInterruptFlags use_interrupt)
+bool QSpiFlash::Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes, UseInterruptFlags use_interrupt)
 {
 	uint8_t status;
 
@@ -532,12 +530,12 @@ uint8_t QSpiFlash::Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes, 
 		status = HAL_QSPI_Receive(&handle, pData, HAL_QPSI_TIMEOUT_DEFAULT_VALUE);
 			
 	if (status!=HAL_OK)
-		return HAL_ERROR;
+		return false;
 
-	return HAL_OK;
+	return true;
 }
 
-uint8_t QSpiFlash::WriteEnable(void)
+HAL_StatusTypeDef QSpiFlash::WriteEnable(void)
 {
 	QSPI_AutoPollingTypeDef s_config;
 
@@ -573,7 +571,7 @@ uint8_t QSpiFlash::WriteEnable(void)
   * @param  Timeout
   * @retval None
   */
-uint8_t QSpiFlash::AutoPollingMemReady(uint32_t Timeout)
+HAL_StatusTypeDef QSpiFlash::AutoPollingMemReady(uint32_t Timeout)
 {
 	QSPI_AutoPollingTypeDef s_config;
 
@@ -603,7 +601,7 @@ uint8_t QSpiFlash::AutoPollingMemReady(uint32_t Timeout)
   * @retval None
   */
 
-uint8_t QSpiFlash::AutoPollingMemReady_IT(void)
+HAL_StatusTypeDef QSpiFlash::AutoPollingMemReady_IT(void)
 {
 	QSPI_AutoPollingTypeDef s_config;
 
@@ -684,6 +682,7 @@ HAL_StatusTypeDef QSpiFlash::EnterMemory_QPI(void)
 	return HAL_OK;
 }
 
+QSpiFlash *QSpiFlash::instance_;
 
 // Callbacks & IRQ handlers
 
