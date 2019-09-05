@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include <stm32f7xx.h>
-
 enum QSPIErasableSizes {
 	QSPI_SECTOR,
 	QSPI_BLOCK_32K,

@@ -1,5 +1,6 @@
-#include "qspi_flash_driver.h"
-#include "gpio_pins.h"
+#include <stm32f7xx.h>
+
+#include "qspi_flash.hh"
 
 //IS25LQ020B
 #define QSPI_FLASH_SIZE_ADDRESSBITS      24 		// 24 address bits = 2 Mbits
@@ -486,13 +487,12 @@ uint8_t QSPI_Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 	s_command.DummyCycles       = 0;
 	s_command.Address 			= write_addr;
 	s_command.NbData  			= num_bytes;
-	DEBUG1_ON;
+
 	if (QSPI_WriteEnable() != HAL_OK)
 		return HAL_ERROR;
 
 	if (HAL_QSPI_Command(&QSPIHandle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return HAL_ERROR;
-	DEBUG1_OFF;
 
 	if (use_interrupt==QSPI_EXECUTE_BACKGROUND)
 	{
@@ -683,7 +683,7 @@ uint8_t QSPI_EnterMemory_QPI(void)
 		return HAL_ERROR;
 
 	/* 40ms  Write Status/Configuration Register Cycle Time */
-	HAL_Delay( 40 );
+	HAL_Delay(8);
 
 	/* Configure automatic polling mode to wait the QUADEN bit=1 and WIP bit=0 */
 	s_config.Match           = QSPI_SR_QUADEN;
