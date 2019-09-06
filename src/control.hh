@@ -246,7 +246,7 @@ class Control : public EventSource<Event> {
     f spread_offset = 0.00129703665_f;
   } default_calibration_data_;
 
-  PersistentStorage<CalibrationData> calibration_data_ { default_calibration_data_ };
+  Persistent<CalibrationData> calibration_data_ { default_calibration_data_ };
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>
