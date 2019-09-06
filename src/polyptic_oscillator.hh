@@ -233,7 +233,9 @@ public:
   bool disable_learn() {
     disable_pre_listen();
     bool wrap_octave = params_.scale.mode == OCTAVE;
-    return pre_scale_.copy_to(current_scale_, wrap_octave);
+    bool success = pre_scale_.copy_to(current_scale_, wrap_octave);
+    if (success) quantizer_.Save();
+    return success;
   }
 
   bool new_note(f x) {
@@ -258,6 +260,7 @@ public:
 
   void reset_current_scale() {
     quantizer_.reset_scale(params_.scale);
+    quantizer_.Save();
   }
 
   void Process(Buffer<Frame, block_size>& out) {

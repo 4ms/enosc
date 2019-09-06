@@ -107,8 +107,6 @@ public:
 class Quantizer {
   using ScaleTable = std::array<std::array<Scale, kScaleNr>, kBankNr>;
 
-  ScaleTable scales_;
-
   ScaleTable const default_scales_ = {{{{
           // 12TET
           {0_f, 12_f},              // octave
@@ -197,15 +195,9 @@ class Quantizer {
           { 0_f, 0.638_f },
         }}}};
 
+  Persistent<ScaleTable> scales_ {default_scales_};
+
 public:
-  Quantizer() {
-    // copy default scales to actual scales
-    for (int i=0; i<kBankNr; ++i) {
-      for (int j=0; j<kScaleNr; ++j) {
-        scales_[i][j].copy_from(default_scales_[i][j]);
-      }
-    }
-  }
 
   void reset_scale(Parameters::Scale scale) {
     int i=scale.mode;
@@ -215,5 +207,9 @@ public:
 
   Scale *get_scale(Parameters::Scale scale) {
     return &scales_[scale.mode][scale.value];
+  }
+
+  void Save() {
+    scales_.Save();
   }
 };
