@@ -11,7 +11,7 @@ struct PitchPair {
   f p1, p2, crossfade;
 };
 
-class Scale : Nocopy {
+class Scale {
   // scale_[0] = 0, contains [size_] sorted elements
   f scale_[kMaxScaleSize];
   int size_ = 0;
@@ -50,14 +50,11 @@ public:
   }
 
   void copy_from(const Scale& g) {
-    size_ = g.size_;
-    std::copy(std::begin(g.scale_), std::end(g.scale_), scale_);
+    *this = g;
   }
 };
 
-class PreScale : Nocopy {
-  f scale_[kMaxScaleSize];
-  int size_ = 0;
+class PreScale : Scale {
 public:
   bool add(f x) {
     if (size_ < kMaxScaleSize-2) { // -2: if Octave wrap, will add one
@@ -99,8 +96,7 @@ public:
 
     if (size_ > 1) {
       // copy to real scale
-      std::copy(scale_, scale_+size_, g->scale_);
-      g->size_=size_;
+      *g = *this;
       return true;
     } else {
       return false;
