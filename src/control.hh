@@ -4,6 +4,7 @@
 #include "spi_adc.hh"
 #include "dsp.hh"
 #include "event_handler.hh"
+#include "persistent_storage.hh"
 
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
@@ -232,31 +233,59 @@ class Control : public EventSource<Event> {
   Adc adc_;
   SpiAdc spi_adc_;
 
+  struct CalibrationData {
+    f pitch_offset = 0.75_f;
+    f pitch_slope = -111.7_f;
+    f root_offset = 0.75_f;
+    f root_slope = -111.7_f;
+    f warp_offset = 0.000183111057_f;
+    f balance_offset = 0.000793481246_f;
+    f twist_offset = 0.00189214759_f;
+    f scale_offset = 0.00146488845_f;
+    f modulation_offset = -0.00106814783_f;
+    f spread_offset = 0.00129703665_f;
+  } default_calibration_data_;
+
+  PersistentStorage<CalibrationData> calibration_data_ { default_calibration_data_ };
+
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
-                NoCVInput, QuadraticOnePoleLp<1>> detune_ {adc_, 0_f};
+                NoCVInput, QuadraticOnePoleLp<1>
+                > detune_ {adc_, 0_f};
   PotCVCombiner<DualFunctionPotConditioner<POT_WARP, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>> warp_ {adc_, 0.000183111057_f};
+                CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>
+                > warp_ {adc_, calibration_data_.warp_offset};
   PotCVCombiner<DualFunctionPotConditioner<POT_BALANCE, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_BALANCE>, QuadraticOnePoleLp<2>> balance_ {adc_, 0.000793481246_f};
+                CVConditioner<CV_BALANCE>, QuadraticOnePoleLp<2>
+                > balance_ {adc_, calibration_data_.balance_offset};
   PotCVCombiner<DualFunctionPotConditioner<POT_TWIST, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_TWIST>, QuadraticOnePoleLp<1>> twist_ {adc_, 0.00189214759_f};
+                CVConditioner<CV_TWIST>, QuadraticOnePoleLp<1>
+                > twist_ {adc_, calibration_data_.twist_offset};
   PotCVCombiner<PotConditioner<POT_SCALE, Law::LINEAR, NoFilter>,
-                CVConditioner<CV_SCALE>, QuadraticOnePoleLp<1>> scale_ {adc_, 0.00146488845_f};
+                CVConditioner<CV_SCALE>, QuadraticOnePoleLp<1>
+                > scale_ {adc_, calibration_data_.twist_offset};
   PotCVCombiner<PotConditioner<POT_MOD, Law::LINEAR, NoFilter>,
-                CVConditioner<CV_MOD>, QuadraticOnePoleLp<1>> mod_ {adc_, -0.00106814783_f};
+                CVConditioner<CV_MOD>, QuadraticOnePoleLp<1>
+                > modulation_ {adc_, calibration_data_.modulation_offset};
   PotCVCombiner<DualFunctionPotConditioner<POT_SPREAD, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
-                CVConditioner<CV_SPREAD>, QuadraticOnePoleLp<1>> spread_ {adc_, 0.00129703665_f};
+                CVConditioner<CV_SPREAD>, QuadraticOnePoleLp<1>
+                > spread_ {adc_, calibration_data_.spread_offset};
 
   DualFunctionPotConditioner<POT_PITCH, Law::LINEAR,
-                             QuadraticOnePoleLp<2>, Takeover::SOFT> pitch_pot_ {adc_};
+                             QuadraticOnePoleLp<2>, Takeover::SOFT
+                             > pitch_pot_ {adc_};
   DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
-                             QuadraticOnePoleLp<2>, Takeover::SOFT> root_pot_ {adc_};
-  ExtCVConditioner<CV_PITCH, Average<4, 2>> pitch_cv_ {0.75_f, -111.7_f, spi_adc_};
-  ExtCVConditioner<CV_ROOT, Average<4, 2>> root_cv_ {0.75_f, -111.7_f, spi_adc_};
+                             QuadraticOnePoleLp<2>, Takeover::SOFT
+                             > root_pot_ {adc_};
+  ExtCVConditioner<CV_PITCH, Average<4, 2>
+                   > pitch_cv_ {calibration_data_.pitch_offset,
+                                calibration_data_.pitch_slope, spi_adc_};
+  ExtCVConditioner<CV_ROOT, Average<4, 2>
+                   > root_cv_ {calibration_data_.root_offset,
+                               calibration_data_.root_slope, spi_adc_};
 
   Parameters& params_;
 
@@ -348,7 +377,7 @@ public:
     }
 
     // MODULATION
-    { f mod = mod_.Process(put);
+    { f mod = modulation_.Process(put);
       // avoids CV noise to produce harmonics near 0
       mod = Signal::crop_down(0.01_f, mod);
       mod *= 6_f / f(params_.numOsc);
@@ -446,11 +475,13 @@ public:
       && balance_.cv_.calibrate_offset()
       && twist_.cv_.calibrate_offset()
       && scale_.cv_.calibrate_offset()
-      && mod_.cv_.calibrate_offset()
+      && modulation_.cv_.calibrate_offset()
       && spread_.cv_.calibrate_offset();
   }
   bool CalibrateSlope() {
-    return pitch_cv_.calibrate_slope()
+    bool success = pitch_cv_.calibrate_slope()
       && root_cv_.calibrate_slope();
+    if (success) calibration_data_.Save();
+    return success;
   }
 };
