@@ -325,7 +325,7 @@ public:
         crossfade *= crossfade;
         crossfade = 1_f - crossfade;
         crossfade *= 0.5_f;
-        params_.crossfade_factor = crossfade; // 0..1
+        params_.alt.crossfade_factor = crossfade; // 0..1
       }
     }
 
@@ -350,8 +350,8 @@ public:
       if (freeze_mode > 0_f) {
         freeze_mode *= 3_f;           // 3 split modes
         SplitMode m = static_cast<SplitMode>(freeze_mode.floor());
-        if (m != params_.freeze_mode) put({AltParamChange, m});
-        params_.freeze_mode = m;
+        if (m != params_.alt.freeze_mode) put({AltParamChange, m});
+        params_.alt.freeze_mode = m;
       }
     }
 
@@ -371,8 +371,8 @@ public:
       if (stereo_mode > 0_f) {
         stereo_mode *= 3_f;           // 3 split modes
         SplitMode m = static_cast<SplitMode>(stereo_mode.floor());
-        if (m != params_.stereo_mode) put({AltParamChange, m});
-        params_.stereo_mode = m;
+        if (m != params_.alt.stereo_mode) put({AltParamChange, m});
+        params_.alt.stereo_mode = m;
       }
     }
 
@@ -380,7 +380,7 @@ public:
     { f mod = modulation_.Process(put);
       // avoids CV noise to produce harmonics near 0
       mod = Signal::crop_down(0.01_f, mod);
-      mod *= 6_f / f(params_.numOsc);
+      mod *= 6_f / f(params_.alt.numOsc);
       if (params_.modulation.mode == ONE) {
         mod *= 0.9_f;
       } else if (params_.modulation.mode == TWO) {
@@ -401,8 +401,8 @@ public:
         numOsc *= f(kMaxNumOsc-1); // [0..max]
         numOsc += 1.5_f;           // [1.5..max+0.5]
         int n = numOsc.floor();    // [1..max]
-        if (n != params_.numOsc) put({AltParamChange, n});
-        params_.numOsc = n;
+        if (n != params_.alt.numOsc) put({AltParamChange, n});
+        params_.alt.numOsc = n;
       }
     }
 

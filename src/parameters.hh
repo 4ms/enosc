@@ -46,12 +46,12 @@ struct Parameters {
     f value;                    // 0..1
   } warp;
 
-  // Alt. parameters
-
-  int numOsc = kMaxNumOsc;      // 0..kMaxNumOsc
-  SplitMode stereo_mode = ALTERNATE;
-  SplitMode freeze_mode = LOW_HIGH;
-  f crossfade_factor = 0.125_f;
+  struct AltParameters {
+    int numOsc = kMaxNumOsc;      // 0..kMaxNumOsc
+    SplitMode stereo_mode = ALTERNATE;
+    SplitMode freeze_mode = LOW_HIGH;
+    f crossfade_factor = 0.125_f;
+  } alt;
 
   f new_note, fine_tune;
 };

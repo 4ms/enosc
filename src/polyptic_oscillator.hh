@@ -146,7 +146,7 @@ public:
     out1.fill(0_f);
     out2.fill(0_f);
 
-    int numOsc = params.numOsc;
+    int numOsc = params.alt.numOsc;
 
     AmplitudeAccumulator amplitude {params.balance, f(numOsc)};
     FrequencyAccumulator frequency {scale, params.root, params.pitch,
@@ -160,9 +160,9 @@ public:
     f warp = params.warp.value;
     f modulation = params.modulation.value;
 
-    f crossfade_factor = params.crossfade_factor;
-    SplitMode stereo_mode = params.stereo_mode;
-    SplitMode freeze_mode = params.freeze_mode;
+    f crossfade_factor = params.alt.crossfade_factor;
+    SplitMode stereo_mode = params.alt.stereo_mode;
+    SplitMode freeze_mode = params.alt.freeze_mode;
     ModulationMode modulation_mode = params.modulation.mode;
 
     for (int i=0; i<kMaxNumOsc; ++i) {
