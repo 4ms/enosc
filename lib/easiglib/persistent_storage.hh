@@ -1,3 +1,4 @@
+#pragma once
 
 template <class T>
 class PersistentStorage : public T {
