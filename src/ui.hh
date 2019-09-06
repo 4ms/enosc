@@ -423,8 +423,8 @@ public:
       freeze_led_.set_glow(Colors::red, 2_f);
     } else {
       mode_ = NORMAL;
-      learn_led_.set_background(Colors::dark_yellow);
-      freeze_led_.set_background(Colors::dark_yellow);
+      learn_led_.set_background(Colors::dark_dark_yellow);
+      freeze_led_.set_background(Colors::dark_dark_yellow);
     }
   }
 

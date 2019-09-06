@@ -58,6 +58,7 @@ struct Colors {
   static constexpr Color dark_green = green.blend(black);
   static constexpr Color dark_blue = blue.blend(black);
   static constexpr Color dark_yellow = yellow.blend(black);
+  static constexpr Color dark_dark_yellow = dark_yellow.blend(black);
   static constexpr Color dark_magenta = magenta.blend(black);
   static constexpr Color dark_cyan = cyan.blend(black);
 };
