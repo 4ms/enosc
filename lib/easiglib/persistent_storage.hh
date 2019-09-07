@@ -9,6 +9,11 @@ public:
   }
 
   void Save() {
-    // save data_
+    // save
+  }
+
+  void Save(T const &data) {
+    *this = data;
+    Save();
   }
 };
