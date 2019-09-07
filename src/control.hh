@@ -244,9 +244,9 @@ class Control : public EventSource<Event> {
     f scale_offset = 0.00146488845_f;
     f modulation_offset = -0.00106814783_f;
     f spread_offset = 0.00129703665_f;
-  } default_calibration_data_;
+  } calibration_data_;
 
-  Persistent<CalibrationData> calibration_data_ { default_calibration_data_ };
+  Persistent<CalibrationData> calibration_data_storage_ { calibration_data_, calibration_data_ };
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>
@@ -481,7 +481,7 @@ public:
   bool CalibrateSlope() {
     bool success = pitch_cv_.calibrate_slope()
       && root_cv_.calibrate_slope();
-    if (success) calibration_data_.Save();
+    if (success) calibration_data_storage_.Save();
     return success;
   }
 };

@@ -195,7 +195,8 @@ class Quantizer {
           { 0_f, 0.638_f },
         }}}};
 
-  Persistent<ScaleTable> scales_ {default_scales_};
+  ScaleTable scales_;
+  Persistent<ScaleTable> scales_storage_ {scales_, default_scales_};
 
 public:
 
@@ -210,6 +211,6 @@ public:
   }
 
   void Save() {
-    scales_.Save();
+    scales_storage_.Save();
   }
 };

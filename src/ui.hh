@@ -108,7 +108,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   Leds leds_;
   PolypticOscillator<block_size> osc_ {params_};
 
-  Persistent<Parameters::AltParameters> alt_params_ {params_.alt};
+  Persistent<Parameters::AltParameters> alt_params_ {params_.alt, params_.alt};
 
   static constexpr int kProcessRate = kSampleRate / block_size;
   static constexpr int kLongPressTime = 2.0f * kProcessRate; // sec
@@ -285,7 +285,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             // Released after a change
             mode_ = NORMAL;
             control_.all_main_function();
-            alt_params_.Save(params_.alt);
+            alt_params_.Save();
             freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
           }
         }

@@ -1,19 +1,16 @@
 #pragma once
 
 template <class T>
-class Persistent : public T {
+class Persistent {
+  T& data_;
   static constexpr int size = sizeof(T);
 public:
-  Persistent(T const &default_data) : T(default_data) {
-    // load into data_, failing back to default_data if not found
+  Persistent(T &data, T const &default_data) : data_(data) {
+    // load to data_, failing back to default_data if not found
+    data = default_data;
   }
 
   void Save() {
     // save
-  }
-
-  void Save(T const &data) {
-    *this = data;
-    Save();
   }
 };
