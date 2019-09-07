@@ -11,6 +11,7 @@ struct Main :
   System<kUiUpdateRate, Main>,
   Math,
   DynamicData,
+  QSpiFlash,
   Dac<kSampleRate, kBlockSize, Main>,
   Ui<kUiUpdateRate, kBlockSize> {
 
