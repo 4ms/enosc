@@ -1,5 +1,11 @@
-
 #pragma once
+
+#define QSPI_FLASH_SIZE_BYTES            0x40000 	// 256 KBytes
+#define QSPI_64KBLOCK_SIZE               0x10000  	// 64 KBytes, hence the name "64K Block" :)
+#define QSPI_32KBLOCK_SIZE               0x8000   	// 32 KBytes, hence the name "32K Block" :)
+#define QSPI_SECTOR_SIZE                 0x1000   	// 4 KBytes sectors
+#define QSPI_PAGE_SIZE                   0x100    	// 256 Byte pages
+#define QSPI_PAGE_ADDRESS_BITS           8    		// 8 bits = 256 addresses per page
 
 class QSpiFlash {
 
@@ -54,9 +60,9 @@ public:
   bool Test(void);
   bool Test_Sector(uint8_t sector_num);
 
-  uint32_t get_64kblock_addr(uint8_t block64k_num);
-  uint32_t get_32kblock_addr(uint8_t block32k_num);
-  uint32_t get_sector_addr(uint8_t sector_num);
+  static uint32_t get_64kblock_addr(uint8_t block64k_num);
+  static uint32_t get_32kblock_addr(uint8_t block32k_num);
+  static uint32_t get_sector_addr(uint8_t sector_num);
 
   HAL_StatusTypeDef Reset(void);
 
@@ -68,7 +74,23 @@ public:
 
   bool Erase(ErasableSizes size, uint32_t BaseAddress, UseInterruptFlags use_interrupt);
 
-
   static QSpiFlash *instance_;
 
+};
+
+template<int block_nr>
+struct FlashBlock {
+  static constexpr int size_ = QSPI_32KBLOCK_SIZE;
+
+  static bool Read(uint8_t *data, int size) {
+    while(!QSpiFlash::instance_->is_ready());
+    return QSpiFlash::instance_->Read(data, QSpiFlash::get_32kblock_addr(block_nr),
+                                      size, QSpiFlash::EXECUTE_BACKGROUND);
+  }
+
+  static bool Write(uint8_t *data, int size) {
+    while(!QSpiFlash::instance_->is_ready());
+    return QSpiFlash::instance_->Write_Page(data, QSpiFlash::get_32kblock_addr(block_nr),
+                                            size, QSpiFlash::EXECUTE_BACKGROUND);
+  }
 };

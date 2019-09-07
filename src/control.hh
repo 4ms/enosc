@@ -5,6 +5,7 @@
 #include "dsp.hh"
 #include "event_handler.hh"
 #include "persistent_storage.hh"
+#include "qspi_flash.hh"
 
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
@@ -262,7 +263,8 @@ class Control : public EventSource<Event> {
     }
   } calibration_data_;
 
-  Persistent<CalibrationData> calibration_data_storage_ { calibration_data_, calibration_data_ };
+  Persistent<CalibrationData, FlashBlock<0>>
+  calibration_data_storage_ {&calibration_data_, calibration_data_};
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>
