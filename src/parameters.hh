@@ -51,6 +51,19 @@ struct Parameters {
     SplitMode stereo_mode = ALTERNATE;
     SplitMode freeze_mode = LOW_HIGH;
     f crossfade_factor = 0.125_f;
+    bool validate() {
+      return
+        numOsc <= kMaxNumOsc &&
+        numOsc > 0 &&
+        ( stereo_mode == ALTERNATE ||
+          stereo_mode == LOW_HIGH ||
+          stereo_mode == LOWEST_REST ) &&
+        ( freeze_mode == ALTERNATE ||
+          freeze_mode == LOW_HIGH ||
+          freeze_mode == LOWEST_REST ) &&
+        crossfade_factor <= 1_f &&
+        crossfade_factor >= 0_f;
+    }
   } alt;
 
   f new_note, fine_tune;

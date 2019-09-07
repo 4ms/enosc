@@ -14,6 +14,7 @@ const f kNewNoteFineRange = 4_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Voltage = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
+const f kCalibrationSuccessToleranceOffset = 0.1_f;
 const f kPotMoveThreshold = 0.01_f;
 
 const int kCalibrationIterations = 16;
@@ -244,6 +245,21 @@ class Control : public EventSource<Event> {
     f scale_offset = 0.00146488845_f;
     f modulation_offset = -0.00106814783_f;
     f spread_offset = 0.00129703665_f;
+
+    // on load, checks that calibration data are within bounds
+    bool validate() {
+      return
+        (pitch_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
+        (pitch_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        (root_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
+        (root_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        warp_offset.abs() <= kCalibrationSuccessToleranceOffset &&
+        balance_offset.abs() <= kCalibrationSuccessToleranceOffset &&
+        twist_offset.abs() <= kCalibrationSuccessToleranceOffset &&
+        scale_offset.abs() <= kCalibrationSuccessToleranceOffset &&
+        modulation_offset.abs() <= kCalibrationSuccessToleranceOffset &&
+        spread_offset.abs() <= kCalibrationSuccessToleranceOffset;
+    }
   } calibration_data_;
 
   Persistent<CalibrationData> calibration_data_storage_ { calibration_data_, calibration_data_ };

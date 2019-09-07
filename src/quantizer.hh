@@ -23,6 +23,13 @@ public:
     std::copy(scale.begin(), scale.end(), scale_);
   }
 
+  bool validate() {
+    if (!(size_ > 0 && size_ <= kMaxScaleSize)) return false;
+    for (auto note : scale_)
+      if (!(note >= 0_f && note <= 150_f)) return false;
+    return true;
+  }
+
   // pitch>0
   PitchPair Process(f const pitch) const {
     f max = scale_[size_-1];
@@ -105,9 +112,16 @@ public:
 };
 
 class Quantizer {
-  using ScaleTable = std::array<std::array<Scale, kScaleNr>, kBankNr>;
+  struct ScaleTable : std::array<std::array<Scale, kScaleNr>, kBankNr> {
+    bool validate() {
+      for (auto bank : *this)
+        for (auto scale : bank)
+          if (!scale.validate()) return false;
+      return true;
+    }
+  };
 
-  ScaleTable const default_scales_ = {{{{
+  ScaleTable const default_scales_ = {{{{{
           // 12TET
           {0_f, 12_f},              // octave
           {0_f, 7_f, 12_f},         // octave+fifth
@@ -193,7 +207,7 @@ class Quantizer {
 
           // Carlos beta
           { 0_f, 0.638_f },
-        }}}};
+        }}}}};
 
   ScaleTable scales_;
   Persistent<ScaleTable> scales_storage_ {scales_, default_scales_};
