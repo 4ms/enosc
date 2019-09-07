@@ -35,7 +35,7 @@ public:
 
   bool calibrate_offset() {
     f offset = last_raw_reading();
-    if ((offset / nominal_offset_ - 1_f).abs() < kCalibrationSuccessTolerance) {
+    if ((offset - nominal_offset_).abs() < kCalibrationSuccessToleranceOffset) {
       offset_ = offset;
       return true;
     } else return false;
