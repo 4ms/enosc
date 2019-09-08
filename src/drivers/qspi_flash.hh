@@ -90,7 +90,7 @@ struct FlashBlock {
 
   static bool Write(uint8_t *data, int size) {
     while(!QSpiFlash::instance_->is_ready());
-    return QSpiFlash::instance_->Write_Page(data, QSpiFlash::get_32kblock_addr(block_nr),
-                                            size, QSpiFlash::EXECUTE_BACKGROUND);
+    return QSpiFlash::instance_->Write(data, QSpiFlash::get_32kblock_addr(block_nr),
+                                       size);
   }
 };
