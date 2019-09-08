@@ -7,9 +7,10 @@ class Persistent {
   static_assert(size_ < Storage::size_);
 public:
   Persistent(Data *data, Data const &default_data) : data_(data) {
-    Storage::Read(reinterpret_cast<uint8_t*>(data_), size_);
     // load to data_, falling back to default_data if not found
-    if (!data->validate()) {
+    bool success = Storage::Read(reinterpret_cast<uint8_t*>(data_), size_);
+    success &= data->validate();
+    if (!success) {
       *data = default_data;
     }
   }
