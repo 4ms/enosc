@@ -450,7 +450,7 @@ bool QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 {
 	//Cannot write more than a page
 	if (num_bytes > QSPI_PAGE_SIZE)
-		return HAL_ERROR;
+		return false;
 
 	uint32_t start_page = write_addr >> QSPI_PAGE_ADDRESS_BITS;
 	uint32_t end_page = (write_addr + num_bytes - 1) >> QSPI_PAGE_ADDRESS_BITS;
