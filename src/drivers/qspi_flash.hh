@@ -78,19 +78,40 @@ public:
 
 };
 
-template<int block_nr>
+// Wrapper reader/writer inside a 32k block. The block is split into
+// [cell_nr_] cells of equal size, each potentially containing an
+// object of Data, and aligned to page boundaries
+template<int block, class Data>
 struct FlashBlock {
+  using data_t = Data;
   static constexpr int size_ = QSPI_32KBLOCK_SIZE;
+  static constexpr int data_size_ = sizeof(data_t);
+  // data size aligned to the next page boundary
+  static constexpr int aligned_data_size_ =
+    ((data_size_ >> QSPI_PAGE_ADDRESS_BITS) + 1) << QSPI_PAGE_ADDRESS_BITS;
+  static_assert(aligned_data_size_ < size_);
+  static constexpr int cell_nr_ = size_ / aligned_data_size_;
 
-  static bool Read(uint8_t *data, int size) {
+  static bool Read(data_t *data, int cell) {
+    if (cell < cell_nr_) return false;
+    uint32_t addr = QSpiFlash::get_32kblock_addr(block) + cell * aligned_data_size_;
     while(!QSpiFlash::instance_->is_ready());
-    return QSpiFlash::instance_->Read(data, QSpiFlash::get_32kblock_addr(block_nr),
-                                      size, QSpiFlash::EXECUTE_BACKGROUND);
+    return QSpiFlash::instance_->Read(reinterpret_cast<uint8_t*>(data),
+                                      addr,
+                                      data_size_, QSpiFlash::EXECUTE_BACKGROUND);
   }
 
-  static bool Write(uint8_t *data, int size) {
+  // cell < cell_nr_
+  static bool Write(data_t *data, int cell) {
+    if (cell < cell_nr_) return false;
+    uint32_t addr = QSpiFlash::get_32kblock_addr(block) + cell * aligned_data_size_;
     while(!QSpiFlash::instance_->is_ready());
-    return QSpiFlash::instance_->Write(data, QSpiFlash::get_32kblock_addr(block_nr),
-                                       size);
+    return QSpiFlash::instance_->Write(reinterpret_cast<uint8_t*>(data),
+                                       addr,
+                                       data_size_);
   }
+
+  // simple wrappers to read/write in 1st cell
+  static bool Read(data_t *data) { return Read(data, 0); }
+  static bool Write(data_t *data) { return Write(data, 0); }
 };

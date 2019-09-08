@@ -210,7 +210,7 @@ class Quantizer {
         }}}}};
 
   ScaleTable scales_;
-  Persistent<ScaleTable, FlashBlock<2>> scales_storage_ {&scales_, default_scales_};
+  Persistent<FlashBlock<2, ScaleTable>> scales_storage_ {&scales_, default_scales_};
 
 public:
 

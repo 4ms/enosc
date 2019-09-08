@@ -263,7 +263,7 @@ class Control : public EventSource<Event> {
     }
   } calibration_data_;
 
-  Persistent<CalibrationData, FlashBlock<0>>
+  Persistent<FlashBlock<0, CalibrationData>>
   calibration_data_storage_ {&calibration_data_, calibration_data_};
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
