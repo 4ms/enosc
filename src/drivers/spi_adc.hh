@@ -14,6 +14,13 @@ enum max11666_channels {
 	MAX11666_CHAN2 = 0xFF00
 };
 
+enum max11666Commands {
+  MAX11666_CONTINUE_READING_CH2 = 0xFFFF,
+  MAX11666_SWITCH_TO_CH1 = 0xFF00,
+  MAX11666_CONTINUE_READING_CH1 = 0x0000,
+  MAX11666_SWITCH_TO_CH2 = 0x00FF
+};
+
 enum max11666Errors {
 	MAX11666_NO_ERR = 0,
 	MAX11666_SPI_INIT_ERR,
@@ -41,6 +48,8 @@ struct SpiAdc : Nocopy {
     register_spi_adc_isr(SpiAdc::spiadc_ISR__IN_ITCM_); //Todo: measure ITCM benefits
 
     err = MAX11666_NO_ERR;
+    read_sequence_idx = 0;
+    cur_chan = 0;
 
     assign_pins();
     SPI_disable();
@@ -50,8 +59,7 @@ struct SpiAdc : Nocopy {
     SPI_enable();
 
     //Send one word to start
-    cur_channel = MAX11666_CHAN1;
-    spih.Instance->DR = cur_channel;
+    spih.Instance->DR = MAX11666_CHAN1;
   }
 
   u0_16 get(uint8_t chan) {
@@ -66,7 +74,9 @@ struct SpiAdc : Nocopy {
   SPI_HandleTypeDef spih;
   value_t values[NUM_SPI_ADC_CHANNELS][OVERSAMPLING_AMT];
   static uint32_t os_idx[NUM_SPI_ADC_CHANNELS];
-  max11666_channels cur_channel;
+  static bool skip;
+  static uint8_t cur_chan;
+  static uint8_t read_sequence_idx;
   max11666Errors err;
 
 private:
