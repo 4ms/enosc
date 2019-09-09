@@ -9,16 +9,16 @@ enum SpiAdcInput {
   NUM_SPI_ADC_CHANNELS
 };
 
-enum max11666_channels {
-	MAX11666_CHAN1 = 0x00FF,
-	MAX11666_CHAN2 = 0xFF00
-};
+// enum max11666_channels {
+// 	MAX11666_CHAN1 = 0x00FF,
+// 	MAX11666_CHAN2 = 0xFF00
+// };
 
 enum max11666Commands {
-  MAX11666_CONTINUE_READING_CH2 = 0xFFFF,
   MAX11666_SWITCH_TO_CH1 = 0xFF00,
   MAX11666_CONTINUE_READING_CH1 = 0x0000,
-  MAX11666_SWITCH_TO_CH2 = 0x00FF
+  MAX11666_SWITCH_TO_CH2 = 0x00FF,
+  MAX11666_CONTINUE_READING_CH2 = 0xFFFF,
 };
 
 enum max11666Errors {
@@ -41,16 +41,15 @@ void register_spi_adc_isr(void f());
 struct SpiAdc : Nocopy {
 
   static constexpr int value_bits = ADC_BIT_DEPTH + OVERSAMPLING_AMT_BITS;
-  using value_t = Fixed<UNSIGNED, 16 - value_bits, value_bits>; // u1_15
+  using value_t = Fixed<UNSIGNED, 16 - value_bits, value_bits>; // OS=3 => u1_15, OS=2 => u2_14
+  using sum_t = Fixed<UNSIGNED, 32 - value_bits, value_bits>; // OS=3 => u17_15, OS=2 => u18_14
 
 	SpiAdc() {
     spiadc_instance_ = this;
     register_spi_adc_isr(SpiAdc::spiadc_ISR__IN_ITCM_); //Todo: measure ITCM benefits
 
     err = MAX11666_NO_ERR;
-    read_sequence_idx = 0;
     cur_chan = 0;
-    skip = 0;
 
     assign_pins();
     SPI_disable();
@@ -60,25 +59,28 @@ struct SpiAdc : Nocopy {
     SPI_enable();
 
     //Send one word to start
-    spih.Instance->DR = MAX11666_CHAN1;
+    spih.Instance->DR = MAX11666_SWITCH_TO_CH1;
   }
 
   u0_16 get(uint8_t chan) {
-    u17_15 avg = 0._u17_15;
+    sum_t avg = 0._u17_15;
     for (int i=0; i<OVERSAMPLING_AMT; i++){
-      avg += u17_15(values[chan][i]);
+      avg += sum_t(values[chan][i]);
     }
-    skip = 0;
     return u0_16::wrap(avg);
+  }
+
+  void switch_channel(void) {
+    cur_chan = !cur_chan;
+    os_idx[cur_chan] = 0;
+    spiadc_instance_->spih.Instance->DR = cur_chan ? MAX11666_SWITCH_TO_CH2 : MAX11666_SWITCH_TO_CH1;
   }
 
   static SpiAdc *spiadc_instance_;
   SPI_HandleTypeDef spih;
   value_t values[NUM_SPI_ADC_CHANNELS][OVERSAMPLING_AMT];
   static uint32_t os_idx[NUM_SPI_ADC_CHANNELS];
-  static uint8_t skip;
   static uint8_t cur_chan;
-  static uint8_t read_sequence_idx;
   max11666Errors err;
 
 private:
