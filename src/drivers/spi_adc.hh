@@ -50,6 +50,7 @@ struct SpiAdc : Nocopy {
     err = MAX11666_NO_ERR;
     read_sequence_idx = 0;
     cur_chan = 0;
+    skip = 0;
 
     assign_pins();
     SPI_disable();
@@ -67,6 +68,7 @@ struct SpiAdc : Nocopy {
     for (int i=0; i<OVERSAMPLING_AMT; i++){
       avg += u17_15(values[chan][i]);
     }
+    skip = 0;
     return u0_16::wrap(avg);
   }
 
@@ -74,7 +76,7 @@ struct SpiAdc : Nocopy {
   SPI_HandleTypeDef spih;
   value_t values[NUM_SPI_ADC_CHANNELS][OVERSAMPLING_AMT];
   static uint32_t os_idx[NUM_SPI_ADC_CHANNELS];
-  static bool skip;
+  static uint8_t skip;
   static uint8_t cur_chan;
   static uint8_t read_sequence_idx;
   max11666Errors err;

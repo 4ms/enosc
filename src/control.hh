@@ -470,7 +470,7 @@ public:
     // ROOT
     { auto [root, new_note] = root_pot_.Process(put);
       root *= kRootPotRange;
-      root += root_cv_.last();
+      // root += root_cv_.last();
       params_.root = root.max(0_f);
 
       if (new_note > 0_f) {
