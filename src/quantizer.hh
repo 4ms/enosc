@@ -23,9 +23,9 @@ public:
     std::copy(scale.begin(), scale.end(), scale_);
   }
 
-  bool validate() {
+  bool validate() const {
     if (!(size_ > 0 && size_ <= kMaxScaleSize)) return false;
-    for (auto note : scale_)
+    for (auto& note : scale_)
       if (!(note >= 0_f && note <= 150_f)) return false;
     return true;
   }
@@ -114,8 +114,8 @@ public:
 class Quantizer {
   struct ScaleTable : std::array<std::array<Scale, kScaleNr>, kBankNr> {
     bool validate() {
-      for (auto bank : *this)
-        for (auto scale : bank)
+      for (const auto& bank : *this)
+        for (const auto& scale : bank)
           if (!scale.validate()) return false;
       return true;
     }
