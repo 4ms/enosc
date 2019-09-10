@@ -20,16 +20,18 @@ void SpiAdc::spiadc_ISR__IN_ITCM_() {
 
   if ((itflag & SPI_FLAG_RXNE) && (itsource & SPI_IT_RXNE))
   {
+    // debug.set(1+cur_chan, true);
+    
     uint16_t adc_val = SpiAdc::spiadc_instance_->spih.Instance->DR;
 
-    debug.set(1+cur_chan, true);
-    SpiAdc::spiadc_instance_->values[cur_chan][os_idx[cur_chan]] = u1_15::of_repr(adc_val);
+    if (os_idx[cur_chan] < OVERSAMPLING_AMT)
+      SpiAdc::spiadc_instance_->values[cur_chan][os_idx[cur_chan]] = u1_15::of_repr(adc_val);
 
-    if (os_idx[cur_chan]++ <= OVERSAMPLING_AMT) //overwrite twice
+    if (os_idx[cur_chan]) {
+      os_idx[cur_chan]--;
       SpiAdc::spiadc_instance_->spih.Instance->DR = cur_chan ? MAX11666_CONTINUE_READING_CH2 : MAX11666_CONTINUE_READING_CH1;
+   }
 
-    os_idx[cur_chan] &= OVERSAMPLING_MASK;
-
-    debug.set(1+cur_chan, false);
+    // debug.set(1+cur_chan, false);
   }
 }

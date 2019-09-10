@@ -15,9 +15,9 @@ enum SpiAdcInput {
 // };
 
 enum max11666Commands {
-  MAX11666_SWITCH_TO_CH1 = 0xFF00,
+  MAX11666_SWITCH_TO_CH1 = 0x00FF,
   MAX11666_CONTINUE_READING_CH1 = 0x0000,
-  MAX11666_SWITCH_TO_CH2 = 0x00FF,
+  MAX11666_SWITCH_TO_CH2 = 0xFF00,
   MAX11666_CONTINUE_READING_CH2 = 0xFFFF,
 };
 
@@ -72,7 +72,7 @@ struct SpiAdc : Nocopy {
 
   void switch_channel(void) {
     cur_chan = !cur_chan;
-    os_idx[cur_chan] = 0;
+    os_idx[cur_chan] = OVERSAMPLING_AMT + 3 - 1;
     spiadc_instance_->spih.Instance->DR = cur_chan ? MAX11666_SWITCH_TO_CH2 : MAX11666_SWITCH_TO_CH1;
   }
 
