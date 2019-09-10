@@ -9,11 +9,6 @@ enum SpiAdcInput {
   NUM_SPI_ADC_CHANNELS
 };
 
-// enum max11666_channels {
-// 	MAX11666_CHAN1 = 0x00FF,
-// 	MAX11666_CHAN2 = 0xFF00
-// };
-
 enum max11666Commands {
   MAX11666_SWITCH_TO_CH1 = 0x00FF,
   MAX11666_CONTINUE_READING_CH1 = 0x0000,
@@ -27,8 +22,6 @@ enum max11666Errors {
 };
 
 #define MAX11666_SPI_IRQHANDLER     SPI2_IRQHandler
-
-//void register_spi_adc_isr(void f());
 
 #define ADC_BIT_DEPTH 12
 
@@ -46,7 +39,6 @@ struct SpiAdc : Nocopy {
 
 	SpiAdc() {
     spiadc_instance_ = this;
-    //register_spi_adc_isr(SpiAdc::spiadc_ISR/*__IN_ITCM_*/); //Todo: measure ITCM benefits
 
     err = MAX11666_NO_ERR;
     cur_chan = 0;
@@ -145,8 +137,6 @@ private:
   void SPI_enable() {
     spih.Instance->CR1 |= SPI_CR1_SPE;
   }
-
-  //static void spiadc_ISR/*__IN_ITCM_*/();
 
   void IRQ_init()
   {
