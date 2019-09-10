@@ -343,9 +343,10 @@ public:
     params_(params) {}
 
   void ProcessSpiAdcInput() {
-    if (ext_cv_chan)
+    if (ext_cv_chan) {
       pitch_cv_.Process();
-    else {
+      pitch_cv_.switch_channel();
+    } else {
       root_cv_.Process();
       root_cv_.switch_channel();
     }
