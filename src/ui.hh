@@ -217,7 +217,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e2.data == BUTTON_LEARN) {
           // long-press on Learn
           osc_.reset_current_scale();
-          learn_led_.flash(Colors::green, 2_f);
+          learn_led_.flash(Colors::blue, 2_f);
         }
       } break;
       case GateOn: {
