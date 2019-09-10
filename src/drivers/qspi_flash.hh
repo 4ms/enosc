@@ -92,26 +92,25 @@ struct FlashBlock {
   static_assert(aligned_data_size_ < size_);
   static constexpr int cell_nr_ = size_ / aligned_data_size_;
 
-  static bool Read(data_t *data, int cell) {
+  bool Read(data_t *data, int cell) {
     if (cell >= cell_nr_) return false;
     uint32_t addr = QSpiFlash::get_32kblock_addr(block) + cell * aligned_data_size_;
     while(!QSpiFlash::instance_->is_ready());
     return QSpiFlash::instance_->Read(reinterpret_cast<uint8_t*>(data),
-                                      addr,
-                                      data_size_, QSpiFlash::EXECUTE_BACKGROUND);
+                                      addr, data_size_,
+                                      QSpiFlash::EXECUTE_BACKGROUND);
   }
 
   // cell < cell_nr_
-  static bool Write(data_t *data, int cell) {
+  bool Write(data_t *data, int cell) {
     if (cell >= cell_nr_) return false;
     uint32_t addr = QSpiFlash::get_32kblock_addr(block) + cell * aligned_data_size_;
     while(!QSpiFlash::instance_->is_ready());
     return QSpiFlash::instance_->Write(reinterpret_cast<uint8_t*>(data),
-                                       addr,
-                                       data_size_);
+                                       addr, data_size_);
   }
 
   // simple wrappers to read/write in 1st cell
-  static bool Read(data_t *data) { return Read(data, 0); }
-  static bool Write(data_t *data) { return Write(data, 0); }
+  bool Read(data_t *data) { return Read(data, 0); }
+  bool Write(data_t *data) { return Write(data, 0); }
 };
