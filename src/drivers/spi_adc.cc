@@ -14,7 +14,7 @@ extern "C" void MAX11666_SPI_IRQHANDLER(void) {
   {
     
     uint16_t adc_val = SpiAdc::spiadc_instance_->spih.Instance->DR;
-
+    adc_val >>= 2;
     if (SpiAdc::spiadc_instance_->os_idx[SpiAdc::spiadc_instance_->cur_chan] < OVERSAMPLING_AMT)
       SpiAdc::spiadc_instance_->values[SpiAdc::spiadc_instance_->cur_chan][SpiAdc::spiadc_instance_->os_idx[SpiAdc::spiadc_instance_->cur_chan]] = u1_15::of_repr(adc_val);
 
