@@ -156,6 +156,7 @@ public:
 
   void alt() { state_ = ALT; }
   void main() { if (state_ == ALT) state_ = ARMING; }
+  void reset_alt_value() { alt_value_ = -1_f; }
 
   std::pair<f, f> Process(std::function<void(Event)> const& put) {
     f input = PotConditioner<INPUT, LAW, FILTER>::Process(put);
@@ -465,11 +466,11 @@ public:
 
   void spread_pot_alternate_function() { spread_.pot_.alt(); }
   void spread_pot_main_function() { spread_.pot_.main(); }
-
   void root_pot_alternate_function() { root_pot_.alt(); }
   void root_pot_main_function() { root_pot_.main(); }
   void pitch_pot_alternate_function() { pitch_pot_.alt(); }
   void pitch_pot_main_function() { pitch_pot_.main(); }
+  void pitch_pot_reset_alternate_value() { pitch_pot_.reset_alt_value(); }
   void twist_pot_alternate_function() { twist_.pot_.alt(); }
   void twist_pot_main_function() { twist_.pot_.main(); }
   void warp_pot_alternate_function() { warp_.pot_.alt(); }
