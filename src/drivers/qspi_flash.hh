@@ -110,7 +110,18 @@ struct FlashBlock {
                                        addr, data_size_);
   }
 
+  bool Erase() {
+    while(!QSpiFlash::instance_->is_ready());
+    return QSpiFlash::instance_->Erase(QSpiFlash::BLOCK_32K,
+                                       QSpiFlash::get_32kblock_addr(block),
+                                       QSpiFlash::EXECUTE_BACKGROUND);
+  }
+
   // simple wrappers to read/write in 1st cell
-  bool Read(data_t *data) { return Read(data, 0); }
-  bool Write(data_t *data) { return Write(data, 0); }
+  bool Read(data_t *data) {
+    return Read(data, 0);
+  }
+  bool Write(data_t *data) {
+    return Erase() && Write(data, 0);
+  }
 };
