@@ -118,7 +118,8 @@ class Oscillators : Nocopy {
 
     f next_pitch() {
       PitchPair p = scale.Process(root);
-      return p.p1 + pitch + detune_accum;
+      f lowest = p.crossfade < 0.5_f ? p.p1 : p.p2;
+      return lowest + pitch + detune_accum;
     }
 
     FrequencyPair next() {
