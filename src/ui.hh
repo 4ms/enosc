@@ -112,7 +112,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   alt_params_ {&params_.alt, params_.alt};
 
   static constexpr int kProcessRate = kSampleRate / block_size;
-  static constexpr int kLongPressTime = 2.0f * kProcessRate; // sec
+  static constexpr int kLongPressTime = 4.0f * kProcessRate; // sec
   static constexpr int kNewNoteDelayTime = 0.01f * kProcessRate; // sec
 
   LedManager<update_rate, Leds::Learn> learn_led_;
