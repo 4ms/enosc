@@ -57,9 +57,13 @@ public:
 
   void Process() {
     u0_16 x = spi_adc_.get(CHAN);
-    if (CHAN==1)
-      spi_adc_.switch_channel();
+    // if (CHAN==1)
+    //   spi_adc_.switch_channel();
     lp_.Process(x);
+  }
+
+  void switch_channel() {
+    spi_adc_.switch_channel();
   }
 
   f last() {
@@ -332,14 +336,20 @@ class Control : public EventSource<Event> {
 
   Sampler<f> pitch_cv_sampler_;
 
+  uint8_t ext_cv_chan;
 public:
 
   Control(Parameters& params) :
     params_(params) {}
 
   void ProcessSpiAdcInput() {
-    pitch_cv_.Process();
-    root_cv_.Process();
+    if (ext_cv_chan)
+      pitch_cv_.Process();
+    else {
+      root_cv_.Process();
+      root_cv_.switch_channel();
+    }
+    ext_cv_chan = !ext_cv_chan;
   }
 
   void Poll(std::function<void(Event)> const& put) {
@@ -472,7 +482,7 @@ public:
     // ROOT
     { auto [root, new_note] = root_pot_.Process(put);
       root *= kRootPotRange;
-      // root += root_cv_.last();
+      root += root_cv_.last();
       params_.root = root.max(0_f);
 
       if (new_note > 0_f) {
