@@ -111,7 +111,7 @@ private:
     spih.Init.Direction         = SPI_DIRECTION_2LINES;
     spih.Init.CLKPhase          = SPI_PHASE_1EDGE;
     spih.Init.CLKPolarity       = SPI_POLARITY_LOW;
-    spih.Init.DataSize          = SPI_DATASIZE_14BIT;
+    spih.Init.DataSize          = SPI_DATASIZE_16BIT;
     spih.Init.FirstBit          = SPI_FIRSTBIT_MSB;
     spih.Init.TIMode            = SPI_TIMODE_DISABLE;
     spih.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;

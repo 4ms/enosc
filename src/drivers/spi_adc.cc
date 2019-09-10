@@ -21,8 +21,9 @@ void SpiAdc::spiadc_ISR__IN_ITCM_() {
   if ((itflag & SPI_FLAG_RXNE) && (itsource & SPI_IT_RXNE))
   { 
     uint8_t chan = (SpiAdc::spiadc_instance_->cur_channel == MAX11666_CHAN2);
-    SpiAdc::spiadc_instance_->values[chan][os_idx[chan]] =
-      u1_15::of_repr(SpiAdc::spiadc_instance_->spih.Instance->DR);
+    uint16_t adc_val = (SpiAdc::spiadc_instance_->spih.Instance->DR);
+    adc_val>>=2;
+    SpiAdc::spiadc_instance_->values[chan][os_idx[chan]] = u1_15::of_repr(adc_val);
     os_idx[chan]++;
     os_idx[chan] &= OVERSAMPLING_MASK;
     SpiAdc::spiadc_instance_->cur_channel = chan ? MAX11666_CHAN1 : MAX11666_CHAN2;
