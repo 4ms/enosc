@@ -443,9 +443,8 @@ public:
       pitch += pitch_cv;
       params_.pitch = pitch;
 
-      if (fine_tune > 0_f) {
-        params_.fine_tune = (fine_tune - 0.5_f) * kNewNoteFineRange;
-      }
+      params_.fine_tune =
+        fine_tune > 0_f ? (fine_tune - 0.5_f) * kNewNoteFineRange : 0_f;
     }
 
     // ROOT
