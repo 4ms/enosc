@@ -28,7 +28,7 @@ enum max11666Errors {
 
 #define MAX11666_SPI_IRQHANDLER     SPI2_IRQHandler
 
-void register_spi_adc_isr(void f());
+//void register_spi_adc_isr(void f());
 
 #define ADC_BIT_DEPTH 12
 
@@ -46,7 +46,7 @@ struct SpiAdc : Nocopy {
 
 	SpiAdc() {
     spiadc_instance_ = this;
-    register_spi_adc_isr(SpiAdc::spiadc_ISR__IN_ITCM_); //Todo: measure ITCM benefits
+    //register_spi_adc_isr(SpiAdc::spiadc_ISR/*__IN_ITCM_*/); //Todo: measure ITCM benefits
 
     err = MAX11666_NO_ERR;
     cur_chan = 0;
@@ -146,7 +146,7 @@ private:
     spih.Instance->CR1 |= SPI_CR1_SPE;
   }
 
-  static void spiadc_ISR__IN_ITCM_();
+  //static void spiadc_ISR/*__IN_ITCM_*/();
 
   void IRQ_init()
   {
