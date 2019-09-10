@@ -328,7 +328,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             osc_.enable_pre_listen();
             osc_.enable_follow_new_note();
             control_.root_pot_alternate_function();
-            control_.pitch_pot_alternate_function();
+            control_.pitch_pot_reset_alternate_value();
           } else {
             learn_led_.flash(Colors::black);
           }
@@ -336,6 +336,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
                    e2.type == ButtonPush &&
                    e2.data == BUTTON_LEARN) {
           mode_ = MANUAL_LEARN;
+          control_.pitch_pot_alternate_function();
           osc_.enable_follow_new_note();
         }
       } break;
@@ -368,6 +369,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       if (e1.type == ButtonRelease && e1.data == BUTTON_LEARN) {
         osc_.disable_follow_new_note();
         mode_ = LEARN;
+      }
+
+      if (e1.type == PotMove && e1.data == POT_PITCH) {
+          control_.pitch_pot_alternate_function();
       }
 
     } break;
