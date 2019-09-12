@@ -702,8 +702,7 @@ void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
 	if (QSpiFlash::instance_->status == QSpiFlash::STATUS_TXING)
 		QSpiFlash::instance_->status = QSpiFlash::STATUS_TX_COMPLETE;
 }
-
-void QUADSPI_IRQHandler(void)
+extern "C" void QUADSPI_IRQHandler(void)
 {
 	HAL_QSPI_IRQHandler(&QSpiFlash::instance_->handle);
 }
