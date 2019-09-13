@@ -394,6 +394,12 @@ bool QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 {
 	uint32_t end_addr, current_size, current_addr;
 
+	if (write_addr >= QSPI_FLASH_SIZE_BYTES)
+		return false;
+
+	if (write_addr+num_bytes >= QSPI_FLASH_SIZE_BYTES)
+		return false;
+
 	// Calculation of the size between the write address and the end of the page
 	current_addr = 0;
 
