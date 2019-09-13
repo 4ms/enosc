@@ -342,6 +342,9 @@ bool QSpiFlash::Erase(ErasableSizes size, uint32_t BaseAddress, UseInterruptFlag
 	uint8_t status;
 	uint32_t timeout;
 
+	if (WriteEnable() != HAL_OK)
+		return false;
+
 	if (size==SECTOR) {
 		s_command.Instruction 	= SECTOR_ERASE_CMD;
 		s_command.Address 		= BaseAddress;
@@ -372,9 +375,6 @@ bool QSpiFlash::Erase(ErasableSizes size, uint32_t BaseAddress, UseInterruptFlag
 	s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
 	s_command.DataMode          = QSPI_DATA_NONE;
 	s_command.DummyCycles       = 0;
-
-	if (WriteEnable() != HAL_OK)
-		return false;
 
 	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return false;
@@ -409,20 +409,20 @@ bool QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 	current_addr = write_addr;
 	end_addr = write_addr + num_bytes;
 
-	s_command.Instruction       = QUAD_IN_FAST_PROG_CMD;
-	s_command.AddressMode       = QSPI_ADDRESS_1_LINE;
-	s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-	s_command.DataMode          = QSPI_DATA_4_LINES;
-	s_command.DummyCycles       = 0;
 
 	// Perform the write page by page
 	do
 	{
-		s_command.Address = current_addr;
-		s_command.NbData  = current_size;
-
 		if (WriteEnable() != HAL_OK)
 			return false;
+
+		s_command.Instruction       = QUAD_IN_FAST_PROG_CMD;
+		s_command.AddressMode       = QSPI_ADDRESS_1_LINE;
+		s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+		s_command.DataMode          = QSPI_DATA_4_LINES;
+		s_command.DummyCycles       = 0;
+		s_command.Address 			= current_addr;
+		s_command.NbData  			= current_size;
 
 		if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 			return false;
@@ -459,6 +459,9 @@ bool QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 	if (start_page != end_page)
 		return false;
 
+	if (WriteEnable() != HAL_OK)
+		return false;
+
 	// Initialize the program command
 	s_command.Instruction       = QUAD_IN_FAST_PROG_CMD;
 	s_command.AddressMode       = QSPI_ADDRESS_1_LINE;
@@ -467,9 +470,6 @@ bool QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 	s_command.DummyCycles       = 0;
 	s_command.Address 			= write_addr;
 	s_command.NbData  			= num_bytes;
-
-	if (WriteEnable() != HAL_OK)
-		return false;
 
 	if (HAL_QSPI_Command(&handle, &s_command, HAL_QPSI_TIMEOUT_DEFAULT_VALUE) != HAL_OK)
 		return false;
