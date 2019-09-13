@@ -126,7 +126,7 @@
 
 //
 // Tests one sector
-// Returns 1 if passed, 0 if failed
+// Returns true if passed, false if failed
 bool QSpiFlash::Test_Sector(uint8_t sector_num)
 {
 	uint32_t i;
@@ -134,45 +134,49 @@ bool QSpiFlash::Test_Sector(uint8_t sector_num)
 	uint32_t test_addr = get_sector_addr(sector_num);
 
 	for (i=0; i<QSPI_SECTOR_SIZE; i++)
-		test_buffer[i] = test_encode_num(i);
+		test_buffer[i] = (test_encode_num(i) + sector_num) & 0xFF;
 	
-	// Initiate Erasing a sector (~18us/sector)
-	Erase(SECTOR, test_addr, EXECUTE_BACKGROUND);
-	// Free to execute code here... ~38ms
+	//Benchmark: ~38ms/sector
+	if (!Erase(SECTOR, test_addr, EXECUTE_BACKGROUND))
+		return false;
+
 	while (!is_ready()) {;}
 
-	// Writing with TX and chip status polling in background:
 	for (i=0; i<(QSPI_SECTOR_SIZE/QSPI_PAGE_SIZE); i++)
 	{
-		// Initiate a TX the data to be written (~30us/page typical)
-		Write_Page(&(test_buffer[i*QSPI_PAGE_SIZE]),
+		//Benchmark: ~380us/page
+		if (!Write_Page(&(test_buffer[i*QSPI_PAGE_SIZE]),
                     test_addr+i*QSPI_PAGE_SIZE,
-                    QSPI_PAGE_SIZE, EXECUTE_BACKGROUND);
-		// Free to execute code here... ~380us/page
+                    QSPI_PAGE_SIZE, EXECUTE_BACKGROUND))
+			return false;
+
 		while (!is_ready()) {;}
 	}
 
-	// Initiate a RX to read a sector: ~5us/sector
-	Read(test_buffer, test_addr, QSPI_SECTOR_SIZE, EXECUTE_BACKGROUND);
-	// Free to execute code here... ~680-850us/sector
+	for (i=0; i<QSPI_SECTOR_SIZE; i++)
+		test_buffer[i] = 0;
+
+	//Benchmark: ~680-850us/sector
+	if (!Read(test_buffer, test_addr, QSPI_SECTOR_SIZE, EXECUTE_BACKGROUND))
+		return false;
+
 	while (!is_ready()) {;}
 
-	// Verify the chip integrity by checking the data we read against our "encoding" function
 	for (i=0; i<(QSPI_SECTOR_SIZE-1); i++) {
-		if (test_buffer[i] != test_encode_num(i))
-			return false; //fail
+		if (test_buffer[i] != ((test_encode_num(i) + sector_num) & 0xFF))
+			return false;
 	}
 
-	return true; //pass
+	return true;
 }
 
 // Tests entire chip sector-by-sector
 // Returns 1 if passed, 0 if failed
 bool QSpiFlash::Test()
 {
-	uint8_t i;
-	for (i=0; i<QSPI_NUM_SECTORS; i++) {
-		if (Test_Sector(i)==0)
+	uint8_t sector;
+	for (sector=0; sector<QSPI_NUM_SECTORS; sector++) {
+		if (!Test_Sector(sector))
 			return false; //fail
 	}
 	return true; //pass
@@ -205,7 +209,7 @@ uint32_t QSpiFlash::get_sector_addr(uint8_t sector_num)
 
 QSpiFlash::QSpiFlash()
 {
-  instance_ = this;
+	instance_ = this;
 
 	handle.Instance = QUADSPI;
 
@@ -244,6 +248,12 @@ QSpiFlash::QSpiFlash()
 
 	// Now that chip is in QPI mode, IO2 and IO3 can be initialized
 	GPIO_Init_IO2_IO3_AF();
+
+	// if (!Test()) {
+	// 	while (1) {
+	// 		asm("nop");
+	// 	}
+	// }
 }
 
 void QSpiFlash::GPIO_Init_1IO(void)
