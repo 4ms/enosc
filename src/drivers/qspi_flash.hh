@@ -33,7 +33,7 @@ public:
   };
 
   // public for use in callbacks and IRQ
-  volatile enum FlashStatus status = STATUS_READY;
+  volatile enum FlashStatus QSPI_status = STATUS_READY;
   QSPI_HandleTypeDef handle;
 
 private:
@@ -48,14 +48,14 @@ private:
   HAL_StatusTypeDef EnterMemory_QPI(void);
   void init_command(QSPI_CommandTypeDef *s_command);
 
-  bool done_TXing(void) { return status == STATUS_TX_COMPLETE; }
+  bool done_TXing(void) { return QSPI_status == STATUS_TX_COMPLETE; }
 
   uint8_t test_encode_num(uint32_t num)	{return (num*7) + (num>>7);}
 
 public:
   QSpiFlash();
 
-  bool is_ready(void) { return status == STATUS_READY; }
+  bool is_ready(void) { return QSPI_status == STATUS_READY; }
 
   bool Test(void);
   bool Test_Sector(uint8_t sector_num);

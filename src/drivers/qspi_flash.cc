@@ -237,7 +237,7 @@ QSpiFlash::QSpiFlash()
 
 	init_command(&s_command);
 
-	status = STATUS_READY;
+	QSPI_status = STATUS_READY;
 
 	hal_assert(Reset());
 	hal_assert(EnterMemory_QPI());
@@ -476,7 +476,7 @@ bool QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 
 	if (use_interrupt==EXECUTE_BACKGROUND)
 	{
-		status = STATUS_TXING;
+		QSPI_status = STATUS_TXING;
 
 		if (HAL_QSPI_Transmit_IT(&handle, pData) != HAL_OK)
 			return false;
@@ -523,7 +523,7 @@ bool QSpiFlash::Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes, Use
 		return HAL_ERROR;
 
 	if (use_interrupt==EXECUTE_BACKGROUND) {
-		status = STATUS_RXING;
+		QSPI_status = STATUS_RXING;
 
 		status = HAL_QSPI_Receive_IT(&handle, pData);
 	} else 
@@ -619,7 +619,7 @@ HAL_StatusTypeDef QSpiFlash::AutoPollingMemReady_IT(void)
 	s_config.Interval        = 0x10;
 	s_config.AutomaticStop   = QSPI_AUTOMATIC_STOP_ENABLE;
 
-	status = STATUS_WIP;
+	QSPI_status = STATUS_WIP;
 
 	if (HAL_QSPI_AutoPolling_IT(&handle, &s_command, &s_config) != HAL_OK)
 		return HAL_ERROR;
@@ -688,19 +688,19 @@ QSpiFlash *QSpiFlash::instance_;
 
 void HAL_QSPI_StatusMatchCallback(QSPI_HandleTypeDef *hqspi)
 {
-  QSpiFlash::instance_->status = QSpiFlash::STATUS_READY;
+  QSpiFlash::instance_->QSPI_status = QSpiFlash::STATUS_READY;
 }
 
 void HAL_QSPI_RxCpltCallback(QSPI_HandleTypeDef *hqspi)
 {
-	if (QSpiFlash::instance_->status == QSpiFlash::STATUS_RXING)
-		QSpiFlash::instance_->status = QSpiFlash::STATUS_READY;
+	if (QSpiFlash::instance_->QSPI_status == QSpiFlash::STATUS_RXING)
+		QSpiFlash::instance_->QSPI_status = QSpiFlash::STATUS_READY;
 }
 
 void HAL_QSPI_TxCpltCallback(QSPI_HandleTypeDef *hqspi)
 {
-	if (QSpiFlash::instance_->status == QSpiFlash::STATUS_TXING)
-		QSpiFlash::instance_->status = QSpiFlash::STATUS_TX_COMPLETE;
+	if (QSpiFlash::instance_->QSPI_status == QSpiFlash::STATUS_TXING)
+		QSpiFlash::instance_->QSPI_status = QSpiFlash::STATUS_TX_COMPLETE;
 }
 extern "C" void QUADSPI_IRQHandler(void)
 {
