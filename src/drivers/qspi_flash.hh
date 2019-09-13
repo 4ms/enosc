@@ -96,9 +96,11 @@ struct FlashBlock {
     if (cell >= cell_nr_) return false;
     uint32_t addr = QSpiFlash::get_32kblock_addr(block) + cell * aligned_data_size_;
     while(!QSpiFlash::instance_->is_ready());
-    return QSpiFlash::instance_->Read(reinterpret_cast<uint8_t*>(data),
+    bool read_ok = QSpiFlash::instance_->Read(reinterpret_cast<uint8_t*>(data),
                                       addr, data_size_,
                                       QSpiFlash::EXECUTE_BACKGROUND);
+    while(!QSpiFlash::instance_->is_ready()); //wait for data to be transferred before using it
+    return read_ok;
   }
 
   // cell < cell_nr_
