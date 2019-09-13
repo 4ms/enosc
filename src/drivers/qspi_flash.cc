@@ -387,7 +387,7 @@ bool QSpiFlash::Erase(ErasableSizes size, uint32_t BaseAddress, UseInterruptFlag
 	if (status!=HAL_OK)
 		return false;
 
-	return false;
+	return true;
 }
 
 bool QSpiFlash::Write(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
