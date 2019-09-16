@@ -90,6 +90,7 @@ CFLAGS= $(ARCHFLAGS) \
 	--param l1-cache-size=8 \
 	--param l1-cache-line-size=32 \
 	-DUSE_HAL_DRIVER \
+	--specs=nano.specs
 #	-DUSE_FULL_ASSERT \
 #       -DTEST \
 
