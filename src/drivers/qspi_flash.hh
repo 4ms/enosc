@@ -33,7 +33,7 @@ public:
   };
 
   // public for use in callbacks and IRQ
-  volatile enum FlashStatus status = STATUS_READY;
+  volatile enum FlashStatus QSPI_status = STATUS_READY;
   QSPI_HandleTypeDef handle;
 
 private:
@@ -48,14 +48,14 @@ private:
   HAL_StatusTypeDef EnterMemory_QPI(void);
   void init_command(QSPI_CommandTypeDef *s_command);
 
-  bool done_TXing(void) { return status == STATUS_TX_COMPLETE; }
+  bool done_TXing(void) { return QSPI_status == STATUS_TX_COMPLETE; }
 
   uint8_t test_encode_num(uint32_t num)	{return (num*7) + (num>>7);}
 
 public:
   QSpiFlash();
 
-  bool is_ready(void) { return status == STATUS_READY; }
+  bool is_ready(void) { return QSPI_status == STATUS_READY; }
 
   bool Test(void);
   bool Test_Sector(uint8_t sector_num);
@@ -96,9 +96,11 @@ struct FlashBlock {
     if (cell >= cell_nr_) return false;
     uint32_t addr = QSpiFlash::get_32kblock_addr(block) + cell * aligned_data_size_;
     while(!QSpiFlash::instance_->is_ready());
-    return QSpiFlash::instance_->Read(reinterpret_cast<uint8_t*>(data),
+    bool read_ok = QSpiFlash::instance_->Read(reinterpret_cast<uint8_t*>(data),
                                       addr, data_size_,
                                       QSpiFlash::EXECUTE_BACKGROUND);
+    while(!QSpiFlash::instance_->is_ready()); //wait for data to be transferred before using it
+    return read_ok;
   }
 
   // cell < cell_nr_

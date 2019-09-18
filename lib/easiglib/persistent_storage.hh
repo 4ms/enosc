@@ -7,17 +7,21 @@ public:
   using data_t = typename Storage::data_t;
 
   bool Read(data_t *data) {
-    while(--cell_) {
-      Storage::Read(data, cell_);
-      if (data->validate()) return true;
+    while(cell_) {
+      Storage::Read(data, --cell_);
+      if (data->validate()) {
+        cell_++;
+        return true;
+      }
     }
     return false;
   }
 
   bool Write(data_t *data) {
-    // TODO erase if cell_ = cell_nr_
-    if (cell_ >= Storage::cell_nr_)
+    if (cell_ >= Storage::cell_nr_) {
       Storage::Erase();
+      cell_ = 0;
+    }
     return Storage::Write(data, cell_++);
   }
 };
