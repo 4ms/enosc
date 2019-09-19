@@ -29,7 +29,7 @@ data['exp2_u0_23'] = (exp2*(2**23)).astype(np.uint32)
 # [-1..1], and for each take the value at which they pass a certain threshold
 # of "acceptable distortion probability"
 
-size = 32
+size = 16
 resolution = 512
 threshold = 0.0001
 
