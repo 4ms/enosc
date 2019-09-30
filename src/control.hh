@@ -262,10 +262,10 @@ class Control : public EventSource<Event> {
         modulation_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         spread_offset.abs() <= kCalibrationSuccessToleranceOffset;
     }
-  } calibration_data_;
+  } calibration_data_, default_calibration_data_;
 
   Persistent<WearLevel<FlashBlock<0, CalibrationData>>>
-  calibration_data_storage_ {&calibration_data_, calibration_data_};
+  calibration_data_storage_ {&calibration_data_, default_calibration_data_};
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>
