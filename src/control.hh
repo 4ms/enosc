@@ -23,16 +23,18 @@ const int kCalibrationIterations = 16;
 template<int CHAN, class FILTER>
 class ExtCVConditioner {
   SpiAdc& spi_adc_;
-  f offset_, nominal_offset_;
-  f slope_, nominal_slope_;
+  f& offset_;
+  f nominal_offset_;
+  f& slope_;
+  f nominal_slope_;
   FILTER lp_;
 
   f last_raw_reading() { return f::inclusive(lp_.last()); }
   
 public:
-  ExtCVConditioner(f o, f s, SpiAdc& spi_adc) :
-    offset_(o), nominal_offset_(o),
-    slope_(s), nominal_slope_(s),
+  ExtCVConditioner(f& o, f& s, f default_offset, f default_slope, SpiAdc& spi_adc) :
+    offset_(o), nominal_offset_(default_offset),
+    slope_(s), nominal_slope_(default_slope),
     spi_adc_(spi_adc) {}
 
   bool calibrate_offset() {
@@ -303,10 +305,16 @@ class Control : public EventSource<Event> {
                              > root_pot_ {adc_};
   ExtCVConditioner<CV_PITCH, Average<4, 2>
                    > pitch_cv_ {calibration_data_.pitch_offset,
-                                calibration_data_.pitch_slope, spi_adc_};
+                                calibration_data_.pitch_slope, 
+                                default_calibration_data_.pitch_offset,
+                                default_calibration_data_.pitch_slope, 
+                                spi_adc_};
   ExtCVConditioner<CV_ROOT, Average<4, 2>
                    > root_cv_ {calibration_data_.root_offset,
-                               calibration_data_.root_slope, spi_adc_};
+                               calibration_data_.root_slope, 
+                               default_calibration_data_.root_offset,
+                               default_calibration_data_.root_slope, 
+                               spi_adc_};
 
   Parameters& params_;
 
