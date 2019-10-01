@@ -13,7 +13,7 @@ const f kRootPotRange = 10_f * 12_f;
 const f kNewNoteRange = 6_f * 12_f;
 const f kNewNoteFineRange = 4_f;
 const f kSpreadRange = 12_f;
-const f kCalibration2Voltage = 4_f;
+const f kCalibration4Volts = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
 const f kCalibrationSuccessToleranceOffset = 0.1_f;
 const f kPotMoveThreshold = 0.01_f;
@@ -44,7 +44,7 @@ public:
   }
 
   bool calibrate_slope() {
-    f octave = (last_raw_reading() - offset_) / kCalibration2Voltage;
+    f octave = (last_raw_reading() - offset_) / kCalibration4Volts;
     f slope = 12_f / octave;
 
     if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance) {
