@@ -456,7 +456,12 @@ public:
       params_.root = root.max(0_f);
 
       if (new_note > 0_f) {
-        params_.new_note = new_note * kNewNoteRange + kNewNoteRange * 0.5_f;
+        new_note *= kRootPotRange;
+        //Root CV is allowed to modify manually learned notes
+        //so that if a keyboard/seq is patched into the jack, 
+        //the learn'ed pitches are consistant.
+        new_note += root_cv_.last();
+        params_.new_note = new_note.max(0_f);
       }
     }
   }

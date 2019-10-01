@@ -216,6 +216,7 @@ class PolypticOscillator : public Oscillators<block_size>, PreListenOscillators<
 
   bool pre_listen_ = false;
   bool follow_new_note_ = false;
+  f manual_learn_offset_ = 0_f;
 
   int previous_scale_index;
 
@@ -229,6 +230,7 @@ public:
 
   void enable_learn() {
     pre_scale_.clear();
+    manual_learn_offset_ = this->lowest_pitch() - params_.root;
   }
 
   bool disable_learn() {
@@ -270,7 +272,7 @@ public:
 
     if (pre_listen_) {
       if (follow_new_note_)
-        change_last_note(params_.new_note, params_.fine_tune);
+        change_last_note(params_.new_note + manual_learn_offset_, params_.fine_tune);
       PreListenOscillators<block_size>::Process(params_, pre_scale_, out1, out2);
     } else {
       if (previous_scale_index != params_.scale.value) {
