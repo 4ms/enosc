@@ -23,12 +23,21 @@ public:
     std::copy(scale.begin(), scale.end(), scale_);
   }
 
+// #pragma GCC push_options
+// #pragma GCC optimize ("O0")
+
   bool validate() const {
-    if (!(size_ > 0 && size_ <= kMaxScaleSize)) return false;
-    for (auto& note : scale_)
-      if (!(note >= 0_f && note <= 150_f)) return false;
+    if (!(size_ > 0 && size_ <= kMaxScaleSize))
+      return false;
+    //FixMe: initialize scale_[] to {0_f} and revert back to for [auto& note : scale_] 
+    for (int i=0; i<size_; i++) {
+      if (!(scale_[i] >= 0_f && scale_[i] <= 150_f))
+        return false;
+    }
     return true;
   }
+
+// #pragma GCC pop_options
 
   // pitch>0
   PitchPair Process(f const pitch) const {
