@@ -258,17 +258,17 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           learn_led_.flash(Colors::blue, 2_f);
         }
       } break;
-      case GateOn: {
-        if (e1.data == GATE_LEARN) {
-          mode_ = LEARN;
-          learn_led_.set_solid(Colors::dark_red);
-          osc_.enable_learn();
-          control_.hold_pitch_cv();
-          // enable pre-listen from CV only when Learn is off
-          osc_.enable_pre_listen();
-          new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
-        }
-      } break;
+      // case GateOn: {
+      //   if (e1.data == GATE_LEARN) {
+      //     mode_ = LEARN;
+      //     learn_led_.set_solid(Colors::dark_red);
+      //     osc_.enable_learn();
+      //     control_.hold_pitch_cv();
+      //     // enable pre-listen from CV only when Learn is off
+      //     osc_.enable_pre_listen();
+      //     new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
+      //   }
+      // } break;
       case ButtonPush: {
         if (e1.data == BUTTON_FREEZE) {
           mode_ = SHIFT;
@@ -345,8 +345,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       case NewNote: {
         // the offset makes the lowest note on a keyboard (0V) about 60Hz
         bool success = osc_.new_note(control_.pitch_cv() + 36_f);
-        // no pre-listen enable here: it is activated either by manual
-        // note entry or in the first note via a gate in Normal mode
+        osc_.enable_pre_listen();
         learn_led_.flash(success ? Colors::white : Colors::black);
       } break;
       case PotMove: {
