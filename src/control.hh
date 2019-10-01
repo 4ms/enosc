@@ -253,8 +253,10 @@ class Control : public EventSource<Event> {
       return
         (pitch_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
         (pitch_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        pitch_slope > 0.0_f &&
         (root_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
         (root_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        root_slope > 0.0_f &&
         warp_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         balance_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         twist_offset.abs() <= kCalibrationSuccessToleranceOffset &&
