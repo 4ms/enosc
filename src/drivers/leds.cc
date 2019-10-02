@@ -65,7 +65,7 @@ Leds::Leds() {
   // Initialize the Timer peripherals (period determines resolution and frequency)
 
   timFREEZELED.Instance = FREEZE_LED_PWM_TIM;
-  timFREEZELED.Init.Prescaler = 0;
+  timFREEZELED.Init.Prescaler = 1;
   timFREEZELED.Init.Period = PWM_MAX; //216M / 1 / 256 = 840kHz;
   timFREEZELED.Init.ClockDivision = 0;
   timFREEZELED.Init.CounterMode = TIM_COUNTERMODE_UP;

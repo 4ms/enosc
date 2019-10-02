@@ -384,15 +384,21 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e2.data == BUTTON_LEARN) {
         if (control_.CalibrateOffset()) {
           mode_ = CALIBRATION_SLOPE;
-          learn_led_.set_glow(Colors::dark_magenta, 1_f);
-          freeze_led_.set_glow(Colors::dark_magenta, 1_f);
+          learn_led_.set_glow(Colors::green, 1_f);
+          freeze_led_.set_glow(Colors::green, 1_f);
         } else {
+          learn_led_.flash(Colors::magenta, 0.5_f); 
+          freeze_led_.flash(Colors::magenta, 0.5_f);
+          learn_led_.set_background(Colors::peach);
+          freeze_led_.set_background(Colors::peach);
           learn_led_.reset_glow();
           freeze_led_.reset_glow();
-          mode_ = NORMAL;       // calibration failure
+          mode_ = NORMAL;     // offset calibration failure
         }
       } else if (e1.type == ButtonPush &&
                  e1.data == BUTTON_FREEZE) {
+        learn_led_.set_background(Colors::peach);
+        freeze_led_.set_background(Colors::peach);
         learn_led_.reset_glow();
         freeze_led_.reset_glow();
         mode_ = NORMAL;         // calibration abort
@@ -407,7 +413,12 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         if (control_.CalibrateSlope()) {
           learn_led_.flash(Colors::white, 2_f);
           freeze_led_.flash(Colors::white, 2_f);
+        } else {
+          learn_led_.flash(Colors::red, 0.5_f); // slope calibration failure
+          freeze_led_.flash(Colors::red, 0.5_f);
         }
+        learn_led_.set_background(Colors::peach);
+        freeze_led_.set_background(Colors::peach);
         learn_led_.reset_glow();
         freeze_led_.reset_glow();
         mode_ = NORMAL;
@@ -425,15 +436,16 @@ public:
     Base::put({SwitchWarp, switches_.warp_.get()});
     Base::Process();
 
-    // Enter calibration if Learn is pushed
+
+   // Enter calibration if Learn is pushed
     if (buttons_.learn_.pushed()) {
       mode_ = CALIBRATION_OFFSET;
-      learn_led_.set_glow(Colors::red, 2_f);
-      freeze_led_.set_glow(Colors::red, 2_f);
+      learn_led_.set_glow(Colors::blue, 2_f);
+      freeze_led_.set_glow(Colors::blue, 2_f);
     } else {
       mode_ = NORMAL;
-      learn_led_.set_background(Colors::dark_dark_yellow);
-      freeze_led_.set_background(Colors::dark_dark_yellow);
+      learn_led_.set_background(Colors::peach);
+      freeze_led_.set_background(Colors::peach);
     }
   }
 

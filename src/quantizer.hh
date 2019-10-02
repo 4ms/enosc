@@ -27,13 +27,9 @@ public:
 // #pragma GCC optimize ("O0")
 
   bool validate() const {
-    if (!(size_ > 0 && size_ <= kMaxScaleSize))
-      return false;
-    //FixMe: initialize scale_[] to {0_f} and revert back to for [auto& note : scale_] 
-    for (int i=0; i<size_; i++) {
-      if (!(scale_[i] >= 0_f && scale_[i] <= 150_f))
-        return false;
-    }
+    if (!(size_ > 0 && size_ <= kMaxScaleSize)) return false;
+    for (auto& note : scale_)
+      if (!(note >= 0_f && note <= 150_f)) return false;
     return true;
   }
 
@@ -98,8 +94,11 @@ public:
     std::sort(scale_, scale_+size_);
     // normalize from smallest element
     f base = scale_[0];
-    for (f& x : scale_) {
-      x -= base;
+    for (int i=0; i<kMaxScaleSize; i++) {
+      if (i<size_)
+        scale_[i] -= base;
+      else
+        scale_[i] = 0_f;
     }
 
     if (wrap_octave) {
