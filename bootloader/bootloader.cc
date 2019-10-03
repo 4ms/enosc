@@ -6,6 +6,7 @@
 	#define USING_QPSK
 #endif
 
+#include "pcb_version.hh"
 #include "bootloader.hh"
 #include "bl_ui.hh"
 #include "periodic_func.hh"
