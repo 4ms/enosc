@@ -32,9 +32,9 @@ class ExtCVConditioner {
   f last_raw_reading() { return f::inclusive(lp_.last()); }
   
 public:
-  ExtCVConditioner(f& o, f& s, f default_offset, f default_slope, SpiAdc& spi_adc) :
-    offset_(o), nominal_offset_(default_offset),
-    slope_(s), nominal_slope_(default_slope),
+  ExtCVConditioner(f& o, f& s, SpiAdc& spi_adc) :
+    offset_(o), nominal_offset_(o),
+    slope_(s), nominal_slope_(s),
     spi_adc_(spi_adc) {}
 
   bool calibrate_offset() {
@@ -266,10 +266,10 @@ class Control : public EventSource<Event> {
         modulation_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         spread_offset.abs() <= kCalibrationSuccessToleranceOffset;
     }
-  } calibration_data_, default_calibration_data_;
+  } calibration_data_;
 
   Persistent<WearLevel<FlashBlock<0, CalibrationData>>>
-  calibration_data_storage_ {&calibration_data_, default_calibration_data_};
+  calibration_data_storage_ {&calibration_data_, calibration_data_};
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>
@@ -306,14 +306,10 @@ class Control : public EventSource<Event> {
   ExtCVConditioner<CV_PITCH, Average<4, 2>
                    > pitch_cv_ {calibration_data_.pitch_offset,
                                 calibration_data_.pitch_slope, 
-                                default_calibration_data_.pitch_offset,
-                                default_calibration_data_.pitch_slope, 
                                 spi_adc_};
   ExtCVConditioner<CV_ROOT, Average<4, 2>
                    > root_cv_ {calibration_data_.root_offset,
                                calibration_data_.root_slope, 
-                               default_calibration_data_.root_offset,
-                               default_calibration_data_.root_slope, 
                                spi_adc_};
 
   Parameters& params_;
