@@ -389,16 +389,16 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         } else {
           learn_led_.flash(Colors::magenta, 0.5_f); 
           freeze_led_.flash(Colors::magenta, 0.5_f);
-          learn_led_.set_background(Colors::peach);
-          freeze_led_.set_background(Colors::peach);
+          learn_led_.set_background(Colors::lemon);
+          freeze_led_.set_background(Colors::lemon);
           learn_led_.reset_glow();
           freeze_led_.reset_glow();
           mode_ = NORMAL;     // offset calibration failure
         }
       } else if (e1.type == ButtonPush &&
                  e1.data == BUTTON_FREEZE) {
-        learn_led_.set_background(Colors::peach);
-        freeze_led_.set_background(Colors::peach);
+        learn_led_.set_background(Colors::lemon);
+        freeze_led_.set_background(Colors::lemon);
         learn_led_.reset_glow();
         freeze_led_.reset_glow();
         mode_ = NORMAL;         // calibration abort
@@ -417,8 +417,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           learn_led_.flash(Colors::red, 0.5_f); // slope calibration failure
           freeze_led_.flash(Colors::red, 0.5_f);
         }
-        learn_led_.set_background(Colors::peach);
-        freeze_led_.set_background(Colors::peach);
+        learn_led_.set_background(Colors::lemon);
+        freeze_led_.set_background(Colors::lemon);
         learn_led_.reset_glow();
         freeze_led_.reset_glow();
         mode_ = NORMAL;
@@ -444,8 +444,8 @@ public:
       freeze_led_.set_glow(Colors::blue, 2_f);
     } else {
       mode_ = NORMAL;
-      learn_led_.set_background(Colors::peach);
-      freeze_led_.set_background(Colors::peach);
+      learn_led_.set_background(Colors::lemon);
+      freeze_led_.set_background(Colors::lemon);
     }
   }
 
