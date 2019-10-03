@@ -68,10 +68,10 @@ public:
 template<AdcInput INPUT>
 class CVConditioner {
   Adc& adc_;
-  f offset_;
+  f& offset_;
 
 public:
-  CVConditioner(Adc& adc, f offset) : adc_(adc), offset_(offset) {}
+  CVConditioner(Adc& adc, f& offset) : adc_(adc), offset_(offset) {}
 
   bool calibrate_offset() {
     f reading = 0_f;
@@ -101,7 +101,7 @@ public:
 };
 
 struct NoCVInput {
-  NoCVInput(Adc& adc, f offset) {}
+  NoCVInput(Adc& adc) {}
   f Process() { return 0._f; }
 };
 
@@ -204,7 +204,8 @@ public:
   PotConditioner pot_;
   CVConditioner cv_;
 
-  PotCVCombiner(Adc& adc, f cv_offset) : pot_(adc), cv_(adc, cv_offset) {}
+  PotCVCombiner(Adc& adc) : pot_(adc), cv_(adc) {}
+  PotCVCombiner(Adc& adc, f& cv_offset) : pot_(adc), cv_(adc, cv_offset) {}
 
   // TODO disable this function if PotConditioner = DualFunction
   f Process(std::function<void(Event)> const& put) {
@@ -273,7 +274,7 @@ class Control : public EventSource<Event> {
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>
-                > detune_ {adc_, 0_f};
+                > detune_ {adc_};
   PotCVCombiner<DualFunctionPotConditioner<POT_WARP, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>
