@@ -13,7 +13,7 @@ const f kRootPotRange = 10_f * 12_f;
 const f kNewNoteRange = 6_f * 12_f;
 const f kNewNoteFineRange = 4_f;
 const f kSpreadRange = 12_f;
-const f kCalibration2Voltage = 4_f;
+const f kCalibration4Volts = 4_f;
 const f kCalibrationSuccessTolerance = 0.2_f;
 const f kCalibrationSuccessToleranceOffset = 0.1_f;
 const f kPotMoveThreshold = 0.01_f;
@@ -23,16 +23,18 @@ const int kCalibrationIterations = 16;
 template<int CHAN, class FILTER>
 class ExtCVConditioner {
   SpiAdc& spi_adc_;
-  f offset_, nominal_offset_;
-  f slope_, nominal_slope_;
+  f& offset_;
+  f nominal_offset_;
+  f& slope_;
+  f nominal_slope_;
   FILTER lp_;
 
   f last_raw_reading() { return f::inclusive(lp_.last()); }
   
 public:
-  ExtCVConditioner(f o, f s, SpiAdc& spi_adc) :
-    offset_(o), nominal_offset_(o),
-    slope_(s), nominal_slope_(s),
+  ExtCVConditioner(f& o, f& s, f default_offset, f default_slope, SpiAdc& spi_adc) :
+    offset_(o), nominal_offset_(default_offset),
+    slope_(s), nominal_slope_(default_slope),
     spi_adc_(spi_adc) {}
 
   bool calibrate_offset() {
@@ -44,7 +46,7 @@ public:
   }
 
   bool calibrate_slope() {
-    f octave = (last_raw_reading() - offset_) / kCalibration2Voltage;
+    f octave = (last_raw_reading() - offset_) / kCalibration4Volts;
     f slope = 12_f / octave;
 
     if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance) {
@@ -253,8 +255,10 @@ class Control : public EventSource<Event> {
       return
         (pitch_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
         (pitch_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        pitch_slope < 0.0_f &&
         (root_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
         (root_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        root_slope < 0.0_f &&
         warp_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         balance_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         twist_offset.abs() <= kCalibrationSuccessToleranceOffset &&
@@ -262,10 +266,10 @@ class Control : public EventSource<Event> {
         modulation_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         spread_offset.abs() <= kCalibrationSuccessToleranceOffset;
     }
-  } calibration_data_;
+  } calibration_data_, default_calibration_data_;
 
   Persistent<WearLevel<FlashBlock<0, CalibrationData>>>
-  calibration_data_storage_ {&calibration_data_, calibration_data_};
+  calibration_data_storage_ {&calibration_data_, default_calibration_data_};
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>
@@ -301,10 +305,16 @@ class Control : public EventSource<Event> {
                              > root_pot_ {adc_};
   ExtCVConditioner<CV_PITCH, Average<4, 2>
                    > pitch_cv_ {calibration_data_.pitch_offset,
-                                calibration_data_.pitch_slope, spi_adc_};
+                                calibration_data_.pitch_slope, 
+                                default_calibration_data_.pitch_offset,
+                                default_calibration_data_.pitch_slope, 
+                                spi_adc_};
   ExtCVConditioner<CV_ROOT, Average<4, 2>
                    > root_cv_ {calibration_data_.root_offset,
-                               calibration_data_.root_slope, spi_adc_};
+                               calibration_data_.root_slope, 
+                               default_calibration_data_.root_offset,
+                               default_calibration_data_.root_slope, 
+                               spi_adc_};
 
   Parameters& params_;
 
@@ -454,7 +464,12 @@ public:
       params_.root = root.max(0_f);
 
       if (new_note > 0_f) {
-        params_.new_note = new_note * kNewNoteRange + kNewNoteRange * 0.5_f;
+        new_note *= kRootPotRange;
+        //Root CV is allowed to modify manually learned notes
+        //so that if a keyboard/seq is patched into the jack, 
+        //the learn'ed pitches are consistant.
+        new_note += root_cv_.last();
+        params_.new_note = new_note.max(0_f);
       }
     }
   }

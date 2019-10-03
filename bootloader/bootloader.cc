@@ -244,12 +244,12 @@ int main(void)
 
 void init_gate_input(void)
 {
-	__HAL_RCC_GPIOC_CLK_ENABLE();
+	BOOTLOADER_INPUT_RCC_ENABLE();
 	GPIO_InitTypeDef gpio = {0};
-	gpio.Pin = GPIO_PIN_0;
+	gpio.Pin = BOOTLOADER_INPUT_PIN;
 	gpio.Mode = GPIO_MODE_INPUT;
 	gpio.Pull = GPIO_PULLDOWN;
-	HAL_GPIO_Init(GPIOC, &gpio);
+	HAL_GPIO_Init(BOOTLOADER_INPUT_GPIO, &gpio);
 }
 
 void read_gate_input(void)
