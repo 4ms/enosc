@@ -10,8 +10,10 @@
 #include "event_handler.hh"
 #include "bitfield.hh"
 
-const u1_7 kLedAdjustMin = 0.8_u1_7;
-const u1_7 kLedAdjustMax = 1.2_u1_7;
+constexpr u1_7 kLedAdjustMin = 0.8_u1_7;
+constexpr u1_7 kLedAdjustMax = 1.2_u1_7;
+constexpr f kLedAdjustRange = (f)(kLedAdjustMax - kLedAdjustMin);
+constexpr f kLedAdjustOffset = (f)(kLedAdjustMin);
 
 template<int update_rate, class T>
 struct LedManager : Leds::ILed<T> {
@@ -465,9 +467,15 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         mode_ = NORMAL;
         learn_led_.set_background(Colors::lemon);
         freeze_led_.set_background(Colors::lemon);
+        led_calibration_data_storage_.Save();
       } else {
-        learn_led_.set_cal(control_.scale_pot(), 1.0_f, 1.0_f);
-        freeze_led_.set_cal(1.0_f, 1.0_f, 1.0_f);
+        learn_led_.set_cal(control_.scale_pot()*kLedAdjustRange + kLedAdjustOffset,
+                           control_.balance_pot()*kLedAdjustRange + kLedAdjustOffset,
+                           control_.twist_pot()*kLedAdjustRange + kLedAdjustOffset);
+
+        freeze_led_.set_cal(control_.pitch_pot()*kLedAdjustRange + kLedAdjustOffset,
+                            control_.modulation_pot()*kLedAdjustRange + kLedAdjustOffset,
+                            control_.warp_pot()*kLedAdjustRange + kLedAdjustOffset);
       }
     } break;
 
@@ -484,12 +492,18 @@ public:
     Base::Process();
 
 
-   // Enter calibration if Learn is pushed
+   // Enter CV jack calibration if Learn is pushed
     if (buttons_.learn_.pushed()) {
       mode_ = CALIBRATION_OFFSET;
       learn_led_.set_glow(Colors::blue, 2_f);
       freeze_led_.set_glow(Colors::blue, 2_f);
-    } else if (buttons_.freeze_.pushed()) {
+
+  // Enter LED calibration if Freeze is pushed and all switches are centered
+    } else if (buttons_.freeze_.pushed() &&
+              switches_.scale_.get()==3 &&
+              switches_.mod_.get()==3 &&
+              switches_.twist_.get()==3 &&
+              switches_.warp_.get()==3) {
       mode_ = CALIBRATE_LEDS;
       learn_led_.set_background(Colors::white);
       freeze_led_.set_background(Colors::white);

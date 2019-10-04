@@ -149,7 +149,7 @@ enum class Takeover { HARD, SOFT };
 enum class PotFct { MAIN, ALT };
 
 template<AdcInput INPUT, Law LAW, class FILTER, Takeover TO>
-class DualFunctionPotConditioner : PotConditioner<INPUT, LAW, FILTER> {
+class DualFunctionPotConditioner : public PotConditioner<INPUT, LAW, FILTER> {
   enum State { MAIN, ALT, ARMING, CATCHUP } state_ = MAIN;
   f main_value_;
   f alt_value_ = -1_f;          // -1 indicates no value
@@ -494,6 +494,9 @@ public:
   f scale_pot() { return scale_.pot_.raw(); }
   f balance_pot() { return balance_.pot_.raw(); }
   f twist_pot() { return twist_.pot_.raw(); }
+  f pitch_pot() { return pitch_pot_.raw(); }
+  f modulation_pot() { return modulation_.pot_.raw(); }
+  f warp_pot() { return warp_.pot_.raw(); }
 
   void all_main_function() {
     spread_pot_main_function();
