@@ -15,6 +15,10 @@
 #define LEARN_LED_PWM_CC_BLUE 		CCR3
 
 struct Color {
+  struct Adjustment {
+    u1_7 r, g, b;
+  };
+
   explicit constexpr Color(u0_8 r, u0_8 g, u0_8 b) : r_(r), g_(g), b_(b) {}
   u0_8 red() { return r_; }
   u0_8 green() { return g_; }
@@ -34,10 +38,14 @@ struct Color {
                  Signal::crossfade(g_, that.g_, phase),
                  Signal::crossfade(b_, that.b_, phase));
   }
-
   constexpr const bool operator!=(Color const that) {
     return this->r_ != that.r_ || this->g_ != that.g_ || this->b_ != that.b_;
   }
+  constexpr const Color adjust(Adjustment const adj) const { 
+    return Color(u0_8::wrap(r_ * adj.r),
+                 u0_8::wrap(g_ * adj.g),
+                 u0_8::wrap(b_ * adj.b));
+  } 
 
 private:
   u0_8 r_, g_, b_;
@@ -46,6 +54,7 @@ private:
 struct Colors {
   //greyscale
   static constexpr Color black = Color(0._u0_8, 0._u0_8, 0._u0_8);
+  static constexpr Color grey50 = Color(0.5_u0_8, 0.5_u0_8, 0.5_u0_8);
   static constexpr Color grey = Color(0.3_u0_8, 0.3_u0_8, 0.3_u0_8);
   static constexpr Color white = Color(u0_8::max_val, u0_8::max_val, u0_8::max_val);
 
@@ -81,7 +90,7 @@ struct Colors {
 
 struct Leds : Nocopy {
   Leds();
-  
+
   template<class T>
   struct ILed : crtp<T, ILed<T>> {
     void set(u0_8 r, u0_8 g, u0_8 b) { return (**this).set(r, g, b); }

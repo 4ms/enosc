@@ -10,9 +10,13 @@
 #include "event_handler.hh"
 #include "bitfield.hh"
 
+const u1_7 kLedAdjustMin = 0.8_u1_7;
+const u1_7 kLedAdjustMax = 1.2_u1_7;
 
 template<int update_rate, class T>
 struct LedManager : Leds::ILed<T> {
+
+  LedManager(Color::Adjustment& color_cal) : color_cal_(color_cal) {}
 
   // flash_freq in Hz; max = update_rate
   void flash(Color c, f flash_freq = 10_f) {
@@ -40,8 +44,16 @@ struct LedManager : Leds::ILed<T> {
     if (solid_color_ != Colors::black) c = solid_color_;
     c = c.blend(glow_color_, u0_8::narrow(osc_.Process()));
     c = c.blend(flash_color_, u0_8::narrow(flash_phase_));
+    c = c.adjust(color_cal_);
     Leds::ILed<T>::set(c);
     if (flash_phase_ > flash_freq_) flash_phase_ -= flash_freq_;
+    else flash_phase_ = 0._u0_16;
+  }
+
+  void set_cal(f r, f g, f b) {
+    color_cal_.r = u1_7(r);
+    color_cal_.g = u1_7(g);
+    color_cal_.b = u1_7(b);
   }
 
 private:
@@ -52,6 +64,7 @@ private:
   Color glow_color_ = Colors::red;
   u0_16 flash_freq_ = 0.0014_u0_16;
   u0_16 flash_phase_ = 0._u0_16;
+  Color::Adjustment& color_cal_;
 };
 
 struct ButtonsEventSource : EventSource<Event>, Buttons {
@@ -115,8 +128,26 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   static constexpr int kLongPressTime = 4.0f * kProcessRate; // sec
   static constexpr int kNewNoteDelayTime = 0.01f * kProcessRate; // sec
 
-  LedManager<update_rate, Leds::Learn> learn_led_;
-  LedManager<update_rate, Leds::Freeze> freeze_led_;
+  struct LedCalibrationData {
+    Color::Adjustment led_learn_adjust = {1._u1_7, 1._u1_7, 1._u1_7};
+    Color::Adjustment led_freeze_adjust = {1._u1_7, 1._u1_7, 1._u1_7};
+
+    bool validate() {
+      return
+        led_learn_adjust.r < kLedAdjustMax && led_learn_adjust.r > kLedAdjustMin &&
+        led_learn_adjust.g < kLedAdjustMax && led_learn_adjust.g > kLedAdjustMin &&
+        led_learn_adjust.b < kLedAdjustMax && led_learn_adjust.b > kLedAdjustMin &&
+        led_freeze_adjust.r < kLedAdjustMax && led_freeze_adjust.r > kLedAdjustMin &&
+        led_freeze_adjust.g < kLedAdjustMax && led_freeze_adjust.g > kLedAdjustMin &&
+        led_freeze_adjust.b < kLedAdjustMax && led_freeze_adjust.b > kLedAdjustMin;
+    }
+  } led_calibration_data_;
+
+  Persistent<WearLevel<FlashBlock<3, LedCalibrationData>>>
+  led_calibration_data_storage_ {&led_calibration_data_, led_calibration_data_};
+
+  LedManager<update_rate, Leds::Learn> learn_led_ {led_calibration_data_.led_learn_adjust};
+  LedManager<update_rate, Leds::Freeze> freeze_led_ {led_calibration_data_.led_freeze_adjust};
 
   typename Base::DelayedEventSource button_timeouts_[2];
   typename Base::DelayedEventSource new_note_delay_;
@@ -138,6 +169,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     MANUAL_LEARN,
     CALIBRATION_OFFSET,
     CALIBRATION_SLOPE,
+    CALIBRATE_LEDS,
   } mode_ = NORMAL;
 
   Bitfield<32> active_catchups_ {0};
@@ -411,7 +443,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e2.type == ButtonPush &&
           e2.data == BUTTON_LEARN) {
         if (control_.CalibrateSlope()) {
-          learn_led_.flash(Colors::white, 2_f);
+          learn_led_.flash(Colors::white, 2_f); //success
           freeze_led_.flash(Colors::white, 2_f);
         } else {
           learn_led_.flash(Colors::red, 0.5_f); // slope calibration failure
@@ -424,6 +456,21 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         mode_ = NORMAL;
       }
     } break;
+
+    case CALIBRATE_LEDS: {
+      if (e1.type == ButtonRelease &&
+          e1.data == BUTTON_FREEZE &&
+          e2.type == ButtonPush &&
+          e2.data == BUTTON_FREEZE) {
+        mode_ = NORMAL;
+        learn_led_.set_background(Colors::lemon);
+        freeze_led_.set_background(Colors::lemon);
+      } else {
+        learn_led_.set_cal(control_.scale_pot(), 1.0_f, 1.0_f);
+        freeze_led_.set_cal(1.0_f, 1.0_f, 1.0_f);
+      }
+    } break;
+
     }
   }
 
@@ -442,6 +489,10 @@ public:
       mode_ = CALIBRATION_OFFSET;
       learn_led_.set_glow(Colors::blue, 2_f);
       freeze_led_.set_glow(Colors::blue, 2_f);
+    } else if (buttons_.freeze_.pushed()) {
+      mode_ = CALIBRATE_LEDS;
+      learn_led_.set_background(Colors::white);
+      freeze_led_.set_background(Colors::white);
     } else {
       mode_ = NORMAL;
       learn_led_.set_background(Colors::lemon);

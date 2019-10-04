@@ -125,6 +125,8 @@ class PotConditioner : MovementDetector {
   FILTER filter_;
 public:
   PotConditioner(Adc& adc) : adc_(adc) {}
+  
+  f raw() { return f::inclusive(adc_.get(INPUT)); }
 
   f Process(std::function<void(Event)> const& put) {
     f x = f::inclusive(adc_.get(INPUT));
@@ -488,6 +490,10 @@ public:
   void warp_pot_main_function() { warp_.pot_.main(); }
   void balance_pot_alternate_function() { balance_.pot_.alt(); }
   void balance_pot_main_function() { balance_.pot_.main(); }
+
+  f scale_pot() { return scale_.pot_.raw(); }
+  f balance_pot() { return balance_.pot_.raw(); }
+  f twist_pot() { return twist_.pot_.raw(); }
 
   void all_main_function() {
     spread_pot_main_function();
