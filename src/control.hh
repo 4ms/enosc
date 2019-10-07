@@ -242,16 +242,16 @@ class Control : public EventSource<Event> {
   SpiAdc spi_adc_;
 
   struct CalibrationData {
-    f pitch_offset = 0.75_f;
-    f pitch_slope = -111.7_f;
-    f root_offset = 0.75_f;
-    f root_slope = -111.7_f;
-    f warp_offset = 0.000183111057_f;
-    f balance_offset = 0.000793481246_f;
-    f twist_offset = 0.00189214759_f;
-    f scale_offset = 0.00146488845_f;
-    f modulation_offset = -0.00106814783_f;
-    f spread_offset = 0.00129703665_f;
+    f pitch_offset;// = 0.75_f;
+    f pitch_slope;// = -111.7_f;
+    f root_offset;// = 0.75_f;
+    f root_slope;// = -111.7_f;
+    f warp_offset;// = 0.000183111057_f;
+    f balance_offset;// = 0.000793481246_f;
+    f twist_offset;// = 0.00189214759_f;
+    f scale_offset;// = 0.00146488845_f;
+    f modulation_offset;// = -0.00106814783_f;
+    f spread_offset;// = 0.00129703665_f;
 
     // on load, checks that calibration data are within bounds
     bool validate() {
@@ -269,10 +269,21 @@ class Control : public EventSource<Event> {
         modulation_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         spread_offset.abs() <= kCalibrationSuccessToleranceOffset;
     }
-  } calibration_data_;
+  };
+  CalibrationData calibration_data_;
+  CalibrationData default_calibration_data_ = {
+    0.75_f, -111.7_f,
+    0.75_f, -111.7_f,
+    0.000183111057_f,
+    0.000793481246_f,
+    0.00189214759_f,
+    0.00146488845_f,
+    -0.00106814783_f,
+    0.00129703665_f,
+  };
 
   Persistent<WearLevel<FlashBlock<0, CalibrationData>>>
-  calibration_data_storage_ {&calibration_data_, calibration_data_};
+  calibration_data_storage_ {&calibration_data_, default_calibration_data_};
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>

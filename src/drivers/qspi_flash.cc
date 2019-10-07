@@ -249,6 +249,7 @@ QSpiFlash::QSpiFlash()
 	// Now that chip is in QPI mode, IO2 and IO3 can be initialized
 	GPIO_Init_IO2_IO3_AF();
 
+	// Erase(ENTIRE_CHIP, 0, EXECUTE_FOREGROUND);
 	// if (!Test()) {
 	// 	while (1) {
 	// 		asm("nop");
