@@ -42,9 +42,9 @@ struct Color {
     return this->r_ != that.r_ || this->g_ != that.g_ || this->b_ != that.b_;
   }
   constexpr const Color adjust(Adjustment const adj) const { 
-    return Color(u0_8::wrap(r_ * adj.r),
-                 u0_8::wrap(g_ * adj.g),
-                 u0_8::wrap(b_ * adj.b));
+    return Color((r_ * adj.r).template to_sat<0,8>(),
+                 (g_ * adj.g).template to_sat<0,8>(),
+                 (b_ * adj.b).template to_sat<0,8>());
   } 
 
 private:

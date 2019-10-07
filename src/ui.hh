@@ -10,8 +10,8 @@
 #include "event_handler.hh"
 #include "bitfield.hh"
 
-constexpr u1_7 kLedAdjustMin = 0.8_u1_7;
-constexpr u1_7 kLedAdjustMax = 1.2_u1_7;
+constexpr u1_7 kLedAdjustMin = 0.6_u1_7;
+constexpr u1_7 kLedAdjustMax = 1.4_u1_7;
 constexpr f kLedAdjustRange = (f)(kLedAdjustMax - kLedAdjustMin);
 constexpr f kLedAdjustOffset = (f)(kLedAdjustMin);
 
@@ -131,8 +131,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   static constexpr int kNewNoteDelayTime = 0.01f * kProcessRate; // sec
 
   struct LedCalibrationData {
-    Color::Adjustment led_learn_adjust = {1._u1_7, 1._u1_7, 1._u1_7};
-    Color::Adjustment led_freeze_adjust = {1._u1_7, 1._u1_7, 1._u1_7};
+    // Color::Adjustment led_learn_adjust {1._u1_7, 1._u1_7, 1._u1_7};
+    // Color::Adjustment led_freeze_adjust {1._u1_7, 1._u1_7, 1._u1_7};
+    Color::Adjustment led_learn_adjust;
+    Color::Adjustment led_freeze_adjust;
 
     bool validate() {
       return
@@ -143,10 +145,12 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         led_freeze_adjust.g < kLedAdjustMax && led_freeze_adjust.g > kLedAdjustMin &&
         led_freeze_adjust.b < kLedAdjustMax && led_freeze_adjust.b > kLedAdjustMin;
     }
-  } led_calibration_data_;
+  };
+  LedCalibrationData led_calibration_data_;
+  LedCalibrationData default_led_calibration_data_= {1._u1_7, 1._u1_7, 1._u1_7, 1._u1_7, 1._u1_7, 1._u1_7};
 
   Persistent<WearLevel<FlashBlock<3, LedCalibrationData>>>
-  led_calibration_data_storage_ {&led_calibration_data_, led_calibration_data_};
+  led_calibration_data_storage_ {&led_calibration_data_, default_led_calibration_data_};
 
   LedManager<update_rate, Leds::Learn> learn_led_ {led_calibration_data_.led_learn_adjust};
   LedManager<update_rate, Leds::Freeze> freeze_led_ {led_calibration_data_.led_freeze_adjust};
@@ -505,8 +509,8 @@ public:
               switches_.twist_.get()==3 &&
               switches_.warp_.get()==3) {
       mode_ = CALIBRATE_LEDS;
-      learn_led_.set_background(Colors::white);
-      freeze_led_.set_background(Colors::white);
+      learn_led_.set_background(Colors::grey50);
+      freeze_led_.set_background(Colors::grey50);
     } else {
       mode_ = NORMAL;
       learn_led_.set_background(Colors::lemon);
