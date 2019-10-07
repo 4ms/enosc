@@ -9,7 +9,7 @@
 
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
-const f kRootPotRange = 10_f * 12_f;
+const f kRootPotRange = 9_f * 12_f;
 const f kNewNoteRange = 6_f * 12_f;
 const f kNewNoteFineRange = 4_f;
 const f kSpreadRange = 12_f;
