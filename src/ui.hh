@@ -124,7 +124,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   PolypticOscillator<block_size> osc_ {params_};
 
   Persistent<WearLevel<FlashBlock<1, Parameters::AltParameters>>>
-  alt_params_ {&params_.alt, params_.alt};
+  alt_params_ {&params_.alt, params_.default_alt};
 
   static constexpr int kProcessRate = kSampleRate / block_size;
   static constexpr int kLongPressTime = 4.0f * kProcessRate; // sec
