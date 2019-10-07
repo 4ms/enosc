@@ -14,7 +14,7 @@ const f kNewNoteRange = 6_f * 12_f;
 const f kNewNoteFineRange = 4_f;
 const f kSpreadRange = 12_f;
 const f kCalibration4Volts = 4_f;
-const f kCalibrationSuccessTolerance = 0.2_f;
+const f kCalibrationSuccessTolerance = 0.3_f;
 const f kCalibrationSuccessToleranceOffset = 0.1_f;
 const f kPotMoveThreshold = 0.01_f;
 
@@ -242,25 +242,25 @@ class Control : public EventSource<Event> {
   SpiAdc spi_adc_;
 
   struct CalibrationData {
-    f pitch_offset;// = 0.75_f;
-    f pitch_slope;// = -111.7_f;
-    f root_offset;// = 0.75_f;
-    f root_slope;// = -111.7_f;
-    f warp_offset;// = 0.000183111057_f;
-    f balance_offset;// = 0.000793481246_f;
-    f twist_offset;// = 0.00189214759_f;
-    f scale_offset;// = 0.00146488845_f;
-    f modulation_offset;// = -0.00106814783_f;
-    f spread_offset;// = 0.00129703665_f;
+    f pitch_offset;
+    f pitch_slope;
+    f root_offset;
+    f root_slope;
+    f warp_offset;
+    f balance_offset;
+    f twist_offset;
+    f scale_offset;
+    f modulation_offset;
+    f spread_offset;
 
     // on load, checks that calibration data are within bounds
     bool validate() {
       return
-        (pitch_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
-        (pitch_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        (pitch_offset - 0.70_f).abs() <= kCalibrationSuccessToleranceOffset &&
+        (pitch_slope / -110._f - 1_f).abs() <= kCalibrationSuccessTolerance &&
         pitch_slope < 0.0_f &&
-        (root_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
-        (root_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        (root_offset - 0.70_f).abs() <= kCalibrationSuccessToleranceOffset &&
+        (root_slope / -110._f - 1_f).abs() <= kCalibrationSuccessTolerance &&
         root_slope < 0.0_f &&
         warp_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         balance_offset.abs() <= kCalibrationSuccessToleranceOffset &&
@@ -272,14 +272,14 @@ class Control : public EventSource<Event> {
   };
   CalibrationData calibration_data_;
   CalibrationData default_calibration_data_ = {
-    0.75_f, -111.7_f,
-    0.75_f, -111.7_f,
-    0.000183111057_f,
-    0.000793481246_f,
-    0.00189214759_f,
-    0.00146488845_f,
-    -0.00106814783_f,
-    0.00129703665_f,
+    0.700267_f, -110.17_f, //pitch_offset, slope
+    0.697154_f, -110.355_f, //root_offset, slope
+    0.00302133_f, //warp_offset
+    0.00476089_f, //balance_offset
+    0.00177007_f, //twist_offset
+    0.00146489_f, //scale_offset
+    0.00265511_f, //modulation_offset
+    0.00326548_f, //spread_offset
   };
 
   Persistent<WearLevel<FlashBlock<0, CalibrationData>>>
