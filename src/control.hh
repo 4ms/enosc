@@ -421,9 +421,9 @@ public:
       mod = Signal::crop_down(0.01_f, mod);
       mod *= 6_f / f(params_.alt.numOsc);
       if (params_.modulation.mode == ONE) {
-        mod *= 0.9_f;
-      } else if (params_.modulation.mode == TWO) {
         mod *= 6.0_f;
+      } else if (params_.modulation.mode == TWO) {
+        mod *= 0.9_f;
       } else if (params_.modulation.mode == THREE) {
         mod *= 4.0_f;
       }

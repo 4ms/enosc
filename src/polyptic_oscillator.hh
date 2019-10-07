@@ -84,19 +84,19 @@ class Oscillators : Nocopy {
 
   inline std::tuple<Buffer<u0_16, block_size>&, Buffer<u0_16, block_size>&>
   pick_modulation_blocks(ModulationMode mode, int i, int numOsc) {
-    if(mode == ONE) {
-      if (i==0) {
-        return std::forward_as_tuple(dummy_block_, modulation_blocks_[i+1]);
-      } else {
-        return std::forward_as_tuple(modulation_blocks_[i], modulation_blocks_[i+1]);
-      }
-    } else if (mode == TWO) {
+    if(mode == ONE) { //Up
       if (i==0) {
         return std::forward_as_tuple(dummy_block_, modulation_blocks_[0]);
       } else {
         return std::forward_as_tuple(modulation_blocks_[0], dummy_block_);
       }
-    } else { // mode == THREE
+    } else if (mode == TWO) { //All
+      if (i==0) {
+        return std::forward_as_tuple(dummy_block_, modulation_blocks_[i+1]);
+      } else {
+        return std::forward_as_tuple(modulation_blocks_[i], modulation_blocks_[i+1]);
+      }
+    } else { // mode == THREE //Down
       if (i==numOsc-1) {
         return std::forward_as_tuple(dummy_block_, modulation_blocks_[0]);
       } else {
