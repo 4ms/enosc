@@ -1,3 +1,6 @@
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 //Largely taken from CubeMX Example for QSPI_ReadWrite on the STM32F73xx DISCO
 #include "hal.hh"
 #include "qspi_flash.hh"
@@ -723,3 +726,5 @@ extern "C" void QUADSPI_IRQHandler(void)
 {
 	HAL_QSPI_IRQHandler(&QSpiFlash::instance_->handle);
 }
+
+#pragma GCC pop_options
