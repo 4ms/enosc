@@ -205,12 +205,13 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     } break;
     case EndOfCatchup: {
       active_catchups_ = active_catchups_.reset(e1.data);
+      freeze_led_.flash(Colors::green);
       freeze_led_.reset_glow();
       freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
     } break;
     case ScaleChange: {
       if (mode_==NORMAL || mode_==LEARN || mode_==MANUAL_LEARN)
-      learn_led_.flash(Colors::white);
+        learn_led_.flash(Colors::white);
     } break;
     case ButtonPush: {
       button_timeouts_[e1.data].trigger_after(kLongPressTime, {ButtonTimeout, e1.data});
