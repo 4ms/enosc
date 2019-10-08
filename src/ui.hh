@@ -12,6 +12,9 @@
 
 constexpr u1_7 kLedAdjustMin = 0.6_u1_7;
 constexpr u1_7 kLedAdjustMax = 1.4_u1_7;
+
+constexpr u1_7 kLedAdjustValidMin = kLedAdjustMin.pred();
+constexpr u1_7 kLedAdjustValidMax = kLedAdjustMax.succ();
 constexpr f kLedAdjustRange = (f)(kLedAdjustMax - kLedAdjustMin);
 constexpr f kLedAdjustOffset = (f)(kLedAdjustMin);
 
@@ -131,23 +134,24 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   static constexpr int kNewNoteDelayTime = 0.01f * kProcessRate; // sec
 
   struct LedCalibrationData {
-    // Color::Adjustment led_learn_adjust {1._u1_7, 1._u1_7, 1._u1_7};
-    // Color::Adjustment led_freeze_adjust {1._u1_7, 1._u1_7, 1._u1_7};
     Color::Adjustment led_learn_adjust;
     Color::Adjustment led_freeze_adjust;
 
     bool validate() {
       return
-        led_learn_adjust.r < kLedAdjustMax && led_learn_adjust.r > kLedAdjustMin &&
-        led_learn_adjust.g < kLedAdjustMax && led_learn_adjust.g > kLedAdjustMin &&
-        led_learn_adjust.b < kLedAdjustMax && led_learn_adjust.b > kLedAdjustMin &&
-        led_freeze_adjust.r < kLedAdjustMax && led_freeze_adjust.r > kLedAdjustMin &&
-        led_freeze_adjust.g < kLedAdjustMax && led_freeze_adjust.g > kLedAdjustMin &&
-        led_freeze_adjust.b < kLedAdjustMax && led_freeze_adjust.b > kLedAdjustMin;
+        led_learn_adjust.r <= kLedAdjustValidMax && led_learn_adjust.r >= kLedAdjustValidMin &&
+        led_learn_adjust.g <= kLedAdjustValidMax && led_learn_adjust.g >= kLedAdjustValidMin &&
+        led_learn_adjust.b <= kLedAdjustValidMax && led_learn_adjust.b >= kLedAdjustValidMin &&
+        led_freeze_adjust.r <= kLedAdjustValidMax && led_freeze_adjust.r >= kLedAdjustValidMin &&
+        led_freeze_adjust.g <= kLedAdjustValidMax && led_freeze_adjust.g >= kLedAdjustValidMin &&
+        led_freeze_adjust.b <= kLedAdjustValidMax && led_freeze_adjust.b >= kLedAdjustValidMin;
     }
   };
   LedCalibrationData led_calibration_data_;
-  LedCalibrationData default_led_calibration_data_= {1._u1_7, 1._u1_7, 1._u1_7, 1._u1_7, 1._u1_7, 1._u1_7};
+  LedCalibrationData default_led_calibration_data_ = {
+    {1._u1_7, 1._u1_7, 1._u1_7},
+    {1._u1_7, 1._u1_7, 1._u1_7}
+  };
 
   Persistent<WearLevel<FlashBlock<3, LedCalibrationData>>>
   led_calibration_data_storage_ {&led_calibration_data_, default_led_calibration_data_};
