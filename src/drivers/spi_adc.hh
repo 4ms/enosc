@@ -24,16 +24,23 @@ enum max11666Errors {
 #define MAX11666_SPI_IRQHANDLER     SPI2_IRQHandler
 
 #define ADC_BIT_DEPTH 12
+const uint8_t kADCBitDepth = 12;
 
 //Oversample and average blocks of 2^oversampling_bitsize samples 
 //Todo: Template with oversampling amount?
-#define OVERSAMPLING_AMT_BITS   3
-#define OVERSAMPLING_AMT (1<<OVERSAMPLING_AMT_BITS)
-#define OVERSAMPLING_MASK (OVERSAMPLING_AMT-1)
+constexpr uint8_t kOversamplingAmountBits = 2;
+constexpr uint8_t kOversamplingAmount = (1<<kOversamplingAmountBits);
+constexpr uint8_t kOversamplingMask = kOversamplingAmount - 1;
+const uint8_t kOversamplingThrowoutReads = 3;
+
+// #define OVERSAMPLING_AMT_BITS   2
+// #define OVERSAMPLING_AMT (1<<OVERSAMPLING_AMT_BITS)
+// #define OVERSAMPLING_MASK (OVERSAMPLING_AMT-1)
+// #define OVERSAMPLEING_THROWOUT_READS  3 
 
 struct SpiAdc : Nocopy {
 
-  static constexpr int value_bits = ADC_BIT_DEPTH + OVERSAMPLING_AMT_BITS;
+  static constexpr int value_bits = kADCBitDepth + kOversamplingAmountBits;
   using value_t = Fixed<UNSIGNED, 16 - value_bits, value_bits>; // OS=3 => u1_15, OS=2 => u2_14
   using sum_t = Fixed<UNSIGNED, 32 - value_bits, value_bits>; // OS=3 => u17_15, OS=2 => u18_14
 
@@ -55,8 +62,8 @@ struct SpiAdc : Nocopy {
   }
 
   u0_16 get(uint8_t chan) {
-    sum_t avg = 0._u17_15;
-    for (int i=0; i<OVERSAMPLING_AMT; i++){
+    sum_t avg = 0._u18_14;
+    for (int i=0; i<kOversamplingAmount; i++){
       avg += sum_t(values[chan][i]);
     }
     return u0_16::wrap(avg);
@@ -64,13 +71,13 @@ struct SpiAdc : Nocopy {
 
   void switch_channel(void) {
     cur_chan = !cur_chan;
-    os_idx[cur_chan] = OVERSAMPLING_AMT + 3 - 1;
+    os_idx[cur_chan] = kOversamplingAmount + kOversamplingThrowoutReads - 1;
     spiadc_instance_->spih.Instance->DR = cur_chan ? MAX11666_SWITCH_TO_CH2 : MAX11666_SWITCH_TO_CH1;
   }
 
   static SpiAdc *spiadc_instance_;
   SPI_HandleTypeDef spih;
-  value_t values[NUM_SPI_ADC_CHANNELS][OVERSAMPLING_AMT];
+  value_t values[NUM_SPI_ADC_CHANNELS][kOversamplingAmount];
   static uint32_t os_idx[NUM_SPI_ADC_CHANNELS];
   static uint8_t cur_chan;
   max11666Errors err;
