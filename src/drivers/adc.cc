@@ -1,8 +1,7 @@
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 #include "adc.hh"
-//Todo after merging back into master: Rename:
-//  MOD_* to CROSSFM_*
-//  SCALE_* to SCALE_*
-//  BALANCE_* to BALANCE_*
 
 #define SPREAD_CV_Pin GPIO_PIN_1
 #define SPREAD_CV_GPIO_Port GPIOA
@@ -297,3 +296,5 @@ void Adc::Start() {
 };
 
 u0_16 Adc::values[NUM_ADCS];
+
+#pragma GCC pop_options
