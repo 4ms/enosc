@@ -10,8 +10,8 @@
 #include "event_handler.hh"
 #include "bitfield.hh"
 
-constexpr u1_7 kLedAdjustMin = 0.6_u1_7;
-constexpr u1_7 kLedAdjustMax = 1.4_u1_7;
+constexpr u1_7 kLedAdjustMin = 0.5_u1_7;
+constexpr u1_7 kLedAdjustMax = 1.5_u1_7;
 
 constexpr u1_7 kLedAdjustValidMin = kLedAdjustMin.pred();
 constexpr u1_7 kLedAdjustValidMax = kLedAdjustMax.succ();
@@ -209,6 +209,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
     } break;
     case ScaleChange: {
+      if (mode_==NORMAL || mode_==LEARN || mode_==MANUAL_LEARN)
       learn_led_.flash(Colors::white);
     } break;
     case ButtonPush: {
@@ -262,17 +263,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           learn_led_.flash(Colors::blue, 2_f);
         }
       } break;
-      // case GateOn: {
-      //   if (e1.data == GATE_LEARN) {
-      //     mode_ = LEARN;
-      //     learn_led_.set_solid(Colors::dark_red);
-      //     osc_.enable_learn();
-      //     control_.hold_pitch_cv();
-      //     // enable pre-listen from CV only when Learn is off
-      //     osc_.enable_pre_listen();
-      //     new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
-      //   }
-      // } break;
       case ButtonPush: {
         if (e1.data == BUTTON_FREEZE) {
           mode_ = SHIFT;
@@ -471,7 +461,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e1.data == BUTTON_FREEZE &&
           e2.type == ButtonPush &&
           e2.data == BUTTON_FREEZE) {
-        mode_ = NORMAL;
+        mode_ = NORMAL; //Freeze => save led calibration
         learn_led_.set_background(Colors::lemon);
         freeze_led_.set_background(Colors::lemon);
         led_calibration_data_storage_.Save();
@@ -483,6 +473,13 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         freeze_led_.set_cal(control_.pitch_pot()*kLedAdjustRange + kLedAdjustOffset,
                             control_.modulation_pot()*kLedAdjustRange + kLedAdjustOffset,
                             control_.warp_pot()*kLedAdjustRange + kLedAdjustOffset);
+        if (switches_.scale_.get()==1) { //Scale switch selects color to use for calibrating
+          learn_led_.set_background(Colors::lemon);
+          freeze_led_.set_background(Colors::lemon);
+        } else {
+          learn_led_.set_background(Colors::grey50);
+          freeze_led_.set_background(Colors::grey50);
+        }
       }
     } break;
 
@@ -512,8 +509,6 @@ public:
               switches_.twist_.get()==3 &&
               switches_.warp_.get()==3) {
       mode_ = CALIBRATE_LEDS;
-      learn_led_.set_background(Colors::grey50);
-      freeze_led_.set_background(Colors::grey50);
     } else {
       mode_ = NORMAL;
       learn_led_.set_background(Colors::lemon);
