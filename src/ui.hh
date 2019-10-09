@@ -267,7 +267,12 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       case ButtonPush: {
         if (e1.data == BUTTON_FREEZE) {
           mode_ = SHIFT;
+          //store snapshot of pot values at moment the button 
+          //goes down, in case the user performs an alt function
+          control_.cache_all_alt_shift_pot_values();
         }
+        if (e1.data == BUTTON_LEARN) 
+          control_.cache_all_alt_learn_pot_values();
       } break;
       case PotMove: {
         if (e1.data == POT_ROOT &&

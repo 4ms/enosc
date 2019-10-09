@@ -159,7 +159,7 @@ class DualFunctionPotConditioner : public PotConditioner<INPUT, LAW, FILTER> {
   enum State { MAIN, ALT, ARMING, CATCHUP } state_ = MAIN;
   f main_value_;
   f alt_value_ = -1_f;          // -1 indicates no value
-  f error_;
+  f cached_value_;
 public:
 
   DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW, FILTER>(adc) {}
@@ -167,6 +167,7 @@ public:
   void alt() { state_ = ALT; }
   void main() { if (state_ == ALT) state_ = ARMING; }
   void reset_alt_value() { alt_value_ = -1_f; }
+  void cache() { if (state_ == MAIN) cached_value_ = main_value_; }
 
   std::pair<f, f> Process(std::function<void(Event)> const& put) {
     f input = PotConditioner<INPUT, LAW, FILTER>::Process(put);
@@ -178,7 +179,6 @@ public:
       alt_value_ = input;
     } break;
     case ARMING: {
-      error_ = input - main_value_;
       state_ = CATCHUP;
       put({StartCatchup, INPUT});
     } break;
@@ -189,16 +189,14 @@ public:
           put({EndOfCatchup, INPUT});
         }
       } else if (TO == Takeover::SOFT) {
-        // end of catchup happens if errors don't have the same sign
-        // (the knob crossed its previous recorded value). The small
-        // constant is to avoid being stuck in catchup when the error
-        // is close to zero (pot didn't move) or if main_value_ = 0.
-        if ((input - main_value_) * error_ <= 0.0001_f) {
+        //Todo: set state_ to PLATEAUED_MAIN where the cached value is used
+        //Then on movement detect set it to MAIN
+        if ((input - cached_value_).abs() <= 0.0005_f) {
           state_ = MAIN;
           put({EndOfCatchup, INPUT});
         }
       }
-    }
+    } break;
     }
     return std::pair(main_value_, alt_value_);
   }
@@ -514,6 +512,16 @@ public:
   void warp_pot_main_function() { warp_.pot_.main(); }
   void balance_pot_alternate_function() { balance_.pot_.alt(); }
   void balance_pot_main_function() { balance_.pot_.main(); }
+  void cache_all_alt_shift_pot_values() {
+    spread_.pot_.cache();
+    twist_.pot_.cache();
+    warp_.pot_.cache();
+    balance_.pot_.cache();
+  }
+  void cache_all_alt_learn_pot_values() {
+    root_pot_.cache();
+    pitch_pot_.cache();
+  }
 
   f scale_pot() { return scale_.pot_.raw(); }
   f balance_pot() { return balance_.pot_.raw(); }
