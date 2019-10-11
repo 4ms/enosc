@@ -9,12 +9,12 @@
 
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
-const f kRootPotRange = 10_f * 12_f;
+const f kRootPotRange = 9_f * 12_f;
 const f kNewNoteRange = 6_f * 12_f;
 const f kNewNoteFineRange = 4_f;
 const f kSpreadRange = 12_f;
 const f kCalibration4Volts = 4_f;
-const f kCalibrationSuccessTolerance = 0.2_f;
+const f kCalibrationSuccessTolerance = 0.3_f;
 const f kCalibrationSuccessToleranceOffset = 0.1_f;
 const f kPotMoveThreshold = 0.01_f;
 
@@ -32,9 +32,9 @@ class ExtCVConditioner {
   f last_raw_reading() { return f::inclusive(lp_.last()); }
   
 public:
-  ExtCVConditioner(f& o, f& s, f default_offset, f default_slope, SpiAdc& spi_adc) :
-    offset_(o), nominal_offset_(default_offset),
-    slope_(s), nominal_slope_(default_slope),
+  ExtCVConditioner(f& o, f& s, SpiAdc& spi_adc) :
+    offset_(o), nominal_offset_(o),
+    slope_(s), nominal_slope_(s),
     spi_adc_(spi_adc) {}
 
   bool calibrate_offset() {
@@ -57,7 +57,13 @@ public:
 
   void Process() {
     u0_16 x = spi_adc_.get(CHAN);
+    // if (CHAN==1)
+    //   spi_adc_.switch_channel();
     lp_.Process(x);
+  }
+
+  void switch_channel() {
+    spi_adc_.switch_channel();
   }
 
   f last() {
@@ -68,10 +74,10 @@ public:
 template<AdcInput INPUT>
 class CVConditioner {
   Adc& adc_;
-  f offset_;
+  f& offset_;
 
 public:
-  CVConditioner(Adc& adc, f offset) : adc_(adc), offset_(offset) {}
+  CVConditioner(Adc& adc, f& offset) : adc_(adc), offset_(offset) {}
 
   bool calibrate_offset() {
     f reading = 0_f;
@@ -101,7 +107,7 @@ public:
 };
 
 struct NoCVInput {
-  NoCVInput(Adc& adc, f offset) {}
+  NoCVInput(Adc& adc) {}
   f Process() { return 0._f; }
 };
 
@@ -125,6 +131,8 @@ class PotConditioner : MovementDetector {
   FILTER filter_;
 public:
   PotConditioner(Adc& adc) : adc_(adc) {}
+  
+  f raw() { return f::inclusive(adc_.get(INPUT)); }
 
   f Process(std::function<void(Event)> const& put) {
     f x = f::inclusive(adc_.get(INPUT));
@@ -147,11 +155,11 @@ enum class Takeover { HARD, SOFT };
 enum class PotFct { MAIN, ALT };
 
 template<AdcInput INPUT, Law LAW, class FILTER, Takeover TO>
-class DualFunctionPotConditioner : PotConditioner<INPUT, LAW, FILTER> {
+class DualFunctionPotConditioner : public PotConditioner<INPUT, LAW, FILTER> {
   enum State { MAIN, ALT, ARMING, CATCHUP } state_ = MAIN;
   f main_value_;
   f alt_value_ = -1_f;          // -1 indicates no value
-  f error_;
+  f cached_value_;
 public:
 
   DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW, FILTER>(adc) {}
@@ -159,6 +167,7 @@ public:
   void alt() { state_ = ALT; }
   void main() { if (state_ == ALT) state_ = ARMING; }
   void reset_alt_value() { alt_value_ = -1_f; }
+  void cache() { if (state_ == MAIN) cached_value_ = main_value_; }
 
   std::pair<f, f> Process(std::function<void(Event)> const& put) {
     f input = PotConditioner<INPUT, LAW, FILTER>::Process(put);
@@ -170,7 +179,6 @@ public:
       alt_value_ = input;
     } break;
     case ARMING: {
-      error_ = input - main_value_;
       state_ = CATCHUP;
       put({StartCatchup, INPUT});
     } break;
@@ -181,16 +189,14 @@ public:
           put({EndOfCatchup, INPUT});
         }
       } else if (TO == Takeover::SOFT) {
-        // end of catchup happens if errors don't have the same sign
-        // (the knob crossed its previous recorded value). The small
-        // constant is to avoid being stuck in catchup when the error
-        // is close to zero (pot didn't move) or if main_value_ = 0.
-        if ((input - main_value_) * error_ <= 0.0001_f) {
+        //Todo: set state_ to PLATEAUED_MAIN where the cached value is used
+        //Then on movement detect set it to MAIN
+        if ((input - cached_value_).abs() <= 0.0005_f) {
           state_ = MAIN;
           put({EndOfCatchup, INPUT});
         }
       }
-    }
+    } break;
     }
     return std::pair(main_value_, alt_value_);
   }
@@ -204,7 +210,8 @@ public:
   PotConditioner pot_;
   CVConditioner cv_;
 
-  PotCVCombiner(Adc& adc, f cv_offset) : pot_(adc), cv_(adc, cv_offset) {}
+  PotCVCombiner(Adc& adc) : pot_(adc), cv_(adc) {}
+  PotCVCombiner(Adc& adc, f& cv_offset) : pot_(adc), cv_(adc, cv_offset) {}
 
   // TODO disable this function if PotConditioner = DualFunction
   f Process(std::function<void(Event)> const& put) {
@@ -239,25 +246,25 @@ class Control : public EventSource<Event> {
   SpiAdc spi_adc_;
 
   struct CalibrationData {
-    f pitch_offset = 0.75_f;
-    f pitch_slope = -111.7_f;
-    f root_offset = 0.75_f;
-    f root_slope = -111.7_f;
-    f warp_offset = 0.000183111057_f;
-    f balance_offset = 0.000793481246_f;
-    f twist_offset = 0.00189214759_f;
-    f scale_offset = 0.00146488845_f;
-    f modulation_offset = -0.00106814783_f;
-    f spread_offset = 0.00129703665_f;
+    f pitch_offset;
+    f pitch_slope;
+    f root_offset;
+    f root_slope;
+    f warp_offset;
+    f balance_offset;
+    f twist_offset;
+    f scale_offset;
+    f modulation_offset;
+    f spread_offset;
 
     // on load, checks that calibration data are within bounds
     bool validate() {
       return
-        (pitch_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
-        (pitch_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        (pitch_offset - 0.70_f).abs() <= kCalibrationSuccessToleranceOffset &&
+        (pitch_slope / -110._f - 1_f).abs() <= kCalibrationSuccessTolerance &&
         pitch_slope < 0.0_f &&
-        (root_offset - 0.75_f).abs() <= kCalibrationSuccessToleranceOffset &&
-        (root_slope / -111.7_f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        (root_offset - 0.70_f).abs() <= kCalibrationSuccessToleranceOffset &&
+        (root_slope / -110._f - 1_f).abs() <= kCalibrationSuccessTolerance &&
         root_slope < 0.0_f &&
         warp_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         balance_offset.abs() <= kCalibrationSuccessToleranceOffset &&
@@ -266,14 +273,25 @@ class Control : public EventSource<Event> {
         modulation_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         spread_offset.abs() <= kCalibrationSuccessToleranceOffset;
     }
-  } calibration_data_, default_calibration_data_;
+  };
+  CalibrationData calibration_data_;
+  CalibrationData default_calibration_data_ = {
+    0.700267_f, -110.17_f, //pitch_offset, slope
+    0.697154_f, -110.355_f, //root_offset, slope
+    0.00302133_f, //warp_offset
+    0.00476089_f, //balance_offset
+    0.00177007_f, //twist_offset
+    0.00146489_f, //scale_offset
+    0.00265511_f, //modulation_offset
+    0.00326548_f, //spread_offset
+  };
 
   Persistent<WearLevel<FlashBlock<0, CalibrationData>>>
   calibration_data_storage_ {&calibration_data_, default_calibration_data_};
 
   PotCVCombiner<PotConditioner<POT_DETUNE, Law::LINEAR, NoFilter>,
                 NoCVInput, QuadraticOnePoleLp<1>
-                > detune_ {adc_, 0_f};
+                > detune_ {adc_};
   PotCVCombiner<DualFunctionPotConditioner<POT_WARP, Law::LINEAR,
                                            QuadraticOnePoleLp<1>, Takeover::SOFT>,
                 CVConditioner<CV_WARP>, QuadraticOnePoleLp<1>
@@ -306,28 +324,31 @@ class Control : public EventSource<Event> {
   ExtCVConditioner<CV_PITCH, Average<4, 2>
                    > pitch_cv_ {calibration_data_.pitch_offset,
                                 calibration_data_.pitch_slope, 
-                                default_calibration_data_.pitch_offset,
-                                default_calibration_data_.pitch_slope, 
                                 spi_adc_};
   ExtCVConditioner<CV_ROOT, Average<4, 2>
                    > root_cv_ {calibration_data_.root_offset,
                                calibration_data_.root_slope, 
-                               default_calibration_data_.root_offset,
-                               default_calibration_data_.root_slope, 
                                spi_adc_};
 
   Parameters& params_;
 
   Sampler<f> pitch_cv_sampler_;
 
+  uint8_t ext_cv_chan;
 public:
 
   Control(Parameters& params) :
     params_(params) {}
 
   void ProcessSpiAdcInput() {
-    pitch_cv_.Process();
-    root_cv_.Process();
+    if (ext_cv_chan) {
+      pitch_cv_.Process();
+      pitch_cv_.switch_channel();
+    } else {
+      root_cv_.Process();
+      root_cv_.switch_channel();
+    }
+    ext_cv_chan = !ext_cv_chan;
   }
 
   void Poll(std::function<void(Event)> const& put) {
@@ -411,9 +432,9 @@ public:
       mod = Signal::crop_down(0.01_f, mod);
       mod *= 6_f / f(params_.alt.numOsc);
       if (params_.modulation.mode == ONE) {
-        mod *= 0.9_f;
-      } else if (params_.modulation.mode == TWO) {
         mod *= 6.0_f;
+      } else if (params_.modulation.mode == TWO) {
+        mod *= 0.9_f;
       } else if (params_.modulation.mode == THREE) {
         mod *= 4.0_f;
       }
@@ -491,6 +512,23 @@ public:
   void warp_pot_main_function() { warp_.pot_.main(); }
   void balance_pot_alternate_function() { balance_.pot_.alt(); }
   void balance_pot_main_function() { balance_.pot_.main(); }
+  void cache_all_alt_shift_pot_values() {
+    spread_.pot_.cache();
+    twist_.pot_.cache();
+    warp_.pot_.cache();
+    balance_.pot_.cache();
+  }
+  void cache_all_alt_learn_pot_values() {
+    root_pot_.cache();
+    pitch_pot_.cache();
+  }
+
+  f scale_pot() { return scale_.pot_.raw(); }
+  f balance_pot() { return balance_.pot_.raw(); }
+  f twist_pot() { return twist_.pot_.raw(); }
+  f pitch_pot() { return pitch_pot_.raw(); }
+  f modulation_pot() { return modulation_.pot_.raw(); }
+  f warp_pot() { return warp_.pot_.raw(); }
 
   void all_main_function() {
     spread_pot_main_function();

@@ -1,3 +1,6 @@
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 #pragma once
 
 #define QSPI_FLASH_SIZE_BYTES            0x40000 	// 256 KBytes
@@ -78,9 +81,12 @@ public:
 
 };
 
+
 // Wrapper reader/writer inside a 32k block. The block is split into
 // [cell_nr_] cells of equal size, each potentially containing an
 // object of Data, and aligned to page boundaries
+// 
+// This template uses 796 bytes for 4 instances
 template<int block, class Data>
 struct FlashBlock {
   using data_t = Data;
@@ -118,6 +124,17 @@ struct FlashBlock {
                                        QSpiFlash::get_32kblock_addr(block),
                                        QSpiFlash::EXECUTE_BACKGROUND);
   }
+  // Verify all bits are 1's
+  bool IsWriteable(int cell) {
+    uint8_t check[data_size_];
+    if (Read(reinterpret_cast<data_t*>(check), cell)) {
+      for (int i=0; i<data_size_; i++) {
+        if (check[i]!=0xFF) return false;
+      }
+      return true;
+    }
+    return false;  
+  }
 
   // simple wrappers to read/write in 1st cell
   bool Read(data_t *data) {
@@ -127,3 +144,5 @@ struct FlashBlock {
     return Erase() && Write(data, 0);
   }
 };
+
+#pragma GCC pop_options

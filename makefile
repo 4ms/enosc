@@ -82,7 +82,6 @@ CPPFLAGS= $(INC)
 
 CFLAGS= $(ARCHFLAGS) \
 	-g \
-	-O$(OPTIM) \
 	-ffast-math \
 	-fdata-sections \
 	-ffunction-sections \
@@ -112,6 +111,10 @@ OBJS := $(STARTUP).o \
 	$(SYSTEM).o \
 	$(addprefix $(HAL_DIR), $(HAL)) \
 	$(OBJS)
+
+OPTFLAG= -O$(OPTIM)
+
+$(addprefix $(HAL_DIR), $(HAL)): OPTFLAG= -Os
 
 all: $(TARGET).hex $(TARGET).bin
 
@@ -153,11 +156,11 @@ debug:
 
 DEPFLAGS = -MMD -MP -MF $<.d
 
-%.o: %.c %.c.d
-	$(CC) $(DEPFLAGS) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+%.o: %.c
+	$(CC) $(CFLAGS) $(OPTFLAG) $(CPPFLAGS) -c $< -o $@
 
 %.o: %.cc %.cc.d
-	$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(CXX) $(DEPFLAGS) $(OPTFLAG) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 %.d: ;
 

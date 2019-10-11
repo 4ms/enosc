@@ -22,6 +22,7 @@ public:
       Storage::Erase();
       cell_ = 0;
     }
+    while (!Storage::IsWriteable(cell_)) { cell_++; }
     return Storage::Write(data, cell_++);
   }
 };

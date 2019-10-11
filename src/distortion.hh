@@ -52,12 +52,12 @@ namespace Distortion {
 
   template<>
   inline f warp<SEGMENT>(s1_15 x, f amount) {
-    constexpr f const fact = f(Data::triangles.size() - 1);
+    constexpr f const fact = f(DynamicData::triangles.size() - 1);
     amount *= fact;
     auto [idx, frac] = amount.integral_fractional();
     u0_32 phase = u0_32(x.to_unsigned_scale());
-    f s1 = Data::triangles[idx].interpolate(phase);
-    f s2 = Data::triangles[idx+1].interpolate(phase);
+    f s1 = DynamicData::triangles[idx].interpolate(phase);
+    f s2 = DynamicData::triangles[idx+1].interpolate(phase);
     return Signal::crossfade(s1, s2, frac);
   }
 };

@@ -179,7 +179,7 @@ private:
 
   struct GPIO {
     // TODO init with constructor
-    void Init() {
+    void __attribute__((optimize("Os"))) Init() {
       GPIO_InitTypeDef gpio;
 
       //BitBang register setup pins:
@@ -211,7 +211,7 @@ private:
   } gpio_;
 
   struct BBRegSetup {
-    void Init() {
+    void  __attribute__((optimize("Os"))) Init() {
       Write(ATTEN_REG1, NO_ATTEN);
       Write(ATTEN_REG2, NO_ATTEN);
       Write(RST_OSMP_MUTE_REG, OVER);
@@ -229,7 +229,7 @@ private:
     }
 
   private:
-    void Write(enum PCM1753Registers reg_addr, uint8_t reg_value) {
+    void  __attribute__((optimize("Os"))) Write(enum PCM1753Registers reg_addr, uint8_t reg_value) {
 
       latch_pin(HIGH);
       delay();
@@ -275,7 +275,7 @@ private:
 
   } bb_regsetup_;
 
-  void Reboot() {
+  void  __attribute__((optimize("Os"))) Reboot() {
     //Take everything down...
     bb_regsetup_.Reset();
     delay();
@@ -295,7 +295,7 @@ private:
     Start();
   }
 
-  void init_SAI_clock() {
+  void  __attribute__((optimize("Os"))) init_SAI_clock() {
     RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
     PeriphClkInitStruct.PeriphClockSelection = DACSAI_SAI_RCC_PERIPHCLK;
 
@@ -344,7 +344,7 @@ private:
     hal_assert(HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct));
   }
 
-  void SAI_init() {
+  void  __attribute__((optimize("Os"))) SAI_init() {
     DACSAI_SAI_CLOCK_ENABLE();
 
     if (!IS_SAI_AUDIO_FREQUENCY(sample_rate)) return;
@@ -381,7 +381,7 @@ private:
     HAL_DMA_DeInit(&hdma_tx);
   }
 
-  void init_audio_DMA() {
+  void  __attribute__((optimize("Os"))) init_audio_DMA() {
 
     // Prepare the DMA for TX (but don't enable yet)
     DACSAI_SAI_DMA_CLOCK_ENABLE();

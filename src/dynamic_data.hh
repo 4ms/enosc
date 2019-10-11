@@ -13,4 +13,5 @@ struct DynamicData {
   static Buffer<Buffer<f, cheby_size>, cheby_tables> cheby;
   static Buffer<std::pair<f, f>, fold_size> fold;
   static Buffer<f, (fold_size-1)/2 + 1> fold_max;
+  static Buffer<Buffer<f, 9>, 8> triangles;
 };

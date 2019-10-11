@@ -1,3 +1,6 @@
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 //Largely taken from CubeMX Example for QSPI_ReadWrite on the STM32F73xx DISCO
 #include "hal.hh"
 #include "qspi_flash.hh"
@@ -249,6 +252,7 @@ QSpiFlash::QSpiFlash()
 	// Now that chip is in QPI mode, IO2 and IO3 can be initialized
 	GPIO_Init_IO2_IO3_AF();
 
+	// Erase(ENTIRE_CHIP, 0, EXECUTE_FOREGROUND);
 	// if (!Test()) {
 	// 	while (1) {
 	// 		asm("nop");
@@ -722,3 +726,5 @@ extern "C" void QUADSPI_IRQHandler(void)
 {
 	HAL_QSPI_IRQHandler(&QSpiFlash::instance_->handle);
 }
+
+#pragma GCC pop_options

@@ -1,10 +1,26 @@
+#pragma GCC push_options
+#pragma GCC optimize ("Os")
+
 #include "dynamic_data.hh"
+
+/* triangles */
+Buffer<Buffer<s8_0, 9>, 8> triangles_12ths = {{{
+  {{{-12._s8_0, -9._s8_0, -6._s8_0, -3._s8_0, 0._s8_0, 3._s8_0, 6._s8_0, 9._s8_0, 12._s8_0, }}},
+  {{{-12._s8_0, -12._s8_0, -8._s8_0, -4._s8_0, 0._s8_0, 4._s8_0, 8._s8_0, 12._s8_0, 12._s8_0, }}},
+  {{{-12._s8_0, -12._s8_0, -12._s8_0, -6._s8_0, 0._s8_0, 6._s8_0, 12._s8_0, 12._s8_0, 12._s8_0, }}},
+  {{{-12._s8_0, -12._s8_0, -12._s8_0, -12._s8_0, 0._s8_0, 12._s8_0, 12._s8_0, 12._s8_0, 12._s8_0, }}},
+  {{{-12._s8_0, -6._s8_0, -12._s8_0, -6._s8_0, 0._s8_0, 6._s8_0, 12._s8_0, 6._s8_0, 12._s8_0, }}},
+  {{{-12._s8_0, -6._s8_0, -0._s8_0, -12._s8_0, 0._s8_0, 12._s8_0, 0._s8_0, 6._s8_0, 12._s8_0, }}}, 
+  {{{-12._s8_0, -6._s8_0, 12._s8_0, -12._s8_0, 0._s8_0, 12._s8_0, -12._s8_0, 6._s8_0, 12._s8_0, }}},
+  {{{12._s8_0, -12._s8_0, 12._s8_0, -12._s8_0, 0._s8_0, 12._s8_0, -12._s8_0, 12._s8_0, -12._s8_0, }}},
+}}};
 
 
 Buffer<std::pair<s1_15, s1_15>, sine_size> DynamicData::sine;
 Buffer<Buffer<f, cheby_size>, cheby_tables> DynamicData::cheby;
 Buffer<std::pair<f, f>, fold_size> DynamicData::fold;
 Buffer<f, (fold_size-1)/2 + 1> DynamicData::fold_max;
+Buffer<Buffer<f, 9>, 8> DynamicData::triangles;
 
 DynamicData::DynamicData() {
 
@@ -58,4 +74,12 @@ DynamicData::DynamicData() {
       fold_max[i] = 0.95_f / (max);
     }
   }
+
+  { //60 bytes of code
+    for (int i=0; i<8; i++)
+      for (int j=0; j<9; j++)
+        triangles[i][j] = (f)(triangles_12ths[i][j])/12.0_f;
+  }
 }
+
+#pragma GCC pop_options

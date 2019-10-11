@@ -9,9 +9,11 @@ enum SpiAdcInput {
   NUM_SPI_ADC_CHANNELS
 };
 
-enum max11666_channels {
-	MAX11666_CHAN1 = 0x00FF,
-	MAX11666_CHAN2 = 0xFF00
+enum max11666Commands {
+  MAX11666_SWITCH_TO_CH1 = 0x00FF,
+  MAX11666_CONTINUE_READING_CH1 = 0x0000,
+  MAX11666_SWITCH_TO_CH2 = 0xFF00,
+  MAX11666_CONTINUE_READING_CH2 = 0xFFFF,
 };
 
 enum max11666Errors {
@@ -21,26 +23,32 @@ enum max11666Errors {
 
 #define MAX11666_SPI_IRQHANDLER     SPI2_IRQHandler
 
-void register_spi_adc_isr(void f());
-
 #define ADC_BIT_DEPTH 12
+const uint8_t kADCBitDepth = 12;
 
 //Oversample and average blocks of 2^oversampling_bitsize samples 
 //Todo: Template with oversampling amount?
-#define OVERSAMPLING_AMT_BITS   3
-#define OVERSAMPLING_AMT (1<<OVERSAMPLING_AMT_BITS)
-#define OVERSAMPLING_MASK (OVERSAMPLING_AMT-1)
+constexpr uint8_t kOversamplingAmountBits = 2;
+constexpr uint8_t kOversamplingAmount = (1<<kOversamplingAmountBits);
+constexpr uint8_t kOversamplingMask = kOversamplingAmount - 1;
+const uint8_t kOversamplingThrowoutReads = 3;
+
+// #define OVERSAMPLING_AMT_BITS   2
+// #define OVERSAMPLING_AMT (1<<OVERSAMPLING_AMT_BITS)
+// #define OVERSAMPLING_MASK (OVERSAMPLING_AMT-1)
+// #define OVERSAMPLEING_THROWOUT_READS  3 
 
 struct SpiAdc : Nocopy {
 
-  static constexpr int value_bits = ADC_BIT_DEPTH + OVERSAMPLING_AMT_BITS;
-  using value_t = Fixed<UNSIGNED, 16 - value_bits, value_bits>; // u1_15
+  static constexpr int value_bits = kADCBitDepth + kOversamplingAmountBits;
+  using value_t = Fixed<UNSIGNED, 16 - value_bits, value_bits>; // OS=3 => u1_15, OS=2 => u2_14
+  using sum_t = Fixed<UNSIGNED, 32 - value_bits, value_bits>; // OS=3 => u17_15, OS=2 => u18_14
 
 	SpiAdc() {
     spiadc_instance_ = this;
-    register_spi_adc_isr(SpiAdc::spiadc_ISR__IN_ITCM_); //Todo: measure ITCM benefits
 
     err = MAX11666_NO_ERR;
+    cur_chan = 0;
 
     assign_pins();
     SPI_disable();
@@ -50,23 +58,28 @@ struct SpiAdc : Nocopy {
     SPI_enable();
 
     //Send one word to start
-    cur_channel = MAX11666_CHAN1;
-    spih.Instance->DR = cur_channel;
+    spih.Instance->DR = MAX11666_SWITCH_TO_CH1;
   }
 
   u0_16 get(uint8_t chan) {
-    u17_15 avg = 0._u17_15;
-    for (int i=0; i<OVERSAMPLING_AMT; i++){
-      avg += u17_15(values[chan][i]);
+    sum_t avg = 0._u18_14;
+    for (int i=0; i<kOversamplingAmount; i++){
+      avg += sum_t(values[chan][i]);
     }
     return u0_16::wrap(avg);
   }
 
+  void switch_channel(void) {
+    cur_chan = !cur_chan;
+    os_idx[cur_chan] = kOversamplingAmount + kOversamplingThrowoutReads - 1;
+    spiadc_instance_->spih.Instance->DR = cur_chan ? MAX11666_SWITCH_TO_CH2 : MAX11666_SWITCH_TO_CH1;
+  }
+
   static SpiAdc *spiadc_instance_;
   SPI_HandleTypeDef spih;
-  value_t values[NUM_SPI_ADC_CHANNELS][OVERSAMPLING_AMT];
+  value_t values[NUM_SPI_ADC_CHANNELS][kOversamplingAmount];
   static uint32_t os_idx[NUM_SPI_ADC_CHANNELS];
-  max11666_channels cur_channel;
+  static uint8_t cur_chan;
   max11666Errors err;
 
 private:
@@ -111,7 +124,7 @@ private:
     spih.Init.Direction         = SPI_DIRECTION_2LINES;
     spih.Init.CLKPhase          = SPI_PHASE_1EDGE;
     spih.Init.CLKPolarity       = SPI_POLARITY_LOW;
-    spih.Init.DataSize          = SPI_DATASIZE_14BIT;
+    spih.Init.DataSize          = SPI_DATASIZE_16BIT;
     spih.Init.FirstBit          = SPI_FIRSTBIT_MSB;
     spih.Init.TIMode            = SPI_TIMODE_DISABLE;
     spih.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
@@ -131,8 +144,6 @@ private:
   void SPI_enable() {
     spih.Instance->CR1 |= SPI_CR1_SPE;
   }
-
-  static void spiadc_ISR__IN_ITCM_();
 
   void IRQ_init()
   {
