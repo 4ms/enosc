@@ -1,3 +1,4 @@
+#include "pcb_version.hh"
 
 #define TICKS_PER_MS 10
 
@@ -12,5 +13,5 @@
 #define BOOTLOADER_INPUT_RCC_ENABLE __HAL_RCC_GPIOB_CLK_ENABLE
 
 #else
-#error "bootloader.hh does not recognize PCB_VERISON"
+#error "bootloader.hh does not recognize PCB_VERSION"
 #endif
