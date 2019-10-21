@@ -17,12 +17,17 @@ public:
     return false;
   }
 
+  //Todo: Report a failed flash block error
+  //if cell 0 is not writable after erasing
   bool Write(data_t *data) {
-    if (cell_ >= Storage::cell_nr_) {
-      Storage::Erase();
-      cell_ = 0;
+    while (!Storage::IsWriteable(cell_)) { 
+      cell_++;
+      if (cell_ >= Storage::cell_nr_) {
+        Storage::Erase();
+        cell_ = 0;
+        break;
+      }
     }
-    while (!Storage::IsWriteable(cell_)) { cell_++; }
     return Storage::Write(data, cell_++);
   }
 };

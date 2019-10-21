@@ -139,6 +139,8 @@ bool QSpiFlash::Test_Sector(uint8_t sector_num)
 	for (i=0; i<QSPI_SECTOR_SIZE; i++)
 		test_buffer[i] = (test_encode_num(i) + sector_num) & 0xFF;
 	
+	while (!is_ready()) {;}
+
 	//Benchmark: ~38ms/sector
 	if (!Erase(SECTOR, test_addr, EXECUTE_BACKGROUND))
 		return false;

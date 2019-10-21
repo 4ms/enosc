@@ -126,6 +126,7 @@ struct FlashBlock {
   }
   // Verify all bits are 1's
   bool IsWriteable(int cell) {
+    if (cell >= cell_nr_) return false;
     uint8_t check[data_size_];
     if (Read(reinterpret_cast<data_t*>(check), cell)) {
       for (int i=0; i<data_size_; i++) {
