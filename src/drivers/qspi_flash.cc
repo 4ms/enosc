@@ -251,7 +251,7 @@ QSpiFlash::QSpiFlash()
 	hal_assert(Reset());
 	hal_assert(EnterMemory_QPI());
 
-	// Now that chip is in QPI mode, IO2 and IO3 can be initialized
+	// Now that chip is in QSPI mode, IO2 and IO3 can be initialized
 	GPIO_Init_IO2_IO3_AF();
 
 	// Erase(ENTIRE_CHIP, 0, EXECUTE_FOREGROUND);
