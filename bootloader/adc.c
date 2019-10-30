@@ -164,14 +164,14 @@ void init_adc(uint32_t adcnum, uint16_t *adc_buffer, uint32_t num_channels, buil
     //} //__LL_ADC_IS_ENABLED_ALL_COMMON_INSTANCE
 
     // if (LL_ADC_IsEnabled(adc) == 0) {
-    LL_ADC_SetResolution(adc, LL_ADC_RESOLUTION_12B);
-    LL_ADC_SetResolution(adc, LL_ADC_DATA_ALIGN_RIGHT);
-    LL_ADC_SetSequencersScanMode(adc, LL_ADC_SEQ_SCAN_ENABLE);
+    // LL_ADC_SetResolution(adc, LL_ADC_RESOLUTION_12B);
+    // LL_ADC_SetResolution(adc, LL_ADC_DATA_ALIGN_RIGHT);
+    // LL_ADC_SetSequencersScanMode(adc, LL_ADC_SEQ_SCAN_DISABLE);
     LL_ADC_REG_SetTriggerSource(adc, LL_ADC_REG_TRIG_SOFTWARE);
-    LL_ADC_REG_SetContinuousMode(adc, LL_ADC_REG_CONV_CONTINUOUS);
-    LL_ADC_REG_SetDMATransfer(adc, LL_ADC_REG_DMA_TRANSFER_UNLIMITED);
+    LL_ADC_REG_SetContinuousMode(adc, LL_ADC_REG_CONV_SINGLE);
+    // LL_ADC_REG_SetDMATransfer(adc, LL_ADC_REG_DMA_TRANSFER_UNLIMITED);
     LL_ADC_REG_SetFlagEndOfConversion(adc, LL_ADC_REG_FLAG_EOC_SEQUENCE_CONV);
-    LL_ADC_REG_SetSequencerLength(adc, num_channels-1);
+    LL_ADC_REG_SetSequencerLength(adc, LL_ADC_REG_SEQ_SCAN_DISABLE); //num_channels-1);
 
     for (i=0; i<num_channels; i++)
     {
