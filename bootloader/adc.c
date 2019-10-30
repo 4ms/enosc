@@ -140,6 +140,7 @@ void adc_init_all(void)
 
 void init_adc(uint32_t adcnum, uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc_setup)
 {
+	/*
 	adcnum &= 0b0001;
 
 	ADC_ChannelConfTypeDef 	sConfig;
@@ -185,11 +186,13 @@ void init_adc(uint32_t adcnum, uint16_t *adc_buffer, uint32_t num_channels, buil
 
 	HAL_ADC_Start(&hadc[adcnum]);
 	HAL_ADC_Start_DMA(&hadc[adcnum], (uint32_t *)adc_buffer, num_channels);
+*/
 }
 
 //
 //This is called from HAL_ADC_Init()
 //
+/*
 void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 {
 	uint8_t adcnum;
@@ -221,4 +224,4 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 	__HAL_LINKDMA(adcHandle,DMA_Handle,hdma_adc[adcnum]);
 
 }
-
+*/
