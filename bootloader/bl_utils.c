@@ -21,7 +21,7 @@ void write_flash_page(const uint8_t* data, uint32_t dst_addr, uint32_t bytes_to_
 	//Erase sector if dst_addr is a sector start
 	flash_open_erase_sector(dst_addr);
 
-	flash_open_program_block_words((uint32_t *)data, dst_addr, bytes_to_write/4);
+	flash_open_program_block_words((uint32_t *)data, dst_addr, bytes_to_write>>2);
 
 	flash_end_open_program();
 
@@ -89,7 +89,8 @@ void SystemClock_Config(void) {
     HAL_RCC_EnableCSS();
 
     // Configure the Systick interrupt time
-    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/(1000*TICKS_PER_MS));
+    // HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/(1000*TICKS_PER_MS));
+    HAL_SYSTICK_Config(21600);
     HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
     // Some IRQs interrupt configuration

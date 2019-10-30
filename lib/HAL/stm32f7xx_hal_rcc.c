@@ -979,6 +979,15 @@ void HAL_RCC_DisableCSS(void)
   *
   * @retval SYSCLK frequency
   */
+uint32_t int_div(uint64_t num, uint64_t denom) {
+  uint32_t quo = 0;
+  while (num>=denom) {
+    quo++;
+    num-=denom;
+  }
+  return quo;
+}
+
 uint32_t HAL_RCC_GetSysClockFreq(void)
 {
   uint32_t pllm = 0, pllvco = 0, pllp = 0;
@@ -1005,16 +1014,23 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
       if (__HAL_RCC_GET_PLL_OSCSOURCE() != RCC_PLLCFGR_PLLSRC_HSI)
       {
         /* HSE used as PLL clock source */
-        pllvco = (uint32_t) ((((uint64_t) HSE_VALUE * ((uint64_t) ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos)))) / (uint64_t)pllm);
+        // pllvco = (uint32_t) ((((uint64_t) HSE_VALUE * ((uint64_t) ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos)))) / (uint64_t)pllm);
+        pllvco = int_div((((uint64_t) HSE_VALUE * ((uint64_t) ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos)))), pllm);
       }
       else
       {
         /* HSI used as PLL clock source */
-        pllvco = (uint32_t) ((((uint64_t) HSI_VALUE * ((uint64_t) ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos)))) / (uint64_t)pllm);
+        //pllvco = (uint32_t) ((((uint64_t) HSI_VALUE * ((uint64_t) ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos)))) / (uint64_t)pllm);
+        pllvco = int_div((((uint64_t) HSI_VALUE * ((uint64_t) ((RCC->PLLCFGR & RCC_PLLCFGR_PLLN) >> RCC_PLLCFGR_PLLN_Pos)))), pllm);
       }
       pllp = ((((RCC->PLLCFGR & RCC_PLLCFGR_PLLP) >> RCC_PLLCFGR_PLLP_Pos) + 1 ) *2);
 
-      sysclockfreq = pllvco/pllp;
+      // while (pllvco>=pllp) {
+      //   sysclockfreq++;
+      //   pllvco-=pllp;
+      // }
+      sysclockfreq = int_div(pllvco, pllp);
+      // sysclockfreq = pllvco/pllp;
       break;
     }
     default:
