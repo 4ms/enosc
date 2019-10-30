@@ -31,10 +31,10 @@
 #include <stm32f7xx.h>
 
 typedef struct builtinAdcSetup{
-        GPIO_TypeDef    *gpio;
-        uint16_t                pin;
-        uint8_t                 channel;
-        uint8_t                 sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
+        GPIO_TypeDef *gpio;
+        uint16_t pin;
+        uint32_t channel;
+        uint32_t sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
 } builtinAdcSetup;
 
 
