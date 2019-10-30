@@ -72,6 +72,8 @@ MCU = -mcpu=cortex-m7 \
 
 F_CPU = 216000000L
 
+# F_FLTO = -flto
+
 ARCH_CFLAGS = -D'IS_BOOTLOADER=1' -DARM_MATH_CM7 \
  	-D'__FPU_PRESENT=1' \
   	-DUSE_HAL_DRIVER \
@@ -79,15 +81,16 @@ ARCH_CFLAGS = -D'IS_BOOTLOADER=1' -DARM_MATH_CM7 \
   	-DF_CPU=$(F_CPU) \
 
 
-OPTIMIZED_CFLAGS = -g2 -Os
+OPTIMIZED_CFLAGS = -g3 -Os
 
 CFLAGS  = $(OPTIMIZED_CFLAGS) 
 CFLAGS += $(ARCH_CFLAGS) $(MCU)
 CFLAGS += -I.  $(INCLUDES)
-CFLAGS += -fdata-sections -ffunction-sections
+CFLAGS += -fdata-sections -ffunction-sections \
+ 	$(F_FLTO)
 # CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)"
 
-C0FLAGS  = -O0 -g2 -Wall
+C0FLAGS  = -O0 -g3 -Wall
 C0FLAGS += $(ARCH_CFLAGS) $(MCU)
 C0FLAGS += -I.  $(INCLUDES)
 
@@ -98,6 +101,7 @@ CXXFLAGS=$(CFLAGS) \
 	-Werror=return-type \
 	-Wdouble-promotion \
 	-Wno-register \
+	$(F_FLTO)
 
 AFLAGS = -mcpu=cortex-m7 \
 	-mthumb-interwork \
@@ -107,7 +111,9 @@ AFLAGS = -mcpu=cortex-m7 \
 
 LDSCRIPT = $(LOADFILE)
 
-LFLAGS  = $(MCU) -specs=nano.specs  -T $(LDSCRIPT) -lc -lm -lnosys
+LFLAGS  = $(MCU) -specs=nano.specs  -T $(LDSCRIPT) \
+	-Wl,--gc-sections \
+	$(F_FLTO)
 	
 # $(BLBUILDDIR)/bootloader.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/bl_ui.o: CFLAGS = $(C0FLAGS)

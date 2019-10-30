@@ -1,5 +1,6 @@
 #include "hardware_test.h"
 #include "gpio_pins.h"
+#include "adc.h"
 
 void test_leds(void);
 void test_switches(void);
@@ -152,5 +153,6 @@ void test_switches(void) {
 //one pot at a time: turn each pot down (red goes off), up (blue goes off), center (green goes off only when in center). 
 //press button to select next pot
 void test_pots(void) {
+    adc_init_all();
 }
 
