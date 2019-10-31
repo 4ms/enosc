@@ -30,6 +30,7 @@
 #include "gpio_pins.h"
 #include "adc.h"
 #include "lib/stm32f7xx_ll_adc.h"
+#include "lib/stm32f7xx_ll_bus.h"
 
 builtinAdcSetup adc_[NUM_ADCS];
 void builtin_adc_setup(void)
@@ -121,20 +122,15 @@ uint16_t read_adc(ADC_TypeDef *adc, uint32_t channel) {
 void init_adcs(void)
 {
     uint8_t i;
-    GPIO_InitTypeDef gpio;
     ADC_TypeDef *adc;
 
     //Note: GPIO RCC should be enabled by now
-    // LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
 
-    //Enable GPIO pins (and channel sampling time) Todo: is it OK to set the channel sampling time here?
-    gpio.Mode = GPIO_MODE_ANALOG;
-    gpio.Pull = GPIO_NOPULL;
+    //Enable GPIO pins (and channel sampling time)
     for (i=0; i<NUM_ADCS; i++)
     {
-        gpio.Pin = adc_[i].pin;
-        HAL_GPIO_Init(adc_[i].gpio, &gpio);
-    //  LL_GPIO_SetPinMode(adc_[i].gpio, adc_[i].pin, LL_GPIO_MODE_ANALOG);
+        LL_GPIO_SetPinMode(adc_[i].gpio, adc_[i].pin, LL_GPIO_MODE_ANALOG);
     }
 
     //Enable ADC core clock

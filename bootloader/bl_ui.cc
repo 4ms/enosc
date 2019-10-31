@@ -1,9 +1,13 @@
 #include "bl_ui.hh"
-#include "leds.hh"
+
+extern "C" {
+#include "leds.h"
+#include "buttons.h"
+#include "bl_utils.h"
+}
 #include "bootloader.hh"
 
-Leds leds;
-Buttons buttons;
+extern volatile uint32_t systmr;
 
 // bool bootloader_entry_buttons_pushed(void)
 // {
@@ -12,28 +16,14 @@ Buttons buttons;
 //  return (buttons.learn_.pushed() && buttons.freeze_.pushed());
 // }
 
+
 bool button_pushed(enum Button button)
 {
     if (button == BUTTON_LEARN) {
-        buttons.learn_.Debounce();
-        return buttons.learn_.pushed();
+        return !PIN_READ(LEARN_BUT_GPIO_Port, LEARN_BUT_Pin);
     }
     else if (button == BUTTON_FREEZE) {
-        buttons.freeze_.Debounce();
-        return buttons.freeze_.pushed();
-    }
-    else return false;
-}
-
-bool button_just_pushed(enum Button button)
-{
-    if (button == BUTTON_LEARN) {
-        buttons.learn_.Debounce();
-        return buttons.learn_.just_pushed();
-    }
-    else if (button == BUTTON_FREEZE) {
-        buttons.freeze_.Debounce();
-        return buttons.freeze_.just_pushed();
+        return !PIN_READ(FREEZE_BUT_GPIO_Port, FREEZE_BUT_Pin);
     }
     else return false;
 }
@@ -42,29 +32,17 @@ void animate_until_button_pushed(enum Animations animation_type, enum Button but
 {
     animate(ANI_RESET);
 
-    if (button == BUTTON_LEARN) {
-        while (!buttons.learn_.pushed())
-        {
-            buttons.learn_.Debounce();
-            animate(animation_type);
-        }
-        while (buttons.learn_.pushed())
-            buttons.learn_.Debounce();
+    while (!button_pushed(button))
+    {   
+        delay(1);
+        animate(animation_type);
     }
-    else if (button == BUTTON_FREEZE) {
-        while (!buttons.freeze_.pushed())
-        {
-            buttons.freeze_.Debounce();
-            animate(animation_type);
-        }
-        while (buttons.freeze_.pushed())
-            buttons.freeze_.Debounce();
-    }
+    while (button_pushed(button)) {delay(1);}
 }
 
 void animate(enum Animations animation_type)
 {
-    uint32_t cur_tm = HAL_GetTick();
+    uint32_t cur_tm = systmr;
     static uint32_t last_tm = 0;
     static uint8_t ctr = 0;
     uint32_t step_time = 500 * TICKS_PER_MS; //default
@@ -72,20 +50,21 @@ void animate(enum Animations animation_type)
     switch (animation_type) {
 
         case ANI_RESET:
-            leds.freeze_.set(Colors::black);
-            leds.learn_.set(Colors::black);
+            SET_LEARN_OFF();
+            SET_FREEZE_OFF();
+
             last_tm = cur_tm;
             ctr = 0;
             break;
 
         case ANI_SUCCESS:
             if (ctr==0) {
-                leds.freeze_.set(Colors::green);
-                leds.learn_.set(Colors::yellow);
+                SET_FREEZE_GREEN();
+                SET_LEARN_YELLOW();
             }
             else if (ctr==1) {
-                leds.freeze_.set(Colors::yellow);
-                leds.learn_.set(Colors::green);
+                SET_FREEZE_YELLOW();
+                SET_LEARN_GREEN();
             }
             // else if (ctr==2) {
             //     leds.freeze_.set(Colors::green);
@@ -114,9 +93,9 @@ void animate(enum Animations animation_type)
         case ANI_WAITING:
             //Flash button green/off when waiting
             if (ctr==0)
-                leds.learn_.set(Colors::black);
+                SET_LEARN_OFF();
             else if (ctr==1)
-                leds.learn_.set(Colors::green);
+                SET_LEARN_GREEN();
             else
                 ctr=0;
             break;
@@ -124,14 +103,14 @@ void animate(enum Animations animation_type)
         case ANI_RECEIVING:
             step_time = 200*TICKS_PER_MS;
             if (ctr<3) {
-                leds.freeze_.set(Colors::blue);
-                leds.learn_.set(Colors::blue);
+                SET_FREEZE_BLUE();
+                SET_LEARN_BLUE();
             } else if (ctr==3) {
-                leds.freeze_.set(Colors::blue);
-                leds.learn_.set(Colors::white);
+                SET_FREEZE_BLUE();
+                SET_LEARN_WHITE();
             } else if (ctr==4) {
-                leds.freeze_.set(Colors::white);
-                leds.learn_.set(Colors::blue);
+                SET_FREEZE_WHITE();
+                SET_LEARN_BLUE();
             } else
                 ctr=0;
             break;
@@ -139,11 +118,11 @@ void animate(enum Animations animation_type)
         case ANI_WRITING:
             step_time = 100*TICKS_PER_MS;
             if (ctr==0) {
-                leds.freeze_.set(Colors::yellow);
-                leds.learn_.set(Colors::black);
+                SET_FREEZE_YELLOW();
+                SET_LEARN_OFF();
             } else if (ctr==1) {
-                leds.freeze_.set(Colors::black);
-                leds.learn_.set(Colors::yellow);
+                SET_FREEZE_OFF();
+                SET_LEARN_YELLOW();
             } else
                 ctr=0;
             break;
@@ -151,11 +130,11 @@ void animate(enum Animations animation_type)
         case ANI_FAIL_ERR:
             step_time = 100*TICKS_PER_MS;
             if (ctr==0) {
-                leds.learn_.set(Colors::black);
-                leds.freeze_.set(Colors::red);
+                SET_LEARN_OFF();
+                SET_FREEZE_RED();
             } else if (ctr==1) {
-                leds.learn_.set(Colors::red);
-                leds.freeze_.set(Colors::red);
+                SET_LEARN_RED();
+                SET_FREEZE_RED();
             } else 
                 ctr=0;
             break;

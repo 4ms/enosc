@@ -28,24 +28,6 @@
 
  #include "hal_handlers.h"
 
-void HAL_MspInit(void)
-{
-    HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_2);
-
-    HAL_NVIC_SetPriority(MemoryManagement_IRQn, 0, 0);
-    HAL_NVIC_SetPriority(BusFault_IRQn, 0, 0);
-    HAL_NVIC_SetPriority(UsageFault_IRQn, 0, 0);
-    HAL_NVIC_SetPriority(SVCall_IRQn, 0, 0);
-    HAL_NVIC_SetPriority(DebugMonitor_IRQn, 0, 0);
-    HAL_NVIC_SetPriority(PendSV_IRQn, 0, 0);
-    HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-}
-void SysTick_Handler(void)
-{
-    HAL_IncTick();
-    HAL_SYSTICK_IRQHandler();
-}
-
 void _Error_Handler(const char* file, uint32_t line)
 { 
     volatile char f[100];
@@ -58,8 +40,8 @@ void _Error_Handler(const char* file, uint32_t line)
 
     while (1)
     {
-        UNUSED(f);
-        UNUSED(l);
+        (void)(f);
+        (void)(l);
     }
 }
 void HardFault_Handler(void)
@@ -78,12 +60,12 @@ void HardFault_Handler(void)
     dfsr=SCB->DFSR;
     cfsr=SCB->CFSR;
 
-    UNUSED(hfsr);
-    UNUSED(afsr);
-    UNUSED(dfsr);
-    UNUSED(cfsr);
-    UNUSED(mmfar);
-    UNUSED(bfar);
+    (void)(hfsr);
+    (void)(afsr);
+    (void)(dfsr);
+    (void)(cfsr);
+    (void)(mmfar);
+    (void)(bfar);
     
     if (foobar){
         return;

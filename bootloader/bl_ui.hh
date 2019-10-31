@@ -1,6 +1,8 @@
 #pragma once
 
-#include "buttons.hh"
+extern "C" {
+#include "buttons.h"
+}
 
 enum Animations {
 	ANI_WAITING, 

@@ -4,20 +4,13 @@
 BINARYNAME = bootloader
 MAINAPP_HEX = ../main.hex
 
-APP_SOURCES = 	\
-	../src/drivers/leds.cc \
-	../src/drivers/buttons.cc \
-	../src/drivers/debug.cc \
-
-
 BUILDDIR = build
 BLBUILDDIR = $(BUILDDIR)/$(BINARYNAME)
 COMBODIR = $(BUILDDIR)/bootloader-app-combo
 COMBO = $(COMBODIR)/bootloader-app-combo
 
 CMSIS_DIR = ../lib/CMSIS
-HAL_DIR = ../lib/HAL
-EASIGLIB_DIR = ../lib/easiglib/
+LL_DIR = lib
 
 STARTUP = $(CMSIS_DIR)/startup_stm32f730xx
 SYSTEM = $(CMSIS_DIR)/system_stm32f7xx
@@ -26,28 +19,19 @@ LOADFILE = bootloader_STM32F730V8x.ld
 
 SOURCES += $(wildcard *.c)
 SOURCES += $(wildcard *.cc)
+SOURCES += $(wildcard $(LL_DIR)/*.c)
 SOURCES += stm_audio_bootloader/fsk/packet_decoder.cc
-SOURCES += $(APP_SOURCES)
-SOURCES += $(wildcard $(HAL_DIR)/*.c)
 SOURCES += $(STARTUP).s
 SOURCES += $(SYSTEM).c
-
-
 
 OBJECTS = $(addprefix $(BLBUILDDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
 
 INCLUDES += -I$(CMSIS_DIR) \
-			-I$(HAL_DIR) \
-			-I$(EASIGLIB_DIR) \
+			-I $(LL_DIR) \
 			-I stm_audio_bootloader/fsk \
 			-I stmlib \
 			-I stmlib/utils \
 			-I ../src \
-			-I ../src/drivers \
-			-I ../ \
-			-I lib
-
-
 
 ELF = $(BLBUILDDIR)/$(BINARYNAME).elf
 HEX = $(BLBUILDDIR)/$(BINARYNAME).hex
@@ -75,9 +59,9 @@ F_CPU = 216000000L
 
 # F_FLTO = -flto
 
-ARCH_CFLAGS = -D'IS_BOOTLOADER=1' -DARM_MATH_CM7 \
+ARCH_CFLAGS = -DARM_MATH_CM7 \
  	-D'__FPU_PRESENT=1' \
-  	-DUSE_HAL_DRIVER \
+  	-DUSE_FULL_LL_DRIVER \
   	-DSTM32F730xx \
   	-DF_CPU=$(F_CPU) \
 
@@ -143,12 +127,12 @@ $(ELF): $(OBJECTS)
 	$(LD) $(LFLAGS) -o $@ $(OBJECTS)
 
 
-$(BLBUILDDIR)/%.o: %.c $(wildcard inc/*.h) $(wildcard inc/res/*.h)
+$(BLBUILDDIR)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) -c $(CFLAGS) $< -o $@
 
 
-$(BLBUILDDIR)/%.o: %.cc $(wildcard inc/*.h) $(wildcard inc/res/*.h)
+$(BLBUILDDIR)/%.o: %.cc
 	mkdir -p $(dir $@)
 	$(CPP) -c $(CFLAGS) $(CXXFLAGS) $< -o $@
 
