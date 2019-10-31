@@ -34,12 +34,12 @@ typedef struct builtinAdcSetup{
         GPIO_TypeDef *gpio;
         uint16_t pin;
         uint32_t channel;
-        uint32_t sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
+        // uint32_t sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
 } builtinAdcSetup;
 
 
 // ADC1
-enum BuiltinAdc1Channels{
+enum BuiltinAdcChannels{
         WARP_POT_ADC,           //  0
         DETUNE_POT_ADC,         //  1
         CROSSFM_POT_ADC,        //  2
@@ -50,25 +50,20 @@ enum BuiltinAdc1Channels{
         BALANCE_POT_ADC,        //  7
         TWIST_POT_ADC,          //  8
 
-        NUM_BUILTIN_ADC1
-};
-
-
-// ADC3
-enum BuiltinAdc3Channels{
-        SPREAD_CV_ADC,          //  0 
-        WARP_CV_ADC,            //  1 
-        CROSSFM_CV_2_ADC,       //  2 
-        TWIST_CV_ADC,           //  3 
-        BALANCE_CV_ADC,         //  4 
-        SCALE_CV_ADC,           //  5 
-        CROSSFM_CV_ADC,         //  6 
+        SPREAD_CV_ADC,          //  9
+        WARP_CV_ADC,            //  10 
+        CROSSFM_CV_2_ADC,       //  11
+        TWIST_CV_ADC,           //  12
+        BALANCE_CV_ADC,         //  13
+        SCALE_CV_ADC,           //  14
+        CROSSFM_CV_ADC,         //  15
         
-        NUM_BUILTIN_ADC3
+        NUM_ADCS
 };
 
-#define NUM_BUILTIN_ADCS        (NUM_BUILTIN_ADC1 + NUM_BUILTIN_ADC3)
-#define NUM_ADCS                 NUM_BUILTIN_ADCS
+#define NUM_POT_ADC1 9
+#define NUM_CV_ADC3 (NUM_ADCS - NUM_POT_ADC1)
 
 void adc_init_all(void);
-void init_adc(uint32_t adcnum, uint16_t *adc_buffer, uint32_t num_channels, builtinAdcSetup *adc_setup);
+uint16_t read_adc(ADC_TypeDef *adc, uint32_t channel);
+void init_adcs(void);

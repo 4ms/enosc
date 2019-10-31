@@ -5,9 +5,6 @@
 void test_leds(void);
 void test_switches(void);
 void test_pots(void);
-
-//bit-bangs reg init for dac
-//
 void test_dac(void);
 
 //one jack at a time: read 0-8V on jacks: red goes off when 8V read, blue goes off after that and 0V read. Green goes off when center read
@@ -150,9 +147,46 @@ void test_switches(void) {
     wait_for_learn_released();
 }
 
-//one pot at a time: turn each pot down (red goes off), up (blue goes off), center (green goes off only when in center). 
-//press button to select next pot
+//bit-bangs reg init for dac
+//init SPI
+//send leaning triangle
+void test_dac(void) {
+
+}
+
+
+//one adc at a time: turn each pot or send CV into each jack
+//-5V/CCW (red goes off), 5V/CW (blue goes off), 0V/center (green goes off only when in center). 
+//press button to select next adc
 void test_pots(void) {
     adc_init_all();
+    uint16_t adcval;
+
+    set_freeze_red(0);
+    set_freeze_green(0);
+    set_freeze_blue(0);
+    set_learn_red(255);
+    set_learn_green(255);
+    set_learn_blue(255);
+
+    for (uint32_t cur_adc=0; cur_adc<NUM_POT_ADC1; cur_adc++) {
+        while (!learn_pressed()) {
+            if (cur_adc<NUM_POT_ADC1)
+                adcval = read_adc(ADC1, cur_adc);
+            else
+                adcval = read_adc(ADC3, cur_adc);
+
+            if (adcval<10) set_learn_red(0);
+            if (adcval>4000) set_learn_blue(0);
+            if (adcval>2000 && adcval<2100) set_learn_green(0);
+            else set_learn_green(255);
+        }
+
+        wait_for_learn_released();
+        set_learn_red(255);
+        set_learn_green(255);
+        set_learn_blue(255);
+    }
+
 }
 
