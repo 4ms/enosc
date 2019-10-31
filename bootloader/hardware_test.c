@@ -1,15 +1,13 @@
 #include "hardware_test.h"
 #include "gpio_pins.h"
 #include "adc.h"
+#include "lib/stm32f7xx_ll_gpio.h"
+
 
 void test_leds(void);
 void test_switches(void);
 void test_pots(void);
 void test_dac(void);
-
-//one jack at a time: read 0-8V on jacks: red goes off when 8V read, blue goes off after that and 0V read. Green goes off when center read
-//press button to continue
-void test_cv_jacks(void);
 
 //checks SPI communication
 //reads value from pitch/root jacks: 
@@ -24,6 +22,7 @@ void test_QSPI(void);
 void do_hardware_test(void) {
     test_leds();
     test_switches();
+    test_dac();
     test_pots();
 }
 
@@ -148,10 +147,44 @@ void test_switches(void) {
 }
 
 //bit-bangs reg init for dac
-//init SPI
+//init SAI
 //send leaning triangle
+#define DACSAI_REG_GPIO               GPIOE
+#define DACSAI_REG_DATA_PIN           GPIO_PIN_0
+#define DACSAI_REG_LATCH_PIN          GPIO_PIN_1
+#define DACSAI_REG_CLK_PIN            GPIO_PIN_3
+
 void test_dac(void) {
 
+    LL_GPIO_SetPinMode(DACSAI_REG_GPIO, DACSAI_REG_DATA_PIN, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinMode(DACSAI_REG_GPIO, DACSAI_REG_LATCH_PIN, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinMode(DACSAI_REG_GPIO, DACSAI_REG_CLK_PIN, LL_GPIO_MODE_OUTPUT);
+
+/*
+    GPIO_InitTypeDef gpio;
+
+    gpio.Mode     = GPIO_MODE_OUTPUT_PP;
+    gpio.Pull     = GPIO_NOPULL;
+    gpio.Speed    = GPIO_SPEED_FREQ_MEDIUM;
+    gpio.Pin      = DACSAI_REG_DATA_PIN | DACSAI_REG_LATCH_PIN | DACSAI_REG_CLK_PIN;
+    HAL_GPIO_Init(DACSAI_REG_GPIO, &gpio);
+
+    //bb_regsetup_.latch_pin(LOW);
+    HAL_GPIO_WritePin(DACSAI_REG_GPIO, DACSAI_REG_LATCH_PIN, GPIO_PIN_RESET);
+
+    DACSAI_SAI_GPIO_CLOCK_ENABLE();
+
+    // SAI pins:
+    gpio.Mode = GPIO_MODE_AF_PP;
+    gpio.Pull = GPIO_NOPULL;
+    gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    gpio.Alternate  = DACSAI_SAI_GPIO_AF;
+
+    gpio.Pin = DACSAI_SAI_WS_PIN; HAL_GPIO_Init(DACSAI_SAI_GPIO_WS, &gpio);
+    gpio.Pin = DACSAI_SAI_SCK_PIN;  HAL_GPIO_Init(DACSAI_SAI_GPIO_SCK, &gpio);
+    gpio.Pin = DACSAI_SAI_SDO_PIN;  HAL_GPIO_Init(DACSAI_SAI_GPIO_SDO, &gpio);
+    gpio.Pin = DACSAI_SAI_MCK_PIN;  HAL_GPIO_Init(DACSAI_SAI_MCK_GPIO, &gpio);
+*/
 }
 
 

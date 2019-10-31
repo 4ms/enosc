@@ -44,7 +44,8 @@ INCLUDES += -I$(CMSIS_DIR) \
 			-I stmlib/utils \
 			-I ../src \
 			-I ../src/drivers \
-			-I ../
+			-I ../ \
+			-I lib
 
 
 
