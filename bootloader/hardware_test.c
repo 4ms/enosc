@@ -139,13 +139,29 @@ void test_switches(void) {
     wait_for_learn_released();
 }
 
+void triangle_out(int32_t *dst) {
+    static int32_t tri;
+    uint32_t i;
+    for (i=0; i<DAC_FRAMES_PER_BLOCK; i++) {
+        *dst++ = tri++;
+        *dst++ = tri++;
+    }
+
+};
+
 //bit-bangs reg init for dac
 //init SAI
 //send leaning triangle
 void test_dac(void)
 {
     init_dac();
+
+    set_dac_callback(triangle_out);
+
+    start_dac();
+
 }
+
 
 
 //one adc at a time: turn each pot or send CV into each jack
@@ -174,6 +190,5 @@ void test_pots(void) {
         wait_for_learn_released();
         SET_LEARN_WHITE();
     }
-
 }
 

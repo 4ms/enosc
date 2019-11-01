@@ -3,6 +3,10 @@
 #include "stm32f7xx_ll_gpio.h"
 #include "gpio_pins.h"
 
+#define DAC_BUF_SIZE 256
+#define DAC_BLOCK_SIZE 128
+#define DAC_FRAMES_PER_BLOCK 64
+
 #define DACSAI_REG_GPIO               GPIOE
 #define DACSAI_REG_DATA_PIN           LL_GPIO_PIN_0
 #define DACSAI_REG_LATCH_PIN          LL_GPIO_PIN_1
@@ -50,12 +54,12 @@
 #define AZRO  (1<<2)  //1 = L/R common zero flag (pin 11), 0 = independent zero flags
 
 enum PCM1753Registers {
-	ATTEN_REG1 = 16,
-	ATTEN_REG2 = 17,
-	RST_OSMP_MUTE_REG = 18,
-	DEEMP_DACEN_REG = 19,
-	FILTER_FORMAT_REG = 20,
-	ZEROFLAG_PHASE_REG = 22
+    ATTEN_REG1 = 16,
+    ATTEN_REG2 = 17,
+    RST_OSMP_MUTE_REG = 18,
+    DEEMP_DACEN_REG = 19,
+    FILTER_FORMAT_REG = 20,
+    ZEROFLAG_PHASE_REG = 22
 };
 
 
@@ -69,20 +73,22 @@ enum PCM1753Registers {
 #define DACSAI_SAI_SCK_PIN              LL_GPIO_PIN_5
 #define DACSAI_SAI_SDO_PIN              LL_GPIO_PIN_6
 
-#define DACSAI_SAI_TX_BLOCK           SAI1_Block_A
-#define DACSAI_SAI_TX_DMA             DMA2
-#define DACSAI_SAI_TX_DMA_ISR         LISR
-#define DACSAI_SAI_TX_DMA_IFCR        LIFCR
-#define DACSAI_SAI_TX_DMA_STREAM      LL_DMA_STREAM_1
-#define DACSAI_SAI_TX_DMA_IRQn        DMA2_Stream1_IRQn
-#define DACSAI_SAI_TX_DMA_IRQHandler  DMA2_Stream1_IRQHandler
-#define DACSAI_SAI_TX_DMA_CHANNEL     LL_DMA_CHANNEL_0
+#define DACSAI_BLOCK           SAI1_Block_A
 
-#define DACSAI_SAI_TX_DMA_FLAG_TC     DMA_FLAG_TCIF1_5
-#define DACSAI_SAI_TX_DMA_FLAG_HT     DMA_FLAG_HTIF1_5
-#define DACSAI_SAI_TX_DMA_FLAG_FE     DMA_FLAG_FEIF1_5
-#define DACSAI_SAI_TX_DMA_FLAG_TE     DMA_FLAG_TEIF1_5
-#define DACSAI_SAI_TX_DMA_FLAG_DME    DMA_FLAG_DMEIF1_5
+#define DACSAI_DMA_RCC         LL_AHB1_GRP1_PERIPH_DMA2
+#define DACSAI_DMA             DMA2
+#define DACSAI_DMA_ISR         LISR
+#define DACSAI_DMA_IFCR        LIFCR
+#define DACSAI_DMA_STREAM      LL_DMA_STREAM_1
+#define DACSAI_DMA_IRQn        DMA2_Stream1_IRQn
+#define DACSAI_DMA_IRQHandler  DMA2_Stream1_IRQHandler
+#define DACSAI_DMA_CHANNEL     LL_DMA_CHANNEL_0
+
+#define DACSAI_DMA_FLAG_TC     DMA_FLAG_TCIF1_5
+#define DACSAI_DMA_FLAG_HT     DMA_FLAG_HTIF1_5
+#define DACSAI_DMA_FLAG_FE     DMA_FLAG_FEIF1_5
+#define DACSAI_DMA_FLAG_TE     DMA_FLAG_TEIF1_5
+#define DACSAI_DMA_FLAG_DME    DMA_FLAG_DMEIF1_5
 
 
 //From HAL:
@@ -188,3 +194,5 @@ enum PCM1753Registers {
 #define SAI_LAST_SENT_VALUE              ((uint32_t)SAI_xCR2_MUTEVAL)
 
 uint8_t init_dac(void);
+void start_dac(void);
+void set_dac_callback(void cb(int32_t *dst));
