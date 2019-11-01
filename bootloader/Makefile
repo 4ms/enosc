@@ -101,6 +101,9 @@ LFLAGS  = $(MCU) -specs=nano.specs  -T $(LDSCRIPT) \
 	$(F_FLTO)
 	
 # $(BLBUILDDIR)/bootloader.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/hardware_test.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/dac_sai.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/adc_spi.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/bl_ui.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/stm_audio_bootloader/fsk/packet_decoder.o: CFLAGS = $(C0FLAGS)
 

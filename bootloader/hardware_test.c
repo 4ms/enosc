@@ -9,16 +9,14 @@
 #include "saw_osc.h"
 #include "adc_spi.h"
 
+
 extern volatile uint32_t systmr;
 
 void test_leds(void);
 void test_switches(void);
 void test_builtin_adc(void);
 void test_dac(void);
-
 void test_extadc(void);
-
-//internal read/write/compare test: warning: erases entire chip
 void test_QSPI(void);
 
 
@@ -143,6 +141,9 @@ void test_switches(void) {
 //send leaning triangle
 void test_dac(void)
 {
+    SET_LEARN_YELLOW();
+    SET_FREEZE_RED();
+
     init_dac();
 
     set_dac_callback(saw_out);
@@ -151,8 +152,8 @@ void test_dac(void)
 
     start_dac();
 
-    SET_LEARN_BLUE();
-    SET_FREEZE_BLUE();
+    SET_LEARN_YELLOW();
+    SET_FREEZE_GREEN();
 
     wait_for_learn_pressed();
     wait_for_learn_released();
@@ -162,48 +163,79 @@ void test_dac(void)
 
     //Setup for testing ADCs next
     set_saw_freqs(1000, -2000, 2000, -2000);
-    set_saw_ranges(-1500000, 5000000, -3733335, 3933335);
+    set_saw_ranges(-2000000, 6710885, -3733335, 3933335);
 }
 
+struct AdcCheck {
+    const uint16_t center_val;
+    const uint16_t center_width;
+    const uint16_t min_val;
+    const uint16_t max_val;
+    const uint32_t center_check_rate; 
+    uint16_t cur_val;
+    uint32_t status;
+};
+//returns 1 if adc is fully ranged checked
+uint8_t check_adc(struct AdcCheck *adc_check)
+{
+    if (adc_check->cur_val < adc_check->min_val) {
+        LEARN_RED(OFF);
+        adc_check->status &= ~(0b10UL);
+    }
+    if (adc_check->cur_val > adc_check->max_val) {
+        LEARN_BLUE(OFF);
+        adc_check->status &= ~(0b01UL);
+    }
+    if (adc_check->cur_val>(adc_check->center_val - adc_check->center_width) \
+        && adc_check->cur_val<(adc_check->center_val + adc_check->center_width)) {
+        LEARN_GREEN(OFF);
+        adc_check->status -= adc_check->center_check_rate; //count down
+    }
+    else {
+        adc_check->status |= ~(0b11UL); //reset counter
+        LEARN_GREEN(ON);
+    }
+    if ((adc_check->status & 0xFFFF0003)==0)
+        return 1;
+    else
+        return 0;
+}
 
 //one adc at a time: turn each pot or send CV into each jack
 //-5V/CCW (red goes off), 5V/CW (blue goes off), 0V/center (green goes off only when in center). 
 //press button to select next adc
 void test_builtin_adc(void) {
+    SET_FREEZE_GREEN();
+    SET_LEARN_RED();
+
     adc_init_all();
-    uint16_t adcval;
 
     SET_FREEZE_OFF();
     SET_LEARN_WHITE();
 
+    struct AdcCheck adc_check = {
+        .center_val = 2048,
+        .center_width = 50,
+        .min_val = 10,
+        .max_val = 4000,
+        .center_check_rate = (1UL<<16)
+    };
     for (uint32_t cur_adc=0; cur_adc<(NUM_ADCS-1); cur_adc++) {
-        uint16_t hits = 0xFFFF;
-
+        adc_check.status = 0xFFFFFFFF;
         while (!learn_pressed()) {
-            if (cur_adc<NUM_POT_ADC1)
-                adcval = read_adc(ADC1, cur_adc);
-            else
-                adcval = read_adc(ADC3, cur_adc);
-
-            if (adcval<10) {LEARN_RED(OFF); hits &= ~(0b10UL);}
-            if (adcval>4000) {LEARN_BLUE(OFF); hits &= ~(0b01UL);}
-            if (adcval>2000 && adcval<2100) {
-                LEARN_GREEN(OFF);
-                hits -= 0b100UL;
-            }
-            else {
-                hits |= ~(0b11UL);
-                LEARN_GREEN(ON);
-            }
-
-            if (hits==0) break;
+            adc_check.cur_val = read_adc(cur_adc<NUM_POT_ADC1 ? ADC1 : ADC3, cur_adc);
+            if (check_adc(&adc_check)) 
+                break;
         }
-        delay(300);
+        FREEZE_GREEN(ON);
+        delay(1500);
+        FREEZE_GREEN(OFF);
         wait_for_learn_released();
+        FREEZE_GREEN(OFF);
         SET_LEARN_WHITE();
     }
+    SET_LEARN_OFF();
 }
-
 
 //checks SPI communication
 //reads value from pitch/root jacks: 
@@ -213,6 +245,8 @@ void test_extadc(void) {
     SET_FREEZE_RED();
 
     init_adc_spi();
+
+    delay(1500);
 
     SET_LEARN_WHITE();
     SET_FREEZE_OFF();
@@ -231,9 +265,11 @@ void test_extadc(void) {
             if (check_adc(&adc_check))
                 break;
         }
+        FREEZE_GREEN(ON);
         set_adc_spi_channel(1);
-        delay(300);
+        delay(1500);
         wait_for_learn_released();
+        FREEZE_GREEN(OFF);
         SET_LEARN_WHITE();
     }
     SET_LEARN_OFF();
