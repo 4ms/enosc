@@ -1,11 +1,14 @@
 #include "dac_sai.h"
 #include "bl_utils.h"
+#include "stm32f7xx_ll_dma.h"
+#include "stm32f7xx_ll_bus.h"
 
 void setup_SAI_pin(uint32_t pin);
 void bitbang_write(enum PCM1753Registers reg_addr, uint8_t reg_value);
 void init_sai_clock(void);
 void init_sai(void);
 void init_dac_registers();
+void start_dac();
 
 // __attribute__((optimize("O0"))) 
 
