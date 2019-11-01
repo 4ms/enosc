@@ -85,4 +85,106 @@ enum PCM1753Registers {
 #define DACSAI_SAI_TX_DMA_FLAG_DME    DMA_FLAG_DMEIF1_5
 
 
+//From HAL:
+#define SAI_SYNCEXT_DISABLE          0
+#define SAI_SYNCEXT_OUTBLOCKA_ENABLE 1
+#define SAI_SYNCEXT_OUTBLOCKB_ENABLE 2
+
+#define SAI_I2S_STANDARD      0
+#define SAI_I2S_MSBJUSTIFIED  1
+#define SAI_I2S_LSBJUSTIFIED  2
+#define SAI_PCM_LONG          3
+#define SAI_PCM_SHORT         4
+
+#define SAI_PROTOCOL_DATASIZE_16BIT         0
+#define SAI_PROTOCOL_DATASIZE_16BITEXTENDED 1
+#define SAI_PROTOCOL_DATASIZE_24BIT         2
+#define SAI_PROTOCOL_DATASIZE_32BIT         3
+
+#define SAI_MODEMASTER_TX         ((uint32_t)0x00000000U)
+#define SAI_MODEMASTER_RX         ((uint32_t)SAI_xCR1_MODE_0)
+#define SAI_MODESLAVE_TX          ((uint32_t)SAI_xCR1_MODE_1)
+#define SAI_MODESLAVE_RX          ((uint32_t)(SAI_xCR1_MODE_1 | SAI_xCR1_MODE_0))
+
+#define SAI_FREE_PROTOCOL                 ((uint32_t)0x00000000U)
+#define SAI_SPDIF_PROTOCOL                ((uint32_t)SAI_xCR1_PRTCFG_0)
+#define SAI_AC97_PROTOCOL                 ((uint32_t)SAI_xCR1_PRTCFG_1)
+
+#define SAI_DATASIZE_8     ((uint32_t)SAI_xCR1_DS_1)
+#define SAI_DATASIZE_10    ((uint32_t)(SAI_xCR1_DS_1 | SAI_xCR1_DS_0))
+#define SAI_DATASIZE_16    ((uint32_t)SAI_xCR1_DS_2)
+#define SAI_DATASIZE_20    ((uint32_t)(SAI_xCR1_DS_2 | SAI_xCR1_DS_0))
+#define SAI_DATASIZE_24    ((uint32_t)(SAI_xCR1_DS_2 | SAI_xCR1_DS_1))
+#define SAI_DATASIZE_32    ((uint32_t)(SAI_xCR1_DS_2 | SAI_xCR1_DS_1 | SAI_xCR1_DS_0))
+
+#define SAI_FIRSTBIT_MSB                  ((uint32_t)0x00000000U)
+#define SAI_FIRSTBIT_LSB                  ((uint32_t)SAI_xCR1_LSBFIRST)
+
+#define SAI_CLOCKSTROBING_FALLINGEDGE     0
+#define SAI_CLOCKSTROBING_RISINGEDGE      1
+
+#define SAI_ASYNCHRONOUS                  0 /*!< Asynchronous */
+#define SAI_SYNCHRONOUS                   1 /*!< Synchronous with other block of same SAI */
+#define SAI_SYNCHRONOUS_EXT_SAI1          2 /*!< Synchronous with other SAI, SAI1 */
+#define SAI_SYNCHRONOUS_EXT_SAI2          3 /*!< Synchronous with other SAI, SAI2 */
+
+#define SAI_OUTPUTDRIVE_DISABLE          ((uint32_t)0x00000000U)
+#define SAI_OUTPUTDRIVE_ENABLE           ((uint32_t)SAI_xCR1_OUTDRIV)
+
+#define SAI_MASTERDIVIDER_ENABLE         ((uint32_t)0x00000000U)
+#define SAI_MASTERDIVIDER_DISABLE        ((uint32_t)SAI_xCR1_NODIV)
+
+#define SAI_FS_STARTFRAME                 ((uint32_t)0x00000000U)
+#define SAI_FS_CHANNEL_IDENTIFICATION     ((uint32_t)SAI_xFRCR_FSDEF)
+
+#define SAI_FS_ACTIVE_LOW                  ((uint32_t)0x00000000U)
+#define SAI_FS_ACTIVE_HIGH                 ((uint32_t)SAI_xFRCR_FSPOL)
+
+#define SAI_FS_FIRSTBIT                   ((uint32_t)0x00000000U)
+#define SAI_FS_BEFOREFIRSTBIT             ((uint32_t)SAI_xFRCR_FSOFF)
+
+#define SAI_SLOTSIZE_DATASIZE             ((uint32_t)0x00000000U)
+#define SAI_SLOTSIZE_16B                  ((uint32_t)SAI_xSLOTR_SLOTSZ_0)
+#define SAI_SLOTSIZE_32B                  ((uint32_t)SAI_xSLOTR_SLOTSZ_1)
+
+#define SAI_SLOT_NOTACTIVE           ((uint32_t)0x00000000U)
+#define SAI_SLOTACTIVE_0             ((uint32_t)0x00000001U)
+#define SAI_SLOTACTIVE_1             ((uint32_t)0x00000002U)
+#define SAI_SLOTACTIVE_2             ((uint32_t)0x00000004U)
+#define SAI_SLOTACTIVE_3             ((uint32_t)0x00000008U)
+#define SAI_SLOTACTIVE_4             ((uint32_t)0x00000010U)
+#define SAI_SLOTACTIVE_5             ((uint32_t)0x00000020U)
+#define SAI_SLOTACTIVE_6             ((uint32_t)0x00000040U)
+#define SAI_SLOTACTIVE_7             ((uint32_t)0x00000080U)
+#define SAI_SLOTACTIVE_8             ((uint32_t)0x00000100U)
+#define SAI_SLOTACTIVE_9             ((uint32_t)0x00000200U)
+#define SAI_SLOTACTIVE_10            ((uint32_t)0x00000400U)
+#define SAI_SLOTACTIVE_11            ((uint32_t)0x00000800U)
+#define SAI_SLOTACTIVE_12            ((uint32_t)0x00001000U)
+#define SAI_SLOTACTIVE_13            ((uint32_t)0x00002000U)
+#define SAI_SLOTACTIVE_14            ((uint32_t)0x00004000U)
+#define SAI_SLOTACTIVE_15            ((uint32_t)0x00008000U)
+#define SAI_SLOTACTIVE_ALL           ((uint32_t)0x0000FFFFU)
+
+#define SAI_STEREOMODE               ((uint32_t)0x00000000U)
+#define SAI_MONOMODE                 ((uint32_t)SAI_xCR1_MONO)
+
+#define SAI_OUTPUT_NOTRELEASED        ((uint32_t)0x00000000U)
+#define SAI_OUTPUT_RELEASED           ((uint32_t)SAI_xCR2_TRIS)
+
+#define SAI_FIFOTHRESHOLD_EMPTY  ((uint32_t)0x00000000U)
+#define SAI_FIFOTHRESHOLD_1QF    ((uint32_t)(SAI_xCR2_FTH_0))
+#define SAI_FIFOTHRESHOLD_HF     ((uint32_t)(SAI_xCR2_FTH_1))
+#define SAI_FIFOTHRESHOLD_3QF    ((uint32_t)(SAI_xCR2_FTH_1 | SAI_xCR2_FTH_0))
+#define SAI_FIFOTHRESHOLD_FULL   ((uint32_t)(SAI_xCR2_FTH_2))
+
+#define SAI_NOCOMPANDING                 ((uint32_t)0x00000000U)
+#define SAI_ULAW_1CPL_COMPANDING         ((uint32_t)(SAI_xCR2_COMP_1))
+#define SAI_ALAW_1CPL_COMPANDING         ((uint32_t)(SAI_xCR2_COMP_1 | SAI_xCR2_COMP_0))
+#define SAI_ULAW_2CPL_COMPANDING         ((uint32_t)(SAI_xCR2_COMP_1 | SAI_xCR2_CPL))
+#define SAI_ALAW_2CPL_COMPANDING         ((uint32_t)(SAI_xCR2_COMP_1 | SAI_xCR2_COMP_0 | SAI_xCR2_CPL))
+
+#define SAI_ZERO_VALUE                   ((uint32_t)0x00000000U)
+#define SAI_LAST_SENT_VALUE              ((uint32_t)SAI_xCR2_MUTEVAL)
+
 uint8_t init_dac(void);
