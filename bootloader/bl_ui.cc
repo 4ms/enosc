@@ -9,14 +9,6 @@ extern "C" {
 
 extern volatile uint32_t systmr;
 
-// bool bootloader_entry_buttons_pushed(void)
-// {
-//  buttons.learn_.Debounce();
-//  buttons.freeze_.Debounce();
-//  return (buttons.learn_.pushed() && buttons.freeze_.pushed());
-// }
-
-
 bool button_pushed(enum Button button)
 {
     if (button == BUTTON_LEARN) {
@@ -59,34 +51,30 @@ void animate(enum Animations animation_type)
 
         case ANI_SUCCESS:
             if (ctr==0) {
-                SET_FREEZE_GREEN();
-                SET_LEARN_YELLOW();
+                FREEZE_RED(ON);
+                LEARN_RED(ON);
             }
             else if (ctr==1) {
-                SET_FREEZE_YELLOW();
-                SET_LEARN_GREEN();
+                FREEZE_GREEN(ON);
+                LEARN_GREEN(ON);
             }
-            // else if (ctr==2) {
-            //     leds.freeze_.set(Colors::green);
-            //     leds.learn_.set(Colors::green);
-            // }
-            // else if (ctr==3) {
-            //     leds.freeze_.set(Colors::cyan);
-            //     leds.learn_.set(Colors::cyan);
-            // }
-            // else if (ctr==4) {
-            //     leds.freeze_.set(Colors::blue);
-            //     leds.learn_.set(Colors::blue);
-            // }
-            // else if (ctr==5) {
-            //     leds.freeze_.set(Colors::magenta);
-            //     leds.learn_.set(Colors::magenta);
-            // }
-            // else if (ctr==6) {
-            //     leds.freeze_.set(Colors::white);
-            //     leds.learn_.set(Colors::white);
-            // }
-            else 
+            else if (ctr==2) {
+                FREEZE_BLUE(ON);
+                LEARN_BLUE(ON);
+            }
+            else if (ctr==3) {
+                FREEZE_RED(OFF);
+                LEARN_RED(OFF);
+            }
+            else if (ctr==4) {
+                FREEZE_GREEN(OFF);
+                LEARN_GREEN(OFF);
+            }
+            else if (ctr==5) {
+                FREEZE_BLUE(OFF);
+                LEARN_BLUE(OFF);
+            }
+            else
                 ctr = 0;
             break;
 
@@ -134,7 +122,7 @@ void animate(enum Animations animation_type)
                 SET_FREEZE_RED();
             } else if (ctr==1) {
                 SET_LEARN_RED();
-                SET_FREEZE_RED();
+                SET_FREEZE_OFF();
             } else 
                 ctr=0;
             break;

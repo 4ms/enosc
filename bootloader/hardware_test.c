@@ -5,6 +5,7 @@
 #include "bl_utils.h"
 #include "buttons.h"
 #include "leds.h"
+#include "dac_sai.h"
 
 extern volatile uint32_t systmr;
 
@@ -141,42 +142,9 @@ void test_switches(void) {
 //bit-bangs reg init for dac
 //init SAI
 //send leaning triangle
-#define DACSAI_REG_GPIO               GPIOE
-#define DACSAI_REG_DATA_PIN           LL_GPIO_PIN_0
-#define DACSAI_REG_LATCH_PIN          LL_GPIO_PIN_1
-#define DACSAI_REG_CLK_PIN            LL_GPIO_PIN_3
-
-void __attribute__((optimize("O0"))) test_dac(void) {
-
-    LL_GPIO_SetPinMode(DACSAI_REG_GPIO, DACSAI_REG_DATA_PIN, LL_GPIO_MODE_OUTPUT);
-    LL_GPIO_SetPinMode(DACSAI_REG_GPIO, DACSAI_REG_LATCH_PIN, LL_GPIO_MODE_OUTPUT);
-    LL_GPIO_SetPinMode(DACSAI_REG_GPIO, DACSAI_REG_CLK_PIN, LL_GPIO_MODE_OUTPUT);
-
-/*
-    GPIO_InitTypeDef gpio;
-
-    gpio.Mode     = GPIO_MODE_OUTPUT_PP;
-    gpio.Pull     = GPIO_NOPULL;
-    gpio.Speed    = GPIO_SPEED_FREQ_MEDIUM;
-    gpio.Pin      = DACSAI_REG_DATA_PIN | DACSAI_REG_LATCH_PIN | DACSAI_REG_CLK_PIN;
-    HAL_GPIO_Init(DACSAI_REG_GPIO, &gpio);
-
-    //bb_regsetup_.latch_pin(LOW);
-    HAL_GPIO_WritePin(DACSAI_REG_GPIO, DACSAI_REG_LATCH_PIN, GPIO_PIN_RESET);
-
-    DACSAI_SAI_GPIO_CLOCK_ENABLE();
-
-    // SAI pins:
-    gpio.Mode = GPIO_MODE_AF_PP;
-    gpio.Pull = GPIO_NOPULL;
-    gpio.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    gpio.Alternate  = DACSAI_SAI_GPIO_AF;
-
-    gpio.Pin = DACSAI_SAI_WS_PIN; HAL_GPIO_Init(DACSAI_SAI_GPIO_WS, &gpio);
-    gpio.Pin = DACSAI_SAI_SCK_PIN;  HAL_GPIO_Init(DACSAI_SAI_GPIO_SCK, &gpio);
-    gpio.Pin = DACSAI_SAI_SDO_PIN;  HAL_GPIO_Init(DACSAI_SAI_GPIO_SDO, &gpio);
-    gpio.Pin = DACSAI_SAI_MCK_PIN;  HAL_GPIO_Init(DACSAI_SAI_MCK_GPIO, &gpio);
-*/
+void test_dac(void)
+{
+    init_dac();
 }
 
 
