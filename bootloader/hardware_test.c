@@ -7,6 +7,7 @@
 #include "leds.h"
 #include "dac_sai.h"
 #include "saw_osc.h"
+#include "adc_spi.h"
 
 extern volatile uint32_t systmr;
 
@@ -159,8 +160,9 @@ void test_dac(void)
     SET_LEARN_OFF();
     SET_FREEZE_OFF();
 
+    //Setup for testing ADCs next
     set_saw_freqs(1000, -2000, 2000, -2000);
-    set_saw_ranges(-6710885, 6710885, -3733335, 3933335);
+    set_saw_ranges(-1500000, 5000000, -3733335, 3933335);
 }
 
 
@@ -206,8 +208,41 @@ void test_builtin_adc(void) {
 //checks SPI communication
 //reads value from pitch/root jacks: 
 //red goes off when 6V read, blue goes off after that and -2V read. Green goes off after that when 0V read
-//Similar for gate jacks
 void test_extadc(void) {
+    SET_LEARN_RED();
+    SET_FREEZE_RED();
+
+    init_adc_spi();
+
+    SET_LEARN_WHITE();
+    SET_FREEZE_OFF();
+
+    struct AdcCheck adc_check = {
+        .center_val = 2907,
+        .center_width = 200,
+        .min_val = 10,
+        .max_val = 4000,
+        .center_check_rate = (1UL<<15)
+    };
+    for (uint8_t chan=0; chan<2; chan++) {
+        adc_check.status = 0xFFFFFFFF;
+        while (!learn_pressed()) {
+            adc_check.cur_val = get_adc_spi_value();
+            if (check_adc(&adc_check))
+                break;
+        }
+        set_adc_spi_channel(1);
+        delay(300);
+        wait_for_learn_released();
+        SET_LEARN_WHITE();
+    }
+    SET_LEARN_OFF();
+}
+
+//internal read/write/compare test: warning: erases entire chip
+void test_QSPI(void) {
 
 }
+
+
 
