@@ -156,6 +156,12 @@ int main(void)
 
     delay(100);
 
+    //////////
+    //Just test the hardware test:
+    ui_state = UI_STATE_DONE;
+    do_hardware_test();
+    ////////
+
     if (do_bootloader)
     {
         #ifdef USING_FSK
