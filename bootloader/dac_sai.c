@@ -14,47 +14,46 @@ void start_dac();
 
 int32_t dac_buf[DAC_BUF_SIZE];
 
-void (*audio_callback)(int32_t *dst);
+void (*audio_callback)(int32_t *dst, uint32_t frames);
 
-void placeholder_cb(int32_t *dst) {
+// void placeholder_cb(int32_t *dst, uint32_t frames) {
 
-}
+// }
 
-void set_dac_callback(void cb(int32_t *dst)) {
+void set_dac_callback(void cb(int32_t *dst, uint32_t frames)) {
     audio_callback = cb;
 }
 
 uint8_t init_dac(void)
 {
+    //GPIOs A (freeze LED), C (learn LED) are already enabled
+    SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_GPIOEEN);
+
     LL_GPIO_SetPinMode(DACSAI_REG_GPIO, DACSAI_REG_DATA_PIN, LL_GPIO_MODE_OUTPUT);
     LL_GPIO_SetPinMode(DACSAI_REG_GPIO, DACSAI_REG_LATCH_PIN, LL_GPIO_MODE_OUTPUT);
     LL_GPIO_SetPinMode(DACSAI_REG_GPIO, DACSAI_REG_CLK_PIN, LL_GPIO_MODE_OUTPUT);
-    DAC_LATCH_LOW;
+    DAC_LATCH_HIGH;
 
     setup_SAI_pin(DACSAI_SAI_MCK_PIN);
     setup_SAI_pin(DACSAI_SAI_WS_PIN);
     setup_SAI_pin(DACSAI_SAI_SCK_PIN);
     setup_SAI_pin(DACSAI_SAI_SDO_PIN);
 
-    audio_callback = placeholder_cb;
+    // audio_callback = placeholder_cb;
 
     init_sai_clock();
     init_sai();
 
     init_dac_registers();
+
+    return 1;
 }
-
-
 void setup_SAI_pin(uint32_t pin) {
     LL_GPIO_SetPinMode(DACSAI_SAI_GPIO, pin, LL_GPIO_MODE_ALTERNATE);
     LL_GPIO_SetPinSpeed(DACSAI_SAI_GPIO, pin, LL_GPIO_SPEED_FREQ_VERY_HIGH);
     LL_GPIO_SetAFPin_0_7(DACSAI_SAI_GPIO, pin, DACSAI_SAI_GPIO_AF);
 }
 
-#define RCC_FLAG_PLLI2SRDY ((uint8_t)0x3BU)
-#ifndef __HAL_RCC_GET_FLAG
-#define __HAL_RCC_GET_FLAG(__FLAG__) (((((((__FLAG__) >> 5) == 1)? RCC->CR :((((__FLAG__) >> 5) == 2) ? RCC->BDCR :((((__FLAG__) >> 5) == 3)? RCC->CSR :RCC->CIR))) & ((uint32_t)1 << ((__FLAG__) & ((uint8_t)0x1F))))!= 0)? 1 : 0)
-#endif
 
 void init_sai_clock(void)
 {
@@ -102,16 +101,7 @@ void init_sai(void)
     // Flush the fifo
     SET_BIT(DACSAI_BLOCK->CR2, SAI_xCR2_FFLUSH);
 
-
     LL_DMA_DeInit(DMA2, LL_DMA_STREAM_1);
-    // DMA2->CR &=  ~DMA_SxCR_EN;
-    // DMA2->CR   = 0U;
-    // DMA2->NDTR = 0U;
-    // DMA2->PAR  = 0U;
-    // DMA2->M0AR = 0U;
-    // DMA2->M1AR = 0U;
-    // DMA2->FCR  = (uint32_t)0x00000021U;
-    // DMA2->LIFCR = 0x00000F40U; //stream 1 flags
     
     //Disable SAI (again?)
     DACSAI_BLOCK->CR1 &=  ~SAI_xCR1_SAIEN;
@@ -123,9 +113,9 @@ void init_sai(void)
     const uint32_t SlotNumber      = 2;
     const uint32_t FrameLength = 64;
     const uint32_t ActiveFrameLength = 32;
-    // const uint32_t freq = 12285714;//(16000000/16) * 344 / 4 / 7
-    // const uint32_t tmpval = 4; //4.9999 == (12285714 * 10) / (48000 * 2 * 256)
-    const uint32_t mckdiv = 0; // tmpval / 10;
+    // const uint32_t freq = 12285714; //freq = (HSE/PLLM) * I2SN / I2SQ / I2SDivQ = (16000000/16) * 344 / 4 / 7
+    // const uint32_t tmpval = 4; //tmpval = freq * 10 / (AudioFreq * #Slots * 256) =  (12285714 * 10) / (48000 * 2 * 256) = (int)4.9999 = 4
+    const uint32_t mckdiv = 0; // mckdiv = tmpval / 10, and it's rounded up: if ((tmpval % 10) > 8) mckdiv++;
     const uint32_t syncen_bits = 0;
     const uint32_t ckstr_bits = SAI_xCR1_CKSTR;
 
@@ -171,31 +161,42 @@ void init_sai(void)
 	LL_DMA_ConfigAddresses(DACSAI_DMA, DACSAI_DMA_STREAM, (uint32_t)&dac_buf, \
                                 (uint32_t)&(DACSAI_BLOCK->DR), LL_DMA_DIRECTION_MEMORY_TO_PERIPH); 
 
+    NVIC_SetPriority(DACSAI_DMA_IRQn, 0);
+    NVIC_DisableIRQ(DACSAI_DMA_IRQn); 
+
     LL_DMA_EnableIT_HT(DACSAI_DMA, DACSAI_DMA_STREAM);
     LL_DMA_EnableIT_TC(DACSAI_DMA, DACSAI_DMA_STREAM);
 	LL_DMA_EnableIT_TE(DACSAI_DMA, DACSAI_DMA_STREAM);
+
+    LL_DMA_EnableStream(DACSAI_DMA, DACSAI_DMA_STREAM);
+
+    //Enable SAI
+    DACSAI_BLOCK->CR1 |= SAI_xCR1_SAIEN;
+    
+    //Enable SAI IT
+    DACSAI_BLOCK->IMR |= SAI_xIMR_WCKCFGIE;
+
+    //Enable SAI DMA Request
+    DACSAI_BLOCK->CR1 |= SAI_xCR1_DMAEN;
+
 }
 
 void start_dac(void)
 {
-    LL_DMA_EnableStream(DACSAI_DMA, DACSAI_DMA_STREAM);
-
-    // DMA IRQ and start DMA
-    NVIC_SetPriority(DACSAI_DMA_IRQn, 0);
     NVIC_EnableIRQ(DACSAI_DMA_IRQn); 
 }
 
-void DACSAI_SAI_TX_DMA_IRQHandler(void)
+void DACSAI_DMA_IRQHandler(void)
 {
   if (LL_DMA_IsActiveFlag_TC1(DACSAI_DMA) == 1)
   {
     LL_DMA_ClearFlag_TC1(DACSAI_DMA);
-    audio_callback(&(dac_buf[0]));
+    audio_callback(&(dac_buf[DAC_BLOCK_SIZE]), DAC_FRAMES_PER_BLOCK);
   }
   else if (LL_DMA_IsActiveFlag_HT1(DACSAI_DMA) == 1)
   {
     LL_DMA_ClearFlag_HT1(DACSAI_DMA);
-    audio_callback(&(dac_buf[DAC_BLOCK_SIZE]));
+    audio_callback(&(dac_buf[0]), DAC_FRAMES_PER_BLOCK);
   }
   else if (LL_DMA_IsActiveFlag_TE1(DACSAI_DMA) == 1)
   {

@@ -92,6 +92,13 @@ enum PCM1753Registers {
 
 
 //From HAL:
+#ifndef RCC_FLAG_PLLI2SRDY
+#define RCC_FLAG_PLLI2SRDY ((uint8_t)0x3BU)
+#endif
+#ifndef __HAL_RCC_GET_FLAG
+#define __HAL_RCC_GET_FLAG(__FLAG__) (((((((__FLAG__) >> 5) == 1)? RCC->CR :((((__FLAG__) >> 5) == 2) ? RCC->BDCR :((((__FLAG__) >> 5) == 3)? RCC->CSR :RCC->CIR))) & ((uint32_t)1 << ((__FLAG__) & ((uint8_t)0x1F))))!= 0)? 1 : 0)
+#endif
+
 #define SAI_SYNCEXT_DISABLE          0
 #define SAI_SYNCEXT_OUTBLOCKA_ENABLE 1
 #define SAI_SYNCEXT_OUTBLOCKB_ENABLE 2
@@ -193,6 +200,15 @@ enum PCM1753Registers {
 #define SAI_ZERO_VALUE                   ((uint32_t)0x00000000U)
 #define SAI_LAST_SENT_VALUE              ((uint32_t)SAI_xCR2_MUTEVAL)
 
+#define SAI_IT_OVRUDR                     ((uint32_t)SAI_xIMR_OVRUDRIE)
+#define SAI_IT_MUTEDET                    ((uint32_t)SAI_xIMR_MUTEDETIE)
+#define SAI_IT_WCKCFG                     ((uint32_t)SAI_xIMR_WCKCFGIE)
+#define SAI_IT_FREQ                       ((uint32_t)SAI_xIMR_FREQIE)
+#define SAI_IT_CNRDY                      ((uint32_t)SAI_xIMR_CNRDYIE)
+#define SAI_IT_AFSDET                     ((uint32_t)SAI_xIMR_AFSDETIE)
+#define SAI_IT_LFSDET                     ((uint32_t)SAI_xIMR_LFSDETIE)
+
+
 uint8_t init_dac(void);
 void start_dac(void);
-void set_dac_callback(void cb(int32_t *dst));
+void set_dac_callback(void cb(int32_t *dst, uint32_t frames));

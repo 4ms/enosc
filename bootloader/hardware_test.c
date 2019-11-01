@@ -6,18 +6,15 @@
 #include "buttons.h"
 #include "leds.h"
 #include "dac_sai.h"
+#include "saw_osc.h"
 
 extern volatile uint32_t systmr;
 
 void test_leds(void);
 void test_switches(void);
-void test_pots(void);
+void test_builtin_adc(void);
 void test_dac(void);
 
-//checks SPI communication
-//reads value from pitch/root jacks: 
-//red goes off when 6V read, blue goes off after that and -2V read. Green goes off after that when 0V read
-//Similar for gate jacks
 void test_extadc(void);
 
 //internal read/write/compare test: warning: erases entire chip
@@ -28,8 +25,8 @@ void do_hardware_test(void) {
     test_leds();
     test_switches();
     test_dac();
-    test_pots();
-
+    test_builtin_adc();
+    test_extadc();
     while (1) {;}
 }
 
@@ -101,7 +98,6 @@ void test_switches(void) {
     LEARN_BLUE(ON);
 
     uint32_t sw;
-    uint8_t flash=0;
     while (!learn_pressed()){
         sw = PIN_READ(CROSSFMSW_TOP_GPIO_Port, CROSSFMSW_TOP_Pin) | 
                             (PIN_READ(CROSSFMSW_BOT_GPIO_Port, CROSSFMSW_BOT_Pin) << 1);
@@ -134,20 +130,12 @@ void test_switches(void) {
         if (sw==0b10) switch_state[3] |= 4;
         if (sw==0b00) { while (1) {FREEZE_GREEN(ON);FREEZE_GREEN(OFF);} }
         if (switch_state[3]==7) FREEZE_BLUE(OFF);
+
+        if (switch_state[0] + switch_state[1] + switch_state[2] + switch_state[3] == 7+7+7+7) break;
     }
 
     wait_for_learn_released();
 }
-
-void triangle_out(int32_t *dst) {
-    static int32_t tri;
-    uint32_t i;
-    for (i=0; i<DAC_FRAMES_PER_BLOCK; i++) {
-        *dst++ = tri++;
-        *dst++ = tri++;
-    }
-
-};
 
 //bit-bangs reg init for dac
 //init SAI
@@ -156,18 +144,30 @@ void test_dac(void)
 {
     init_dac();
 
-    set_dac_callback(triangle_out);
+    set_dac_callback(saw_out);
+    set_saw_freqs(10000, -20000, 20000, -20000);
+    set_saw_ranges(-6710885, 6710885, -6710885, 6710885);
 
     start_dac();
 
-}
+    SET_LEARN_BLUE();
+    SET_FREEZE_BLUE();
 
+    wait_for_learn_pressed();
+    wait_for_learn_released();
+
+    SET_LEARN_OFF();
+    SET_FREEZE_OFF();
+
+    set_saw_freqs(1000, -2000, 2000, -2000);
+    set_saw_ranges(-6710885, 6710885, -3733335, 3933335);
+}
 
 
 //one adc at a time: turn each pot or send CV into each jack
 //-5V/CCW (red goes off), 5V/CW (blue goes off), 0V/center (green goes off only when in center). 
 //press button to select next adc
-void test_pots(void) {
+void test_builtin_adc(void) {
     adc_init_all();
     uint16_t adcval;
 
@@ -175,20 +175,39 @@ void test_pots(void) {
     SET_LEARN_WHITE();
 
     for (uint32_t cur_adc=0; cur_adc<(NUM_ADCS-1); cur_adc++) {
+        uint16_t hits = 0xFFFF;
+
         while (!learn_pressed()) {
             if (cur_adc<NUM_POT_ADC1)
                 adcval = read_adc(ADC1, cur_adc);
             else
                 adcval = read_adc(ADC3, cur_adc);
 
-            if (adcval<10) LEARN_RED(OFF);
-            if (adcval>4000) LEARN_BLUE(OFF);
-            if (adcval>2000 && adcval<2100) LEARN_GREEN(OFF);
-            else LEARN_GREEN(ON);
-        }
+            if (adcval<10) {LEARN_RED(OFF); hits &= ~(0b10UL);}
+            if (adcval>4000) {LEARN_BLUE(OFF); hits &= ~(0b01UL);}
+            if (adcval>2000 && adcval<2100) {
+                LEARN_GREEN(OFF);
+                hits -= 0b100UL;
+            }
+            else {
+                hits |= ~(0b11UL);
+                LEARN_GREEN(ON);
+            }
 
+            if (hits==0) break;
+        }
+        delay(300);
         wait_for_learn_released();
         SET_LEARN_WHITE();
     }
+}
+
+
+//checks SPI communication
+//reads value from pitch/root jacks: 
+//red goes off when 6V read, blue goes off after that and -2V read. Green goes off after that when 0V read
+//Similar for gate jacks
+void test_extadc(void) {
+
 }
 
