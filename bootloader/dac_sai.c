@@ -145,15 +145,15 @@ void init_sai(void)
 	DACSAI_SAI_TX_BLOCK->SLOTR |=  FirstBitOffset |  SAI_SLOTSIZE_32B | (SAI_SLOTACTIVE_ALL << 16) | ((SlotNumber - 1) <<  8);
 
 /*    
-	hdma_tx.Instance                  = DACSAI_SAI_TX_DMA_STREAM;
+	hdma_tx.Instance                  = DACSAI_SAI_TX_DMA_STREAM;xxxx
     hdma_tx.Init.Channel              = DACSAI_SAI_TX_DMA_CHANNEL;
-    hdma_tx.Init.Direction            = DMA_MEMORY_TO_PERIPH;
-    hdma_tx.Init.PeriphInc            = DMA_PINC_DISABLE;
-    hdma_tx.Init.MemInc               = DMA_MINC_ENABLE;
-    hdma_tx.Init.PeriphDataAlignment  = DMA_PDATAALIGN_WORD;
-    hdma_tx.Init.MemDataAlignment     = DMA_PDATAALIGN_WORD;
-    hdma_tx.Init.Mode                 = DMA_CIRCULAR;
-    hdma_tx.Init.Priority             = DMA_PRIORITY_HIGH;
+    hdma_tx.Init.Direction            = DMA_MEMORY_TO_PERIPH;xxx
+    hdma_tx.Init.PeriphInc            = DMA_PINC_DISABLE;xxxx
+    hdma_tx.Init.MemInc               = DMA_MINC_ENABLE;xxxx
+    hdma_tx.Init.PeriphDataAlignment  = DMA_PDATAALIGN_WORD;xxxx
+    hdma_tx.Init.MemDataAlignment     = DMA_PDATAALIGN_WORD;xxxx
+    hdma_tx.Init.Mode                 = DMA_CIRCULAR;xxxx
+    hdma_tx.Init.Priority             = DMA_PRIORITY_HIGH;xxx
     hdma_tx.Init.FIFOMode             = DMA_FIFOMODE_DISABLE;
     hdma_tx.Init.MemBurst             = DMA_MBURST_SINGLE;
     hdma_tx.Init.PeriphBurst          = DMA_PBURST_SINGLE;
@@ -161,13 +161,29 @@ void init_sai(void)
 
 	//Enable DMA clock
 	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA2);
-	LL_DMA_SetDataTransferDirection(DMA2, LL_DMA_STREAM_0, LL_DMA_DIRECTION_MEMORY_TO_MEMORY);
-	LL_DMA_SetStreamPriorityLevel(DMA2, LL_DMA_STREAM_0, LL_DMA_PRIORITY_HIGH);
-	LL_DMA_SetMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MODE_NORMAL);
-	LL_DMA_SetPeriphIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_PERIPH_INCREMENT);
-	LL_DMA_SetMemoryIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MEMORY_INCREMENT);
-	LL_DMA_SetPeriphSize(DMA2, LL_DMA_STREAM_0, LL_DMA_PDATAALIGN_WORD);
-	LL_DMA_SetMemorySize(DMA2, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_WORD);
+	// LL_DMA_SetDataTransferDirection(DMA2, LL_DMA_STREAM_0, LL_DMA_DIRECTION_MEMORY_TO_MEMORY);
+	// LL_DMA_SetStreamPriorityLevel(DMA2, LL_DMA_STREAM_0, LL_DMA_PRIORITY_HIGH);
+	// LL_DMA_SetMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MODE_NORMAL);
+	// LL_DMA_SetPeriphIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_PERIPH_INCREMENT);
+	// LL_DMA_SetMemoryIncMode(DMA2, LL_DMA_STREAM_0, LL_DMA_MEMORY_INCREMENT);
+	// LL_DMA_SetPeriphSize(DMA2, LL_DMA_STREAM_0, LL_DMA_PDATAALIGN_WORD);
+	// LL_DMA_SetMemorySize(DMA2, LL_DMA_STREAM_0, LL_DMA_MDATAALIGN_WORD);
+ 	LL_DMA_ConfigTransfer(DMA2, LL_DMA_STREAM_1, LL_DMA_DIRECTION_MEMORY_TO_PERIPH |
+                                              LL_DMA_PRIORITY_HIGH              |
+                                              LL_DMA_MODE_CIRCULAR                |
+                                              LL_DMA_PERIPH_NOINCREMENT           |
+                                              LL_DMA_MEMORY_INCREMENT           |
+                                              LL_DMA_PDATAALIGN_WORD            |
+                                              LL_DMA_MDATAALIGN_WORD);
+ 	
+	LL_DMA_SetDataLength(DMA2, LL_DMA_STREAM_0, BUFFER_SIZE);
+	LL_DMA_ConfigAddresses(DMA2, LL_DMA_STREAM_0, (uint32_t)&aSRC_Const_Buffer, (uint32_t)&aDST_Buffer, LL_DMA_GetDataTransferDirection(DMA2, LL_DMA_STREAM_0));
+
+	/* (3) Configure NVIC for DMA transfer complete/error interrupts */
+	LL_DMA_EnableIT_TC(DMA2, LL_DMA_STREAM_0);
+	LL_DMA_EnableIT_TE(DMA2, LL_DMA_STREAM_0);
+	NVIC_SetPriority(DMA2_Stream0_IRQn, 0);
+	NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 	LL_DMA_EnableStream(DMA2, DACSAI_SAI_TX_DMA_STREAM);
 
