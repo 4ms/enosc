@@ -26,6 +26,7 @@ void do_hardware_test(void) {
     test_dac();
     test_builtin_adc();
     test_extadc();
+    test_QSPI();
     while (1) {;}
 }
 
