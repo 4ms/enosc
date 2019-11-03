@@ -1,6 +1,23 @@
 #pragma once
 #include <stm32f7xx.h>
 
+void LL_QSPI_Command(QSPI_CommandTypeDef *cmd);
+void LL_QSPI_Transmit(uint8_t *pData);
+void LL_QSPI_WriteEnable(void);
+void LL_QSPI_StartAutoPoll(uint32_t Match, uint32_t Mask, uint32_t Interval, uint32_t MatchMode);
+
+void LL_QPSI_SetAltBytes(uint32_t AlternateBytes);
+void LL_QPSI_SetDataLength(uint32_t NbData);
+void LL_QSPI_SetCommunicationConfig(QSPI_CommandTypeDef *cmd, uint32_t FunctionalMode);
+void LL_QSPI_SetAddress(uint32_t address);
+
+void LL_QSPI_WaitNotBusy(void);
+uint32_t LL_QSPI_WaitFlagTimeout(uint32_t flag);
+void LL_QSPI_WaitFlag(uint32_t flag);
+void LL_QSPI_ClearFlag(uint32_t flag);
+
+
+//Chip-specific:
 #define QSPI_FLASH_SIZE_BYTES            0x40000    // 256 KBytes
 #define QSPI_64KBLOCK_SIZE               0x10000    // 64 KBytes, hence the name "64K Block" :)
 #define QSPI_32KBLOCK_SIZE               0x8000     // 32 KBytes, hence the name "32K Block" :)
@@ -12,7 +29,7 @@
 #define QSPI_NUM_32KBLOCKS              (QSPI_FLASH_SIZE_BYTES/QSPI_32KBLOCK_SIZE)
 #define QSPI_NUM_SECTORS                (QSPI_FLASH_SIZE_BYTES/QSPI_SECTOR_SIZE)
 
-
+//Board-specific:
 #define QSPI_CS_PIN                LL_GPIO_PIN_11
 #define LL_GPIO_SetAFPin_QSPI_CS() LL_GPIO_SetAFPin_8_15(LL_GPIO_AF_9)
 #define QSPI_CS_GPIO_PORT          GPIOC
@@ -37,61 +54,7 @@
 #define LL_GPIO_SetAFPin_QSPI_D3() LL_GPIO_SetAFPin_8_15(LL_GPIO_AF_10)
 #define QSPI_D3_GPIO_PORT          GPIOE
 
-
-
-typedef struct
-{
-  uint32_t Instruction;        /* Specifies the Instruction to be sent
-                                  This parameter can be a value (8-bit) between 0x00 and 0xFF */
-  uint32_t Address;            /* Specifies the Address to be sent (Size from 1 to 4 bytes according AddressSize)
-                                  This parameter can be a value (32-bits) between 0x0 and 0xFFFFFFFF */
-  uint32_t AlternateBytes;     /* Specifies the Alternate Bytes to be sent (Size from 1 to 4 bytes according AlternateBytesSize)
-                                  This parameter can be a value (32-bits) between 0x0 and 0xFFFFFFFF */
-  uint32_t AddressSize;        /* Specifies the Address Size
-                                  This parameter can be a value of @ref QSPI_AddressSize */
-  uint32_t AlternateBytesSize; /* Specifies the Alternate Bytes Size
-                                  This parameter can be a value of @ref QSPI_AlternateBytesSize */
-  uint32_t DummyCycles;        /* Specifies the Number of Dummy Cycles.
-                                  This parameter can be a number between 0 and 31 */
-  uint32_t InstructionMode;    /* Specifies the Instruction Mode
-                                  This parameter can be a value of @ref QSPI_InstructionMode */
-  uint32_t AddressMode;        /* Specifies the Address Mode
-                                  This parameter can be a value of @ref QSPI_AddressMode */
-  uint32_t AlternateByteMode;  /* Specifies the Alternate Bytes Mode
-                                  This parameter can be a value of @ref QSPI_AlternateBytesMode */
-  uint32_t DataMode;           /* Specifies the Data Mode (used for dummy cycles and data phases)
-                                  This parameter can be a value of @ref QSPI_DataMode */
-  uint32_t NbData;             /* Specifies the number of data to transfer. 
-                                  This parameter can be any value between 0 and 0xFFFFFFFF (0 means undefined length 
-                                  until end of memory)*/
-  uint32_t DdrMode;            /* Specifies the double data rate mode for address, alternate byte and data phase
-                                  This parameter can be a value of @ref QSPI_DdrMode */
-  uint32_t DdrHoldHalfCycle;   /* Specifies the DDR hold half cycle. It delays the data output by one half of 
-                                  system clock in DDR mode.
-                                  This parameter can be a value of @ref QSPI_DdrHoldHalfCycle */
-  uint32_t SIOOMode;          /* Specifies the send instruction only once mode
-                                  This parameter can be a value of @ref QSPI_SIOOMode */
-}QSPI_CommandTypeDef;
-
-typedef struct
-{
-  uint32_t Match;              /* Specifies the value to be compared with the masked status register to get a match.
-                                  This parameter can be any value between 0 and 0xFFFFFFFF */
-  uint32_t Mask;               /* Specifies the mask to be applied to the status bytes received. 
-                                  This parameter can be any value between 0 and 0xFFFFFFFF */
-  uint32_t Interval;           /* Specifies the number of clock cycles between two read during automatic polling phases.
-                                  This parameter can be any value between 0 and 0xFFFF */
-  uint32_t StatusBytesSize;    /* Specifies the size of the status bytes received.
-                                  This parameter can be any value between 1 and 4 */
-  uint32_t MatchMode;          /* Specifies the method used for determining a match.
-                                  This parameter can be a value of @ref QSPI_MatchMode */
-  uint32_t AutomaticStop;      /* Specifies if automatic polling is stopped after a match.
-                                  This parameter can be a value of @ref QSPI_AutomaticStop */
-}QSPI_AutoPollingTypeDef;
-
-/** 
-  * @brief  QSPI Commands  
-  */  
+//Typical QSPI chip (but may be chip-specific)
 /* Reset Operations */
 #define RESET_ENABLE_CMD                    0x66
 #define RESET_CMD                           0x99
@@ -147,6 +110,46 @@ typedef struct
 
 
 //From HAL:
+
+typedef struct
+{
+  uint32_t Instruction;        /* Specifies the Instruction to be sent
+                                  This parameter can be a value (8-bit) between 0x00 and 0xFF */
+  uint32_t Address;            /* Specifies the Address to be sent (Size from 1 to 4 bytes according AddressSize)
+                                  This parameter can be a value (32-bits) between 0x0 and 0xFFFFFFFF */
+  uint32_t AlternateBytes;     /* Specifies the Alternate Bytes to be sent (Size from 1 to 4 bytes according AlternateBytesSize)
+                                  This parameter can be a value (32-bits) between 0x0 and 0xFFFFFFFF */
+  uint32_t AddressSize;        /* Specifies the Address Size
+                                  This parameter can be a value of @ref QSPI_AddressSize */
+  uint32_t AlternateBytesSize; /* Specifies the Alternate Bytes Size
+                                  This parameter can be a value of @ref QSPI_AlternateBytesSize */
+  uint32_t DummyCycles;        /* Specifies the Number of Dummy Cycles.
+                                  This parameter can be a number between 0 and 31 */
+  uint32_t InstructionMode;    /* Specifies the Instruction Mode
+                                  This parameter can be a value of @ref QSPI_InstructionMode */
+  uint32_t AddressMode;        /* Specifies the Address Mode
+                                  This parameter can be a value of @ref QSPI_AddressMode */
+  uint32_t AlternateByteMode;  /* Specifies the Alternate Bytes Mode
+                                  This parameter can be a value of @ref QSPI_AlternateBytesMode */
+  uint32_t DataMode;           /* Specifies the Data Mode (used for dummy cycles and data phases)
+                                  This parameter can be a value of @ref QSPI_DataMode */
+  uint32_t NbData;             /* Specifies the number of data to transfer. 
+                                  This parameter can be any value between 0 and 0xFFFFFFFF (0 means undefined length 
+                                  until end of memory)*/
+  uint32_t DdrMode;            /* Specifies the double data rate mode for address, alternate byte and data phase
+                                  This parameter can be a value of @ref QSPI_DdrMode */
+  uint32_t DdrHoldHalfCycle;   /* Specifies the DDR hold half cycle. It delays the data output by one half of 
+                                  system clock in DDR mode.
+                                  This parameter can be a value of @ref QSPI_DdrHoldHalfCycle */
+  uint32_t SIOOMode;          /* Specifies the send instruction only once mode
+                                  This parameter can be a value of @ref QSPI_SIOOMode */
+}QSPI_CommandTypeDef;
+
+
+#define QSPI_FUNCTIONAL_MODE_INDIRECT_WRITE ((uint32_t)0x00000000U)          /*!<Indirect write mode*/
+#define QSPI_FUNCTIONAL_MODE_INDIRECT_READ  ((uint32_t)QUADSPI_CCR_FMODE_0) /*!<Indirect read mode*/
+#define QSPI_FUNCTIONAL_MODE_AUTO_POLLING   ((uint32_t)QUADSPI_CCR_FMODE_1) /*!<Automatic polling mode*/
+#define QSPI_FUNCTIONAL_MODE_MEMORY_MAPPED  ((uint32_t)QUADSPI_CCR_FMODE)   /*!<Memory-mapped mode*/
 
 /** @defgroup QSPI_SampleShifting QSPI Sample Shifting
   * @{
