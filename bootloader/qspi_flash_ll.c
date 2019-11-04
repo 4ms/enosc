@@ -20,7 +20,7 @@ void LL_QSPI_WaitNotBusy(void) {
 uint32_t LL_QSPI_WaitFlagTimeout(uint32_t flag) {
     //wait for flag to go high
     uint32_t timeout = 0x00FFFFFF;
-    while ( --timeout && (READ_BIT(QUADSPI->SR, flag) != 1)) {;}
+    while ( --timeout && (READ_BIT(QUADSPI->SR, flag) == 0)) {;}
     return timeout;
 }
 
