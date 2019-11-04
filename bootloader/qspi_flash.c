@@ -65,35 +65,6 @@ uint32_t QSPI_init(void)
     if (!LL_QSPI_Transmit(&reg))
         return 0;
 
-
-    // s_command.Instruction        = RESET_ENABLE_CMD;
-    // s_command.AddressMode        = QSPI_ADDRESS_NONE;
-    // s_command.AddressSize        = 0;
-    // s_command.AlternateByteMode  = QSPI_ALTERNATE_BYTES_NONE;
-    // s_command.AlternateBytesSize = 0;
-    // s_command.DataMode           = QSPI_DATA_NONE;
-    // s_command.DummyCycles        = 0;
-    // if (!LL_QSPI_Command(&s_command))
-    //     return 0;
-
-    // s_command.Instruction = RESET_CMD;
-    // if (!LL_QSPI_Command(&s_command))
-    //     return 0;
-
-    // s_command.Instruction = WRITE_ENABLE_CMD;
-    // if (!LL_QSPI_Command(&s_command))
-    //     return 0;
-
-    // s_command.Instruction       = WRITE_STATUS_REG_CMD;
-    // s_command.DataMode          = QSPI_DATA_1_LINE;
-    // s_command.NbData            = 1;
-    // LL_QSPI_Command(&s_command);
-
-    // //Enable QPI mode
-    // uint8_t reg = QSPI_SR_QUADEN;
-    // if (!LL_QSPI_Transmit(&reg))
-    //     return 0;
-
      // 40ms  Write Status/Configuration Register Cycle Time 
     delay(4000);
 
@@ -172,6 +143,8 @@ uint32_t QSPI_read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes) {
 
 uint32_t QSPI_erase(enum EraseCommands erase_command, uint32_t base_address) {
     uint32_t ok;
+
+    LL_QSPI_WriteEnable();
 
     LL_QSPI_WaitNotBusy();
     LL_QSPI_SetCommConfig(QSPI_DDR_MODE_DISABLE | QSPI_DDR_HHC_ANALOG_DELAY | QSPI_SIOO_INST_EVERY_CMD | QSPI_INSTRUCTION_1_LINE |
