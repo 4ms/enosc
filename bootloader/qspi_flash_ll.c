@@ -9,18 +9,6 @@ void LL_QPSI_SetDataLength(uint32_t NbData) {
     WRITE_REG(QUADSPI->DLR, (NbData - 1));
 }
 
-void LL_QSPI_SetCommunicationConfig(QSPI_CommandTypeDef *cmd, uint32_t FunctionalMode) {
-    WRITE_REG(QUADSPI->CCR, (QSPI_DDR_MODE_DISABLE | QSPI_DDR_HHC_ANALOG_DELAY | QSPI_SIOO_INST_EVERY_CMD | QSPI_INSTRUCTION_1_LINE | //preset configs: alter as needed
-                            cmd->DataMode | 
-                            (cmd->DummyCycles << 18) | 
-                            cmd->AlternateBytesSize |
-                            cmd->AlternateByteMode | 
-                            cmd->AddressSize | 
-                            cmd->AddressMode |
-                            cmd->Instruction | 
-                            FunctionalMode));
-}
-
 void LL_QSPI_SetAddress(uint32_t address) {
     WRITE_REG(QUADSPI->AR, address);
 }
@@ -45,35 +33,24 @@ void LL_QSPI_ClearFlag(uint32_t flag) {
     WRITE_REG(QUADSPI->FCR, flag);
 }
 
-uint32_t LL_QSPI_Command(QSPI_CommandTypeDef *cmd) {
+void LL_QSPI_SetCommConfig(uint32_t commconfig) {
+    WRITE_REG(QUADSPI->CCR, commconfig);
+}
+
+uint32_t LL_QSPI_SendInstructionNoDataNoAddress(uint32_t instruction) {
     LL_QSPI_WaitNotBusy();
-
-    if (cmd->DataMode != QSPI_DATA_NONE)
-        LL_QPSI_SetDataLength(cmd->NbData);
-
-    // if (cmd->InstructionMode == QSPI_INSTRUCTION_NONE) //not used with this particular chip
-    //     cmd->Instruction = 0;
-
-    if (cmd->AlternateByteMode == QSPI_ALTERNATE_BYTES_NONE)
-        cmd->AlternateBytesSize = 0;
-    else
-        LL_QPSI_SetAltBytes(cmd->AlternateBytes);
-
-    if (cmd->AddressMode == QSPI_ADDRESS_NONE)
-        cmd->AddressSize = 0;
-
-    LL_QSPI_SetCommunicationConfig(cmd, QSPI_FUNCTIONAL_MODE_INDIRECT_WRITE);
-
-    if (cmd->AddressMode != QSPI_ADDRESS_NONE)
-        LL_QSPI_SetAddress(cmd->Address);
-
-    uint32_t ok = 1;
-    if (cmd->DataMode == QSPI_DATA_NONE) {
-        ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_TC);
-        LL_QSPI_ClearFlag(QSPI_FLAG_TC);
-    }
-
-    return ok;
+    LL_QSPI_SetCommConfig(QSPI_DDR_MODE_DISABLE | QSPI_DDR_HHC_ANALOG_DELAY | QSPI_SIOO_INST_EVERY_CMD | QSPI_INSTRUCTION_1_LINE |
+                            QSPI_DATA_NONE | 
+                            (0 << 18) | 
+                            QSPI_ALTERNATE_BYTES_SIZE_NONE |
+                            QSPI_ALTERNATE_BYTES_NONE | 
+                            QSPI_ADDRESSSIZE_NONE | 
+                            QSPI_ADDRESS_NONE |
+                            instruction | 
+                            QSPI_FUNCTIONAL_MODE_INDIRECT_WRITE);
+    if (!LL_QSPI_WaitFlagTimeout(QSPI_FLAG_TC)) return 0;
+    LL_QSPI_ClearFlag(QSPI_FLAG_TC);
+    return 1;
 }
 
 uint32_t LL_QSPI_Transmit(uint8_t *pData) {
@@ -132,17 +109,20 @@ uint32_t LL_QSPI_Receive(uint8_t *pData) {
 
 uint32_t LL_QSPI_WriteEnable(void)
 {
-    QSPI_CommandTypeDef s_command;
     uint32_t ok;
 
-    s_command.Instruction       = WRITE_ENABLE_CMD;
-    s_command.AddressMode       = QSPI_ADDRESS_NONE;
-    s_command.AddressSize       = 0; //QSPI_ADDRESS_24_BITS
-    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    s_command.AlternateBytesSize = 0;
-    s_command.DataMode          = QSPI_DATA_NONE;
-    s_command.DummyCycles       = 0;
-    ok = LL_QSPI_Command(&s_command);
+    LL_QSPI_WaitNotBusy();
+    WRITE_REG(QUADSPI->CCR, (QSPI_DDR_MODE_DISABLE | QSPI_DDR_HHC_ANALOG_DELAY | QSPI_SIOO_INST_EVERY_CMD | QSPI_INSTRUCTION_1_LINE |
+                            QSPI_DATA_NONE | 
+                            (0 << 18) | 
+                            QSPI_ALTERNATE_BYTES_SIZE_NONE |
+                            QSPI_ALTERNATE_BYTES_NONE | 
+                            QSPI_ADDRESSSIZE_NONE | 
+                            QSPI_ADDRESS_NONE |
+                            WRITE_ENABLE_CMD | 
+                            QSPI_FUNCTIONAL_MODE_INDIRECT_WRITE));
+    ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_TC);
+    LL_QSPI_ClearFlag(QSPI_FLAG_TC);
 
     if (ok) {
         LL_QSPI_StartAutoPoll(QSPI_SR_WREN, QSPI_SR_WREN, 0x10, QSPI_MATCH_MODE_AND);
@@ -154,7 +134,9 @@ uint32_t LL_QSPI_WriteEnable(void)
 
 void LL_QSPI_StartAutoPoll(uint32_t Match, uint32_t Mask, uint32_t Interval, uint32_t MatchMode)
 {
-    QSPI_CommandTypeDef s_command;
+    // QSPI_CommandTypeDef s_command;
+
+    LL_QSPI_WaitNotBusy();
 
     WRITE_REG(QUADSPI->PSMAR, Match);
     WRITE_REG(QUADSPI->PSMKR, Mask);
@@ -164,13 +146,14 @@ void LL_QSPI_StartAutoPoll(uint32_t Match, uint32_t Mask, uint32_t Interval, uin
     MODIFY_REG(QUADSPI->CR, (QUADSPI_CR_PMM | QUADSPI_CR_APMS), (MatchMode | QSPI_AUTOMATIC_STOP_ENABLE));
 
     LL_QPSI_SetDataLength(1);
-    s_command.Instruction       = READ_STATUS_REG_CMD;
-    s_command.AddressMode       = QSPI_ADDRESS_NONE;
-    s_command.AddressSize       = 0;
-    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    s_command.AlternateBytesSize = 0;
-    s_command.DataMode          = QSPI_DATA_1_LINE;
-    s_command.DummyCycles       = 0;
-    LL_QSPI_SetCommunicationConfig(&s_command, QSPI_FUNCTIONAL_MODE_AUTO_POLLING);
+    WRITE_REG(QUADSPI->CCR, (QSPI_DDR_MODE_DISABLE | QSPI_DDR_HHC_ANALOG_DELAY | QSPI_SIOO_INST_EVERY_CMD | QSPI_INSTRUCTION_1_LINE |
+                            QSPI_DATA_1_LINE | 
+                            (0 << 18) | 
+                            QSPI_ALTERNATE_BYTES_SIZE_NONE |
+                            QSPI_ALTERNATE_BYTES_NONE | 
+                            QSPI_ADDRESSSIZE_NONE | 
+                            QSPI_ADDRESS_NONE |
+                            READ_STATUS_REG_CMD | 
+                            QSPI_FUNCTIONAL_MODE_AUTO_POLLING));
 }
 

@@ -9,8 +9,6 @@ void init_QSPI_GPIO_4IO(void);
 
 uint32_t QSPI_init(void)
 {
-    QSPI_CommandTypeDef s_command;
-
     LL_AHB3_GRP1_EnableClock(LL_AHB3_GRP1_PERIPH_QSPI);
 
     CLEAR_BIT(QUADSPI->CR, QUADSPI_CR_EN);
@@ -45,36 +43,59 @@ uint32_t QSPI_init(void)
      // Enable the QSPI peripheral 
     SET_BIT(QUADSPI->CR, QUADSPI_CR_EN);
 
-    s_command.Instruction        = RESET_ENABLE_CMD;
-    s_command.AddressMode        = QSPI_ADDRESS_NONE;
-    s_command.AddressSize        = 0;
-    s_command.AlternateByteMode  = QSPI_ALTERNATE_BYTES_NONE;
-    s_command.AlternateBytesSize = 0;
-    s_command.DataMode           = QSPI_DATA_NONE;
-    s_command.DummyCycles        = 0;
-    if (!LL_QSPI_Command(&s_command))
-        return 0;
+    LL_QSPI_SendInstructionNoDataNoAddress(RESET_ENABLE_CMD);
+    LL_QSPI_SendInstructionNoDataNoAddress(RESET_CMD);
+    LL_QSPI_SendInstructionNoDataNoAddress(WRITE_ENABLE_CMD);
+    //LL_QSPI_WriteEnable();
 
-    s_command.Instruction = RESET_CMD;
-    if (!LL_QSPI_Command(&s_command))
-        return 0;
-
-    s_command.Instruction = WRITE_ENABLE_CMD;
-    if (!LL_QSPI_Command(&s_command))
-        return 0;
-
-    s_command.Instruction       = WRITE_STATUS_REG_CMD;
-    s_command.DataMode          = QSPI_DATA_1_LINE;
-    s_command.NbData            = 1;
-    LL_QSPI_Command(&s_command);
+    LL_QSPI_WaitNotBusy();
+    LL_QPSI_SetDataLength(1);
+    LL_QSPI_SetCommConfig(QSPI_DDR_MODE_DISABLE | QSPI_DDR_HHC_ANALOG_DELAY | QSPI_SIOO_INST_EVERY_CMD | QSPI_INSTRUCTION_1_LINE |
+                            QSPI_DATA_1_LINE | 
+                            (0 << 18) | 
+                            QSPI_ALTERNATE_BYTES_SIZE_NONE |
+                            QSPI_ALTERNATE_BYTES_NONE | 
+                            QSPI_ADDRESSSIZE_NONE | 
+                            QSPI_ADDRESS_NONE |
+                            WRITE_STATUS_REG_CMD | 
+                            QSPI_FUNCTIONAL_MODE_INDIRECT_WRITE);
 
     //Enable QPI mode
     uint8_t reg = QSPI_SR_QUADEN;
     if (!LL_QSPI_Transmit(&reg))
         return 0;
 
+
+    // s_command.Instruction        = RESET_ENABLE_CMD;
+    // s_command.AddressMode        = QSPI_ADDRESS_NONE;
+    // s_command.AddressSize        = 0;
+    // s_command.AlternateByteMode  = QSPI_ALTERNATE_BYTES_NONE;
+    // s_command.AlternateBytesSize = 0;
+    // s_command.DataMode           = QSPI_DATA_NONE;
+    // s_command.DummyCycles        = 0;
+    // if (!LL_QSPI_Command(&s_command))
+    //     return 0;
+
+    // s_command.Instruction = RESET_CMD;
+    // if (!LL_QSPI_Command(&s_command))
+    //     return 0;
+
+    // s_command.Instruction = WRITE_ENABLE_CMD;
+    // if (!LL_QSPI_Command(&s_command))
+    //     return 0;
+
+    // s_command.Instruction       = WRITE_STATUS_REG_CMD;
+    // s_command.DataMode          = QSPI_DATA_1_LINE;
+    // s_command.NbData            = 1;
+    // LL_QSPI_Command(&s_command);
+
+    // //Enable QPI mode
+    // uint8_t reg = QSPI_SR_QUADEN;
+    // if (!LL_QSPI_Transmit(&reg))
+    //     return 0;
+
      // 40ms  Write Status/Configuration Register Cycle Time 
-    delay(400);
+    delay(4000);
 
     LL_QSPI_StartAutoPoll(QSPI_SR_QUADEN, QSPI_SR_QUADEN, 0x10, QSPI_MATCH_MODE_AND);
     uint32_t ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_SM);
@@ -89,7 +110,6 @@ uint32_t QSPI_init(void)
 
 
 uint32_t QSPI_write_page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes) {
-    QSPI_CommandTypeDef s_command;
     uint32_t ok;
 
     //Cannot write more than a page
@@ -105,17 +125,18 @@ uint32_t QSPI_write_page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes
 
     LL_QSPI_WriteEnable();
 
-    // Initialize the program command
-    s_command.Instruction       = QUAD_IN_FAST_PROG_CMD;
-    s_command.AddressMode       = QSPI_ADDRESS_1_LINE;
-    s_command.Address           = write_addr;
-    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    s_command.AlternateBytesSize = 0;
-    s_command.DataMode          = QSPI_DATA_4_LINES;
-    s_command.DummyCycles       = 0;
-    s_command.NbData            = num_bytes;
-
-    LL_QSPI_Command(&s_command);
+    LL_QSPI_WaitNotBusy();
+    LL_QPSI_SetDataLength(num_bytes);
+    LL_QSPI_SetCommConfig(QSPI_DDR_MODE_DISABLE | QSPI_DDR_HHC_ANALOG_DELAY | QSPI_SIOO_INST_EVERY_CMD | QSPI_INSTRUCTION_1_LINE |
+                            QSPI_DATA_4_LINES | 
+                            (0 << 18) | 
+                            QSPI_ALTERNATE_BYTES_SIZE_NONE |
+                            QSPI_ALTERNATE_BYTES_NONE | 
+                            QSPI_ADDRESS_24_BITS | 
+                            QSPI_ADDRESS_1_LINE |
+                            QUAD_IN_FAST_PROG_CMD | 
+                            QSPI_FUNCTIONAL_MODE_INDIRECT_WRITE);
+    LL_QSPI_SetAddress(write_addr);
 
     ok = LL_QSPI_Transmit(pData);
     if (ok) {
@@ -127,21 +148,22 @@ uint32_t QSPI_write_page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes
 }
 
 uint32_t QSPI_read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes) {
-    QSPI_CommandTypeDef s_command;
     uint32_t ok;
 
-    s_command.Instruction       = QUAD_INOUT_FAST_READ_CMD;
-    s_command.AddressMode       = QSPI_ADDRESS_4_LINES;
-    s_command.Address           = read_addr;
-    s_command.AlternateBytesSize= QSPI_ALTERNATE_BYTES_8_BITS;
-    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES;
-    s_command.AlternateBytes    = 0x00;
-    s_command.DataMode          = QSPI_DATA_4_LINES;
-    s_command.DummyCycles       = QSPI_DUMMY_CYCLES_READ_QUAD_IO;
-    s_command.NbData            = num_bytes;
+    LL_QSPI_WaitNotBusy();
 
-    if (!LL_QSPI_Command(&s_command))
-        return 0;
+    LL_QPSI_SetDataLength(num_bytes);
+    LL_QSPI_SetCommConfig(QSPI_DDR_MODE_DISABLE | QSPI_DDR_HHC_ANALOG_DELAY | QSPI_SIOO_INST_EVERY_CMD | QSPI_INSTRUCTION_1_LINE |
+                            QSPI_DATA_4_LINES | 
+                            (QSPI_DUMMY_CYCLES_READ_QUAD_IO << 18) | 
+                            QSPI_ALTERNATE_BYTES_8_BITS |
+                            QSPI_ALTERNATE_BYTES_4_LINES | 
+                            QSPI_ADDRESS_24_BITS | 
+                            QSPI_ADDRESS_4_LINES |
+                            QUAD_INOUT_FAST_READ_CMD | 
+                            QSPI_FUNCTIONAL_MODE_INDIRECT_WRITE);
+    LL_QPSI_SetAltBytes(0);
+    LL_QSPI_SetAddress(read_addr);
 
     ok = LL_QSPI_Receive(pData);
             
@@ -149,18 +171,22 @@ uint32_t QSPI_read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes) {
 }
 
 uint32_t QSPI_erase(enum EraseCommands erase_command, uint32_t base_address) {
-    QSPI_CommandTypeDef s_command;
     uint32_t ok;
 
-    s_command.Instruction   = erase_command;
-    s_command.Address       = base_address;
-    s_command.AddressMode   = QSPI_ADDRESS_1_LINE;
-    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
-    s_command.AlternateBytesSize = 0;
-    s_command.DataMode          = QSPI_DATA_NONE;
-    s_command.DummyCycles       = 0;
+    LL_QSPI_WaitNotBusy();
+    LL_QSPI_SetCommConfig(QSPI_DDR_MODE_DISABLE | QSPI_DDR_HHC_ANALOG_DELAY | QSPI_SIOO_INST_EVERY_CMD | QSPI_INSTRUCTION_1_LINE |
+                            QSPI_DATA_NONE | 
+                            (0 << 18) | 
+                            QSPI_ALTERNATE_BYTES_SIZE_NONE |
+                            QSPI_ALTERNATE_BYTES_NONE | 
+                            QSPI_ADDRESS_24_BITS | 
+                            QSPI_ADDRESS_1_LINE |
+                            erase_command | 
+                            QSPI_FUNCTIONAL_MODE_INDIRECT_WRITE);
+    LL_QSPI_SetAddress(base_address);
 
-    ok = LL_QSPI_Command(&s_command);
+    ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_TC);
+    LL_QSPI_ClearFlag(QSPI_FLAG_TC);
 
     if (ok) {
         LL_QSPI_StartAutoPoll(0, QSPI_SR_WIP, 0x10, QSPI_MATCH_MODE_AND);
@@ -177,7 +203,6 @@ void init_QSPI_GPIO_1IO(void) {
     SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_GPIOBEN);
     SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_GPIOCEN);
     SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_GPIOEEN);
-
 
     LL_GPIO_SetPinMode(QSPI_CS_GPIO_PORT, QSPI_CS_PIN, LL_GPIO_MODE_ALTERNATE);
     LL_GPIO_SetPinSpeed(QSPI_CS_GPIO_PORT, QSPI_CS_PIN, LL_GPIO_SPEED_FREQ_HIGH);
