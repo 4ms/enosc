@@ -31,7 +31,6 @@ INCLUDES += -I$(CMSIS_DIR) \
 			-I stm_audio_bootloader/fsk \
 			-I stmlib \
 			-I stmlib/utils \
-			-I ../src \
 
 ELF = $(BLBUILDDIR)/$(BINARYNAME).elf
 HEX = $(BLBUILDDIR)/$(BINARYNAME).hex
@@ -103,6 +102,8 @@ LFLAGS  = $(MCU) -specs=nano.specs  -T $(LDSCRIPT) \
 # $(BLBUILDDIR)/bootloader.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/hardware_test.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/dac_sai.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/qspi_flash_ll.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/qspi_flash.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/adc_spi.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/bl_ui.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/stm_audio_bootloader/fsk/packet_decoder.o: CFLAGS = $(C0FLAGS)
