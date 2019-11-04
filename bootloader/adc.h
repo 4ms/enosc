@@ -1,5 +1,5 @@
 /*
- * hal_handlers.c
+ * adc_builtin_driver.h - adc driver for built-in adcs
  *
  * Author: Dan Green (danngreen1@gmail.com)
  *
@@ -26,78 +26,44 @@
  * -----------------------------------------------------------------------------
  */
 
- #include "hal_handlers.h"
+#pragma once
 
-void _Error_Handler(const char* file, uint32_t line)
-{ 
-    volatile char f[100];
-    volatile uint32_t l;
-    uint8_t i=0;
+#include <stm32f7xx.h>
 
-    while (file[i])
-        f[i] = file[i++];
-    l=line;
+typedef struct builtinAdcSetup{
+        GPIO_TypeDef *gpio;
+        uint16_t pin;
+        uint32_t channel;
+        // uint32_t sample_time; //must be a valid ADC_SAMPLETIME_XXXCYCLES
+} builtinAdcSetup;
 
-    while (1)
-    {
-        (void)(f);
-        (void)(l);
-    }
-}
-void HardFault_Handler(void)
-{ 
-    volatile uint8_t foobar;
-    uint32_t hfsr,dfsr,afsr,bfar,mmfar,cfsr;
 
-    volatile uint8_t pause=1;
+// ADC1
+enum BuiltinAdcChannels{
+        WARP_POT_ADC,           //  0
+        DETUNE_POT_ADC,         //  1
+        CROSSFM_POT_ADC,        //  2
+        ROOT_POT_ADC,           //  3
+        SCALE_POT_ADC,          //  4
+        PITCH_POT_ADC,          //  5
+        SPREAD_POT_ADC,         //  6
+        BALANCE_POT_ADC,        //  7
+        TWIST_POT_ADC,          //  8
 
-    foobar=0;
-    mmfar=SCB->MMFAR;
-    bfar=SCB->BFAR;
+        SPREAD_CV_ADC,          //  9
+        WARP_CV_ADC,            //  10 
+        CROSSFM_CV_2_ADC,       //  11
+        TWIST_CV_ADC,           //  12
+        BALANCE_CV_ADC,         //  13
+        SCALE_CV_ADC,           //  14
+        CROSSFM_CV_ADC,         //  15
+        
+        NUM_ADCS
+};
 
-    hfsr=SCB->HFSR;
-    afsr=SCB->AFSR;
-    dfsr=SCB->DFSR;
-    cfsr=SCB->CFSR;
+#define NUM_POT_ADC1 9
+#define NUM_CV_ADC3 (NUM_ADCS - NUM_POT_ADC1)
 
-    (void)(hfsr);
-    (void)(afsr);
-    (void)(dfsr);
-    (void)(cfsr);
-    (void)(mmfar);
-    (void)(bfar);
-    
-    if (foobar){
-        return;
-    } else {
-        while(pause){};
-    }
-}
-void NMI_Handler(void)
-{ 
-    while(1){};
-}
-void MemManage_Handler(void)
-{ 
-    while(1){};
-}
-void BusFault_Handler(void)
-{ 
-    while(1){};
-}
-void UsageFault_Handler(void)
-{ 
-    while(1){};
-}
-void SVC_Handler(void)
-{ 
-    while(1){};
-}
-void DebugMon_Handler(void)
-{ 
-    while(1){};
-}
-void PendSV_Handler(void)
-{ 
-    while(1){};
-}
+void adc_init_all(void);
+uint16_t read_adc(ADC_TypeDef *adc, uint32_t channel);
+void init_adcs(void);

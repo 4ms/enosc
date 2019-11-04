@@ -14,10 +14,10 @@
 
 void flash_begin_open_program(void);
 void flash_open_erase_sector(uint32_t address);
-uint8_t flash_open_program_byte(uint8_t byte, uint32_t address);
-uint8_t flash_open_program_word(uint32_t word, uint32_t address);
-uint8_t flash_open_program_block_bytes(uint8_t* arr, uint32_t address, uint32_t size);
-uint8_t flash_open_program_block_words(uint32_t* arr, uint32_t address, uint32_t size);
+void flash_open_program_byte(uint8_t byte, uint32_t address);
+void flash_open_program_word(uint32_t word, uint32_t address);
+void flash_open_program_block_bytes(uint8_t* arr, uint32_t address, uint32_t size);
+void flash_open_program_block_words(uint32_t* arr, uint32_t address, uint32_t size);
 void flash_end_open_program(void);
 
 void flash_erase_sector(uint32_t address);

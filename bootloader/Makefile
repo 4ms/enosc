@@ -4,20 +4,13 @@
 BINARYNAME = bootloader
 MAINAPP_HEX = ../main.hex
 
-APP_SOURCES = 	\
-	../src/drivers/leds.cc \
-	../src/drivers/buttons.cc \
-	../src/drivers/debug.cc \
-
-
 BUILDDIR = build
 BLBUILDDIR = $(BUILDDIR)/$(BINARYNAME)
 COMBODIR = $(BUILDDIR)/bootloader-app-combo
 COMBO = $(COMBODIR)/bootloader-app-combo
 
 CMSIS_DIR = ../lib/CMSIS
-HAL_DIR = ../lib/HAL
-EASIGLIB_DIR = ../lib/easiglib/
+LL_DIR = lib
 
 STARTUP = $(CMSIS_DIR)/startup_stm32f730xx
 SYSTEM = $(CMSIS_DIR)/system_stm32f7xx
@@ -26,27 +19,19 @@ LOADFILE = bootloader_STM32F730V8x.ld
 
 SOURCES += $(wildcard *.c)
 SOURCES += $(wildcard *.cc)
+SOURCES += $(wildcard $(LL_DIR)/*.c)
 SOURCES += stm_audio_bootloader/fsk/packet_decoder.cc
-SOURCES += $(APP_SOURCES)
-SOURCES += $(wildcard $(HAL_DIR)/*.c)
 SOURCES += $(STARTUP).s
 SOURCES += $(SYSTEM).c
-
-
 
 OBJECTS = $(addprefix $(BLBUILDDIR)/, $(addsuffix .o, $(basename $(SOURCES))))
 
 INCLUDES += -I$(CMSIS_DIR) \
-			-I$(HAL_DIR) \
-			-I$(EASIGLIB_DIR) \
+			-I $(LL_DIR) \
 			-I stm_audio_bootloader/fsk \
 			-I stmlib \
 			-I stmlib/utils \
 			-I ../src \
-			-I ../src/drivers \
-			-I ../
-
-
 
 ELF = $(BLBUILDDIR)/$(BINARYNAME).elf
 HEX = $(BLBUILDDIR)/$(BINARYNAME).hex
@@ -72,22 +57,25 @@ MCU = -mcpu=cortex-m7 \
 
 F_CPU = 216000000L
 
-ARCH_CFLAGS = -D'IS_BOOTLOADER=1' -DARM_MATH_CM7 \
+# F_FLTO = -flto
+
+ARCH_CFLAGS = -DARM_MATH_CM7 \
  	-D'__FPU_PRESENT=1' \
-  	-DUSE_HAL_DRIVER \
+  	-DUSE_FULL_LL_DRIVER \
   	-DSTM32F730xx \
   	-DF_CPU=$(F_CPU) \
 
 
-OPTIMIZED_CFLAGS = -g2 -Os
+OPTIMIZED_CFLAGS = -g3 -Os
 
 CFLAGS  = $(OPTIMIZED_CFLAGS) 
 CFLAGS += $(ARCH_CFLAGS) $(MCU)
 CFLAGS += -I.  $(INCLUDES)
-CFLAGS += -fdata-sections -ffunction-sections
+CFLAGS += -fdata-sections -ffunction-sections \
+ 	$(F_FLTO)
 # CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)"
 
-C0FLAGS  = -O0 -g2 -Wall
+C0FLAGS  = -O0 -g3 -Wall
 C0FLAGS += $(ARCH_CFLAGS) $(MCU)
 C0FLAGS += -I.  $(INCLUDES)
 
@@ -98,6 +86,7 @@ CXXFLAGS=$(CFLAGS) \
 	-Werror=return-type \
 	-Wdouble-promotion \
 	-Wno-register \
+	$(F_FLTO)
 
 AFLAGS = -mcpu=cortex-m7 \
 	-mthumb-interwork \
@@ -107,9 +96,14 @@ AFLAGS = -mcpu=cortex-m7 \
 
 LDSCRIPT = $(LOADFILE)
 
-LFLAGS  = $(MCU) -specs=nano.specs  -T $(LDSCRIPT) -lc -lm -lnosys
+LFLAGS  = $(MCU) -specs=nano.specs  -T $(LDSCRIPT) \
+	-Wl,--gc-sections \
+	$(F_FLTO)
 	
 # $(BLBUILDDIR)/bootloader.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/hardware_test.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/dac_sai.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/adc_spi.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/bl_ui.o: CFLAGS = $(C0FLAGS)
 # $(BLBUILDDIR)/stm_audio_bootloader/fsk/packet_decoder.o: CFLAGS = $(C0FLAGS)
 
@@ -136,12 +130,12 @@ $(ELF): $(OBJECTS)
 	$(LD) $(LFLAGS) -o $@ $(OBJECTS)
 
 
-$(BLBUILDDIR)/%.o: %.c $(wildcard inc/*.h) $(wildcard inc/res/*.h)
+$(BLBUILDDIR)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) -c $(CFLAGS) $< -o $@
 
 
-$(BLBUILDDIR)/%.o: %.cc $(wildcard inc/*.h) $(wildcard inc/res/*.h)
+$(BLBUILDDIR)/%.o: %.cc
 	mkdir -p $(dir $@)
 	$(CPP) -c $(CFLAGS) $(CXXFLAGS) $< -o $@
 
