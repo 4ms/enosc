@@ -207,13 +207,30 @@ uint8_t check_adc(struct AdcCheck *adc_check)
 //-5V/CCW (red goes off), 5V/CW (blue goes off), 0V/center (green goes off only when in center). 
 //press button to select next adc
 void test_builtin_adc(void) {
+    const uint8_t adc_map[NUM_ADCS] = {
+        SCALE_POT_ADC, 
+        SPREAD_POT_ADC,
+        PITCH_POT_ADC,
+        BALANCE_POT_ADC,
+        ROOT_POT_ADC,
+        CROSSFM_POT_ADC,
+        TWIST_POT_ADC,
+        DETUNE_POT_ADC,
+        WARP_POT_ADC,
+        SCALE_CV_ADC,
+        SPREAD_CV_ADC,
+        CROSSFM_CV_ADC,
+        BALANCE_CV_ADC,
+        TWIST_CV_ADC,
+        WARP_CV_ADC 
+    };
+
     SET_FREEZE_GREEN();
     SET_LEARN_RED();
 
     adc_init_all();
 
     SET_FREEZE_OFF();
-    SET_LEARN_WHITE();
 
     struct AdcCheck adc_check = {
         .center_val = 2048,
@@ -222,8 +239,10 @@ void test_builtin_adc(void) {
         .max_val = 4000,
         .center_check_rate = (1UL<<16)
     };
-    for (uint32_t cur_adc=0; cur_adc<(NUM_ADCS-1); cur_adc++) {
+    for (uint32_t adc_i=0; adc_i<(NUM_ADCS-1); adc_i++) {
+        uint32_t cur_adc = adc_map[adc_i];
         adc_check.status = 0xFFFFFFFF;
+        SET_LEARN_WHITE();
         while (!learn_pressed()) {
             adc_check.cur_val = read_adc(cur_adc<NUM_POT_ADC1 ? ADC1 : ADC3, cur_adc);
             if (check_adc(&adc_check)) 
