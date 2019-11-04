@@ -11,6 +11,8 @@ struct System : crtp<T, System<SYSTICK_FREQ, T>>, Nocopy {
   System() {
     instance_ = this;
     SetVectorTable(0x08004000);
+    HAL_DeInit();
+    HAL_RCC_DeInit();
 
     HAL_Init();
     SystemClock_Config();
