@@ -17,6 +17,7 @@ void test_switches(void);
 void test_builtin_adc(void);
 void test_dac(void);
 void test_extadc(void);
+void test_gates(void);
 void test_QSPI(void);
 
 
@@ -232,11 +233,44 @@ void test_builtin_adc(void) {
         delay(1500);
         FREEZE_GREEN(OFF);
         wait_for_learn_released();
-        FREEZE_GREEN(OFF);
-        SET_LEARN_WHITE();
     }
-    SET_LEARN_OFF();
 }
+
+void test_gates(void) {
+    SET_FREEZE_OFF();
+
+    LL_GPIO_SetPinMode(FREEZE_JACK_GPIO_Port, FREEZE_JACK_Pin, LL_GPIO_MODE_INPUT);
+    LL_GPIO_SetPinPull(FREEZE_JACK_GPIO_Port, FREEZE_JACK_Pin, LL_GPIO_PULL_UP);
+    LL_GPIO_SetPinMode(LEARN_JACK_GPIO_Port, LEARN_JACK_Pin, LL_GPIO_MODE_INPUT);
+    LL_GPIO_SetPinPull(LEARN_JACK_GPIO_Port, LEARN_JACK_Pin, LL_GPIO_PULL_UP);
+
+    for (uint32_t i=0; i<2; i++) {
+        SET_LEARN_WHITE();
+        uint32_t status = 0b111;
+        while (!learn_pressed()) {
+            uint32_t gate =  i ? PIN_READ(FREEZE_JACK_GPIO_Port, FREEZE_JACK_Pin) : 
+                                 PIN_READ(LEARN_JACK_GPIO_Port, LEARN_JACK_Pin);
+            if (!gate && (status & 0b010)) {
+                LEARN_GREEN(OFF);
+                status &= ~(0b001UL);
+            }
+            if (gate) {
+                LEARN_RED(OFF);
+                status &= ~(0b010UL);
+            }   
+            if (!gate && !(status & 0b010)) {
+                LEARN_BLUE(OFF);
+                status &= ~(0b100UL);
+            }
+            if (status==0) break;
+        }
+        FREEZE_GREEN(ON);
+        delay(1500);
+        FREEZE_GREEN(OFF);
+        wait_for_learn_released();
+    }
+}
+
 
 //checks SPI communication
 //reads value from pitch/root jacks: 
