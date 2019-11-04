@@ -77,6 +77,10 @@ void reset_buses(void) {
 
 void reset_RCC(void)
 {
+  SysTick->CTRL  &= ~(SysTick_CTRL_CLKSOURCE_Msk |
+                   SysTick_CTRL_TICKINT_Msk   |
+                   SysTick_CTRL_ENABLE_Msk);                         /* Disable SysTick IRQ and SysTick Timer */
+
   /* Set HSION bit to the reset value */
   SET_BIT(RCC->CR, RCC_CR_HSION);
 
