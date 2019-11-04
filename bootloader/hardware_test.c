@@ -291,23 +291,33 @@ uint32_t test_qspi_sector(uint8_t sector_num)
     for (i=0; i<QSPI_SECTOR_SIZE; i++)
         test_buffer[i] = (test_encode_num(i) + sector_num) & 0xFF;
     
+    LEARN_BLUE(ON);
     //Benchmark: ~38ms/sector
     if (!QSPI_erase(SECTOR_ERASE_CMD, test_addr))
         return 0;
 
+    LEARN_BLUE(OFF);
+    LEARN_RED(ON);
     for (i=0; i<(QSPI_SECTOR_SIZE/QSPI_PAGE_SIZE); i++)
     {
+        FREEZE_RED((i&1) ? ON : OFF);
+        FREEZE_GREEN((i&2) ? ON : OFF);
+        FREEZE_BLUE((i&4) ? ON : OFF);
         //Benchmark: ~380us/page
         if (!QSPI_write_page( &(test_buffer[i*QSPI_PAGE_SIZE]), test_addr+i*QSPI_PAGE_SIZE, QSPI_PAGE_SIZE))
             return 0;
     }
+    LEARN_RED(OFF);
+    SET_FREEZE_OFF();
 
     for (i=0; i<QSPI_SECTOR_SIZE; i++)
         test_buffer[i] = 0;
 
+    LEARN_GREEN(ON);
     //Benchmark: ~680-850us/sector
     if (!QSPI_read(test_buffer, test_addr, QSPI_SECTOR_SIZE))
         return 0;
+    LEARN_GREEN(OFF);
 
     for (i=0; i<(QSPI_SECTOR_SIZE-1); i++) {
         if (test_buffer[i] != ((test_encode_num(i) + sector_num) & 0xFF))
@@ -322,7 +332,13 @@ void test_QSPI(void) {
     SET_LEARN_CYAN();
     SET_FREEZE_RED();
 
-    QSPI_init();
+    if (!QSPI_init())
+    {
+        FREEZE_RED(ON);
+        delay(1000);
+        FREEZE_RED(OFF);
+        delay(1000);
+    }
 
     delay(1500);
 
@@ -334,14 +350,19 @@ void test_QSPI(void) {
         if (!test_qspi_sector(sector))
         {
             while (1) {
-                LEARN_RED(ON);
+                SET_LEARN_RED();
+                SET_FREEZE_RED();
                 delay(1000);
                 LEARN_RED(OFF);
+                FREEZE_RED(OFF);
                 delay(1000);
             }
             break;
         }
     }
+
+    SET_LEARN_OFF();
+    SET_FREEZE_OFF();
 }
 
 
