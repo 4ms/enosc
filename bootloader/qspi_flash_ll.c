@@ -1,4 +1,4 @@
-#include "qpsi_flash_ll.h"
+#include "qspi_flash_ll.h"
 
 
 void LL_QPSI_SetAltBytes(uint32_t AlternateBytes) {
@@ -36,7 +36,7 @@ uint32_t LL_QSPI_WaitFlagTimeout(uint32_t flag) {
     return timeout;
 }
 
-uint32_t LL_QSPI_WaitFlag(uint32_t flag) {
+void LL_QSPI_WaitFlag(uint32_t flag) {
     //wait for flag to go high
     while (!(READ_BIT(QUADSPI->SR, flag))) {;}
 }
@@ -45,10 +45,9 @@ void LL_QSPI_ClearFlag(uint32_t flag) {
     WRITE_REG(QUADSPI->FCR, flag);
 }
 
-void LL_QSPI_Command(QSPI_CommandTypeDef *cmd) {
+uint32_t LL_QSPI_Command(QSPI_CommandTypeDef *cmd) {
     LL_QSPI_WaitNotBusy();
 
-    //QSPI_Config()
     if (cmd->DataMode != QSPI_DATA_NONE)
         LL_QPSI_SetDataLength(cmd->NbData);
 
@@ -68,38 +67,73 @@ void LL_QSPI_Command(QSPI_CommandTypeDef *cmd) {
     if (cmd->AddressMode != QSPI_ADDRESS_NONE)
         LL_QSPI_SetAddress(cmd->Address);
 
-    //end config
+    uint32_t ok = 1;
+    if (cmd->DataMode == QSPI_DATA_NONE) {
+        ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_TC);
+        LL_QSPI_ClearFlag(QSPI_FLAG_TC);
+    }
 
-    if (cmd->DataMode == QSPI_DATA_NONE)
-    LL_QSPI_WaitFlag(QSPI_FLAG_TC);
-    LL_QSPI_ClearFlag(QSPI_FLAG_TC);
+    return ok;
 }
 
-void LL_QSPI_Transmit(uint8_t *pData) {
+uint32_t LL_QSPI_Transmit(uint8_t *pData) {
     __IO uint32_t *data_reg = &(QUADSPI->DR);
-
     uint32_t cnt = READ_REG(QUADSPI->DLR) + 1;
+    uint32_t ok=1;
 
     MODIFY_REG(QUADSPI->CCR, QUADSPI_CCR_FMODE, QSPI_FUNCTIONAL_MODE_INDIRECT_WRITE);
-    uint32_t ok;
+
     while(cnt > 0)
     {
          // Wait until FT flag is set to send data 
         ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_FT);
-        LL_QSPI_ClearFlag(QSPI_FLAG_FT);
+        // LL_QSPI_ClearFlag(QSPI_FLAG_FT);
+        if (!ok) break;
 
         //byte-mode write to DR to add 1 byte to FIFO
         *(__IO uint8_t *)data_reg = *pData++;
         cnt--;
     }
     if (ok) {
-        LL_QSPI_WaitFlagTimeout(QSPI_FLAG_TC);
+        ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_TC);
         LL_QSPI_ClearFlag(QSPI_FLAG_TC);
     }
+    return ok;
 }
-void LL_QSPI_WriteEnable(void)
+
+uint32_t LL_QSPI_Receive(uint8_t *pData) {
+    uint32_t addr_reg = READ_REG(QUADSPI->AR);
+    __IO uint32_t *data_reg = &QUADSPI->DR;
+    uint32_t cnt = READ_REG(QUADSPI->DLR) + 1;
+    uint32_t ok=1;
+
+    MODIFY_REG(QUADSPI->CCR, QUADSPI_CCR_FMODE, QSPI_FUNCTIONAL_MODE_INDIRECT_READ);
+
+    // Start the transfer by re-writing the address in AR register
+    WRITE_REG(QUADSPI->AR, addr_reg);
+
+    while (cnt > 0)
+    {
+         // Wait until FT or TC flag is set to read data 
+        ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_FT | QSPI_FLAG_TC);
+        // LL_QSPI_ClearFlag(QSPI_FLAG_FT);
+        if (!ok) break;
+        
+        //byte-mode read from DR
+        *pData++ = *(__IO uint8_t *)data_reg;
+        cnt--;
+    }
+    if (ok) {
+        ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_TC);
+        LL_QSPI_ClearFlag(QSPI_FLAG_TC);
+    }
+    return ok;
+}
+
+uint32_t LL_QSPI_WriteEnable(void)
 {
     QSPI_CommandTypeDef s_command;
+    uint32_t ok;
 
     s_command.Instruction       = WRITE_ENABLE_CMD;
     s_command.AddressMode       = QSPI_ADDRESS_NONE;
@@ -108,11 +142,14 @@ void LL_QSPI_WriteEnable(void)
     s_command.AlternateBytesSize = 0;
     s_command.DataMode          = QSPI_DATA_NONE;
     s_command.DummyCycles       = 0;
-    LL_QSPI_Command(s_command);
+    ok = LL_QSPI_Command(&s_command);
 
-    LL_QSPI_StartAutoPoll(QSPI_SR_WREN, QSPI_SR_WREN, 0x10, QSPI_MATCH_MODE_AND);
-    LL_QSPI_WaitFlag(QSPI_FLAG_SM);
-    LL_QSPI_ClearFlag(QSPI_FLAG_SM);
+    if (ok) {
+        LL_QSPI_StartAutoPoll(QSPI_SR_WREN, QSPI_SR_WREN, 0x10, QSPI_MATCH_MODE_AND);
+        ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_SM);
+        LL_QSPI_ClearFlag(QSPI_FLAG_SM);
+    }
+    return ok;
 }
 
 void LL_QSPI_StartAutoPoll(uint32_t Match, uint32_t Mask, uint32_t Interval, uint32_t MatchMode)
@@ -134,6 +171,6 @@ void LL_QSPI_StartAutoPoll(uint32_t Match, uint32_t Mask, uint32_t Interval, uin
     s_command.AlternateBytesSize = 0;
     s_command.DataMode          = QSPI_DATA_1_LINE;
     s_command.DummyCycles       = 0;
-    LL_QSPI_SetCommunicationConfig(s_command, QSPI_FUNCTIONAL_MODE_AUTO_POLLING);
+    LL_QSPI_SetCommunicationConfig(&s_command, QSPI_FUNCTIONAL_MODE_AUTO_POLLING);
 }
 

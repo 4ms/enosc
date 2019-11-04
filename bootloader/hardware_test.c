@@ -8,7 +8,7 @@
 #include "dac_sai.h"
 #include "saw_osc.h"
 #include "adc_spi.h"
-
+#include "qspi_flash.h"
 
 extern volatile uint32_t systmr;
 
@@ -276,9 +276,72 @@ void test_extadc(void) {
     SET_LEARN_OFF();
 }
 
+
+
+uint8_t test_encode_num(uint32_t num) {return (num*7) + (num>>7);}
+
+// Tests one sector
+// Returns true if passed, false if failed
+uint32_t test_qspi_sector(uint8_t sector_num)
+{
+    uint32_t i;
+    uint8_t test_buffer[QSPI_SECTOR_SIZE];
+    uint32_t test_addr = sector_num * QSPI_SECTOR_SIZE;
+
+    for (i=0; i<QSPI_SECTOR_SIZE; i++)
+        test_buffer[i] = (test_encode_num(i) + sector_num) & 0xFF;
+    
+    //Benchmark: ~38ms/sector
+    if (!QSPI_erase(SECTOR_ERASE_CMD, test_addr))
+        return 0;
+
+    for (i=0; i<(QSPI_SECTOR_SIZE/QSPI_PAGE_SIZE); i++)
+    {
+        //Benchmark: ~380us/page
+        if (!QSPI_write_page( &(test_buffer[i*QSPI_PAGE_SIZE]), test_addr+i*QSPI_PAGE_SIZE, QSPI_PAGE_SIZE))
+            return 0;
+    }
+
+    for (i=0; i<QSPI_SECTOR_SIZE; i++)
+        test_buffer[i] = 0;
+
+    //Benchmark: ~680-850us/sector
+    if (!QSPI_read(test_buffer, test_addr, QSPI_SECTOR_SIZE))
+        return 0;
+
+    for (i=0; i<(QSPI_SECTOR_SIZE-1); i++) {
+        if (test_buffer[i] != ((test_encode_num(i) + sector_num) & 0xFF))
+            return 0;
+    }
+
+    return 1;
+}
+
 //internal read/write/compare test: warning: erases entire chip
 void test_QSPI(void) {
+    SET_LEARN_CYAN();
+    SET_FREEZE_RED();
 
+    QSPI_init();
+
+    delay(1500);
+
+    SET_LEARN_RED();
+    SET_FREEZE_OFF();
+
+    uint8_t sector;
+    for (sector=0; sector<QSPI_NUM_SECTORS; sector++) {
+        if (!test_qspi_sector(sector))
+        {
+            while (1) {
+                LEARN_RED(ON);
+                delay(1000);
+                LEARN_RED(OFF);
+                delay(1000);
+            }
+            break;
+        }
+    }
 }
 
 

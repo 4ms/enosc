@@ -1,7 +1,14 @@
 #include "qspi_flash.h"
 
+#include "bl_utils.h" //for delay() function only
 
-void init_QSPI(void) {
+//private:
+void init_QSPI_GPIO_1IO(void);
+void init_QSPI_GPIO_4IO(void);
+
+
+uint32_t QSPI_init(void)
+{
     QSPI_CommandTypeDef s_command;
 
     LL_AHB3_GRP1_EnableClock(LL_AHB3_GRP1_PERIPH_QSPI);
@@ -14,11 +21,6 @@ void init_QSPI(void) {
     //Initialize chip pins in single IO mode
     init_QSPI_GPIO_1IO();
 
-    //Don't use IRQ, right?
-    // NVIC_SetPriority(QUADSPI_IRQn, 0b1010);
-    // NVIC_EnableIRQ(QUADSPI_IRQn);
-
-    // /* QSPI freq = SYSCLK /(1 + ClockPrescaler) = 216 MHz/(1+1) = 108 Mhz */
     const uint32_t ClockPrescaler     = 1; 
     const uint32_t FifoThreshold      = 16;
     const uint32_t SampleShifting     = QSPI_SAMPLE_SHIFTING_HALFCYCLE;
@@ -30,10 +32,7 @@ void init_QSPI(void) {
 
     MODIFY_REG(QUADSPI->CR, QUADSPI_CR_FTHRES, ((FifoThreshold - 1) << 8));
 
-    LL_QSPI_WaitNotBusy(hqspi, QSPI_FLAG_BUSY, RESET, tickstart, hqspi->Timeout);
-
-    // while ( (FlagStatus)(READ_BIT(QUADSPI->SR, QSPI_FLAG_BUSY)) != RESET) {;}
-    while ( READ_BIT(QUADSPI->SR, QSPI_FLAG_BUSY) != 0) {;}
+    LL_QSPI_WaitNotBusy();
 
      // Configure QSPI Clock Prescaler and Sample Shift 
     MODIFY_REG(QUADSPI->CR,(QUADSPI_CR_PRESCALER | QUADSPI_CR_SSHIFT | QUADSPI_CR_FSEL | QUADSPI_CR_DFM), 
@@ -46,53 +45,63 @@ void init_QSPI(void) {
      // Enable the QSPI peripheral 
     SET_BIT(QUADSPI->CR, QUADSPI_CR_EN);
 
-    s_command.Instruction       = RESET_ENABLE_CMD;
-    s_command.AddressMode       = QSPI_ADDRESS_NONE;
-    s_command.AddressSize       = 0;
-    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    s_command.Instruction        = RESET_ENABLE_CMD;
+    s_command.AddressMode        = QSPI_ADDRESS_NONE;
+    s_command.AddressSize        = 0;
+    s_command.AlternateByteMode  = QSPI_ALTERNATE_BYTES_NONE;
     s_command.AlternateBytesSize = 0;
-    s_command.DataMode          = QSPI_DATA_NONE;
-    s_command.DummyCycles       = 0;
-    LL_QSPI_Command(&s_command);
+    s_command.DataMode           = QSPI_DATA_NONE;
+    s_command.DummyCycles        = 0;
+    if (!LL_QSPI_Command(&s_command))
+        return 0;
 
     s_command.Instruction = RESET_CMD;
-    LL_QSPI_Command(&s_command);
+    if (!LL_QSPI_Command(&s_command))
+        return 0;
 
     s_command.Instruction = WRITE_ENABLE_CMD;
-    LL_QSPI_Command(&s_command);
+    if (!LL_QSPI_Command(&s_command))
+        return 0;
 
     s_command.Instruction       = WRITE_STATUS_REG_CMD;
     s_command.DataMode          = QSPI_DATA_1_LINE;
     s_command.NbData            = 1;
     LL_QSPI_Command(&s_command);
 
+    //Enable QPI mode
     uint8_t reg = QSPI_SR_QUADEN;
-    QSPI_Transmit(&reg);
+    if (!LL_QSPI_Transmit(&reg))
+        return 0;
 
      // 40ms  Write Status/Configuration Register Cycle Time 
     delay(400);
 
     LL_QSPI_StartAutoPoll(QSPI_SR_QUADEN, QSPI_SR_QUADEN, 0x10, QSPI_MATCH_MODE_AND);
-    LL_QSPI_WaitFlag(QSPI_FLAG_SM);
+    uint32_t ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_SM);
     LL_QSPI_ClearFlag(QSPI_FLAG_SM);
+    if (!ok) return 0;
 
     // Now that chip is in QPI mode, IO2 and IO3 can be initialized
     init_QSPI_GPIO_4IO();
+
+    return 1;
 }
 
 
-uint8_t QSPI_Write_Page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes) {
+uint32_t QSPI_write_page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes) {
     QSPI_CommandTypeDef s_command;
+    uint32_t ok;
+
     //Cannot write more than a page
     if (num_bytes > QSPI_PAGE_SIZE)
-        return false;
+        return 0;
 
     uint32_t start_page = write_addr >> QSPI_PAGE_ADDRESS_BITS;
     uint32_t end_page = (write_addr + num_bytes - 1) >> QSPI_PAGE_ADDRESS_BITS;
 
     //Cannot cross page boundaries
     if (start_page != end_page)
-        return false;
+        return 0;
 
     LL_QSPI_WriteEnable();
 
@@ -108,20 +117,58 @@ uint8_t QSPI_Write_Page(uint8_t* pData, uint32_t write_addr, uint32_t num_bytes)
 
     LL_QSPI_Command(&s_command);
 
-    LL_QSPI_Transmit(pData);
-
-    LL_QSPI_StartAutoPoll(0, QSPI_SR_WIP, 0x10, QSPI_MATCH_MODE_AND);
-    LL_QSPI_WaitFlag(QSPI_FLAG_SM);
-    LL_QSPI_ClearFlag(QSPI_FLAG_SM);
-
+    ok = LL_QSPI_Transmit(pData);
+    if (ok) {
+        LL_QSPI_StartAutoPoll(0, QSPI_SR_WIP, 0x10, QSPI_MATCH_MODE_AND);
+        ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_SM);
+        LL_QSPI_ClearFlag(QSPI_FLAG_SM);
+    }
+    return ok;
 }
 
-uint8_t QSPI_Read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes) {
+uint32_t QSPI_read(uint8_t* pData, uint32_t read_addr, uint32_t num_bytes) {
+    QSPI_CommandTypeDef s_command;
+    uint32_t ok;
 
+    s_command.Instruction       = QUAD_INOUT_FAST_READ_CMD;
+    s_command.AddressMode       = QSPI_ADDRESS_4_LINES;
+    s_command.Address           = read_addr;
+    s_command.AlternateBytesSize= QSPI_ALTERNATE_BYTES_8_BITS;
+    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES;
+    s_command.AlternateBytes    = 0x00;
+    s_command.DataMode          = QSPI_DATA_4_LINES;
+    s_command.DummyCycles       = QSPI_DUMMY_CYCLES_READ_QUAD_IO;
+    s_command.NbData            = num_bytes;
+
+    if (!LL_QSPI_Command(&s_command))
+        return 0;
+
+    ok = LL_QSPI_Receive(pData);
+            
+    return ok;
 }
 
-uint8_t QSPI_Erase(ErasableSizes size, uint32_t BaseAddress) {
+uint32_t QSPI_erase(enum EraseCommands erase_command, uint32_t base_address) {
+    QSPI_CommandTypeDef s_command;
+    uint32_t ok;
 
+    s_command.Instruction   = erase_command;
+    s_command.Address       = base_address;
+    s_command.AddressMode   = QSPI_ADDRESS_1_LINE;
+    s_command.AlternateByteMode = QSPI_ALTERNATE_BYTES_NONE;
+    s_command.AlternateBytesSize = 0;
+    s_command.DataMode          = QSPI_DATA_NONE;
+    s_command.DummyCycles       = 0;
+
+    ok = LL_QSPI_Command(&s_command);
+
+    if (ok) {
+        LL_QSPI_StartAutoPoll(0, QSPI_SR_WIP, 0x10, QSPI_MATCH_MODE_AND);
+        ok = LL_QSPI_WaitFlagTimeout(QSPI_FLAG_SM);
+        LL_QSPI_ClearFlag(QSPI_FLAG_SM);
+    }
+
+    return ok;
 }
 
 
