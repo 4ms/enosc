@@ -26,9 +26,20 @@ void do_hardware_test(void) {
     test_switches();
     test_dac();
     test_builtin_adc();
+    test_gates();
     test_extadc();
     test_QSPI();
-    while (1) {;}
+    uint8_t i;
+    while (1) {
+        i++;
+        FREEZE_RED((i&1) ? ON : OFF);
+        FREEZE_GREEN((i&2) ? ON : OFF);
+        FREEZE_BLUE((i&4) ? ON : OFF);
+        LEARN_RED((i&1) ? OFF : ON);
+        LEARN_GREEN((i&2) ? OFF : ON);
+        LEARN_BLUE((i&4) ? OFF : ON);
+        delay(4000);
+    }
 }
 
 
