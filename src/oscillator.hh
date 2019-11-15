@@ -95,6 +95,11 @@ public:
       sum += sample * am.next();
     }
 
+    // force twist value to come back to its nominal value; fixes a
+    // float bug in Pulsar where it would rarely go beyond zero when
+    // turning knob CCW. TODO: check CPU time that this line adds.
+    tw.jump(twist);
+
     phasor_ = ph;
     sine_shaper_ = sh;
     fade_ = fd;
