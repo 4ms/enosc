@@ -37,7 +37,8 @@ public:
 class Oscillator {
   Phasor phasor_;
   SineShaper sine_shaper_;
-  IFloat fade_, twist_, warp_, modulation_, amplitude_;
+  IFloat fade_, twist_, warp_, modulation_;
+  SimpleFloat amplitude_ {0_f};
 
 public:
 
@@ -82,7 +83,8 @@ public:
     u0_32 const fr = u0_32(freq);
     Phasor ph = phasor_;
     SineShaper sh = sine_shaper_;
-    IFloat fd=fade_, am=amplitude_, md=modulation_, tw=twist_, wa=warp_;
+    IFloat fd=fade_, md=modulation_, tw=twist_, wa=warp_;
+    SimpleFloat am=amplitude_;
 
     fd.set(fade, block_size);
 
