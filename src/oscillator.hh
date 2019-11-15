@@ -11,6 +11,9 @@ public:
     phase_ += freq;
     return phase_;
   }
+
+  void set(u0_32 phase) { phase_ = phase; }
+  u0_32 phase() { return phase_; }
 };
 
 class SineShaper {
@@ -37,6 +40,12 @@ class Oscillator {
   IFloat fade_, twist_, warp_, modulation_, amplitude_;
 
 public:
+
+  void sync_to(Oscillator& that) {
+    this->phasor_.set(that.phasor_.phase());
+  }
+
+
   template<TwistMode twist_mode, WarpMode warp_mode>
   static f Process(Phasor& ph, SineShaper& sh, u0_32 freq, u0_16 mod, f twist_amount, f warp_amount) {
     u0_32 phase = ph.Process(freq);
@@ -80,7 +89,6 @@ public:
     for (auto [sum, m_in, m_out] : zip(sum_output, mod_in, mod_out)) {
       f sample = Process<twist_mode, warp_mode>(ph, sh, fr, m_in, tw.next(), wa.next());
       sample *= fd.next();
-      // TODO comprendre +1
       m_out += u0_16((sample + 1_f) * md.next());
       sum += sample * am.next();
     }
@@ -159,8 +167,10 @@ public:
     processor_t process = pick_processor(twist_mode, warp_mode);
 
     // shape crossfade so notes are easier to find
-    // crossfade = Math::fast_raised_cosine(crossfade);
     crossfade = Signal::crop(crossfade_factor, crossfade);
+
+    if (crossfade == 0_f) osc_[1].sync_to(osc_[0]);
+    if (crossfade == 1_f) osc_[0].sync_to(osc_[1]);
 
     f fade1 = 1_f - crossfade;
     f fade2 = crossfade;
