@@ -5,8 +5,6 @@
 #include "polyptic_oscillator.hh"
 #include "dynamic_data.hh"
 
-Debug debug;
-
 struct Main :
   System<kUiUpdateRate, Main>,
   Math,
@@ -29,6 +27,8 @@ struct Main :
   void SysTickCallback() {
     Ui::Update();
   }
+  
+  Debug debug;
 
   template<int block_size>
   void DacCallback(Buffer<Frame, block_size>& out) {
