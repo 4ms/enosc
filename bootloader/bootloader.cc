@@ -113,7 +113,7 @@ void SysTick_Handler(void)
     update_LEDs();
 }
 
-int main(void)
+void main(void)
 {
     uint32_t symbols_processed=0;
     uint32_t dly=0, button_debounce=0;
@@ -284,13 +284,13 @@ int main(void)
                 learn_exit_armed = 1;
 
         }
+        ui_state=UI_STATE_DONE;
+        while (button_pushed(BUTTON_LEARN) || button_pushed(BUTTON_FREEZE)) {;}
     }
-    while (button_pushed(BUTTON_LEARN) || button_pushed(BUTTON_FREEZE)) {;}
 
     reset_buses();
     reset_RCC();
     JumpTo(kStartExecutionAddress);
-    return 1;
 }
 
 void init_gate_input(void)
@@ -302,7 +302,7 @@ void init_gate_input(void)
 
 void read_gate_input(void)
 {
-    DEBUG1_ON;
+    // DEBUG1_ON;
     bool sample = ((BOOTLOADER_INPUT_GPIO->IDR & BOOTLOADER_INPUT_PIN) != 0);
 
     // if (sample) DEBUG1_ON;
@@ -317,7 +317,7 @@ void read_gate_input(void)
     } else {
         --discard_samples;
     }
-    DEBUG1_OFF;
+    // DEBUG1_OFF;
 }
 
 } //extern "C"
