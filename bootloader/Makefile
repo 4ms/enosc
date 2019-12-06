@@ -56,7 +56,6 @@ MCU = -mcpu=cortex-m7 \
 
 F_CPU = 216000000L
 
-# F_FLTO = -flto
 
 ARCH_CFLAGS = -DARM_MATH_CM7 \
  	-D'__FPU_PRESENT=1' \
@@ -64,19 +63,18 @@ ARCH_CFLAGS = -DARM_MATH_CM7 \
   	-DSTM32F730xx \
   	-DF_CPU=$(F_CPU) \
 
+# F_FLTO = -flto
 
-OPTIMIZED_CFLAGS = -g3 -Os
+OPTFLAG = -Os
+OPT0  = -O0
 
-CFLAGS  = $(OPTIMIZED_CFLAGS) 
-CFLAGS += $(ARCH_CFLAGS) $(MCU)
-CFLAGS += -I.  $(INCLUDES)
-CFLAGS += -fdata-sections -ffunction-sections \
- 	$(F_FLTO)
-# CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)"
+CFLAGS  = -g3 \
+		$(ARCH_CFLAGS) $(MCU) \
+		-I.  $(INCLUDES) \
+		-fdata-sections -ffunction-sections \
+	   	-ffreestanding \
+ 		$(F_FLTO) \
 
-C0FLAGS  = -O0 -g3 -Wall
-C0FLAGS += $(ARCH_CFLAGS) $(MCU)
-C0FLAGS += -I.  $(INCLUDES)
 
 CXXFLAGS=$(CFLAGS) \
 	-std=c++17 \
@@ -85,13 +83,12 @@ CXXFLAGS=$(CFLAGS) \
 	-Werror=return-type \
 	-Wdouble-promotion \
 	-Wno-register \
-	$(F_FLTO)
 
 AFLAGS = -mcpu=cortex-m7 \
 	-mthumb-interwork \
 	-mlittle-endian \
  	-mfpu=fpv5-d16 \
- 	-mfloat-abi=hard
+ 	-mfloat-abi=hard \
 
 LDSCRIPT = $(LOADFILE)
 
@@ -99,14 +96,14 @@ LFLAGS  = $(MCU) -specs=nano.specs  -T $(LDSCRIPT) \
 	-Wl,--gc-sections \
 	$(F_FLTO)
 	
-# $(BLBUILDDIR)/bootloader.o: CFLAGS = $(C0FLAGS)
-# $(BLBUILDDIR)/hardware_test.o: CFLAGS = $(C0FLAGS)
-# $(BLBUILDDIR)/dac_sai.o: CFLAGS = $(C0FLAGS)
-# $(BLBUILDDIR)/qspi_flash_ll.o: CFLAGS = $(C0FLAGS)
-# $(BLBUILDDIR)/qspi_flash.o: CFLAGS = $(C0FLAGS)
-# $(BLBUILDDIR)/adc_spi.o: CFLAGS = $(C0FLAGS)
-# $(BLBUILDDIR)/bl_ui.o: CFLAGS = $(C0FLAGS)
-# $(BLBUILDDIR)/stm_audio_bootloader/fsk/packet_decoder.o: CFLAGS = $(C0FLAGS)
+# $(BLBUILDDIR)/bootloader.o: OPTFLAG = $(OPT0)
+# $(BLBUILDDIR)/hardware_test.o: OPTFLAG = $(OPT0)
+# $(BLBUILDDIR)/dac_sai.o: OPTFLAG = $(OPT0)
+# $(BLBUILDDIR)/qspi_flash_ll.o: OPTFLAG = $(OPT0)
+# $(BLBUILDDIR)/qspi_flash.o: OPTFLAG = $(OPT0)
+# $(BLBUILDDIR)/adc_spi.o: OPTFLAG = $(OPT0)
+# $(BLBUILDDIR)/bl_ui.o: OPTFLAG = $(OPT0)
+# $(BLBUILDDIR)/stm_audio_bootloader/fsk/packet_decoder.o: OPTFLAG = $(OPT0)
 
 all: Makefile $(BIN) $(HEX) $(COMBO).bin
 
@@ -133,12 +130,12 @@ $(ELF): $(OBJECTS)
 
 $(BLBUILDDIR)/%.o: %.c
 	mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(OPTFLAG) $(CFLAGS) $< -o $@
 
 
 $(BLBUILDDIR)/%.o: %.cc
 	mkdir -p $(dir $@)
-	$(CPP) -c $(CFLAGS) $(CXXFLAGS) $< -o $@
+	$(CPP) -c $(OPTFLAG) $(CFLAGS) $(CXXFLAGS) $< -o $@
 
 
 $(BLBUILDDIR)/%.o: %.s
