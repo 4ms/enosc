@@ -77,7 +77,7 @@ class Oscillators : Nocopy {
 
   static inline bool pick_split(SplitMode mode, int i, int numOsc) {
     return
-      mode == ALTERNATE ? i&1 :
+      mode == ALTERNATE ? !(i&1) :
       mode == LOW_HIGH ? i<numOsc/2 :
       i == 0;
   }
