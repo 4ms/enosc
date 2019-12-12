@@ -403,7 +403,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e2.data == BUTTON_LEARN) {
         if (control_.CalibrateOffset()) {
           mode_ = CALIBRATION_PITCH_SLOPE; // success
-          learn_led_.set_glow(Colors::blue, 1_f);
+          learn_led_.set_glow(Colors::white, 1_f);
           freeze_led_.reset_glow();
         } else {
           learn_led_.flash(Colors::magenta, 0.5_f); 
@@ -426,7 +426,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         if (control_.CalibratePitchSlope()) {
           mode_ = CALIBRATION_ROOT_SLOPE;  // success
           learn_led_.reset_glow();
-          freeze_led_.set_glow(Colors::blue, 2_f);
+          freeze_led_.set_glow(Colors::white, 2_f);
         } else {
           learn_led_.flash(Colors::red, 0.5_f); // slope calibration failure
           freeze_led_.flash(Colors::red, 0.5_f);
