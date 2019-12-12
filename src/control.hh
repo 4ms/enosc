@@ -6,6 +6,8 @@
 #include "event_handler.hh"
 #include "persistent_storage.hh"
 #include "qspi_flash.hh"
+#include "gates.hh"
+#include "polyptic_oscillator.hh"
 
 const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
@@ -244,6 +246,7 @@ class Control : public EventSource<Event> {
 
   Adc adc_;
   SpiAdc spi_adc_;
+  Gates gates_;
 
   struct CalibrationData {
     f pitch_offset;
@@ -331,13 +334,15 @@ class Control : public EventSource<Event> {
                                spi_adc_};
 
   Parameters& params_;
+  PolypticOscillator<block_size>& osc_;
 
   Sampler<f> pitch_cv_sampler_;
 
   uint8_t ext_cv_chan;
 public:
 
-  Control(Parameters& params) :
+  Control(Parameters& params, PolypticOscillator<block_size>& osc) :
+    osc_(osc),
     params_(params) {}
 
   void ProcessSpiAdcInput() {
@@ -352,6 +357,19 @@ public:
   }
 
   void Poll(std::function<void(Event)> const& put) {
+
+    // Process gates
+    gates_.Debounce();
+
+    if (gates_.freeze_.just_enabled()) {
+      osc_.set_freeze(!osc_.frozen());
+    } else if (gates_.freeze_.just_disabled()) {
+      osc_.set_freeze(!osc_.frozen());
+    }
+
+    if (gates_.learn_.just_enabled()) {
+      put({NewNoteAfterDelay, 0});
+    }
 
     // Process potentiometer & CV
 

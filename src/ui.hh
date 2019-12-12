@@ -2,7 +2,6 @@
 
 #include <variant>
 #include "buttons.hh"
-#include "gates.hh"
 #include "switches.hh"
 #include "leds.hh"
 #include "control.hh"
@@ -82,16 +81,6 @@ struct ButtonsEventSource : EventSource<Event>, Buttons {
   }
 };
 
-struct GatesEventSource : EventSource<Event>, private Gates {
-  void Poll(std::function<void(Event)> const& put) {
-    Gates::Debounce();
-    if (Gates::learn_.just_enabled()) put({GateOn, GATE_LEARN});
-    else if (Gates::learn_.just_disabled()) put({GateOff, GATE_LEARN});
-    if (Gates::freeze_.just_enabled()) put({GateOn, GATE_FREEZE});
-    else if (Gates::freeze_.just_disabled()) put({GateOff, GATE_FREEZE});
-  }
-};
-
 template<class Switch, EventType event>
 struct SwitchEventSource : EventSource<Event>, Switch {
   void Poll(std::function<void(Event)> const& put) {
@@ -162,12 +151,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   typename Base::DelayedEventSource button_timeouts_[2];
   typename Base::DelayedEventSource new_note_delay_;
   ButtonsEventSource buttons_;
-  GatesEventSource gates_;
   SwitchesEventSource switches_;
-  Control<block_size> control_ {params_};
+  Control<block_size> control_ {params_, osc_};
 
-  EventSource<Event>* sources_[7] = {
-    &buttons_, &gates_, &switches_,
+  EventSource<Event>* sources_[6] = {
+    &buttons_, &switches_,
     &button_timeouts_[0], &button_timeouts_[1],
     &control_, &new_note_delay_
   };
@@ -189,16 +177,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     Event& e2 = stack.get(1);
 
     switch(e1.type) {
-    case GateOn: {
-      if (e1.data == GATE_FREEZE)
-        osc_.set_freeze(!osc_.frozen());
-      freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
-    } break;
-    case GateOff: {
-      if (e1.data == GATE_FREEZE)
-        osc_.set_freeze(!osc_.frozen());
-      freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
-    } break;
     case StartCatchup: {
       active_catchups_ = active_catchups_.set(e1.data);
       freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
@@ -337,10 +315,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
     case LEARN: {
       switch(e1.type) {
-      case GateOn: {
-        if (e1.data == GATE_LEARN) {
-          new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
-        }
+      case NewNoteAfterDelay: {
+        new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
       } break;
       case NewNote: {
         // the offset makes the lowest note on a keyboard (0V) about 60Hz
@@ -502,18 +478,18 @@ public:
     Base::Process();
 
 
-   // Enter CV jack calibration if Learn is pushed
+    // Enter CV jack calibration if Learn is pushed
     if (buttons_.learn_.pushed()) {
       mode_ = CALIBRATION_OFFSET;
       learn_led_.set_glow(Colors::blue, 2_f);
       freeze_led_.set_glow(Colors::blue, 2_f);
 
-  // Enter LED calibration if Freeze is pushed and all switches are centered
+    // Enter LED calibration if Freeze is pushed and all switches are centered
     } else if (buttons_.freeze_.pushed() &&
-              switches_.scale_.get()==3 &&
-              switches_.mod_.get()==3 &&
-              switches_.twist_.get()==3 &&
-              switches_.warp_.get()==3) {
+               switches_.scale_.get()==3 &&
+               switches_.mod_.get()==3 &&
+               switches_.twist_.get()==3 &&
+               switches_.warp_.get()==3) {
       mode_ = CALIBRATE_LEDS;
     } else {
       mode_ = NORMAL;
@@ -527,6 +503,7 @@ public:
   void Poll() {
     control_.ProcessSpiAdcInput();
     Base::Poll();
+    freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
   }
 
   void Update() {
