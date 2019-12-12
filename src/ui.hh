@@ -321,8 +321,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e1.data != e2.data) {
           // long-press on Learn and Freeze
           mode_ = CALIBRATION_OFFSET;
-          learn_led_.set_background(Colors::lemon);
-          freeze_led_.set_background(Colors::lemon);
+          learn_led_.set_background(Colors::black);
+          freeze_led_.set_background(Colors::black);
           learn_led_.set_glow(Colors::blue, 2_f);
           freeze_led_.set_glow(Colors::blue, 2_f);
         }
@@ -437,7 +437,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         if (control_.CalibratePitchSlope()) {
           mode_ = CALIBRATION_ROOT_SLOPE;  // success
           learn_led_.reset_glow();
-          freeze_led_.set_glow(Colors::white, 2_f);
+          freeze_led_.set_glow(Colors::white, 1_f);
         } else {
           learn_led_.flash(Colors::red, 0.5_f); // slope calibration failure
           freeze_led_.flash(Colors::red, 0.5_f);
@@ -449,13 +449,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
 
     case CALIBRATION_ROOT_SLOPE: {
       if ((e1.type == ButtonRelease &&
-          e1.data == BUTTON_LEARN &&
           e2.type == ButtonPush &&
-          e2.data == BUTTON_LEARN) ||
-         (e1.type == ButtonRelease &&
-          e1.data == BUTTON_FREEZE &&
-          e2.type == ButtonPush &&
-          e2.data == BUTTON_FREEZE)
+          e1.data == e2.data)
         ) {
         if (control_.CalibrateRootSlope()) {
           control_.SaveCalibration();
