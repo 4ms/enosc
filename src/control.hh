@@ -93,7 +93,7 @@ public:
 
     reading /= f(kCalibrationIterations);
 
-    if (reading.abs() < 0.1_f) {
+    if (reading.abs() < kCalibrationSuccessToleranceOffset) {
       offset_ = reading;
       return true;
     } else {
@@ -567,10 +567,15 @@ public:
       && modulation_.cv_.calibrate_offset()
       && spread_.cv_.calibrate_offset();
   }
-  bool CalibrateSlope() {
-    bool success = pitch_cv_.calibrate_slope()
-      && root_cv_.calibrate_slope();
-    if (success) calibration_data_storage_.Save();
+  bool CalibratePitchSlope() {
+    bool success = pitch_cv_.calibrate_slope();
     return success;
+  }
+  bool CalibrateRootSlope() {
+    bool success = root_cv_.calibrate_slope();
+    return success;
+  }
+  void SaveCalibration() {
+    calibration_data_storage_.Save();
   }
 };
