@@ -316,6 +316,17 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           }
         }
       } break;
+      case ButtonTimeout: {
+        if (e2.type == ButtonTimeout &&
+            e1.data != e2.data) {
+          // long-press on Learn and Freeze
+          mode_ = CALIBRATION_OFFSET;
+          learn_led_.set_background(Colors::lemon);
+          freeze_led_.set_background(Colors::lemon);
+          learn_led_.set_glow(Colors::blue, 2_f);
+          freeze_led_.set_glow(Colors::blue, 2_f);
+        }
+      }
       case AltParamChange: {
         freeze_led_.flash(Colors::white);
       } break;
