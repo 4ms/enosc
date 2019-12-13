@@ -367,7 +367,7 @@ public:
       osc_.set_freeze(!osc_.frozen());
     }
 
-    if (gates_.learn_.just_enabled()) {
+    if (gates_.learn_.just_enabled() && osc_.learn_mode()) {
       put({NewNoteAfterDelay, 0});
     }
 

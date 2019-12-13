@@ -214,6 +214,7 @@ class PolypticOscillator : public Oscillators<block_size>, PreListenOscillators<
   PreScale pre_scale_;
   Scale *current_scale_;
 
+  bool learn_ = false;
   bool pre_listen_ = false;
   bool follow_new_note_ = false;
   f manual_learn_offset_ = 0_f;
@@ -229,17 +230,21 @@ public:
   void disable_follow_new_note() { follow_new_note_ = false; }
 
   void enable_learn() {
+    learn_ = true;
     pre_scale_.clear();
     manual_learn_offset_ = this->lowest_pitch() - params_.root;
   }
 
   bool disable_learn() {
+    learn_ = false;
     disable_pre_listen();
     bool wrap_octave = params_.scale.mode == OCTAVE;
     bool success = pre_scale_.copy_to(current_scale_, wrap_octave);
     if (success) quantizer_.Save();
     return success;
   }
+
+  bool learn_mode() { return learn_; }
 
   bool new_note(f x) {
     if (params_.scale.mode == TWELVE)
