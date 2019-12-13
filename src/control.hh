@@ -59,8 +59,6 @@ public:
 
   void Process() {
     u0_16 x = spi_adc_.get(CHAN);
-    // if (CHAN==1)
-    //   spi_adc_.switch_channel();
     lp_.Process(x);
   }
 

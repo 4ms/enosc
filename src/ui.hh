@@ -412,6 +412,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e1.data == BUTTON_LEARN &&
           e2.type == ButtonPush &&
           e2.data == BUTTON_LEARN) {
+        learn_led_.set_glow(Colors::grey, 8_f);
+        freeze_led_.set_glow(Colors::grey, 8_f);
         if (control_.CalibrateOffset()) {
           mode_ = CALIBRATION_PITCH_SLOPE; // success
           learn_led_.set_glow(Colors::white, 1_f);
@@ -430,10 +432,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     } break;
 
     case CALIBRATION_PITCH_SLOPE: {
-      if (e1.type == ButtonRelease &&
+      if ((e1.type == ButtonRelease &&
           e1.data == BUTTON_LEARN &&
           e2.type == ButtonPush &&
-          e2.data == BUTTON_LEARN) {
+          e1.data == e2.data)) {
+        learn_led_.set_glow(Colors::grey, 8_f);
         if (control_.CalibratePitchSlope()) {
           mode_ = CALIBRATION_ROOT_SLOPE;  // success
           learn_led_.reset_glow();
@@ -450,8 +453,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     case CALIBRATION_ROOT_SLOPE: {
       if ((e1.type == ButtonRelease &&
           e2.type == ButtonPush &&
-          e1.data == e2.data)
-        ) {
+          e1.data == e2.data)) {
+        freeze_led_.set_glow(Colors::grey, 8_f);
         if (control_.CalibrateRootSlope()) {
           control_.SaveCalibration();
           learn_led_.flash(Colors::green, 0.5_f); //success
