@@ -414,11 +414,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e1.data == BUTTON_LEARN &&
           e2.type == ButtonPush &&
           e2.data == BUTTON_LEARN) {
-        learn_led_.set_glow(Colors::grey, 8_f);
-        freeze_led_.set_glow(Colors::grey, 8_f);
+        learn_led_.set_glow(Colors::yellow, 8_f);
+        freeze_led_.set_glow(Colors::yellow, 8_f);
         if (control_.CalibrateOffset()) {
           mode_ = CALIBRATION_PITCH_OFFSET; // success
-          learn_led_.set_glow(Colors::white, 1_f);
+          learn_led_.set_glow(Colors::blue, 1_f);
           freeze_led_.reset_glow();
         } else {
           learn_led_.flash(Colors::magenta, 0.5_f); 
@@ -426,10 +426,6 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           reset_leds();
           mode_ = NORMAL;     // offset calibration failure
         }
-      } else if (e1.type == ButtonPush &&
-                 e1.data == BUTTON_FREEZE) {
-        reset_leds();
-        mode_ = NORMAL; // abort calibration
       }
     } break;
 
@@ -437,10 +433,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       if ((e1.type == ButtonRelease &&
           e2.type == ButtonPush &&
           e1.data == e2.data)) {
-        learn_led_.set_glow(Colors::grey, 8_f);
+        learn_led_.set_glow(Colors::yellow, 8_f);
         if (control_.CalibratePitchOffset()) {
           mode_ = CALIBRATION_PITCH_SLOPE;  // success
-          learn_led_.set_glow(Colors::white, 4_f);
+          learn_led_.set_glow(Colors::blue, 4_f);
           freeze_led_.reset_glow();
         } else {
           learn_led_.flash(Colors::red, 0.5_f); // slope calibration failure
@@ -455,11 +451,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       if ((e1.type == ButtonRelease &&
           e2.type == ButtonPush &&
           e1.data == e2.data)) {
-        learn_led_.set_glow(Colors::grey, 8_f);
+        learn_led_.set_glow(Colors::yellow, 8_f);
         if (control_.CalibratePitchSlope()) {
           mode_ = CALIBRATION_ROOT_OFFSET;  // success
           learn_led_.reset_glow();
-          freeze_led_.set_glow(Colors::white, 1_f);
+          freeze_led_.set_glow(Colors::blue, 1_f);
         } else {
           learn_led_.flash(Colors::red, 0.5_f); // slope calibration failure
           freeze_led_.flash(Colors::red, 0.5_f);
@@ -473,11 +469,11 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       if ((e1.type == ButtonRelease &&
           e2.type == ButtonPush &&
           e1.data == e2.data)) {
-        freeze_led_.set_glow(Colors::grey, 8_f);
+        freeze_led_.set_glow(Colors::yellow, 8_f);
         if (control_.CalibrateRootOffset()) {
           mode_ = CALIBRATION_ROOT_SLOPE;  // success
           learn_led_.reset_glow();
-          freeze_led_.set_glow(Colors::white, 4_f);
+          freeze_led_.set_glow(Colors::blue, 4_f);
         } else {
           learn_led_.flash(Colors::red, 0.5_f); // slope calibration failure
           freeze_led_.flash(Colors::red, 0.5_f);
@@ -491,7 +487,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       if ((e1.type == ButtonRelease &&
           e2.type == ButtonPush &&
           e1.data == e2.data)) {
-        freeze_led_.set_glow(Colors::grey, 8_f);
+        freeze_led_.set_glow(Colors::yellow, 8_f);
         if (control_.CalibrateRootSlope()) {
           control_.SaveCalibration();
           learn_led_.flash(Colors::green, 0.5_f); //success
