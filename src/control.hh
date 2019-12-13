@@ -15,6 +15,7 @@ const f kRootPotRange = 9_f * 12_f;
 const f kNewNoteRange = 6_f * 12_f;
 const f kNewNoteFineRange = 4_f;
 const f kSpreadRange = 12_f;
+const f kCalibration2Volts = 2_f;
 const f kCalibration4Volts = 4_f;
 const f kCalibrationSuccessTolerance = 0.3_f;
 const f kCalibrationSuccessToleranceOffset = 0.1_f;
@@ -39,16 +40,38 @@ public:
     slope_(s), nominal_slope_(s),
     spi_adc_(spi_adc) {}
 
-  bool calibrate_offset() {
-    f offset = last_raw_reading();
-    if ((offset - nominal_offset_).abs() < kCalibrationSuccessToleranceOffset) {
-      offset_ = offset;
+  bool calibrate_unpatched_offset() {
+    f voltage_unpatched = last_raw_reading();
+    if ((voltage_unpatched - nominal_offset_).abs() < kCalibrationSuccessToleranceOffset) {
+      return true;
+    } else return false;
+  }
+
+  bool calibrate_patched_offset() {
+    f reading_at_C2 = 0_f;
+    for (int i=0;i<kCalibrationIterations*16;i++) {
+      reading_at_C2 += last_raw_reading();
+      HAL_Delay(1);
+    }
+    reading_at_C2 /= f(kCalibrationIterations*16);
+
+    f patched_offset =  reading_at_C2 - (kCalibration2Volts * 12_f / slope_);
+
+    if ((patched_offset - nominal_offset_).abs() < kCalibrationSuccessTolerance) {
+      offset_ = patched_offset;
       return true;
     } else return false;
   }
 
   bool calibrate_slope() {
-    f octave = (last_raw_reading() - offset_) / kCalibration4Volts;
+    f reading_at_C4 = 0_f;
+    for (int i=0;i<kCalibrationIterations*16;i++) {
+      reading_at_C4 += last_raw_reading();
+      HAL_Delay(1);
+    }
+    reading_at_C4 /= f(kCalibrationIterations*16);
+
+    f octave = (reading_at_C4 - offset_) / kCalibration4Volts;
     f slope = 12_f / octave;
 
     if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance) {
@@ -556,8 +579,8 @@ public:
   }
 
   bool CalibrateOffset() {
-    return pitch_cv_.calibrate_offset()
-      && root_cv_.calibrate_offset()
+    return pitch_cv_.calibrate_unpatched_offset()
+      && root_cv_.calibrate_unpatched_offset()
       && warp_.cv_.calibrate_offset()
       && balance_.cv_.calibrate_offset()
       && twist_.cv_.calibrate_offset()
@@ -565,9 +588,17 @@ public:
       && modulation_.cv_.calibrate_offset()
       && spread_.cv_.calibrate_offset();
   }
+  bool CalibratePitchOffset() {
+      bool success = pitch_cv_.calibrate_patched_offset();
+      return success;
+  }
   bool CalibratePitchSlope() {
     bool success = pitch_cv_.calibrate_slope();
     return success;
+  }
+  bool CalibrateRootOffset() {
+      bool success = root_cv_.calibrate_patched_offset();
+      return success;
   }
   bool CalibrateRootSlope() {
     bool success = root_cv_.calibrate_slope();
