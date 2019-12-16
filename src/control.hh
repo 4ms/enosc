@@ -76,8 +76,7 @@ public:
   auto process_calibration() {
     CalibrationStepResult res;
 
-    if (is_calibrating_) { 
-      cal_running_total_ += last_raw_reading_;
+    cal_running_total_ += last_raw_reading_;
 
     if (++cal_i_ >= kExtCVCalibrationIterations) {
         is_calibrating_ = false;
@@ -116,11 +115,9 @@ public:
               res = CAL_STEP_RESULT_FAILURE;
           } break;
 
-        }
       }
-      else res = CAL_STEP_RESULT_IN_PROGRESS;
     }
-    else res = CAL_STEP_RESULT_NOT_BEGUN;
+    else res = CAL_STEP_RESULT_IN_PROGRESS;
 
     return res;
   }
@@ -561,12 +558,13 @@ public:
       pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
       f pitch_cv = pitch_cv_.last();
 
-      auto cal_result = pitch_cv_.process_calibration();
-      if (cal_result == CAL_STEP_RESULT_FAILURE)
-        put({CalibrationFailed, 0});
-      else if (cal_result == CAL_STEP_RESULT_SUCCESS)
-        put({CalibrationStepDone, 0});
-
+      if (pitch_cv_.calibration_busy()) {
+        auto cal_result = pitch_cv_.process_calibration();
+        if (cal_result == CAL_STEP_RESULT_FAILURE)
+          put({CalibrationFailed, 0});
+        else if (cal_result == CAL_STEP_RESULT_SUCCESS)
+          put({CalibrationStepDone, 0});
+      }
       pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
       pitch += pitch_cv;
       params_.pitch = pitch;
@@ -580,11 +578,13 @@ public:
       root *= kRootPotRange;
       root += root_cv_.last();
 
-      auto cal_result = root_cv_.process_calibration();
-      if (cal_result == CAL_STEP_RESULT_FAILURE)
-        put({CalibrationFailed, 0});
-      else if (cal_result == CAL_STEP_RESULT_SUCCESS)
-        put({CalibrationStepDone, 0});
+      if (root_cv_.calibration_busy()) {
+        auto cal_result = root_cv_.process_calibration();
+        if (cal_result == CAL_STEP_RESULT_FAILURE)
+          put({CalibrationFailed, 0});
+        else if (cal_result == CAL_STEP_RESULT_SUCCESS)
+          put({CalibrationStepDone, 0});
+      }
 
       params_.root = root.max(0_f);
 
