@@ -79,41 +79,41 @@ public:
     cal_running_total_ += last_raw_reading_;
 
     if (++cal_i_ >= kExtCVCalibrationIterations) {
-        is_calibrating_ = false;
+      is_calibrating_ = false;
       cal_running_total_ /= f(kExtCVCalibrationIterations);
 
-        switch (cal_step_) {
+      switch (cal_step_) {
 
-          case (CALIBRATE_UNPATCHED): {
-            reading_unpatched = cal_running_total_;
-            if ((reading_unpatched - nominal_offset_).abs() < kCalibrationSuccessToleranceOffset) {
-              res = CAL_STEP_RESULT_SUCCESS;
-             } else
-              res = CAL_STEP_RESULT_FAILURE;
-          } break;
+        case (CALIBRATE_UNPATCHED): {
+          reading_unpatched = cal_running_total_;
+          if ((reading_unpatched - nominal_offset_).abs() < kCalibrationSuccessToleranceOffset) {
+            res = CAL_STEP_RESULT_SUCCESS;
+           } else
+            res = CAL_STEP_RESULT_FAILURE;
+        } break;
 
-          case (CALIBRATE_C2): {
-            reading_at_C2 = cal_running_total_;
-            f octave = (reading_at_C2 - reading_unpatched) / kCalibration2Volts;
-            f slope = 12_f / octave;
+        case (CALIBRATE_C2): {
+          reading_at_C2 = cal_running_total_;
+          f octave = (reading_at_C2 - reading_unpatched) / kCalibration2Volts;
+          f slope = 12_f / octave;
 
-            if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance)
-              res = CAL_STEP_RESULT_SUCCESS;
-            else
-              res = CAL_STEP_RESULT_FAILURE;
-          } break;
+          if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance)
+            res = CAL_STEP_RESULT_SUCCESS;
+          else
+            res = CAL_STEP_RESULT_FAILURE;
+        } break;
 
-          case (CALIBRATE_C4): {
-            f octave = (cal_running_total_ - reading_at_C2) / kCalibration2Volts;
-            f slope = 12_f / octave;
+        case (CALIBRATE_C4): {
+          f octave = (cal_running_total_ - reading_at_C2) / kCalibration2Volts;
+          f slope = 12_f / octave;
 
-            if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance) {
-              slope_ = slope;
-              offset_ = reading_at_C2 - (kCalibration2Volts * 12_f / slope_);
-              res = CAL_STEP_RESULT_SUCCESS;
-            } else
-              res = CAL_STEP_RESULT_FAILURE;
-          } break;
+          if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance) {
+            slope_ = slope;
+            offset_ = reading_at_C2 - (kCalibration2Volts * 12_f / slope_);
+            res = CAL_STEP_RESULT_SUCCESS;
+          } else
+            res = CAL_STEP_RESULT_FAILURE;
+        } break;
 
       }
     }
@@ -393,11 +393,11 @@ class Control : public EventSource<Event> {
   DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT
                              > root_pot_ {adc_};
-  ExtCVConditioner<CV_PITCH, Average<8, 2>
+  ExtCVConditioner<CV_PITCH, Average<4, 4>
                    > pitch_cv_ {calibration_data_.pitch_offset,
                                 calibration_data_.pitch_slope, 
                                 spi_adc_};
-  ExtCVConditioner<CV_ROOT, Average<8, 2>
+  ExtCVConditioner<CV_ROOT, Average<4, 4>
                    > root_cv_ {calibration_data_.root_offset,
                                calibration_data_.root_slope, 
                                spi_adc_};
