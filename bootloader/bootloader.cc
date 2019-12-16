@@ -169,6 +169,7 @@ void main(void)
         #endif
 
         uint32_t hwtest_entry=0;
+        uint32_t factory_reset=0;
         while (button_pushed(BUTTON_LEARN) || button_pushed(BUTTON_FREEZE)) {
             if (button_pushed(BUTTON_LEARN) && !button_pushed(BUTTON_FREEZE)) {
                 hwtest_entry++;
@@ -178,6 +179,19 @@ void main(void)
                 }
             }
             else hwtest_entry=0;
+
+            if (!button_pushed(BUTTON_LEARN) && button_pushed(BUTTON_FREEZE)) {
+                factory_reset++;
+                if (factory_reset>4000000) {
+                    ui_state = UI_STATE_DONE;
+                    test_QSPI();
+                    while (1) {
+                        animate(ANI_SUCCESS);
+                        delay(100);
+                    }
+                }
+            }
+            else factory_reset=0;
         }
 
         init_gate_input();
