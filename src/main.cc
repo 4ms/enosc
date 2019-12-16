@@ -32,9 +32,9 @@ struct Main :
 
   template<int block_size>
   void DacCallback(Buffer<Frame, block_size>& out) {
-    // debug.set(3, true);
+    debug.set(3, true);
     Ui::Poll();
     Ui::osc().Process(out);
-    // debug.set(3, false);
+    debug.set(3, false);
   }
 } _;

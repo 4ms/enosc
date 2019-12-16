@@ -22,6 +22,20 @@ const f kCalibrationSuccessToleranceOffset = 0.1_f;
 const f kPotMoveThreshold = 0.01_f;
 
 const int kCalibrationIterations = 16;
+const int kPitchRootCalibrationIterations = 256;
+
+enum CalibrationStepResult {
+  CAL_STEP_RESULT_NOT_BEGUN,
+  CAL_STEP_RESULT_IN_PROGRESS,
+  CAL_STEP_RESULT_SUCCESS,
+  CAL_STEP_RESULT_FAILURE,
+};
+
+enum CalibrationStep {
+  CALIBRATE_UNPATCHED,
+  CALIBRATE_C2,
+  CALIBRATE_C4
+};
 
 template<int CHAN, class FILTER>
 class ExtCVConditioner {
@@ -32,52 +46,90 @@ class ExtCVConditioner {
   f nominal_slope_;
   FILTER lp_;
 
-  f last_raw_reading() { return f::inclusive(lp_.last()); }
-  
+  f reading_at_C2;
+  f reading_at_C4;
+  f reading_unpatched;
+  int cal_i_;
+  bool is_calibrating_=false;
+  f cal_running_total_;
+
+  CalibrationStep cal_step_;
+
+  f last_raw_reading_;
+
 public:
   ExtCVConditioner(f& o, f& s, SpiAdc& spi_adc) :
     offset_(o), nominal_offset_(o),
     slope_(s), nominal_slope_(s),
     spi_adc_(spi_adc) {}
 
-  bool calibrate_unpatched_offset() {
-    f voltage_unpatched = last_raw_reading();
-    if ((voltage_unpatched - nominal_offset_).abs() < kCalibrationSuccessToleranceOffset) {
-      return true;
-    } else return false;
+  void reset_calibration() {
+    is_calibrating_ = false;
+    cal_step_ = CALIBRATE_UNPATCHED;
   }
 
-  bool calibrate_patched_offset() {
-    f reading_at_C2 = 0_f;
-    for (int i=0;i<kCalibrationIterations*16;i++) {
-      reading_at_C2 += last_raw_reading();
-      HAL_Delay(1);
-    }
-    reading_at_C2 /= f(kCalibrationIterations*16);
-
-    f patched_offset =  reading_at_C2 - (kCalibration2Volts * 12_f / slope_);
-
-    if ((patched_offset - nominal_offset_).abs() < kCalibrationSuccessTolerance) {
-      offset_ = patched_offset;
-      return true;
-    } else return false;
+  void start_calibration(CalibrationStep step) {
+    cal_i_ = 0;
+    cal_step_ = step;
+    cal_running_total_ = 0_f;
+    is_calibrating_ = true;
   }
 
-  bool calibrate_slope() {
-    f reading_at_C4 = 0_f;
-    for (int i=0;i<kCalibrationIterations*16;i++) {
-      reading_at_C4 += last_raw_reading();
-      HAL_Delay(1);
+  CalibrationStepResult process_calibration() {
+    CalibrationStepResult res;
+
+    if (is_calibrating_) { 
+      cal_running_total_ += last_raw_reading_;
+
+      if (++cal_i_ >= kPitchRootCalibrationIterations) {
+        is_calibrating_ = false;
+        cal_running_total_ /= f(kPitchRootCalibrationIterations);
+
+        switch (cal_step_) {
+
+          case (CALIBRATE_UNPATCHED): {
+            reading_unpatched = cal_running_total_;
+            if ((reading_unpatched - nominal_offset_).abs() < kCalibrationSuccessToleranceOffset)
+              res = CAL_STEP_RESULT_SUCCESS; //cal_step_ = CALIBRATE_C2;
+            else
+              res = CAL_STEP_RESULT_FAILURE; //cal_step_ = CALIBRATE_FAILURE;
+          } break;
+
+          case (CALIBRATE_C2): {
+            reading_at_C2 = cal_running_total_;
+            f octave = (reading_at_C2 - reading_unpatched) / kCalibration2Volts;
+            f slope = 12_f / octave;
+
+            if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance)
+              res = CAL_STEP_RESULT_SUCCESS; //cal_step_ = CALIBRATE_C4;
+            else
+              res = CAL_STEP_RESULT_FAILURE; //cal_step_ = CALIBRATE_FAILURE;
+          } break;
+
+          case (CALIBRATE_C4): {
+            reading_at_C4 = cal_running_total_;
+            f octave = (reading_at_C4 - reading_at_C2) / kCalibration2Volts;
+            f slope = 12_f / octave;
+
+            if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance) {
+              slope_ = slope;
+              offset_ = reading_at_C2 - (kCalibration2Volts * 12_f / slope_);
+              res = CAL_STEP_RESULT_SUCCESS; //cal_step_ = CALIBRATE_SUCESS;
+            } else
+              res = CAL_STEP_RESULT_FAILURE; //cal_step_ = CALIBRATE_FAILURE;
+          } break;
+
+        }
+      }
+      else res = CAL_STEP_RESULT_IN_PROGRESS;
     }
-    reading_at_C4 /= f(kCalibrationIterations*16);
+    else res = CAL_STEP_RESULT_NOT_BEGUN;
 
-    f octave = (reading_at_C4 - offset_) / kCalibration4Volts;
-    f slope = 12_f / octave;
+    return res;
+  }
 
-    if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance) {
-      slope_ = slope;
-      return true;
-    } else return false;
+  bool calibration_busy() {
+    return is_calibrating_;
   }
 
   void Process() {
@@ -90,7 +142,8 @@ public:
   }
 
   f last() {
-    return (f::inclusive(lp_.last()) - offset_) * slope_;
+    last_raw_reading_ = f::inclusive(lp_.last());
+    return (last_raw_reading_ - offset_) * slope_;
   }
 };
 
@@ -262,6 +315,7 @@ struct NoFilter {
   f Process(f x) { return x; }
 };
 
+
 template<int block_size>
 class Control : public EventSource<Event> {
 
@@ -285,10 +339,10 @@ class Control : public EventSource<Event> {
     bool validate() {
       return
         (pitch_offset - 0.70_f).abs() <= kCalibrationSuccessToleranceOffset &&
-        (pitch_slope / -110._f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        (pitch_slope / -112._f - 1_f).abs() <= kCalibrationSuccessTolerance &&
         pitch_slope < 0.0_f &&
         (root_offset - 0.70_f).abs() <= kCalibrationSuccessToleranceOffset &&
-        (root_slope / -110._f - 1_f).abs() <= kCalibrationSuccessTolerance &&
+        (root_slope / -112._f - 1_f).abs() <= kCalibrationSuccessTolerance &&
         root_slope < 0.0_f &&
         warp_offset.abs() <= kCalibrationSuccessToleranceOffset &&
         balance_offset.abs() <= kCalibrationSuccessToleranceOffset &&
@@ -300,8 +354,8 @@ class Control : public EventSource<Event> {
   };
   CalibrationData calibration_data_;
   CalibrationData default_calibration_data_ = {
-    0.700267_f, -110.17_f, //pitch_offset, slope
-    0.697154_f, -110.355_f, //root_offset, slope
+    0.704_f, -112.73_f, //pitch_offset, slope
+    0.704_f, -112.73_f, //root_offset, slope
     0.00302133_f, //warp_offset
     0.00476089_f, //balance_offset
     0.00177007_f, //twist_offset
@@ -345,11 +399,11 @@ class Control : public EventSource<Event> {
   DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT
                              > root_pot_ {adc_};
-  ExtCVConditioner<CV_PITCH, Average<4, 2>
+  ExtCVConditioner<CV_PITCH, Average<8, 4>
                    > pitch_cv_ {calibration_data_.pitch_offset,
                                 calibration_data_.pitch_slope, 
                                 spi_adc_};
-  ExtCVConditioner<CV_ROOT, Average<4, 2>
+  ExtCVConditioner<CV_ROOT, Average<8, 4>
                    > root_cv_ {calibration_data_.root_offset,
                                calibration_data_.root_slope, 
                                spi_adc_};
@@ -509,6 +563,13 @@ public:
       pitch *= kPitchPotRange;                               // 0..range
       pitch -= kPitchPotRange * 0.5_f;                       // -range/2..range/2
       f pitch_cv = pitch_cv_.last();
+
+      auto cal_result = pitch_cv_.process_calibration();
+      if (cal_result == CAL_STEP_RESULT_FAILURE)
+        put({CalibrationFailed, 0});
+      else if (cal_result == CAL_STEP_RESULT_SUCCESS)
+        put({CalibrationStepDone, 0});
+
       pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
       pitch += pitch_cv;
       params_.pitch = pitch;
@@ -521,6 +582,13 @@ public:
     { auto [root, new_note] = root_pot_.Process(put);
       root *= kRootPotRange;
       root += root_cv_.last();
+
+      auto cal_result = root_cv_.process_calibration();
+      if (cal_result == CAL_STEP_RESULT_FAILURE)
+        put({CalibrationFailed, 0});
+      else if (cal_result == CAL_STEP_RESULT_SUCCESS)
+        put({CalibrationStepDone, 0});
+
       params_.root = root.max(0_f);
 
       if (new_note > 0_f) {
@@ -578,32 +646,79 @@ public:
     balance_pot_main_function();
   }
 
-  bool CalibrateOffset() {
-    return pitch_cv_.calibrate_unpatched_offset()
-      && root_cv_.calibrate_unpatched_offset()
-      && warp_.cv_.calibrate_offset()
+  // enum CalibratorState {
+  //   NOT_CALIBRATING,
+  //   CALIBRATING_UNPATCHED,
+  //   CALIBRATING_PITCH_OFFSET,
+  //   CALIBRATING_PITCH_SLOPE,
+  //   CALIBRATING_ROOT_OFFSET,
+  //   CALIBRATING_ROOT_SLOPE,
+  //   CALIBRATION_SUCCESS,
+  // } 
+
+  CalibratorState calibration_state_;
+
+  void calibration_reset() {
+    calibration_state_ = NOT_CALIBRATING;
+    pitch_cv_.reset_calibration();
+    root_cv_.reset_calibration();
+  }
+
+  bool calibration_busy() { 
+    return (pitch_cv_.calibration_busy() 
+        || root_cv_.calibration_busy());
+  }
+
+  auto calibration_state() {
+    return calibration_state_;
+  }
+
+  void next_calibration() {
+    switch (calibration_state_) {
+      case NOT_CALIBRATING: {
+        calibration_state_ = CALIBRATING_PITCH_UNPATCHED;
+        pitch_cv_.start_calibration(CALIBRATE_UNPATCHED);
+      } break;
+
+      case CALIBRATING_PITCH_UNPATCHED: {
+        calibration_state_ = CALIBRATING_ROOT_UNPATCHED;
+        root_cv_.start_calibration(CALIBRATE_UNPATCHED);
+      } break;
+
+      case CALIBRATING_ROOT_UNPATCHED: {
+        calibration_state_ = CALIBRATING_PITCH_OFFSET;
+        pitch_cv_.start_calibration(CALIBRATE_C2);
+      } break;
+
+      case CALIBRATING_PITCH_OFFSET: {
+        calibration_state_ = CALIBRATING_PITCH_SLOPE;
+        pitch_cv_.start_calibration(CALIBRATE_C4);
+      } break;
+
+      case CALIBRATING_PITCH_SLOPE: {
+        calibration_state_ = CALIBRATING_ROOT_OFFSET;
+        root_cv_.start_calibration(CALIBRATE_C2);
+      } break;
+
+      case CALIBRATING_ROOT_OFFSET: {
+        calibration_state_ = CALIBRATING_ROOT_SLOPE;
+        root_cv_.start_calibration(CALIBRATE_C4);
+      } break;
+
+      default:
+        break;
+    }
+  }
+
+  bool calibrate_offsets() {
+    return warp_.cv_.calibrate_offset()
       && balance_.cv_.calibrate_offset()
       && twist_.cv_.calibrate_offset()
       && scale_.cv_.calibrate_offset()
       && modulation_.cv_.calibrate_offset()
       && spread_.cv_.calibrate_offset();
   }
-  bool CalibratePitchOffset() {
-      bool success = pitch_cv_.calibrate_patched_offset();
-      return success;
-  }
-  bool CalibratePitchSlope() {
-    bool success = pitch_cv_.calibrate_slope();
-    return success;
-  }
-  bool CalibrateRootOffset() {
-      bool success = root_cv_.calibrate_patched_offset();
-      return success;
-  }
-  bool CalibrateRootSlope() {
-    bool success = root_cv_.calibrate_slope();
-    return success;
-  }
+
   void SaveCalibration() {
     calibration_data_storage_.Save();
   }

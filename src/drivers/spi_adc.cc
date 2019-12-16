@@ -1,6 +1,6 @@
 #include "spi_adc.hh"
 #include "debug.hh"
-// extern Debug debug;
+// Debug debug;
 
 SpiAdc *SpiAdc::spiadc_instance_;
 uint32_t SpiAdc::os_idx[NUM_SPI_ADC_CHANNELS]={0};
