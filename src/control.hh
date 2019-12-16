@@ -47,7 +47,6 @@ class ExtCVConditioner {
   FILTER lp_;
 
   f reading_at_C2;
-  f reading_at_C4;
   f reading_unpatched;
   int cal_i_;
   bool is_calibrating_=false;
@@ -74,8 +73,7 @@ public:
     cal_running_total_ = 0_f;
     is_calibrating_ = true;
   }
-
-  CalibrationStepResult process_calibration() {
+  auto process_calibration() {
     CalibrationStepResult res;
 
     if (is_calibrating_) { 
@@ -89,10 +87,10 @@ public:
 
           case (CALIBRATE_UNPATCHED): {
             reading_unpatched = cal_running_total_;
-            if ((reading_unpatched - nominal_offset_).abs() < kCalibrationSuccessToleranceOffset)
-              res = CAL_STEP_RESULT_SUCCESS; //cal_step_ = CALIBRATE_C2;
-            else
-              res = CAL_STEP_RESULT_FAILURE; //cal_step_ = CALIBRATE_FAILURE;
+            if ((reading_unpatched - nominal_offset_).abs() < kCalibrationSuccessToleranceOffset) {
+              res = CAL_STEP_RESULT_SUCCESS;
+             } else
+              res = CAL_STEP_RESULT_FAILURE;
           } break;
 
           case (CALIBRATE_C2): {
@@ -101,22 +99,21 @@ public:
             f slope = 12_f / octave;
 
             if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance)
-              res = CAL_STEP_RESULT_SUCCESS; //cal_step_ = CALIBRATE_C4;
+              res = CAL_STEP_RESULT_SUCCESS;
             else
-              res = CAL_STEP_RESULT_FAILURE; //cal_step_ = CALIBRATE_FAILURE;
+              res = CAL_STEP_RESULT_FAILURE;
           } break;
 
           case (CALIBRATE_C4): {
-            reading_at_C4 = cal_running_total_;
-            f octave = (reading_at_C4 - reading_at_C2) / kCalibration2Volts;
+            f octave = (cal_running_total_ - reading_at_C2) / kCalibration2Volts;
             f slope = 12_f / octave;
 
             if ((slope / nominal_slope_ - 1_f).abs() < kCalibrationSuccessTolerance) {
               slope_ = slope;
               offset_ = reading_at_C2 - (kCalibration2Volts * 12_f / slope_);
-              res = CAL_STEP_RESULT_SUCCESS; //cal_step_ = CALIBRATE_SUCESS;
+              res = CAL_STEP_RESULT_SUCCESS;
             } else
-              res = CAL_STEP_RESULT_FAILURE; //cal_step_ = CALIBRATE_FAILURE;
+              res = CAL_STEP_RESULT_FAILURE;
           } break;
 
         }
@@ -646,15 +643,6 @@ public:
     balance_pot_main_function();
   }
 
-  // enum CalibratorState {
-  //   NOT_CALIBRATING,
-  //   CALIBRATING_UNPATCHED,
-  //   CALIBRATING_PITCH_OFFSET,
-  //   CALIBRATING_PITCH_SLOPE,
-  //   CALIBRATING_ROOT_OFFSET,
-  //   CALIBRATING_ROOT_SLOPE,
-  //   CALIBRATION_SUCCESS,
-  // } 
 
   CalibratorState calibration_state_;
 
@@ -704,9 +692,6 @@ public:
         calibration_state_ = CALIBRATING_ROOT_SLOPE;
         root_cv_.start_calibration(CALIBRATE_C4);
       } break;
-
-      default:
-        break;
     }
   }
 
