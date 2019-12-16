@@ -449,7 +449,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             break;
         }
       }      
-      else
+      else //wait for button press to advance to next step
       if (e1.type == ButtonRelease &&
           e2.type == ButtonPush &&
           e1.data == e2.data &&
@@ -501,15 +501,8 @@ public:
     Base::Process();
 
 
-    // Enter CV jack calibration if Learn is pushed
-    if (buttons_.learn_.pushed()) {
-      mode_ = CALIBRATE_CV;
-      control_.calibration_reset();
-      learn_led_.set_glow(Colors::blue, 2_f);
-      freeze_led_.set_glow(Colors::blue, 2_f);
-
     // Enter LED calibration if Freeze is pushed and all switches are centered
-    } else if (buttons_.freeze_.pushed() &&
+    if (buttons_.freeze_.pushed() &&
                switches_.scale_.get()==3 &&
                switches_.mod_.get()==3 &&
                switches_.twist_.get()==3 &&
