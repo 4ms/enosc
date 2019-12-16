@@ -2,3 +2,4 @@
 
 #include <stm32f7xx.h>
 void do_hardware_test(void);
+void test_QSPI();
