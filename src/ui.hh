@@ -319,11 +319,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e1.data != e2.data) {
           // long-press on Learn and Freeze
           mode_ = CALIBRATE_CV;
-          control_.calibration_reset();
           learn_led_.set_background(Colors::black);
           freeze_led_.set_background(Colors::black);
-          learn_led_.set_glow(Colors::blue, 2_f);
-          freeze_led_.set_glow(Colors::blue, 2_f);
+          control_.calibration_reset();
+          control_.next_calibration();
         }
       } break;
       case AltParamChange: {
@@ -455,8 +454,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           e1.data == e2.data &&
           !control_.calibration_busy()
         ){
-        learn_led_.set_glow(Colors::dark_cyan, 0.5_f); //busy lights
-        freeze_led_.set_glow(Colors::dark_cyan, 0.5_f);
+        learn_led_.set_glow(Colors::dark_cyan, 10_f); //busy lights
+        freeze_led_.set_glow(Colors::dark_cyan, 10_f);
         control_.next_calibration();
       }
     } break;
