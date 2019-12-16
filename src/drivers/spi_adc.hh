@@ -28,10 +28,10 @@ const uint8_t kADCBitDepth = 12;
 
 //Oversample and average blocks of 2^oversampling_bitsize samples 
 //Todo: Template with oversampling amount?
-constexpr uint8_t kOversamplingAmountBits = 2;
+constexpr uint8_t kOversamplingAmountBits = 3;
 constexpr uint8_t kOversamplingAmount = (1<<kOversamplingAmountBits);
 constexpr uint8_t kOversamplingMask = kOversamplingAmount - 1;
-const uint8_t kOversamplingThrowoutReads = 3;
+const uint8_t kOversamplingThrowoutReads = 7;
 
 // #define OVERSAMPLING_AMT_BITS   2
 // #define OVERSAMPLING_AMT (1<<OVERSAMPLING_AMT_BITS)
@@ -62,7 +62,7 @@ struct SpiAdc : Nocopy {
   }
 
   u0_16 get(uint8_t chan) {
-    sum_t avg = 0._u18_14;
+    sum_t avg = 0._u17_15;
     for (int i=0; i<kOversamplingAmount; i++){
       avg += sum_t(values[chan][i]);
     }
@@ -120,7 +120,7 @@ private:
   }
 
   void SPI_init() {
-    spih.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+    spih.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
     spih.Init.Direction         = SPI_DIRECTION_2LINES;
     spih.Init.CLKPhase          = SPI_PHASE_1EDGE;
     spih.Init.CLKPolarity       = SPI_POLARITY_LOW;
