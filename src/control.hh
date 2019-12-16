@@ -21,8 +21,8 @@ const f kCalibrationSuccessTolerance = 0.3_f;
 const f kCalibrationSuccessToleranceOffset = 0.1_f;
 const f kPotMoveThreshold = 0.01_f;
 
-const int kCalibrationIterations = 16;
-const int kPitchRootCalibrationIterations = 256;
+const int kIntCVCalibrationIterations = 16;
+const int kExtCVCalibrationIterations = 1024;
 
 enum CalibrationStepResult {
   CAL_STEP_RESULT_NOT_BEGUN,
@@ -79,9 +79,9 @@ public:
     if (is_calibrating_) { 
       cal_running_total_ += last_raw_reading_;
 
-      if (++cal_i_ >= kPitchRootCalibrationIterations) {
+    if (++cal_i_ >= kExtCVCalibrationIterations) {
         is_calibrating_ = false;
-        cal_running_total_ /= f(kPitchRootCalibrationIterations);
+      cal_running_total_ /= f(kExtCVCalibrationIterations);
 
         switch (cal_step_) {
 
@@ -155,14 +155,14 @@ public:
   bool calibrate_offset() {
     f reading = 0_f;
 
-    for (int i=0; i<kCalibrationIterations; i++) {
+    for (int i=0; i<kIntCVCalibrationIterations; i++) {
       u0_16 in = adc_.get(INPUT);
       s1_15 x = in.to_signed_scale();
       reading += f::inclusive(x);
       HAL_Delay(1);
     }
 
-    reading /= f(kCalibrationIterations);
+    reading /= f(kIntCVCalibrationIterations);
 
     if (reading.abs() < kCalibrationSuccessToleranceOffset) {
       offset_ = reading;
@@ -396,11 +396,11 @@ class Control : public EventSource<Event> {
   DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT
                              > root_pot_ {adc_};
-  ExtCVConditioner<CV_PITCH, Average<8, 4>
+  ExtCVConditioner<CV_PITCH, Average<8, 2>
                    > pitch_cv_ {calibration_data_.pitch_offset,
                                 calibration_data_.pitch_slope, 
                                 spi_adc_};
-  ExtCVConditioner<CV_ROOT, Average<8, 4>
+  ExtCVConditioner<CV_ROOT, Average<8, 2>
                    > root_cv_ {calibration_data_.root_offset,
                                calibration_data_.root_slope, 
                                spi_adc_};
