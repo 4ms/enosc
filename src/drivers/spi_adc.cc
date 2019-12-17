@@ -1,6 +1,6 @@
 #include "spi_adc.hh"
-#include "debug.hh"
-// extern Debug debug;
+// #include "debug.hh"
+// Debug debug;
 
 SpiAdc *SpiAdc::spiadc_instance_;
 uint32_t SpiAdc::os_idx[NUM_SPI_ADC_CHANNELS]={0};
@@ -16,7 +16,7 @@ extern "C" void MAX11666_SPI_IRQHANDLER(void) {
     uint16_t adc_val = SpiAdc::spiadc_instance_->spih.Instance->DR;
     adc_val >>= 2;
     if (SpiAdc::os_idx[SpiAdc::cur_chan] < kOversamplingAmount)
-      SpiAdc::spiadc_instance_->values[SpiAdc::cur_chan][SpiAdc::os_idx[SpiAdc::cur_chan]] = u2_14::of_repr(adc_val);
+      SpiAdc::spiadc_instance_->values[SpiAdc::cur_chan][SpiAdc::os_idx[SpiAdc::cur_chan]] = u1_15::of_repr(adc_val);
 
     if (SpiAdc::os_idx[SpiAdc::cur_chan]) {
       SpiAdc::os_idx[SpiAdc::cur_chan]--;

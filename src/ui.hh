@@ -165,12 +165,19 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     SHIFT,
     LEARN,
     MANUAL_LEARN,
-    CALIBRATION_OFFSET,
-    CALIBRATION_SLOPE,
+    CALIBRATE_CV,
     CALIBRATE_LEDS,
   } mode_ = NORMAL;
 
   Bitfield<32> active_catchups_ {0};
+
+  void reset_leds() {
+    learn_led_.set_background(Colors::lemon);
+    freeze_led_.set_background(Colors::lemon);
+    learn_led_.reset_glow();
+    freeze_led_.reset_glow();
+  }
+
 
   void Handle(typename Base::EventStack stack) {
     Event& e1 = stack.get(0);
@@ -289,7 +296,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           freeze_led_.set_solid(Colors::grey);
           control_.balance_pot_alternate_function();
         }
-      }
+      } break;
       case ButtonRelease: {
         if (e1.data == BUTTON_FREEZE) {
           if (e2.type == ButtonPush &&
@@ -305,6 +312,17 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             alt_params_.Save();
             freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
           }
+        }
+      } break;
+      case ButtonTimeout: {
+        if (e2.type == ButtonTimeout &&
+            e1.data != e2.data) {
+          // long-press on Learn and Freeze
+          mode_ = CALIBRATE_CV;
+          learn_led_.set_background(Colors::black);
+          freeze_led_.set_background(Colors::black);
+          control_.calibration_reset();
+          control_.next_calibration();
         }
       } break;
       case AltParamChange: {
@@ -378,63 +396,67 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     } break;
 
     case MANUAL_LEARN: {
-
       if (e1.type == ButtonRelease && e1.data == BUTTON_LEARN) {
         osc_.disable_follow_new_note();
         mode_ = LEARN;
       }
-
       if (e1.type == PotMove && e1.data == POT_PITCH) {
           control_.pitch_pot_alternate_function();
       }
-
     } break;
 
-    case CALIBRATION_OFFSET: {
-      if (e1.type == ButtonRelease &&
-          e1.data == BUTTON_LEARN &&
-          e2.type == ButtonPush &&
-          e2.data == BUTTON_LEARN) {
-        if (control_.CalibrateOffset()) {
-          mode_ = CALIBRATION_SLOPE;
-          learn_led_.set_glow(Colors::green, 1_f);
-          freeze_led_.set_glow(Colors::green, 1_f);
-        } else {
-          learn_led_.flash(Colors::magenta, 0.5_f); 
-          freeze_led_.flash(Colors::magenta, 0.5_f);
-          learn_led_.set_background(Colors::lemon);
-          freeze_led_.set_background(Colors::lemon);
-          learn_led_.reset_glow();
-          freeze_led_.reset_glow();
-          mode_ = NORMAL;     // offset calibration failure
-        }
-      } else if (e1.type == ButtonPush &&
-                 e1.data == BUTTON_FREEZE) {
-        learn_led_.set_background(Colors::lemon);
-        freeze_led_.set_background(Colors::lemon);
-        learn_led_.reset_glow();
-        freeze_led_.reset_glow();
-        mode_ = NORMAL;         // calibration abort
-      }
-    } break;
-
-    case CALIBRATION_SLOPE: {
-      if (e1.type == ButtonRelease &&
-          e1.data == BUTTON_LEARN &&
-          e2.type == ButtonPush &&
-          e2.data == BUTTON_LEARN) {
-        if (control_.CalibrateSlope()) {
-          learn_led_.flash(Colors::white, 2_f); //success
-          freeze_led_.flash(Colors::white, 2_f);
-        } else {
-          learn_led_.flash(Colors::red, 0.5_f); // slope calibration failure
-          freeze_led_.flash(Colors::red, 0.5_f);
-        }
-        learn_led_.set_background(Colors::lemon);
-        freeze_led_.set_background(Colors::lemon);
-        learn_led_.reset_glow();
-        freeze_led_.reset_glow();
+    case CALIBRATE_CV: {
+      if (e1.type == CalibrationFailed) {
+        learn_led_.flash(Colors::magenta, 0.5_f); 
+        freeze_led_.flash(Colors::magenta, 0.5_f);
+        reset_leds();
         mode_ = NORMAL;
+      }
+      else
+      if (e1.type == CalibrationStepDone) {
+        switch (control_.calibration_state()) {
+          case CALIBRATING_PITCH_UNPATCHED:
+            control_.next_calibration(); //special-case: go directly to next step
+            break;
+          case CALIBRATING_ROOT_UNPATCHED:
+            learn_led_.set_glow(Colors::blue, 2_f);
+            freeze_led_.reset_glow();
+            break;
+          case CALIBRATING_PITCH_OFFSET:
+            learn_led_.set_glow(Colors::blue, 6_f);
+            freeze_led_.reset_glow();
+            break;
+          case CALIBRATING_PITCH_SLOPE:
+            learn_led_.reset_glow();
+            freeze_led_.set_glow(Colors::blue, 2_f);
+            break;
+          case CALIBRATING_ROOT_OFFSET:
+            learn_led_.reset_glow();
+            freeze_led_.set_glow(Colors::blue, 6_f);
+            break;
+          case CALIBRATING_ROOT_SLOPE:
+            if (control_.calibrate_offsets()) {
+              control_.SaveCalibration();
+              learn_led_.flash(Colors::green, 0.5_f); //success
+              freeze_led_.flash(Colors::green, 0.5_f);
+            } else {
+              learn_led_.flash(Colors::magenta, 0.5_f); //fail
+              freeze_led_.flash(Colors::magenta, 0.5_f);
+            }
+            reset_leds();
+            mode_ = NORMAL;
+            break;
+        }
+      }      
+      else //wait for button press to advance to next step
+      if (e1.type == ButtonRelease &&
+          e2.type == ButtonPush &&
+          e1.data == e2.data &&
+          !control_.calibration_busy()
+        ){
+        learn_led_.set_glow(Colors::dark_cyan, 10_f); //busy lights
+        freeze_led_.set_glow(Colors::dark_cyan, 10_f);
+        control_.next_calibration();
       }
     } break;
 
@@ -478,14 +500,8 @@ public:
     Base::Process();
 
 
-    // Enter CV jack calibration if Learn is pushed
-    if (buttons_.learn_.pushed()) {
-      mode_ = CALIBRATION_OFFSET;
-      learn_led_.set_glow(Colors::blue, 2_f);
-      freeze_led_.set_glow(Colors::blue, 2_f);
-
     // Enter LED calibration if Freeze is pushed and all switches are centered
-    } else if (buttons_.freeze_.pushed() &&
+    if (buttons_.freeze_.pushed() &&
                switches_.scale_.get()==3 &&
                switches_.mod_.get()==3 &&
                switches_.twist_.get()==3 &&
@@ -505,7 +521,7 @@ public:
     Base::Poll();
     freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
   }
-
+  
   void Update() {
     learn_led_.Update();
     freeze_led_.Update();

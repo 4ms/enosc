@@ -28,7 +28,7 @@ struct Main :
     Ui::Update();
   }
   
-  Debug debug;
+  // Debug debug;
 
   template<int block_size>
   void DacCallback(Buffer<Frame, block_size>& out) {
