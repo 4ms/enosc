@@ -88,6 +88,12 @@ public:
     } else return false;
   }
 
+  void quantize() {
+    for (int i=0; i<size_; i++) {
+        scale_[i] = scale_[i].integral();
+    }
+  }
+
   // do not call if size==0
   bool copy_to(Scale *g, bool wrap_octave) {
     // sort table

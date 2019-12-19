@@ -239,6 +239,8 @@ public:
     learn_ = false;
     disable_pre_listen();
     current_scale_ = quantizer_.get_scale(params_.scale);
+    if (params_.scale.mode == TWELVE)
+      pre_scale_.quantize();
     bool wrap_octave = params_.scale.mode == OCTAVE;
     bool success = pre_scale_.copy_to(current_scale_, wrap_octave);
     if (success) quantizer_.Save();
