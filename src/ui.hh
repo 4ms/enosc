@@ -122,6 +122,8 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
   static constexpr int kLongPressTime = 4.0f * kProcessRate; // sec
   static constexpr int kNewNoteDelayTime = 0.01f * kProcessRate; // sec
 
+  f cached_pitch_base_;
+
   struct LedCalibrationData {
     Color::Adjustment led_learn_adjust;
     Color::Adjustment led_freeze_adjust;
@@ -235,6 +237,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           if (e1.data == BUTTON_LEARN) {
             mode_ = LEARN;
             learn_led_.set_solid(Colors::dark_red);
+            cached_pitch_base_ = osc_.lowest_pitch() - control_.pitch_cv();
             osc_.enable_learn();
             control_.hold_pitch_cv();
           }
@@ -337,8 +340,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         new_note_delay_.trigger_after(kNewNoteDelayTime, {NewNote, 0});
       } break;
       case NewNote: {
-        // the offset makes the lowest note on a keyboard (0V) about 60Hz
-        bool success = osc_.new_note(control_.pitch_cv() + 36_f);
+        bool success = osc_.new_note(control_.pitch_cv() + cached_pitch_base_);
         osc_.enable_pre_listen();
         learn_led_.flash(success ? Colors::white : Colors::black);
       } break;
