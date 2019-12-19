@@ -131,16 +131,16 @@ class Quantizer {
 
   ScaleTable const default_scales_ = {{{{{
           // 12TET
-          {0_f, 12_f},              // octave
-          {0_f, 7_f, 12_f},         // octave+fifth
-          {0_f, 4_f, 7_f, 12_f},    // major triad
-          {0_f, 3_f, 7_f, 12_f},    // minor triad
-          {0_f, 3_f, 5_f, 7_f, 12_f},    // minor triad
-          {0_f, 3_f, 5_f, 10_f, 12_f}, // ??
-          {0_f, 1_f, 5_f, 8_f, 12_f},
-          {0_f, 7_f},               // circle of fifths
-          {0_f, 3_f, 5_f, 7_f},
-          {0_f, 1_f},                // all semitones
+          {0_f, 12_f},              // Slot 1: octave
+          {0_f, 7_f, 12_f},         // Slot 2: octave+fifth
+          {0_f, 4_f, 7_f, 12_f},    // Slot 3: major triad
+          {0_f, 3_f, 7_f, 12_f},    // Slot 4: minor triad
+          {0_f, 3_f, 5_f, 7_f, 12_f},    // Slot 5: minor triad
+          {0_f, 3_f, 5_f, 10_f, 12_f}, // Slot 6: ??
+          {0_f, 1_f, 5_f, 8_f, 12_f},   //Slot 7: 
+          {0_f, 7_f},               // Slot 8: circle of fifths
+          {0_f, 3_f, 5_f, 7_f},       // Slot 9:
+          {0_f, 1_f},                // Slot 10: all semitones
         }}, {{
           // OCTAVE
 
