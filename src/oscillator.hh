@@ -130,6 +130,8 @@ class OscillatorPair : Nocopy {
   Oscillator osc_[2];
   FrequencyState freq_;
 
+  Average<256, 2> crossfade_smoother_;
+
 public:
 
   using processor_t = void (Oscillator::*)(f const freq,
@@ -175,6 +177,10 @@ public:
 
     // shape crossfade so notes are easier to find
     crossfade = Signal::crop(crossfade_factor, crossfade);
+
+    // filter crossfade to avoid hysteresis 
+    if (crossfade_factor < 0.4_f)
+      crossfade = f::inclusive(crossfade_smoother_.Process(u0_16::inclusive(crossfade)));
 
     if (crossfade == 0_f) osc_[1].sync_to(osc_[0]);
     if (crossfade == 1_f) osc_[0].sync_to(osc_[1]);
