@@ -12,6 +12,7 @@
 
 extern volatile uint32_t systmr;
 
+void test_buttons(void);
 void test_leds(void);
 void test_switches(void);
 void test_builtin_adc(void);
@@ -22,6 +23,7 @@ void test_QSPI(void);
 
 
 void do_hardware_test(void) {
+	test_buttons();
     test_leds();
     test_switches();
     test_dac();
@@ -42,7 +44,21 @@ void do_hardware_test(void) {
     }
 }
 
+void test_buttons(void) {
+	// while (1) {
+	// 	uint8_t lr = PIN_READ(LEARN_BUT_GPIO_Port, LEARN_BUT_Pin);
+	// 	uint8_t fr = PIN_READ(FREEZE_BUT_GPIO_Port, FREEZE_BUT_Pin);
+	// 	if (lr) 
+	// 		DEBUG1_ON;
+	// 	else
+	// 		DEBUG1_OFF;
 
+	// 	if (fr)
+	// 		DEBUG2_ON;
+	// 	else
+	// 		DEBUG2_OFF;
+	// }
+}
 
 //press buttons to turn off each led color: red green blue
 void test_leds(void) {
@@ -53,23 +69,35 @@ void test_leds(void) {
     SET_LEARN_WHITE();
 
     wait_for_learn_pressed();
+    LEARN_BLUE(OFF);
+    LEARN_GREEN(OFF);
+    wait_for_learn_released();
+    wait_for_learn_pressed();
     LEARN_RED(OFF);
+    LEARN_BLUE(ON);
+    wait_for_learn_released();
+    wait_for_learn_pressed();
+    LEARN_BLUE(OFF);
+    LEARN_GREEN(ON);
     wait_for_learn_released();
     wait_for_learn_pressed();
     LEARN_GREEN(OFF);
     wait_for_learn_released();
-    wait_for_learn_pressed();
-    LEARN_BLUE(OFF);
-    wait_for_learn_released();
 
     wait_for_freeze_pressed();
-    FREEZE_RED(OFF);
-    wait_for_freeze_released();
-    wait_for_freeze_pressed();
+	FREEZE_BLUE(OFF);
     FREEZE_GREEN(OFF);
     wait_for_freeze_released();
     wait_for_freeze_pressed();
-    FREEZE_BLUE(OFF);
+    FREEZE_RED(OFF);
+	FREEZE_BLUE(ON);
+    wait_for_freeze_released();
+    wait_for_freeze_pressed();
+	FREEZE_BLUE(OFF);
+    FREEZE_GREEN(ON);
+    wait_for_freeze_released();
+    wait_for_freeze_pressed();
+    FREEZE_GREEN(OFF);
     wait_for_freeze_released();
 }
 
@@ -160,7 +188,7 @@ void test_dac(void)
     init_dac();
 
     set_dac_callback(saw_out);
-    set_saw_freqs(10000, -20000, 20000, -20000);
+    set_saw_freqs(40000, -80000, 80000, -20000);
     set_saw_ranges(-6710885, 6710885, -6710885, 6710885);
 
     start_dac();
