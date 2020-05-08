@@ -426,10 +426,12 @@ void test_QSPI(void) {
 
     if (!QSPI_init())
     {
-        FREEZE_RED(ON);
-        delay(1000);
-        FREEZE_RED(OFF);
-        delay(1000);
+		while (1) {
+			FREEZE_RED(ON);
+			delay(1000);
+			FREEZE_RED(OFF);
+			delay(1000);
+		}
     }
 
     delay(1500);
