@@ -397,10 +397,12 @@ class Control : public EventSource<Event> {
                    > pitch_cv_ {calibration_data_.pitch_offset,
                                 calibration_data_.pitch_slope, 
                                 spi_adc_};
-  ExtCVConditioner<CV_ROOT, Average<4, 4>
+  ExtCVConditioner<CV_ROOT, Average<4, 2>
                    > root_cv_ {calibration_data_.root_offset,
                                calibration_data_.root_slope, 
                                spi_adc_};
+
+  HysteresisFilter<1, 10> root_post_filter_;
 
   Parameters& params_;
   PolypticOscillator<block_size>& osc_;
@@ -576,7 +578,7 @@ public:
     // ROOT
     { auto [root, new_note] = root_pot_.Process(put);
       root *= kRootPotRange;
-      root += root_cv_.last();
+      root += root_post_filter_.Process(root_cv_.last());
 
       if (root_cv_.calibration_busy()) {
         auto cal_result = root_cv_.process_calibration();
