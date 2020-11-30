@@ -39,7 +39,7 @@ factors = []
 
 for i in range(size):
     # plt.plot(u)
-    half = u[len(u)/2:]
+    half = u[int(len(u)/2):]
     half = np.append(half, 0.)
     factor = np.argmax(half<threshold) / float(resolution/2)
     factors.append(1.0 / factor)
