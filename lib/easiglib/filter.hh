@@ -122,6 +122,14 @@ struct TransferPositiveLimit {
   }
 };
 
+template<int numerator, int divisor>
+struct TransferHysteresis {
+  static f Process(f x) {
+    constexpr f const flat = f(numerator) / f(divisor);
+    return x - x.max(-flat).min(flat);
+  }
+};
+
 template<int divisor>
 class IQuadraticOnePoleLp : public NonLinearOnePoleLp<s1_15, ITransferQuadratic<divisor> > {};
 template<int divisor>
@@ -133,6 +141,9 @@ template<int divisor>
 class CubicOnePoleLp : public NonLinearOnePoleLp<f, TransferCubic<divisor> > {};
 template<int divisor>
 class PositiveSlewLimiter : public NonLinearOnePoleLp<f, TransferPositiveLimit<divisor> > {};
+
+template<int numerator, int divisor>
+class HysteresisFilter : public NonLinearOnePoleLp<f, TransferHysteresis<numerator, divisor> > {};
 
 struct FourPoleLadderLp {
   OnePoleLp lp_[4];
