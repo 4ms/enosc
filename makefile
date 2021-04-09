@@ -131,13 +131,24 @@ all: $(TARGET).hex $(TARGET).bin
 %.o: %.s
 	$(CC) -c -x assembler-with-cpp $(ASFLAGS) $< -o $@
 
+combo:
+	cd bootloader && $(MAKE)
+
+bootloader: combo
+
 data.cc data.hh: $(EASIGLIB_DIR)data_compiler.py data/data.py
 	PYTHONPATH=$(EASIGLIB_DIR) python data/data.py
 
 clean:
-	rm -f $(OBJS) $(TEST_OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin $(TARGET).hex \
-	main.map test/test data.cc data.hh \
-	$(EASIGLIB_DIR)data_compiler.pyc
+	rm -f $(OBJS) $(TEST_OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin $(TARGET).hex  \ 
+	main.map test/test $(EASIGLIB_DIR)data_compiler.pyc
+
+realclean: clean
+	rm data.cc data.hh 
+
+bootloader-clean: clean
+	rm -rf bootloader/build
+	
 
 flash: $(TARGET).bin
 	st-flash write $(TARGET).bin 0x8004000
