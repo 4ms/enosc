@@ -108,6 +108,7 @@ public:
 
       f trans = (transposition / trans_step).integral() * trans_step;
 
+	  //FIXME: if idx > pitch_buffer_.cursor_, Read() will return garbage data
       pitches_[i] = pitch_buffer_.Read(idx) + trans;
 
       // small detune

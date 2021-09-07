@@ -124,16 +124,17 @@ struct Buffer : std::array<T, SIZE> {
 template<int SIZE, class T>
 struct std::tuple_size<Buffer<T, SIZE>> { static constexpr int value = SIZE; };
 
-template<typename T, int SIZE>
+template<typename T, size_t SIZE>
 class RingBuffer {
   T buffer_[SIZE];
-  int cursor_ = SIZE;
+  size_t cursor_ = SIZE;
 public:
-  int size() { return SIZE; }
+  size_t size() { return SIZE; }
   void Write(T& x) {
     ++cursor_;
     buffer_[cursor_ % SIZE] = x;
   }
+  //FIXME: Dangerous if n > cursor_!
   T& Read(int n) {
     // TODO specialized version when SIZE is 2^n
     return buffer_[(cursor_ - n) % SIZE];
