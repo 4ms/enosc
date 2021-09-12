@@ -278,11 +278,6 @@ public:
       return T::of_repr(that.repr() << (FRAC - FRAC2));
   }
 
-  // Boundary values:
-  static constexpr T min_val = T::of_repr(SIGN==SIGNED ? (1 << (WIDTH-1)) : 0);
-  static constexpr T max_val = T::of_repr(SIGN==SIGNED ? (~(1 << (WIDTH-1))) : -1);
-  static constexpr T increment = T::of_repr(1);
-
   // CONVERSIONS
 
   // unsafe getter for representation
@@ -827,9 +822,17 @@ constexpr u16 operator "" _u16(unsigned long long int x) { return u16::of_long_l
 constexpr s32 operator "" _s32(unsigned long long int x) { return s32::of_long_long(x); }
 constexpr u32 operator "" _u32(unsigned long long int x) { return u32::of_long_long(x); }
 
-template<sign SIGN, int INT, int FRAC>
-constexpr Fixed<SIGN, INT, FRAC> Fixed<SIGN, INT, FRAC>::min_val;
-template<sign SIGN, int INT, int FRAC>
-constexpr Fixed<SIGN, INT, FRAC> Fixed<SIGN, INT, FRAC>::max_val;
-template<sign SIGN, int INT, int FRAC>
-constexpr Fixed<SIGN, INT, FRAC> Fixed<SIGN, INT, FRAC>::increment;
+// Boundary values:
+
+template <typename T>
+static constexpr T min_val;
+template <typename T>
+static constexpr T max_val;
+
+template <sign SIGN, int INT, int FRAC>
+static constexpr auto min_val<Fixed<SIGN, INT, FRAC>> = Fixed<SIGN, INT, FRAC>::of_repr(
+    std::numeric_limits<typename Basetype<INT + FRAC, SIGN>::T>::min());
+
+template <sign SIGN, int INT, int FRAC>
+static constexpr auto max_val<Fixed<SIGN, INT, FRAC>> = Fixed<SIGN, INT, FRAC>::of_repr(
+    std::numeric_limits<typename Basetype<INT + FRAC, SIGN>::T>::max());

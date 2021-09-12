@@ -25,7 +25,7 @@ struct LedManager : Leds::ILed<T> {
   // flash_freq in Hz; max = update_rate
   void flash(Color c, f flash_freq = 10_f) {
     flash_color_ = c;
-    flash_phase_ = u0_16::max_val;
+    flash_phase_ = max_val<u0_16>;
     flash_freq_ = u0_16(flash_freq / f(update_rate));
   }
 

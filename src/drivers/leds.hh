@@ -56,24 +56,24 @@ struct Colors {
   static constexpr Color black = Color(0._u0_8, 0._u0_8, 0._u0_8);
   static constexpr Color grey50 = Color(0.5_u0_8, 0.5_u0_8, 0.5_u0_8);
   static constexpr Color grey = Color(0.3_u0_8, 0.3_u0_8, 0.3_u0_8);
-  static constexpr Color white = Color(u0_8::max_val, u0_8::max_val, u0_8::max_val);
+  static constexpr Color white = Color(max_val<u0_8>, max_val<u0_8>, max_val<u0_8>);
 
   //primary/secondary
-  static constexpr Color red = Color(u0_8::max_val, 0._u0_8, 0.1_u0_8);
-  static constexpr Color green = Color(0._u0_8, u0_8::max_val, 0._u0_8);
-  static constexpr Color blue = Color(0._u0_8, 0._u0_8, u0_8::max_val);
-  static constexpr Color yellow = Color(u0_8::max_val, u0_8::max_val, 0._u0_8);
-  static constexpr Color magenta = Color(u0_8::max_val, 0._u0_8, u0_8::max_val);
-  static constexpr Color cyan = Color(0._u0_8, u0_8::max_val, u0_8::max_val);
+  static constexpr Color red = Color(max_val<u0_8>, 0._u0_8, 0.1_u0_8);
+  static constexpr Color green = Color(0._u0_8, max_val<u0_8>, 0._u0_8);
+  static constexpr Color blue = Color(0._u0_8, 0._u0_8, max_val<u0_8>);
+  static constexpr Color yellow = Color(max_val<u0_8>, max_val<u0_8>, 0._u0_8);
+  static constexpr Color magenta = Color(max_val<u0_8>, 0._u0_8, max_val<u0_8>);
+  static constexpr Color cyan = Color(0._u0_8, max_val<u0_8>, max_val<u0_8>);
 
   //fun
   static constexpr Color orange = red.blend(yellow);
-  static constexpr Color pink = Color(u0_8::max_val, 0.32_u0_8, 0.24_u0_8);
+  static constexpr Color pink = Color(max_val<u0_8>, 0.32_u0_8, 0.24_u0_8);
   static constexpr Color peach = Color(0.6_u0_8, 0.1_u0_8, 0.03_u0_8);
-  static constexpr Color lemon = Color(u0_8::max_val, 0.42_u0_8, 0._u0_8);
-  static constexpr Color hotpink = Color(u0_8::max_val, 0._u0_8, 0.5_u0_8);
+  static constexpr Color lemon = Color(max_val<u0_8>, 0.42_u0_8, 0._u0_8);
+  static constexpr Color hotpink = Color(max_val<u0_8>, 0._u0_8, 0.5_u0_8);
   static constexpr Color mint = Color(0.34_u0_8, 0.29_u0_8, 0.66_u0_8);
-  static constexpr Color ice = Color(0._u0_8, u0_8::max_val, 0.27_u0_8);
+  static constexpr Color ice = Color(0._u0_8, max_val<u0_8>, 0.27_u0_8);
 
   //blends
   static constexpr Color dark_grey = grey.blend(black, 0.1_u0_8);
