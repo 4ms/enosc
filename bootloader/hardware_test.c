@@ -274,8 +274,8 @@ void test_builtin_adc(void) {
     struct AdcCheck adc_check = {
         .center_val = 2048,
         .center_width = 50,
-        .min_val = 10,
-        .max_val = 4000,
+        .min_val = 20,
+        .max_val = 4000, 
         .center_check_rate = (1UL<<16)
     };
     for (uint32_t adc_i=0; adc_i<(NUM_ADCS-1); adc_i++) {
