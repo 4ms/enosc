@@ -1,6 +1,7 @@
 #pragma once
 
 #include <variant>
+#include "adc.hh"
 #include "buttons.hh"
 #include "switches.hh"
 #include "leds.hh"
@@ -298,6 +299,9 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         } else if (e1.data == POT_BALANCE) {
           freeze_led_.set_solid(Colors::grey);
           control_.balance_pot_alternate_function();
+        } else if (e1.data == POT_PITCH) {
+          freeze_led_.set_solid(Colors::cyan);
+          control_.pitch_pot_alternate_function();
         }
       } break;
       case ButtonRelease: {

@@ -627,6 +627,7 @@ public:
     twist_.pot_.cache();
     warp_.pot_.cache();
     balance_.pot_.cache();
+    pitch_pot_.cache();
   }
   void cache_all_alt_learn_pot_values() {
     root_pot_.cache();
@@ -647,6 +648,7 @@ public:
     twist_pot_main_function();
     warp_pot_main_function();
     balance_pot_main_function();
+	pitch_pot_main_function();
   }
 
 
