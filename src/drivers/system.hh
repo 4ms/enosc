@@ -97,7 +97,7 @@ private:
 namespace std {
   void __throw_bad_function_call() {
     assert_param(false);
-    while(1);
+    NVIC_SystemReset();
   };
 }
 
@@ -122,18 +122,18 @@ extern "C" {
     UNUSED(cfsr);
     UNUSED(mmfar);
     UNUSED(bfar);
-    
-    while(1);
+
+	HAL_NVIC_SystemReset();
   }
-  void assert_failed(const char* file, uint32_t line) { while (1); }
-  void NMI_Handler() { while(1); }
-  void MemManage_Handler() { while (1); }
-  void BusFault_Handler() { while (1); }
-  void UsageFault_Handler() { while (1); }
-  void SVC_Handler() { while(1); }
-  void DebugMon_Handler() { while(1); }
-  void PendSV_Handler() { while(1); }
-  void __cxa_pure_virtual() { while(1); }
+  void assert_failed(const char* file, uint32_t line) { NVIC_SystemReset(); }
+  void NMI_Handler() { NVIC_SystemReset(); }
+  void MemManage_Handler() { NVIC_SystemReset(); }
+  void BusFault_Handler() { NVIC_SystemReset(); }
+  void UsageFault_Handler() { NVIC_SystemReset(); }
+  void SVC_Handler() { NVIC_SystemReset(); }
+  void DebugMon_Handler() { NVIC_SystemReset(); }
+  void PendSV_Handler() { NVIC_SystemReset(); }
+  void __cxa_pure_virtual() { NVIC_SystemReset(); }
   __weak void _init() {}
   __weak void main() {}
 }
