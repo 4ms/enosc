@@ -292,8 +292,8 @@ public:
     }
 
     for (auto [o1, o2, o] : zip(out1, out2, out)) {
-      o.l = s9_23(o1);
-      o.r = s9_23(o2);
+      o.l = s9_23::inclusive(o1.clip());
+      o.r = s9_23::inclusive(o2.clip());
     }
   }
 };
