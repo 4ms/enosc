@@ -11,6 +11,7 @@ class AmplitudeAccumulator {
   f amplitudes = 0_f;
   f balance;
   f numOsc;
+
 public:
   AmplitudeAccumulator(f t, f n) : balance(t), numOsc(n) {}
   f next() {
@@ -213,6 +214,7 @@ class PolypticOscillator : public Oscillators<block_size>, PreListenOscillators<
   Quantizer quantizer_;
   PreScale pre_scale_;
   Scale *current_scale_;
+  DCBlocker dc_blocker1_, dc_blocker2_;
 
   bool learn_ = false;
   bool pre_listen_ = false;
@@ -292,6 +294,8 @@ public:
     }
 
     for (auto [o1, o2, o] : zip(out1, out2, out)) {
+      o1 = dc_blocker1_.process(o1);
+      o2 = dc_blocker2_.process(o2);
       o.l = s9_23::inclusive(o1.clip());
       o.r = s9_23::inclusive(o2.clip());
     }

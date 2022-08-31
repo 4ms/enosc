@@ -334,3 +334,22 @@ public:
 
 using IFloat = InterpolatedFloat<SimpleFloat>;
 using IIFloat = InterpolatedFloat<InterpolatedFloat<SimpleFloat> >;
+
+// simple DC blocker from https://www.dsprelated.com/freebooks/filters/DC_Blocker.html
+// [coef] in 0..1. 0.995 is a reasonable at 44.1 Hz
+// normalized so that gain <= 1 at all frequencies
+struct DCBlocker {
+  DCBlocker() : DCBlocker(0.995_f) {}
+  DCBlocker(f coef) : coef_(coef) {}
+  f process(f x) noexcept {
+    f y = gain_ * (x - xm1_) + coef_ * ym1_;
+    xm1_ = x;
+    ym1_ = y;
+    return y;
+  }
+
+ private:
+  const f coef_;
+  const f gain_ = (1_f + coef_) * 0.5_f;
+  f xm1_ = 0_f, ym1_ = 0_f;
+};
