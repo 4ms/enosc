@@ -71,7 +71,7 @@ DynamicData::DynamicData() {
       max = fold[i+start].first.abs().max(max);
       // the attenuation factor accounts for interpolation error, so
       // we don't overestimate the 1/x curve and amplify to clipping
-      fold_max[i] = 0.95_f / (max);
+      fold_max[i] = 0.92_f / (max + 0.00001_f);
     }
   }
 
