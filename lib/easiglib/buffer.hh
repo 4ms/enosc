@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "util.hh"
 #include "signal.hh"
 #include "numtypes.hh"
