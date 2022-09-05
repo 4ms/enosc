@@ -76,6 +76,10 @@ class Oscillators : Nocopy {
   bool temp_frozen_ = false;
   f lowest_pitch_;
 
+  TwistMode previous_twist_mode_;
+  WarpMode previous_warp_mode_;
+  ModulationMode previous_modulation_mode_;
+
   static inline bool pick_split(SplitMode mode, int i, int numOsc) {
     return
       mode == ALTERNATE ? !(i&1) :
@@ -167,6 +171,24 @@ public:
     SplitMode freeze_mode = params.alt.freeze_mode;
     ModulationMode modulation_mode = params.modulation.mode;
 
+    bool twist_needs_jump = false;
+    if (twist_mode != previous_twist_mode_) {
+      previous_twist_mode_ = twist_mode;
+      twist_needs_jump = true;
+    }
+
+    bool warp_needs_jump = false;
+    if (warp_mode != previous_warp_mode_) {
+      previous_warp_mode_ = warp_mode;
+      warp_needs_jump = true;
+    }
+
+    bool modulation_needs_jump = false;
+    if (modulation_mode != previous_modulation_mode_) {
+      previous_modulation_mode_ = modulation_mode;
+      modulation_needs_jump = true;
+    }
+
     for (int i=0; i<kMaxNumOsc; ++i) {
       FrequencyPair p = frequency.next(); // 3%
       f amp = amplitude.next();
@@ -174,9 +196,9 @@ public:
       auto [mod_in, mod_out] = pick_modulation_blocks(modulation_mode, i, numOsc);
       dummy_block_.fill(0._u0_16);
       bool frozen = (pick_split(freeze_mode, i, numOsc) && frozen_) || temp_frozen_;
-      oscs_[i].Process(twist_mode, warp_mode,
+      oscs_[i].Process(twist_mode, twist_needs_jump, warp_mode, warp_needs_jump,
                        p, frozen, crossfade_factor,
-                       twist, warp, modulation, amp,
+                       twist, warp, modulation, modulation_needs_jump, amp,
                        mod_in, mod_out, out);
     }
 

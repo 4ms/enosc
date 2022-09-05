@@ -37,10 +37,10 @@ public:
 class Oscillator {
   Phasor phasor_;
   SineShaper sine_shaper_;
-  IFloat fade_, twist_, warp_, modulation_;
-  SimpleFloat amplitude_ {0_f};
-
+  SimpleFloat amplitude_{0_f};
+  
 public:
+  IFloat fade_, twist_, warp_, modulation_;
 
   void sync_to(Oscillator& that) {
     this->phasor_.set(that.phasor_.phase());
@@ -156,12 +156,14 @@ public:
     return tab[t][m];
   }
 
-  void Process(TwistMode twist_mode, WarpMode warp_mode, FrequencyPair freq,
+  void Process(TwistMode twist_mode, bool twist_needs_jump,
+               WarpMode warp_mode, bool warp_needs_jump,
+               FrequencyPair freq,
                bool frozen,
                f crossfade_factor,
                f twist,
                f warp,
-               f modulation,
+               f modulation, bool modulation_needs_jump,
                f const amplitude,
                Buffer<u0_16, block_size>& mod_in, Buffer<u0_16, block_size>& mod_out,
                Buffer<f, block_size>& sum_output) {
@@ -175,6 +177,21 @@ public:
 
     // shape crossfade so notes are easier to find
     crossfade = Signal::crop(crossfade_factor, crossfade);
+
+    if (twist_needs_jump) {
+      osc_[0].twist_.jump(twist);
+      osc_[1].twist_.jump(twist);
+    }
+
+    if (warp_needs_jump) {
+      osc_[0].warp_.jump(warp);
+      osc_[1].warp_.jump(warp);
+    }
+
+    if (modulation_needs_jump) {
+      osc_[0].modulation_.jump(modulation);
+      osc_[1].modulation_.jump(modulation);
+    }
 
     if (crossfade == 0_f) osc_[1].sync_to(osc_[0]);
     if (crossfade == 1_f) osc_[0].sync_to(osc_[1]);
