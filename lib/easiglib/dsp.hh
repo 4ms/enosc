@@ -102,49 +102,6 @@ public:
   }
 };
 
-
-template<int S> struct PinkNoiseCsts {};
-template<> struct PinkNoiseCsts<3> {
-  static constexpr Float A[3] = {0.02109238_f, 0.07113478_f, 0.68873558_f};
-  static constexpr Float P[3] = {0.3190_f, 0.7756_f, 0.9613_f};
-};
-
-template<> struct PinkNoiseCsts<4> {
-  static constexpr Float A[4] = {0.0186944045911_f, 0.0514485907859_f, 0.19168_f, 0.940098715596_f};
-  static constexpr Float P[4] = {0.3030_f, 0.7417_f, 0.9168_f, 0.9782_f};
-};
-
-template<> struct PinkNoiseCsts<5> {
-  static constexpr Float A[5] = {0.0030662336401_f, 0.0153123333238_f, 0.0536773305003_f, 0.191430730313_f, 0.999749211196_f};
-  static constexpr Float P[5] = {0.15571_f, 0.30194_f, 0.74115_f, 0.93003_f, 0.98035_f};
-};
-
-template<int STAGES>
-class PinkNoise {
-  Float state[STAGES] = {0};
-
-  static constexpr Float offset(int i) {
-    return i<0 ? 0 : PinkNoiseCsts<STAGES>::A[i] + offset(i-1);
-  }
-  static constexpr Float offset() { return offset(STAGES); }
-
-public:
-  void Process(Float *out) {
-    static const Float RMI2 = 2.0 / Random::rand_max;
-
-    Float s = 0.0f;
-
-    for(int i=0; i<STAGES; i++) {
-      Float temp = Random::Word();
-      state[i] = PinkNoiseCsts<STAGES>::P[i] * (state[i] - temp) + temp;
-      s += PinkNoiseCsts<STAGES>::A[i] * state[i];
-    }
-
-    *out = s * RMI2 - offset();
-  }
-};
-
-
 // Magic circle algorithm
 class MagicSine {
   f sinz_ = 0_f;
