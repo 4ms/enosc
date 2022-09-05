@@ -1,7 +1,5 @@
 #pragma once
 
-#include <variant>
-#include "adc.hh"
 #include "buttons.hh"
 #include "switches.hh"
 #include "leds.hh"
