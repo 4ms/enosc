@@ -502,6 +502,10 @@ public:
       if (params_.warp.mode == FOLD) {
         warp *= warp;
         warp *= 0.9_f;
+        // the little offset avoids scaling the input too close to
+        // zero; reducing it makes the wavefolder more linear around
+        // warp=0, but increases the quantization noise.
+        warp += 0.004_f;
       } else if (params_.warp.mode == CHEBY) {
       } else if (params_.warp.mode == SEGMENT) {
       }

@@ -89,10 +89,7 @@ namespace Antialias {
   }
 
   template<> f warp<FOLD>(f freq, f amount) {
-    // the little offset avoids scaling the input too close to
-    // zero; reducing it makes the wavefolder more linear around
-    // warp=0, but increases the quantization noise.
-    return amount * (1_f - 8_f * freq).max(0_f).square().square() + 0.004_f;
+    return (amount * (1_f - 8_f * freq).max(0_f).square().square()).max(0.004_f);
   }
 
   template<> f warp<CHEBY>(f freq, f amount) {
