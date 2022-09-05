@@ -59,7 +59,7 @@ DynamicData::DynamicData() {
       while(p > 1_f) p--;
       while(p < 0_f) p++;
       x = - g * (x + Math::fast_sine(p));
-      fold[i] = std::pair(previous, x - previous);
+      fold[i] = i==0 ? std::pair(x, 0_f) : std::pair(previous, x - previous);
       previous = x;
     }
   }
