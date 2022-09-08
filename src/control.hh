@@ -226,18 +226,20 @@ enum class PotFct { MAIN, ALT };
 
 template<AdcInput INPUT, Law LAW, class FILTER, Takeover TO>
 class DualFunctionPotConditioner : public PotConditioner<INPUT, LAW, FILTER> {
-  enum State { MAIN, ALT, ARMING, CATCHUP } state_ = MAIN;
+  enum State { MAIN, INACTIVE, ALT, ARMING, CATCHUP } state_ = MAIN;
   f main_value_;
   f alt_value_ = -1_f;          // -1 indicates no value
-  f cached_value_;
 public:
 
   DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW, FILTER>(adc) {}
 
   void alt() { state_ = ALT; }
-  void main() { if (state_ == ALT) state_ = ARMING; }
+  void main() { 
+    if (state_ == ALT) state_ = ARMING; 
+    else if (state_ == INACTIVE) state_ = MAIN; 
+  }
   void reset_alt_value() { alt_value_ = -1_f; }
-  void cache() { if (state_ == MAIN) cached_value_ = main_value_; }
+  void disable() { if (state_ == MAIN) state_ = INACTIVE; }
 
   std::pair<f, f> Process(std::function<void(Event)> const& put) {
     f input = PotConditioner<INPUT, LAW, FILTER>::Process(put);
@@ -245,6 +247,7 @@ public:
     case MAIN: {
       main_value_ = input;
     } break;
+    case INACTIVE: {} break;
     case ALT: {
       alt_value_ = input;
     } break;
@@ -261,7 +264,7 @@ public:
       } else if (TO == Takeover::SOFT) {
         //Todo: set state_ to PLATEAUED_MAIN where the cached value is used
         //Then on movement detect set it to MAIN
-        if ((input - cached_value_).abs() <= 0.0005_f) {
+        if ((input - main_value_).abs() <= 0.0005_f) {
           state_ = MAIN;
           put({EndOfCatchup, INPUT});
         }
@@ -622,16 +625,18 @@ public:
   void warp_pot_main_function() { warp_.pot_.main(); }
   void balance_pot_alternate_function() { balance_.pot_.alt(); }
   void balance_pot_main_function() { balance_.pot_.main(); }
-  void cache_all_alt_shift_pot_values() {
-    spread_.pot_.cache();
-    twist_.pot_.cache();
-    warp_.pot_.cache();
-    balance_.pot_.cache();
-    pitch_pot_.cache();
+
+  void disable_all_alt_shift_pot_values() {
+    spread_.pot_.disable();
+    twist_.pot_.disable();
+    warp_.pot_.disable();
+    balance_.pot_.disable();
+    pitch_pot_.disable();
   }
-  void cache_all_alt_learn_pot_values() {
-    root_pot_.cache();
-    pitch_pot_.cache();
+  
+  void disable_all_alt_learn_pot_values() {
+    root_pot_.disable();
+    pitch_pot_.disable();
   }
 
   f scale_pot() { return scale_.pot_.raw(); }
@@ -648,7 +653,7 @@ public:
     twist_pot_main_function();
     warp_pot_main_function();
     balance_pot_main_function();
-	pitch_pot_main_function();
+    pitch_pot_main_function();
   }
 
 

@@ -256,10 +256,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           mode_ = SHIFT;
           //store snapshot of pot values at moment the button 
           //goes down, in case the user performs an alt function
-          control_.cache_all_alt_shift_pot_values();
+          control_.disable_all_alt_shift_pot_values();
         }
         if (e1.data == BUTTON_LEARN) 
-          control_.cache_all_alt_learn_pot_values();
+          control_.disable_all_alt_learn_pot_values();
       } break;
       case PotMove: {
         if (e1.data == POT_ROOT &&
@@ -310,6 +310,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             osc_.set_freeze(!osc_.frozen());
             freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
             mode_ = NORMAL;
+            control_.all_main_function();
           } else {
             // Released after a change
             mode_ = NORMAL;
@@ -384,8 +385,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
           bool success = osc_.disable_learn();
           if (success) learn_led_.flash(Colors::green, 2_f);
           control_.release_pitch_cv();
-          control_.root_pot_main_function();
-          control_.pitch_pot_main_function();
+          control_.all_main_function();
           learn_led_.reset_glow();
           learn_led_.set_solid(Colors::black);
         } else if (e1.data == BUTTON_FREEZE &&
