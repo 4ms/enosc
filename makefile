@@ -54,7 +54,7 @@ OBJCOPY = $(TOOLCHAIN_DIR)arm-none-eabi-objcopy
 GDB = $(TOOLCHAIN_DIR)arm-none-eabi-gdb
 CMDSIZE = $(TOOLCHAIN_DIR)arm-none-eabi-size
 
-TEST_CXX = g++-8
+TEST_CXX = g++-12
 
 CMSIS_DIR = lib/CMSIS/
 HAL_DIR = lib/HAL/
@@ -157,10 +157,10 @@ erase:
 	st-flash erase
 
 debug-server:
-	st-util -v
+	openocd -f interface/stlink-v2-1.cfg -f target/stm32f7x.cfg
 
 debug:
-	$(TOOLCHAIN_DIR)arm-none-eabi-gdb $(TARGET).elf \
+	gdb $(TARGET).elf \
 	-x gdbinit
 
 # File dependencies:
