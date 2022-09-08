@@ -13,7 +13,7 @@ const f kPotDeadZone = 0.01_f;
 const f kPitchPotRange = 6_f * 12_f;
 const f kRootPotRange = 9_f * 12_f;
 const f kNewNoteRange = 6_f * 12_f;
-const f kNewNoteFineRange = 4_f;
+const f kFineTuneRange = 4_f;
 const f kSpreadRange = 12_f;
 const f kCalibration2Volts = 2_f;
 const f kCalibration4Volts = 4_f;
@@ -576,10 +576,11 @@ public:
       }
       pitch_cv = pitch_cv_sampler_.Process(pitch_cv);
       pitch += pitch_cv;
-      params_.pitch = pitch;
 
       params_.fine_tune =
-        fine_tune > 0_f ? (fine_tune - 0.5_f) * kNewNoteFineRange : 0_f;
+        fine_tune > 0_f ? (fine_tune - 0.5_f) * kFineTuneRange : 0_f;
+
+      params_.pitch = pitch + params_.fine_tune;
     }
 
     // ROOT
