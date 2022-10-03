@@ -19,6 +19,16 @@ enum ModulationMode { ONE, TWO, THREE };
 
 enum SplitMode { ALTERNATE, LOW_HIGH, LOWEST_REST };
 
+struct SavedDualPotState {
+  enum : uint32_t{ MainMode, CatchUpMode = 0x1234ABCD } restore_catchup_mode = MainMode;
+  f restore_main_val = 0.5_f;
+  f restore_alt_val = 0_f;
+  bool validate() { 
+    return restore_main_val >= 0_f && restore_main_val <= 1_f &&
+           restore_alt_val  >= 0_f && restore_alt_val  <= 1_f;
+  }
+};
+
 struct Parameters {
   f balance;                        // -1..1
   f root;                        // semitones
@@ -51,6 +61,9 @@ struct Parameters {
     SplitMode stereo_mode;// = ALTERNATE;
     SplitMode freeze_mode;// = LOW_HIGH;
     f crossfade_factor;// = 0.125_f;
+
+	SavedDualPotState pitch_pot_state;
+
     bool validate() {
       return
         numOsc <= kMaxNumOsc &&

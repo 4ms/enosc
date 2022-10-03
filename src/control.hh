@@ -232,6 +232,15 @@ class DualFunctionPotConditioner : public PotConditioner<INPUT, LAW, FILTER> {
 public:
 
   DualFunctionPotConditioner(Adc& adc) : PotConditioner<INPUT, LAW, FILTER>(adc) {}
+  DualFunctionPotConditioner(Adc& adc, SavedDualPotState saved_state) : PotConditioner<INPUT, LAW, FILTER>(adc)
+  {
+    if (saved_state.validate()) {
+      main_value_ = saved_state.restore_main_val;
+      alt_value_ = saved_state.restore_alt_val;
+      if (saved_state.restore_catchup_mode == SavedDualPotState::CatchUpMode)
+        state_ = ARMING;
+    }
+  }
 
   void alt() { state_ = ALT; }
   void main() { 
@@ -392,7 +401,7 @@ class Control : public EventSource<Event> {
 
   DualFunctionPotConditioner<POT_PITCH, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT
-                             > pitch_pot_ {adc_};
+                             > pitch_pot_;
   DualFunctionPotConditioner<POT_ROOT, Law::LINEAR,
                              QuadraticOnePoleLp<2>, Takeover::SOFT
                              > root_pot_ {adc_};
@@ -417,7 +426,8 @@ public:
 
   Control(Parameters& params, PolypticOscillator<block_size>& osc) :
     osc_(osc),
-    params_(params) {}
+    params_(params),
+    pitch_pot_(adc_, params.alt.pitch_pot_state) {}
 
   void ProcessSpiAdcInput() {
     if (ext_cv_chan) {
