@@ -98,6 +98,7 @@ namespace std {
   void __throw_bad_function_call() {
     assert_param(false);
     NVIC_SystemReset();
+	while(1);
   };
 }
 
