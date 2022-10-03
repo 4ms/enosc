@@ -248,13 +248,14 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             e2.data == BUTTON_LEARN) {
           // long-press on Learn
           osc_.reset_current_scale();
+          control_.all_main_function();
           learn_led_.flash(Colors::blue, 2_f);
         }
       } break;
       case ButtonPush: {
         if (e1.data == BUTTON_FREEZE) {
           mode_ = SHIFT;
-          //store snapshot of pot values at moment the button 
+          //stop updating pot values when the Shift button 
           //goes down, in case the user performs an alt function
           control_.disable_all_alt_shift_pot_values();
         }
