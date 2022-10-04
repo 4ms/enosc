@@ -250,6 +250,12 @@ public:
   void reset_alt_value() { alt_value_ = -1_f; }
   void disable() { if (state_ == MAIN) state_ = INACTIVE; }
 
+  SavedDualPotState get_state() { 
+      return { .restore_catchup_mode = (state_ == MAIN) ? SavedDualPotState::MainMode : SavedDualPotState::CatchUpMode,
+               .restore_main_val = main_value_,
+               .restore_alt_val = alt_value_};
+  }
+
   std::pair<f, f> Process(std::function<void(Event)> const& put) {
     f input = PotConditioner<INPUT, LAW, FILTER>::Process(put);
     switch(state_) {
@@ -636,6 +642,8 @@ public:
   void warp_pot_main_function() { warp_.pot_.main(); }
   void balance_pot_alternate_function() { balance_.pot_.alt(); }
   void balance_pot_main_function() { balance_.pot_.main(); }
+
+  auto pitch_pot_state() { return pitch_pot_.get_state(); }
 
   void disable_all_alt_shift_pot_values() {
     spread_.pot_.disable();
