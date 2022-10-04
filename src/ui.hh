@@ -194,6 +194,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
       freeze_led_.flash(Colors::green);
       freeze_led_.reset_glow();
       freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
+      if (e1.data == POT_PITCH) {
+        params_.alt.pitch_pot_state = control_.pitch_pot_state();
+        alt_params_.Save();
+      }
     } break;
     case ScaleChange: {
       if (mode_==NORMAL || mode_==LEARN || mode_==MANUAL_LEARN)
