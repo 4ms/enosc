@@ -129,6 +129,7 @@ template<int block_size>
 class OscillatorPair : Nocopy {
   Oscillator osc_[2];
   FrequencyState freq_;
+  OnePoleLp crossfade_lp_;
 
 public:
 
@@ -176,7 +177,7 @@ public:
     processor_t process = pick_processor(twist_mode, warp_mode);
 
     // shape crossfade so notes are easier to find
-    crossfade = Signal::crop(crossfade_factor, crossfade);
+    crossfade = crossfade_lp_.Process(0.1_f, Signal::crop(crossfade_factor, crossfade));
 
     if (twist_needs_jump) {
       osc_[0].twist_.jump(twist);
