@@ -59,7 +59,7 @@ public:
 
     f sum = amplitudes.sum();
     f atten = 0.5_f / sum;
-    atten *= 1_f + Data::normalization_factors.interpolate_from_index(sum);
+    atten *= 1_f + Data::normalization_factors.interpolate_from_index(sum.max(f(kMaxNumOsc)));
 
     for (auto [o1, o2] : zip(out1, out2)) {
       o2 = o1 = o1 * atten;
