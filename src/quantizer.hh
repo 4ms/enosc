@@ -1,6 +1,7 @@
 #pragma once
 
 #include "buffer.hh"
+#include "persistent_storage.hh"
 
 constexpr const int kScaleNr = 10;
 constexpr const int kBankNr = 3;
