@@ -22,7 +22,7 @@ SRCS = \
 OBJS_1 = $(SRCS:.cc=.o)
 OBJS = $(OBJS_1:.c=.o)
 
-TEST_SRCS = test/test.cc data.cc lib/easiglib/numtypes.cc lib/easiglib/math.cc lib/easiglib/dsp.cc
+TEST_SRCS = test/test.cc data.cc lib/easiglib/numtypes.cc lib/easiglib/math.cc lib/easiglib/dsp.cc src/dynamic_data.cc
 
 DEPS = $(addsuffix .d, $(SRCS)) $(addsuffix .d, $(TEST_SRCS))
 
@@ -177,13 +177,24 @@ DEPFLAGS = -MMD -MP -MF $<.d
 
 # Test build:
 
+TEST_CXXFLAGS= \
+	-std=c++17 \
+	-fno-rtti \
+	-fno-exceptions \
+	-Werror=return-type \
+	-Wdouble-promotion \
+	-Wno-register \
+	-g \
+	-ffast-math \
+	-O2
+
 test: test/test
 
 test/test: data.hh test/test.cc $(TEST_OBJS)
-	$(TEST_CXX) -o $@ $(TEST_OBJS) $(LIBS)
+	$(TEST_CXX) -o $@ $(CPPFLAGS) $(TEST_CXXFLAGS) $(TEST_OBJS) $(LIBS)
 
 %.test.o: %.cc %.cc.d
-	$(TEST_CXX) $(DEPFLAGS) $(CPPFLAGS) -c $< -o $@
+	$(TEST_CXX) $(DEPFLAGS) $(CPPFLAGS) $(TEST_CXXFLAGS) -DTEST -c $< -o $@
 
 fsk-wav: $(TARGET).bin
 	PYTHONPATH='bootloader/:.' && python bootloader/stm_audio_bootloader/fsk/encoder.py \
