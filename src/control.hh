@@ -480,10 +480,10 @@ public:
       params_.balance = balance;
 
       if (crossfade > 0_f) {
-        crossfade *= crossfade;
-        crossfade = 1_f - crossfade;
-        crossfade *= 0.5_f;
-        params_.alt.crossfade_factor = crossfade; // 0..1
+        crossfade *= crossfade; // 0..1
+        crossfade = 1_f - crossfade; // 0..1
+        crossfade *= 0.5_f; // 0..0.5
+        params_.alt.crossfade_factor = crossfade; // 0..0.5
       }
     }
 
