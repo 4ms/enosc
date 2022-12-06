@@ -311,7 +311,7 @@ public:
   // preserves the represented value if it is positive
   constexpr Fixed<UNSIGNED, INT-1, FRAC+1> const to_unsigned() const {
     static_assert(SIGN==SIGNED, "Only unsigned-to-signed conversion supported");
-    return Fixed<UNSIGNED, INT-1, FRAC+1>::of_repr((unsigned)(val_ << 1));
+    return Fixed<UNSIGNED, INT-1, FRAC+1>::of_repr((unsigned)(val_ * 2));
   }
 
   // remaps MIN..MAX to MIN..MAX (e.g. -1..1 --> 0..1)
