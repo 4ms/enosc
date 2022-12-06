@@ -176,7 +176,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     learn_led_.set_background(Colors::lemon);
     freeze_led_.set_background(Colors::lemon);
     learn_led_.reset_glow();
-    freeze_led_.reset_glow();
+    freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
   }
 
 
@@ -320,7 +320,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             // Released after a change
             mode_ = NORMAL;
             control_.all_main_function();
-			params_.alt.pitch_pot_state = control_.pitch_pot_state();
+            params_.alt.pitch_pot_state = control_.pitch_pot_state();
             alt_params_.Save();
             freeze_led_.set_solid(osc_.frozen() ? Colors::blue : Colors::black);
           }
@@ -459,7 +459,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
             mode_ = NORMAL;
             break;
         }
-      }      
+      }
       else //wait for button press to advance to next step
       if (e1.type == ButtonRelease &&
           e2.type == ButtonPush &&
