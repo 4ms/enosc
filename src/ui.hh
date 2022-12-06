@@ -420,6 +420,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
         learn_led_.flash(Colors::magenta, 0.5_f); 
         freeze_led_.flash(Colors::magenta, 0.5_f);
         reset_leds();
+        control_.all_main_function();
         mode_ = NORMAL;
       }
       else
@@ -454,6 +455,7 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
               freeze_led_.flash(Colors::magenta, 0.5_f);
             }
             reset_leds();
+            control_.all_main_function();
             mode_ = NORMAL;
             break;
         }
