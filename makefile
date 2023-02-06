@@ -137,7 +137,7 @@ combo:
 bootloader: combo
 
 data.cc data.hh: $(EASIGLIB_DIR)data_compiler.py data/data.py
-	PYTHONPATH=$(EASIGLIB_DIR) python data/data.py
+	PYTHONPATH=$(EASIGLIB_DIR) python3 data/data.py
 
 clean:
 	rm -f $(OBJS) $(TEST_OBJS) $(DEPS) $(TARGET).elf $(TARGET).bin $(TARGET).hex  \ 
