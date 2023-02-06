@@ -176,7 +176,10 @@ class Ui : public EventHandler<Ui<update_rate, block_size>, Event> {
     learn_led_.set_background(Colors::lemon);
     freeze_led_.set_background(Colors::lemon);
     learn_led_.reset_glow();
-    freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
+    if (active_catchups_.set_bits() > 0)
+      freeze_led_.set_glow(Colors::grey, 2_f * f(active_catchups_.set_bits()));
+    else
+      freeze_led_.reset_glow();
   }
 
 
