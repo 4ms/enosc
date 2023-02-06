@@ -197,7 +197,7 @@ test/test: data.hh test/test.cc $(TEST_OBJS)
 	$(TEST_CXX) $(DEPFLAGS) $(CPPFLAGS) $(TEST_CXXFLAGS) -DTEST -c $< -o $@
 
 fsk-wav: $(TARGET).bin
-	PYTHONPATH='bootloader/:.' && python bootloader/stm_audio_bootloader/fsk/encoder.py \
+	PYTHONPATH='bootloader/:.' && python3 bootloader/stm_audio_bootloader/fsk/encoder.py \
 		-s 22050 -b 16 -n 8 -z 4 -p 256 -g 16384 -k 1800 \
 		$(TARGET).bin
 
