@@ -169,6 +169,15 @@ static_assert(0.25_u0_16 * 0.5_u0_16 == 0.125_u0_32);
 static_assert(0._u0_16 * 0.5_u0_16 == 0._u0_32);
 static_assert(1.0_u0_16 * 0.5_u0_16 == 0.0_u0_32);
 
+// Does this make sense?
+static_assert((-0.75_s1_31).to_unsigned_scale() == 0.125_u0_32, "");
+static_assert((-0.5_s1_15).to_unsigned_scale() == 0.25_u0_16, "");
+static_assert((-0.25_s1_31).to_unsigned_scale() == 0.375_u0_32, "");
+
+// Does this make sense?
+static_assert((0.125_u0_32).to_signed_scale() == -0.75_s1_31, "");
+static_assert((0.25_u0_32).to_signed_scale() == -0.5_s1_31, "");
+
 // Division
 // static_assert(42_u16 / 2_u16 == 21_u32);
 
