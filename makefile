@@ -199,9 +199,9 @@ test/test: data.hh test/test.cc $(TEST_OBJS)
 wav: fsk-wav
 
 fsk-wav: $(TARGET).bin
-	PYTHONPATH='bootloader/:.' && python3 bootloader/stm_audio_bootloader/fsk/encoder.py \
+	cd bootloader && python3 stm_audio_bootloader/fsk/encoder.py \
 		-s 22050 -b 16 -n 8 -z 4 -p 256 -g 16384 -k 1800 \
-		$(TARGET).bin
+		../$(TARGET).bin
 
 
 -include $(DEPS)
