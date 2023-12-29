@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <cmath>
+#include <limits>
 #include <cfloat>
 
 #include "util.hh"
