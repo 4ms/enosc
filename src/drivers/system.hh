@@ -136,5 +136,5 @@ extern "C" {
   void PendSV_Handler() { NVIC_SystemReset(); }
   void __cxa_pure_virtual() { NVIC_SystemReset(); }
   __weak void _init() {}
-  __weak void main() {}
+  __weak int main() {}
 }
